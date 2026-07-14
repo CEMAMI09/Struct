@@ -1,9 +1,24 @@
 <template>
-  <aside class="flex w-56 shrink-0 flex-col border-r border-[#2A2F3A] bg-[#0F1115]/80">
-    <div class="flex h-14 items-center justify-center border-b border-[#2A2F3A] px-3">
-      <NuxtLink to="/dashboard" class="flex w-full items-center justify-center">
-        <StructLogo size="sm" class="max-w-[140px]" />
+  <aside
+    class="fixed inset-y-0 left-0 z-50 flex w-56 shrink-0 flex-col border-r border-[#2A2F3A] bg-[#0F1115] transition-transform duration-200 ease-out md:static md:translate-x-0 md:bg-[#0F1115]/80"
+    :class="open ? 'translate-x-0' : '-translate-x-full'"
+  >
+    <div class="flex h-[4.5rem] items-center justify-between border-b border-[#2A2F3A] px-3 md:justify-center">
+      <NuxtLink
+        to="/dashboard"
+        class="flex min-w-0 flex-1 items-center justify-center"
+        @click="emit('close')"
+      >
+        <StructLogo size="sm" />
       </NuxtLink>
+      <button
+        type="button"
+        class="btn-ghost ml-1 shrink-0 px-2 py-2 md:hidden"
+        aria-label="Close menu"
+        @click="emit('close')"
+      >
+        ✕
+      </button>
     </div>
 
     <nav class="flex flex-1 flex-col gap-1 p-3">
@@ -11,12 +26,13 @@
         v-for="link in links"
         :key="link.to"
         :to="link.to"
-        class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition"
+        class="flex min-h-11 items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition md:min-h-0 md:py-2"
         :class="
           isActive(link.to)
             ? 'bg-[#1A1D24] text-[#38B6FF]'
             : 'text-[#8B93A7] hover:bg-[#1A1D24]/60 hover:text-[#E8EAEF]'
         "
+        @click="emit('close')"
       >
         <span class="font-mono text-xs opacity-60">{{ link.glyph }}</span>
         {{ link.label }}
@@ -31,6 +47,14 @@
 </template>
 
 <script setup lang="ts">
+defineProps<{
+  open?: boolean
+}>()
+
+const emit = defineEmits<{
+  close: []
+}>()
+
 const route = useRoute()
 const config = useRuntimeConfig()
 const tcpPort = computed(() => config.public.tcpPort)

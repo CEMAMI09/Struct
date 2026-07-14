@@ -30,7 +30,7 @@ const FORCE_PLAIN = args.has('--plain') || args.has('-p')
 
 const HOST = process.env.HOST || '127.0.0.1'
 const PORT = Number(process.env.PORT || process.env.TCP_PORT || 8080)
-const API_KEY = process.env.API_KEY || 'de7bol3xcp0jraki'
+const API_KEY = process.env.API_KEY || 'v3tz2m0fv57c6p05'
 const SCHEMA_VERSION = Number(process.env.SCHEMA_VERSION || 1)
 
 async function lookupDevice(apiKey) {
@@ -121,7 +121,7 @@ async function main() {
   const version = Number(process.env.SCHEMA_VERSION) || Number(tip?.version) || SCHEMA_VERSION
 
   const packed = Buffer.alloc(9)
-  packed.writeFloatLE(95.5, 0)
+  packed.writeFloatLE(120.5, 0)
   packed.writeFloatLE(65.2, 4)
   packed.writeUInt8(1, 8)
 

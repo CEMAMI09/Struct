@@ -28,6 +28,10 @@ export default defineNuxtConfig({
       title: 'Struct — Ultra-Lightweight IoT Gateway',
       meta: [
         {
+          name: 'viewport',
+          content: 'width=device-width, initial-scale=1, viewport-fit=cover',
+        },
+        {
           name: 'description',
           content:
             'Extend edge battery life by 10×. Send raw binary over TCP; we handle secure routing, parsing, and cloud integration.',

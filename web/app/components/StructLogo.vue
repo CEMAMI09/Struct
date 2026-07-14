@@ -1,6 +1,6 @@
 <template>
   <img
-    src="/struct-logo.svg"
+    :src="src"
     alt="Struct"
     class="struct-logo"
     :class="sizeClass"
@@ -16,16 +16,19 @@ const props = withDefaults(
   { size: 'md' },
 )
 
+/** Cache-bust when replacing the SVG asset */
+const src = '/struct-logo.svg?v=5'
+
 const sizeClass = computed(() => {
-  if (props.size === 'sm') return 'h-7'
-  if (props.size === 'lg') return 'h-10'
-  return 'h-8'
+  // Horizontal wordmark — size by width so it reads large in the nav
+  if (props.size === 'sm') return 'h-auto w-[120px]'
+  if (props.size === 'lg') return 'h-auto w-[180px]'
+  return 'h-auto w-[140px] sm:w-[155px]'
 })
 </script>
 
 <style scoped>
 .struct-logo {
-  width: auto;
   display: block;
   margin-inline: auto;
   object-fit: contain;

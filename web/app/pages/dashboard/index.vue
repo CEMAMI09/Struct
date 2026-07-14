@@ -1,9 +1,9 @@
 <template>
-  <div class="flex h-[calc(100vh-8rem)] min-h-[520px] flex-col gap-4">
-    <!-- Bento grid: no endless scroll -->
+  <div
+    class="flex min-h-0 flex-col gap-4 lg:h-[calc(100vh-8rem)] lg:min-h-[520px]"
+  >
     <div class="grid min-h-0 flex-1 gap-4 lg:grid-cols-12 lg:grid-rows-2">
-      <!-- Devices column -->
-      <section class="card min-h-0 p-4 lg:col-span-4 lg:row-span-2">
+      <section class="card min-h-[220px] p-4 lg:col-span-4 lg:row-span-2 lg:min-h-0">
         <DeviceList
           :devices="devices"
           :selected-id="selectedId"
@@ -11,16 +11,14 @@
         />
       </section>
 
-      <!-- Chart -->
-      <section class="card min-h-0 p-4 lg:col-span-8 lg:row-span-1">
+      <section class="card min-h-[260px] p-4 lg:col-span-8 lg:row-span-1 lg:min-h-0">
         <TelemetryChart :rows="rows" :live="live" />
       </section>
 
-      <!-- Latest packet + stats -->
       <section class="card min-h-0 overflow-auto p-4 lg:col-span-5 lg:row-span-1">
-        <div class="mb-3 flex items-center justify-between">
+        <div class="mb-3 flex items-center justify-between gap-2">
           <h2 class="text-sm font-semibold text-[#E8EAEF]">Latest packet</h2>
-          <span class="font-mono text-[10px] text-[#8B93A7]">
+          <span class="shrink-0 font-mono text-[10px] text-[#8B93A7]">
             {{ latest?.timestamp ? formatTime(latest.timestamp) : '—' }}
           </span>
         </div>

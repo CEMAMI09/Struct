@@ -1,7 +1,7 @@
 <template>
   <div class="flex min-h-full flex-col gap-4">
-    <div class="flex shrink-0 flex-wrap items-end gap-3">
-      <div class="min-w-[180px] flex-1">
+    <div class="flex shrink-0 flex-wrap items-end gap-2 sm:gap-3">
+      <div class="min-w-0 w-full flex-1 sm:min-w-[180px]">
         <label class="label">Device</label>
         <select v-model="selectedDeviceId" class="input" :disabled="!devices.length">
           <option disabled value="">
@@ -18,7 +18,7 @@
       </button>
       <button
         type="button"
-        class="btn-ghost"
+        class="btn-ghost w-full sm:w-auto"
         :disabled="!canDownload"
         title="Download ESP32 .h with packed struct + schema version"
         @click="downloadHeader"
@@ -77,7 +77,7 @@
               </button>
             </div>
           </div>
-          <pre class="mono overflow-x-auto rounded-lg bg-[#0F1115] p-3 text-xs text-[#38B6FF]">{{ selectedDevice.encryption_key }}</pre>
+          <pre class="mono overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-[#0F1115] p-3 text-xs text-[#38B6FF]">{{ selectedDevice.encryption_key }}</pre>
           <p class="mt-2 font-mono text-[10px] text-[#8B93A7]">
             Wire: [16B api_key][1B version][12B nonce][4B ts + struct ciphertext][16B tag]
           </p>
@@ -130,7 +130,7 @@
           <div
             v-for="(field, idx) in fields"
             :key="idx"
-            class="grid grid-cols-[1fr_140px_36px] items-center gap-2"
+            class="grid grid-cols-1 items-center gap-2 sm:grid-cols-[1fr_140px_40px]"
           >
             <input
               v-model="field.name"
@@ -143,7 +143,7 @@
             </select>
             <button
               type="button"
-              class="btn-ghost px-0 text-[#8B93A7] hover:text-red-400"
+              class="btn-ghost min-h-10 text-[#8B93A7] hover:text-red-400 sm:min-h-0 sm:px-0"
               title="Remove field"
               @click="removeField(idx)"
             >

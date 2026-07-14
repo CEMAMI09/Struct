@@ -1,13 +1,13 @@
 <template>
   <div class="mx-auto max-w-3xl">
-    <div class="mb-6 flex items-center justify-between gap-4">
-      <div>
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="min-w-0">
         <h2 class="text-lg font-semibold text-[#E8EAEF]">Destinations</h2>
         <p class="text-sm text-[#8B93A7]">
           Pipe every parsed packet to your own systems. Struct is a router — not your data warehouse.
         </p>
       </div>
-      <button class="btn-primary shrink-0" @click="showForm = !showForm">
+      <button class="btn-primary w-full shrink-0 sm:w-auto" @click="showForm = !showForm">
         {{ showForm ? 'Cancel' : 'Add Destination' }}
       </button>
     </div>
@@ -59,7 +59,7 @@
             />
             <p class="font-medium text-[#E8EAEF]">{{ dest.name }}</p>
           </div>
-          <p class="mt-1 truncate font-mono text-xs text-[#8B93A7]">{{ dest.url }}</p>
+          <p class="mt-1 break-all font-mono text-xs text-[#8B93A7]">{{ dest.url }}</p>
           <p class="mt-1 text-[10px] text-[#8B93A7]">
             {{ dest.device_id ? deviceName(dest.device_id) : 'All devices' }}
           </p>

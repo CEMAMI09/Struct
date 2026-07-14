@@ -2,10 +2,10 @@
   <div class="landing">
     <!-- Nav -->
     <header class="landing-nav">
-      <NuxtLink to="/" class="flex items-center justify-center">
-        <StructLogo size="md" class="max-w-[150px]" />
+      <NuxtLink to="/" class="flex min-w-0 items-center justify-center">
+        <StructLogo size="md" />
       </NuxtLink>
-      <div class="flex items-center gap-3">
+      <div class="flex shrink-0 items-center gap-2 sm:gap-3">
         <template v-if="user">
           <NuxtLink to="/dashboard" class="btn-primary text-xs">Open dashboard</NuxtLink>
         </template>
@@ -19,43 +19,51 @@
     <!-- Hero -->
     <section class="hero">
       <div class="hero-grid" aria-hidden="true" />
-      <div class="relative mx-auto max-w-5xl px-6 pt-20 pb-24 text-center sm:pt-28 sm:pb-28">
-        <p
-          class="mb-6 inline-flex items-center gap-2 rounded-full border border-[#2A2F3A] bg-[#1A1D24]/80 px-3 py-1 font-mono text-[11px] text-[#8B93A7]"
-        >
-          <span class="h-1.5 w-1.5 rounded-full bg-[#38B6FF] shadow-[0_0_10px_rgba(56,182,255,0.8)]" />
-          Binary over TCP · No MQTT tax
-        </p>
+      <div class="hero-layout">
+        <div class="hero-copy min-w-0 text-left">
+          <h1
+            class="font-display max-w-xl text-[2.35rem] font-semibold leading-[1.08] tracking-[-0.04em] text-[#F4F5F7] sm:text-5xl lg:text-[3.5rem]"
+          >
+            Multiply Your Edge Battery Life by
+            <span class="text-[#38B6FF]">10x.</span>
+          </h1>
 
-        <h1
-          class="font-display mx-auto max-w-4xl text-4xl font-semibold leading-[1.08] tracking-[-0.03em] text-[#F4F5F7] sm:text-5xl lg:text-[3.75rem]"
-        >
-          The Ultra-Lightweight IoT Gateway for
-          <span class="text-[#38B6FF]">Battery-Constrained Fleets.</span>
-        </h1>
+          <p class="mt-5 max-w-md text-base leading-relaxed text-[#8B93A7] sm:text-lg">
+            Ditch the heavy JSON and TLS handshakes. Securely route encrypted, raw C++ structs to
+            your cloud using 80% less bandwidth.
+          </p>
 
-        <p class="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-[#8B93A7] sm:text-lg">
-          Extend edge battery life by 10× and eliminate heap fragmentation. Send raw binary over
-          TCP; we handle the secure routing, parsing, and cloud integration.
-        </p>
-
-        <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <NuxtLink to="/signup" class="btn-primary px-6 py-3 text-sm">Build your gateway</NuxtLink>
-          <a href="#math" class="btn-ghost px-6 py-3 text-sm">See the math →</a>
-        </div>
-
-        <!-- Glass terminal snippet -->
-        <div class="terminal mx-auto mt-12 max-w-xl text-left">
-          <div class="terminal-chrome">
-            <span class="dot dot-r" />
-            <span class="dot dot-y" />
-            <span class="dot dot-g" />
-            <span class="terminal-title font-mono">struct — uplink</span>
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <NuxtLink to="/signup" class="btn-primary px-6 py-3 text-sm">
+              Connect your first device free
+            </NuxtLink>
+            <a href="#math" class="btn-ghost px-6 py-3 text-sm">See the proof</a>
           </div>
-          <pre class="terminal-body font-mono"><span class="t-muted">$</span> <span class="t-cmd">compare</span> <span class="t-flag">--payload</span>
+
+          <div class="terminal mt-8 max-w-md text-left" aria-label="Payload size comparison">
+            <div class="terminal-chrome">
+              <span class="dot dot-r" />
+              <span class="dot dot-y" />
+              <span class="dot dot-g" />
+              <span class="terminal-title font-mono">struct — uplink</span>
+            </div>
+            <pre class="terminal-body font-mono"><span class="t-muted">$</span> <span class="t-cmd">compare</span> <span class="t-flag">--payload</span>
 <span class="t-dim">JSON</span>   <span class="t-strike">85B</span>  <span class="t-dim">· radio</span> <span class="t-strike">200ms</span>
 <span class="t-ok">STRUCT</span> <span class="t-hi">25B</span>  <span class="t-dim">· radio</span> <span class="t-hi">20ms</span>
-<span class="t-muted">→</span> <span class="t-dim">heap fragmentation:</span> <span class="t-hi">0</span></pre>
+<span class="t-muted">→</span> <span class="t-dim">85B JSON</span> <span class="t-muted">→</span> <span class="t-hi">25B packed struct</span><span class="cursor" aria-hidden="true" /></pre>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <img
+            src="/hero-shot.svg"
+            alt="Struct gateway parsing packed ESP32 telemetry into live cloud dashboards"
+            class="hero-shot"
+            width="1200"
+            height="600"
+            decoding="async"
+            fetchpriority="high"
+          />
         </div>
       </div>
     </section>
@@ -197,20 +205,22 @@
     <section class="border-t border-[#2A2F3A] py-20">
       <div class="mx-auto max-w-3xl px-6 text-center">
         <h2 class="font-display text-3xl font-semibold tracking-[-0.03em] text-[#F4F5F7] sm:text-4xl">
-          Stop paying the JSON tax on every wake.
+          Ship your first packed uplink today.
         </h2>
         <p class="mt-4 text-sm text-[#8B93A7]">
-          Create a device, paste the API key into firmware, define the packed layout — telemetry
-          shows up live. Destinations, fleet tags, encryption, and downlinks included.
+          Create a free device, drop in the ESP32 header Struct generates, and watch live telemetry
+          land — with destinations, fleet tags, ChaCha20, and downlinks included.
         </p>
-        <NuxtLink to="/signup" class="btn-primary mt-8 inline-flex px-8 py-3">
-          Open the dashboard
+        <NuxtLink to="/signup" class="btn-primary mt-8 inline-flex px-8 py-3.5">
+          Start free — get your API key
         </NuxtLink>
       </div>
     </section>
 
     <footer class="border-t border-[#2A2F3A] py-8">
-      <div class="mx-auto flex max-w-5xl items-center justify-between px-6">
+      <div
+        class="mx-auto flex max-w-5xl flex-col gap-3 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"
+      >
         <p class="font-mono text-[11px] text-[#8B93A7]">Struct · binary telemetry gateway</p>
         <NuxtLink to="/login" class="text-xs text-[#8B93A7] hover:text-[#38B6FF]">Sign in</NuxtLink>
       </div>
@@ -224,9 +234,9 @@ definePageMeta({ layout: false })
 const user = useSupabaseUser()
 
 useSeoMeta({
-  title: 'Struct — Ultra-Lightweight IoT Gateway',
+  title: 'Struct — Multiply Your Edge Battery Life by 10x',
   description:
-    'Extend edge battery life by 10×. Send raw binary over TCP; Struct handles secure routing, parsing, and cloud integration.',
+    'Ditch heavy JSON and TLS handshakes. Securely route encrypted, raw C++ structs to your cloud using 80% less bandwidth.',
 })
 
 const mathCards = [
@@ -267,25 +277,109 @@ const mathCards = [
 }
 
 .landing-nav {
-  @apply sticky top-0 z-20 flex items-center justify-between border-b border-[#2A2F3A] bg-[#0F1115]/80 px-6 py-4 backdrop-blur-xl;
+  @apply sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-[#2A2F3A] bg-[#0F1115]/80 px-4 py-3 backdrop-blur-xl sm:px-6 sm:py-4;
 }
 
 .hero {
-  @apply relative overflow-hidden;
+  position: relative;
+  overflow: hidden;
+  padding: 7.5rem 0 8rem;
+}
+
+@media (min-width: 640px) {
+  .hero {
+    padding: 9rem 0 9.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero {
+    padding: 10.5rem 0 11rem;
+  }
 }
 
 .hero-grid {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(42, 47, 58, 0.28) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(42, 47, 58, 0.28) 1px, transparent 1px);
+    linear-gradient(rgba(42, 47, 58, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42, 47, 58, 0.22) 1px, transparent 1px);
   background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 70% 55% at 50% 28%, black 15%, transparent 75%);
+  mask-image: radial-gradient(ellipse 80% 70% at 78% 42%, black 18%, transparent 78%);
   pointer-events: none;
 }
 
-/* Glass terminal */
+.hero-layout {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2.5rem;
+  align-items: center;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+  .hero-layout {
+    grid-template-columns: minmax(0, 32rem) minmax(0, 1fr);
+    gap: 1rem;
+    max-width: none;
+    padding-left: max(1.5rem, calc((100vw - 72rem) / 2));
+    padding-right: 0;
+  }
+}
+
+.hero-copy {
+  animation: hero-copy-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.hero-visual {
+  position: relative;
+  width: 100%;
+  min-height: 200px;
+}
+
+@media (min-width: 1024px) {
+  .hero-visual {
+    min-height: 480px;
+    height: 100%;
+    width: calc(100% + 2rem);
+    max-width: none;
+  }
+}
+
+.hero-shot {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: min(44vh, 340px);
+  object-fit: contain;
+  object-position: center center;
+  margin-inline: auto;
+  filter: drop-shadow(0 28px 48px rgba(0, 0, 0, 0.45));
+  animation: hero-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (min-width: 1024px) {
+  .hero-shot {
+    position: absolute;
+    left: 6%;
+    top: 50%;
+    width: 140%;
+    max-width: 62rem;
+    max-height: 560px;
+    height: auto;
+    margin: 0;
+    object-fit: contain;
+    object-position: left center;
+    transform: translateY(-50%);
+    animation-name: hero-in-lg;
+  }
+}
+
+/* Glass terminal under CTAs */
 .terminal {
   border-radius: 12px;
   border: 1px solid rgba(42, 47, 58, 0.9);
@@ -335,7 +429,7 @@ const mathCards = [
 
 .terminal-body {
   margin: 0;
-  padding: 16px 18px 18px;
+  padding: 14px 16px 16px;
   font-size: 12px;
   line-height: 1.7;
   text-align: left;
@@ -366,6 +460,78 @@ const mathCards = [
 .t-hi {
   color: #38b6ff;
   text-shadow: 0 0 12px rgba(56, 182, 255, 0.35);
+}
+
+.cursor {
+  display: inline-block;
+  width: 7px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: #38b6ff;
+  box-shadow: 0 0 10px rgba(56, 182, 255, 0.55);
+  animation: caret-blink 1.05s step-end infinite;
+}
+
+@keyframes caret-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes hero-in-lg {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-50% + 20px)) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+@keyframes hero-copy-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-shot,
+  .hero-copy {
+    animation: none;
+  }
+
+  .cursor {
+    animation: none;
+    opacity: 1;
+  }
+
+  @media (min-width: 1024px) {
+    .hero-shot {
+      transform: translateY(-50%);
+    }
+  }
 }
 
 /* Math bento cards */

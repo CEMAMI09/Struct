@@ -1,21 +1,21 @@
 <template>
-  <div class="flex h-full min-h-0 flex-col gap-4">
+  <div class="flex min-h-0 flex-col gap-4 lg:h-full">
     <div class="flex flex-wrap items-end gap-3">
-      <div class="min-w-[180px] flex-1">
+      <div class="min-w-0 w-full flex-1 sm:min-w-[180px]">
         <label class="label">Device</label>
         <select v-model="selectedDeviceId" class="input">
           <option disabled value="">Select device</option>
           <option v-for="d in devices" :key="d.id" :value="d.id">{{ d.name }}</option>
         </select>
       </div>
-      <button class="btn-primary" :disabled="!canSimulate" @click="simulate">
+      <button class="btn-primary w-full sm:w-auto" :disabled="!canSimulate" @click="simulate">
         Simulate packet
       </button>
     </div>
 
     <div
       v-if="!schema.length"
-      class="card flex flex-1 items-center justify-center p-8 text-sm text-[#8B93A7]"
+      class="card flex min-h-[200px] flex-1 items-center justify-center p-6 text-sm text-[#8B93A7] sm:p-8"
     >
       {{
         selectedDeviceId
@@ -25,10 +25,10 @@
     </div>
 
     <div v-else class="grid min-h-0 flex-1 gap-4 lg:grid-cols-2">
-      <div class="card flex min-h-0 flex-col overflow-hidden">
-        <div class="flex items-center justify-between border-b border-[#2A2F3A] px-4 py-3">
+      <div class="card flex min-h-[220px] flex-col overflow-hidden lg:min-h-0">
+        <div class="flex items-center justify-between gap-2 border-b border-[#2A2F3A] px-4 py-3">
           <h3 class="text-sm font-semibold text-[#E8EAEF]">Raw hex</h3>
-          <span class="font-mono text-[10px] text-[#8B93A7]">{{ totalBytes }} B frame</span>
+          <span class="shrink-0 font-mono text-[10px] text-[#8B93A7]">{{ totalBytes }} B frame</span>
         </div>
         <div class="flex-1 overflow-auto p-4">
           <p class="mb-2 text-[10px] uppercase tracking-wider text-[#8B93A7]">
@@ -38,13 +38,13 @@
         </div>
       </div>
 
-      <div class="card flex min-h-0 flex-col overflow-hidden">
-        <div class="flex items-center justify-between border-b border-[#2A2F3A] px-4 py-3">
+      <div class="card flex min-h-[220px] flex-col overflow-hidden lg:min-h-0">
+        <div class="flex items-center justify-between gap-2 border-b border-[#2A2F3A] px-4 py-3">
           <h3 class="text-sm font-semibold text-[#E8EAEF]">Parsed JSON</h3>
-          <span class="font-mono text-[10px] text-[#8B93A7]">LE · packed</span>
+          <span class="shrink-0 font-mono text-[10px] text-[#8B93A7]">LE · packed</span>
         </div>
         <div class="flex-1 overflow-auto p-4">
-          <pre class="mono text-xs leading-6 text-[#E8EAEF]">{{ jsonOutput || '—' }}</pre>
+          <pre class="mono overflow-x-auto whitespace-pre-wrap break-all text-xs leading-6 text-[#E8EAEF]">{{ jsonOutput || '—' }}</pre>
         </div>
       </div>
     </div>

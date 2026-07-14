@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto flex min-h-[calc(100vh-8rem)] max-w-3xl flex-col">
+  <div class="mx-auto flex min-h-0 w-full max-w-3xl flex-col lg:min-h-[calc(100vh-8rem)]">
     <p v-if="error" class="mb-3 text-sm text-red-400">{{ error }}</p>
     <p v-else-if="loading" class="mb-3 text-sm text-[#8B93A7]">Loading devices…</p>
     <p v-else-if="!devices.length" class="mb-3 text-sm text-[#8B93A7]">

@@ -45,6 +45,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+@media (max-width: 767px) {
+  body {
+    /* fixed backgrounds jank scroll on many mobile browsers */
+    background-attachment: scroll;
+  }
+}
+
 .font-mono,
 .mono {
   font-family: 'Geist Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;

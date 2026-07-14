@@ -1,25 +1,29 @@
 <template>
   <div class="mx-auto max-w-4xl">
-    <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
-      <div>
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div class="min-w-0">
         <h2 class="text-lg font-semibold text-[#E8EAEF]">Fleet</h2>
         <p class="text-sm text-[#8B93A7]">
           Tag devices like industrial assets. Filter 400 sensors down to the 12 that matter.
         </p>
       </div>
-      <button class="btn-primary" @click="showForm = !showForm">
+      <button class="btn-primary w-full shrink-0 sm:w-auto" @click="showForm = !showForm">
         {{ showForm ? 'Cancel' : 'Add device' }}
       </button>
     </div>
 
-    <form v-if="showForm" class="card mb-6 flex gap-3 p-4" @submit.prevent="onCreate">
+    <form
+      v-if="showForm"
+      class="card mb-6 flex flex-col gap-3 p-4 sm:flex-row"
+      @submit.prevent="onCreate"
+    >
       <input
         v-model="newName"
-        class="input flex-1"
+        class="input min-w-0 flex-1"
         placeholder="Device name (e.g. ESP32 Kitchen)"
         required
       />
-      <button type="submit" class="btn-primary" :disabled="creating">
+      <button type="submit" class="btn-primary shrink-0" :disabled="creating">
         {{ creating ? 'Creating…' : 'Create' }}
       </button>
     </form>
@@ -57,7 +61,7 @@
             <StatusDot :online="isDeviceOnline(device.last_seen)" class="mt-1.5" />
             <div>
               <p class="font-medium text-[#E8EAEF]">{{ device.name }}</p>
-              <p class="mt-1 font-mono text-xs text-[#38B6FF]">{{ device.api_key }}</p>
+              <p class="mt-1 break-all font-mono text-xs text-[#38B6FF]">{{ device.api_key }}</p>
               <p class="mt-1 text-[10px] text-[#8B93A7]">
                 Last seen:
                 {{ device.last_seen ? new Date(device.last_seen).toLocaleString() : 'never' }}
@@ -98,11 +102,15 @@
               <div
                 v-for="(pair, idx) in tagDraft"
                 :key="idx"
-                class="grid grid-cols-[1fr_1fr_32px] gap-2"
+                class="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_40px]"
               >
                 <input v-model="pair.key" class="input text-xs" placeholder="Location" />
                 <input v-model="pair.value" class="input text-xs" placeholder="Chicago_Factory" />
-                <button type="button" class="btn-ghost px-0 text-[#8B93A7]" @click="tagDraft.splice(idx, 1)">
+                <button
+                  type="button"
+                  class="btn-ghost min-h-10 text-[#8B93A7] sm:min-h-0 sm:px-0"
+                  @click="tagDraft.splice(idx, 1)"
+                >
                   ×
                 </button>
               </div>
