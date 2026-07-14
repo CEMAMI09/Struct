@@ -43,19 +43,45 @@ export interface Database {
           id: string
           device_id: string
           schema_definition: Json
+          version: number
           updated_at: string
         }
         Insert: {
           id?: string
           device_id: string
           schema_definition?: Json
+          version?: number
           updated_at?: string
         }
         Update: {
           id?: string
           device_id?: string
           schema_definition?: Json
+          version?: number
           updated_at?: string
+        }
+      }
+      schema_versions: {
+        Row: {
+          id: string
+          device_id: string
+          version: number
+          schema_definition: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          device_id: string
+          version: number
+          schema_definition?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          device_id?: string
+          version?: number
+          schema_definition?: Json
+          created_at?: string
         }
       }
       telemetry: {

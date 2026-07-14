@@ -1,10 +1,13 @@
 /**
  * ChaCha20-Poly1305 helpers for edge payload encryption.
  *
- * Wire (after 16-byte API key):
+ * Wire (after 16-byte API key + 1-byte schema version):
  *   [12-byte nonce][ciphertext…][16-byte auth tag]
  *
- * Ciphertext length == plaintext length (schema byte size).
+ * Ciphertext plaintext:
+ *   [4-byte uint32 LE unix timestamp][packed schema struct…]
+ *
+ * Ciphertext length == TIMESTAMP_LEN + schema byte size.
  */
 
 const crypto = require('crypto')
@@ -30,17 +33,22 @@ function hexToKey(hex) {
  * @param {string} keyHex
  * @returns {Buffer} plaintext packed struct
  */
-function decryptPayload(encryptedRegion, keyHex) {
+function splitEncryptedRegion(encryptedRegion) {
   if (encryptedRegion.length < NONCE_LEN + TAG_LEN) {
     throw new Error(
       `Encrypted payload too short: ${encryptedRegion.length}B (need ≥ ${NONCE_LEN + TAG_LEN})`,
     )
   }
+  return {
+    nonce: encryptedRegion.subarray(0, NONCE_LEN),
+    tag: encryptedRegion.subarray(encryptedRegion.length - TAG_LEN),
+    ciphertext: encryptedRegion.subarray(NONCE_LEN, encryptedRegion.length - TAG_LEN),
+  }
+}
 
+function decryptPayload(encryptedRegion, keyHex) {
+  const { nonce, tag, ciphertext } = splitEncryptedRegion(encryptedRegion)
   const key = hexToKey(keyHex)
-  const nonce = encryptedRegion.subarray(0, NONCE_LEN)
-  const tag = encryptedRegion.subarray(encryptedRegion.length - TAG_LEN)
-  const ciphertext = encryptedRegion.subarray(NONCE_LEN, encryptedRegion.length - TAG_LEN)
 
   const decipher = crypto.createDecipheriv('chacha20-poly1305', key, nonce, {
     authTagLength: TAG_LEN,
@@ -79,4 +87,5 @@ module.exports = {
   encryptPayload,
   encryptedFrameLength,
   hexToKey,
+  splitEncryptedRegion,
 }

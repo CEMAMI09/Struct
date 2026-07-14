@@ -16,6 +16,15 @@
       <button type="button" class="btn-ghost" :disabled="!canEdit || saving" @click="save">
         {{ saving ? 'Saving…' : 'Save schema' }}
       </button>
+      <button
+        type="button"
+        class="btn-ghost"
+        :disabled="!canDownload"
+        title="Download ESP32 .h with packed struct + schema version"
+        @click="downloadHeader"
+      >
+        Download C++ Header
+      </button>
     </div>
 
     <div v-if="!selectedDeviceId" class="card flex flex-1 items-center justify-center p-8">
@@ -32,7 +41,8 @@
             <p class="text-sm font-semibold text-[#E8EAEF]">Enable ChaCha20 Edge Encryption</p>
             <p class="mt-1 text-xs leading-relaxed text-[#8B93A7]">
               Scramble the packed payload on-device without TLS handshake overhead. Struct
-              descrambles at the gateway before JSON routing.
+              descrambles at the gateway before JSON routing. Encrypted frames include a
+              4-byte unix timestamp (replay protection).
             </p>
           </div>
           <button
@@ -69,7 +79,7 @@
           </div>
           <pre class="mono overflow-x-auto rounded-lg bg-[#0F1115] p-3 text-xs text-[#38B6FF]">{{ selectedDevice.encryption_key }}</pre>
           <p class="mt-2 font-mono text-[10px] text-[#8B93A7]">
-            Wire: [16B api_key][12B nonce][ciphertext][16B Poly1305 tag]
+            Wire: [16B api_key][1B version][12B nonce][4B ts + struct ciphertext][16B tag]
           </p>
         </div>
         <p v-if="encMsg" class="mt-3 text-xs" :class="encErr ? 'text-red-400' : 'text-[#38B6FF]'">
@@ -78,11 +88,32 @@
       </div>
 
       <div class="card flex-1 overflow-auto p-4">
-        <div class="mb-3 flex items-center justify-between gap-3">
-          <h3 class="text-sm font-semibold text-[#E8EAEF]">Fields</h3>
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-semibold text-[#E8EAEF]">Fields</h3>
+            <p class="mt-0.5 font-mono text-[10px] text-[#8B93A7]">
+              schema version {{ displayVersion }}
+              <span v-if="willBumpOnSave" class="text-[#38B6FF]"> → {{ displayVersion + 1 }} on save</span>
+            </p>
+          </div>
           <p class="font-mono text-[10px] text-[#8B93A7]">
             sizeof = {{ byteLength }} bytes
           </p>
+        </div>
+
+        <div
+          v-if="versionHistory.length > 1"
+          class="mb-4 flex flex-wrap gap-2"
+        >
+          <span
+            v-for="v in versionHistory"
+            :key="v.version"
+            class="rounded border border-[#2A2F3A] px-2 py-0.5 font-mono text-[10px]"
+            :class="v.version === publishedVersion ? 'border-[#38B6FF]/60 text-[#38B6FF]' : 'text-[#8B93A7]'"
+            :title="`${v.schema_definition.length} fields`"
+          >
+            v{{ v.version }}{{ v.version === publishedVersion ? ' · current' : '' }}
+          </span>
         </div>
 
         <div
@@ -131,8 +162,23 @@
       </div>
 
       <div class="card shrink-0 p-4">
-        <p class="label">C++ preview</p>
-        <pre class="mono overflow-x-auto rounded-lg bg-[#0F1115] p-3 text-xs leading-relaxed text-[#38B6FF]">{{ cppPreview }}</pre>
+        <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <p class="label mb-0">C++ preview</p>
+          <button
+            type="button"
+            class="btn-ghost py-1 text-[10px]"
+            :disabled="!canDownload"
+            @click="downloadHeader"
+          >
+            Download .h
+          </button>
+        </div>
+        <pre class="mono overflow-x-auto rounded-lg bg-[#0F1115] p-3 text-xs leading-relaxed text-[#38B6FF]">{{ cppPreviewText }}</pre>
+        <p class="mt-2 text-[10px] leading-relaxed text-[#8B93A7]">
+          Changing a field type (e.g. int32 → float32) publishes a new schema version.
+          Old devices keep sending their version byte; the gateway routes each packet to
+          the matching immutable layout.
+        </p>
       </div>
 
       <p v-if="message" class="text-xs" :class="error ? 'text-red-400' : 'text-[#38B6FF]'">
@@ -143,15 +189,17 @@
 </template>
 
 <script setup lang="ts">
-import type { Device, SchemaField } from '~/types'
+import type { Device, DeviceSchema, SchemaField, SchemaVersion } from '~/types'
 import { FIELD_TYPES } from '~/types'
 
 const props = defineProps<{
   devices: Device[]
-  schemas: Record<string, { schema_definition: SchemaField[] }>
+  schemas: Record<string, DeviceSchema>
+  schemaVersions?: Record<string, SchemaVersion[]>
 }>()
 
 const { saveSchema, setDeviceEncryption, rotateEncryptionKey } = useDevices()
+const { generateCppHeader, downloadCppHeader, headerFilename, cppPreview } = useCppHeader()
 const selectedDeviceId = useState('schema-selected-device', () => '')
 const fields = ref<SchemaField[]>([])
 const saving = ref(false)
@@ -169,6 +217,32 @@ const { schemaByteLength } = useBinaryParser()
 const canEdit = computed(() => !!selectedDeviceId.value && props.devices.some((d) => d.id === selectedDeviceId.value))
 const selectedDevice = computed(() => props.devices.find((d) => d.id === selectedDeviceId.value))
 const encryptionOn = computed(() => !!selectedDevice.value?.encryption_enabled)
+
+const publishedVersion = computed(() => props.schemas[selectedDeviceId.value]?.version || 1)
+const publishedDef = computed(
+  () => props.schemas[selectedDeviceId.value]?.schema_definition || ([] as SchemaField[]),
+)
+
+const dirty = computed(() => {
+  return JSON.stringify(publishedDef.value) !== JSON.stringify(
+    fields.value.map((f) => ({ name: f.name.trim(), type: f.type })).filter((f) => f.name),
+  )
+})
+
+const willBumpOnSave = computed(() => dirty.value && publishedDef.value.length > 0)
+const displayVersion = computed(() => publishedVersion.value)
+const exportVersion = computed(() =>
+  willBumpOnSave.value ? publishedVersion.value + 1 : publishedVersion.value,
+)
+
+const versionHistory = computed(() => props.schemaVersions?.[selectedDeviceId.value] || [])
+
+const canDownload = computed(() => {
+  return (
+    !!selectedDevice.value &&
+    fields.value.some((f) => f.name.trim() && /^[A-Za-z_][A-Za-z0-9_]*$/.test(f.name.trim()))
+  )
+})
 
 function normalizeFields(def: unknown): SchemaField[] {
   if (!Array.isArray(def)) return []
@@ -226,21 +300,15 @@ const byteLength = computed(() => {
   }
 })
 
-const cppPreview = computed(() => {
-  if (!fields.value.length) {
-    return '#pragma pack(push, 1)\nstruct Packet {\n  // add fields…\n};\n#pragma pack(pop)'
-  }
-  const lines = fields.value.map((f) => {
-    const map: Record<string, string> = {
-      float32: 'float',
-      int32: 'int32_t',
-      uint8: 'uint8_t',
-      boolean: 'uint8_t',
-    }
-    return `  ${map[f.type] || 'uint8_t'} ${f.name || 'unnamed'};`
-  })
-  return `#pragma pack(push, 1)\nstruct Packet {\n${lines.join('\n')}\n};\n#pragma pack(pop)\n// sizeof(Packet) == ${byteLength.value}`
-})
+const cppPreviewText = computed(() =>
+  cppPreview(fields.value, exportVersion.value, byteLength.value),
+)
+
+function cleanedFields(): SchemaField[] {
+  return fields.value
+    .map((f) => ({ name: f.name.trim(), type: f.type }))
+    .filter((f) => f.name)
+}
 
 function addField() {
   if (!canEdit.value) return
@@ -253,9 +321,7 @@ function removeField(idx: number) {
 
 async function save() {
   if (!canEdit.value) return
-  const cleaned = fields.value
-    .map((f) => ({ name: f.name.trim(), type: f.type }))
-    .filter((f) => f.name)
+  const cleaned = cleanedFields()
 
   if (cleaned.some((f) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(f.name))) {
     error.value = true
@@ -267,14 +333,35 @@ async function save() {
   message.value = ''
   error.value = false
   try {
-    await saveSchema(selectedDeviceId.value, cleaned)
-    message.value = `Saved ${cleaned.length} fields (${schemaByteLength(cleaned)} bytes).`
+    const saved = await saveSchema(selectedDeviceId.value, cleaned)
+    message.value = `Saved v${saved.version} · ${cleaned.length} fields (${schemaByteLength(cleaned)} bytes). Old versions stay active for devices still on them.`
   } catch (e: any) {
     error.value = true
     message.value = e.message || 'Save failed'
   } finally {
     saving.value = false
   }
+}
+
+function downloadHeader() {
+  if (!selectedDevice.value || !canDownload.value) return
+  const cleaned = cleanedFields()
+  if (!cleaned.length) return
+
+  if (cleaned.some((f) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(f.name))) {
+    error.value = true
+    message.value = 'Field names must be valid C identifiers before download.'
+    return
+  }
+
+  const version = exportVersion.value
+  const contents = generateCppHeader({
+    deviceName: selectedDevice.value.name,
+    version,
+    fields: cleaned,
+    encryptionEnabled: encryptionOn.value,
+  })
+  downloadCppHeader(headerFilename(selectedDevice.value.name, version), contents)
 }
 
 async function onToggleEncryption() {
@@ -286,7 +373,7 @@ async function onToggleEncryption() {
     const next = !encryptionOn.value
     await setDeviceEncryption(selectedDeviceId.value, next)
     encMsg.value = next
-      ? 'ChaCha20 enabled — paste the key into your firmware.'
+      ? 'ChaCha20 enabled — include a unix timestamp in the plaintext and paste the key into firmware.'
       : 'ChaCha20 disabled — payloads expected plaintext.'
   } catch (e: any) {
     encErr.value = true

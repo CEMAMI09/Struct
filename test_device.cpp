@@ -5,13 +5,16 @@
  *   [{"name":"temp","type":"float32"},{"name":"humidity","type":"float32"},{"name":"is_active","type":"boolean"}]
  *
  * Wire format (little-endian, packed):
- *   [16-byte ASCII api_key][float temp][float humidity][uint8 is_active]
+ *   [16-byte ASCII api_key][1-byte SCHEMA_VERSION][float temp][float humidity][uint8 is_active]
  *
  * Optional ChaCha20-Poly1305 (enable in Schema Builder):
- *   [16-byte api_key][12-byte nonce][ciphertext][16-byte tag]
+ *   [16-byte api_key][1-byte version][12-byte nonce][ciphertext][16-byte tag]
+ *   Ciphertext plaintext = [uint32 LE unix timestamp][packed struct]
  *   Paste the 64-char hex key from the dashboard into ENCRYPTION_KEY_HEX below
  *   and set ENCRYPTION_ENABLED to true (requires a ChaCha20-Poly1305 lib such as
  *   Arduino Cryptography / mbedtls — left as a hook; keep false for plaintext).
+ *
+ * Prefer "Download C++ Header" on /dashboard/schema for the exact packed layout.
  *
  * Downlink (after uplink, same TCP session):
  *   [uint16 LE length][cmd…]
@@ -40,13 +43,16 @@ const char API_KEY[16] = {
   'a','b','c','d','e','f','0','1','2','3','4','5','6','7','8','9'
 };
 
+// Must match schemas.version / Download C++ Header (STRUCT_SCHEMA_VERSION)
+const uint8_t SCHEMA_VERSION = 1;
+
 // Set true only after you wire in a ChaCha20-Poly1305 encrypt helper
 const bool ENCRYPTION_ENABLED = false;
 // const char* ENCRYPTION_KEY_HEX = "…64 hex chars from Schema Builder…";
 
 uint32_t wakeIntervalMs = 2000;
 
-// ─── Packed payload matching schemas.schema_definition ────────────────────────
+// ─── Packed payload matching schema_versions.schema_definition ────────────────
 #pragma pack(push, 1)
 struct TelemetryPacket {
   float   temp;       // float32
@@ -73,7 +79,6 @@ void connectWiFi() {
 }
 
 void handleDownlink() {
-  // Read zero or more length-prefixed command frames while data remains
   while (client.available() >= 2) {
     uint8_t hdr[2];
     if (client.readBytes(hdr, 2) != 2) break;
@@ -116,14 +121,17 @@ bool sendPacket(const TelemetryPacket& packet) {
   // 1) 16-byte API key (no null terminator on the wire)
   client.write(reinterpret_cast<const uint8_t*>(API_KEY), 16);
 
-  // 2) Packed struct bytes (plaintext). When ENCRYPTION_ENABLED, wrap with
-  //    ChaCha20-Poly1305: nonce(12) + ciphertext + tag(16) instead.
+  // 2) Schema version byte — gateway routes to the matching immutable layout
+  client.write(&SCHEMA_VERSION, 1);
+
+  // 3) Packed struct bytes (plaintext). When ENCRYPTION_ENABLED, wrap with
+  //    ChaCha20-Poly1305 over [uint32 LE unix_ts][packed struct]:
+  //    nonce(12) + ciphertext + tag(16) instead.
   (void)ENCRYPTION_ENABLED;
   client.write(reinterpret_cast<const uint8_t*>(&packet), sizeof(packet));
 
   client.flush();
 
-  // Allow gateway to push pending downlinks on this socket
   unsigned long start = millis();
   while (millis() - start < 400) {
     if (client.available()) handleDownlink();
@@ -148,8 +156,10 @@ void loop() {
 
   if (sendPacket(packet)) {
     Serial.print("Sent ");
-    Serial.print(16 + sizeof(packet));
-    Serial.println(" bytes");
+    Serial.print(16 + 1 + sizeof(packet));
+    Serial.print(" bytes (schema v");
+    Serial.print(SCHEMA_VERSION);
+    Serial.println(")");
   }
 
   delay(wakeIntervalMs);

@@ -32,7 +32,7 @@
         </div>
         <div class="flex-1 overflow-auto p-4">
           <p class="mb-2 text-[10px] uppercase tracking-wider text-[#8B93A7]">
-            API key (16 B) + payload
+            API key (16 B) + schema version (1 B) + payload
           </p>
           <pre class="mono whitespace-pre-wrap break-all text-xs leading-6 text-[#38B6FF]">{{ hexOutput || '— click Simulate —' }}</pre>
         </div>
@@ -52,11 +52,11 @@
 </template>
 
 <script setup lang="ts">
-import type { Device, SchemaField } from '~/types'
+import type { Device, DeviceSchema, SchemaField } from '~/types'
 
 const props = defineProps<{
   devices: Device[]
-  schemas: Record<string, { schema_definition: SchemaField[] }>
+  schemas: Record<string, DeviceSchema>
 }>()
 
 const { encodeApiKey, encodePayload, parsePayload, toHex, schemaByteLength } = useBinaryParser()
@@ -67,16 +67,16 @@ const jsonOutput = ref('')
 
 const selectedDevice = computed(() => props.devices.find((d) => d.id === selectedDeviceId.value))
 
-const schema = computed(
-  () => props.schemas[selectedDeviceId.value]?.schema_definition || ([] as SchemaField[]),
-)
+const schemaRow = computed(() => props.schemas[selectedDeviceId.value])
+const schema = computed(() => schemaRow.value?.schema_definition || ([] as SchemaField[]))
+const schemaVersion = computed(() => schemaRow.value?.version || 1)
 
 const canSimulate = computed(() => !!selectedDevice.value && schema.value.length > 0)
 
 const totalBytes = computed(() => {
   if (!schema.value.length) return 0
   try {
-    return 16 + schemaByteLength(schema.value)
+    return 16 + 1 + schemaByteLength(schema.value)
   } catch {
     return 0
   }
@@ -108,20 +108,24 @@ function simulate() {
 
   const values = randomValues(schema.value)
   const keyBytes = encodeApiKey(selectedDevice.value.api_key)
+  const versionByte = new Uint8Array([schemaVersion.value & 0xff])
   const payload = encodePayload(values, schema.value)
-  const frame = new Uint8Array(keyBytes.length + payload.length)
+  const frame = new Uint8Array(keyBytes.length + 1 + payload.length)
   frame.set(keyBytes, 0)
-  frame.set(payload, keyBytes.length)
+  frame.set(versionByte, keyBytes.length)
+  frame.set(payload, keyBytes.length + 1)
 
   const keyHex = toHex(keyBytes)
+  const versionHex = toHex(versionByte)
   const payloadHex = toHex(payload)
-  hexOutput.value = `${keyHex}\n\n${payloadHex}`
+  hexOutput.value = `${keyHex}\n\n${versionHex}  // schema v${schemaVersion.value}\n\n${payloadHex}`
 
   const parsed = parsePayload(payload, schema.value)
   jsonOutput.value = JSON.stringify(
     {
       api_key: selectedDevice.value.api_key,
       device: selectedDevice.value.name,
+      schema_version: schemaVersion.value,
       payload: parsed,
     },
     null,

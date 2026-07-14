@@ -3,7 +3,7 @@
 The ultra-lightweight IoT gateway for battery-constrained fleets. Microcontrollers dump **packed C++ structs** over TCP — Struct authenticates, (optionally) decrypts with ChaCha20, parses with your schema, stores telemetry, and routes clean JSON to your cloud.
 
 ```
-ESP32  --[16B api_key + packed LE bytes]-->  tcp-server (:8080)
+ESP32  --[16B api_key + 1B schema_ver + packed LE]-->  tcp-server (:8080)
                                                    |
                            ┌───────────────────────┼───────────────────────┐
                            │                       │                       │
@@ -30,15 +30,16 @@ ESP32  --[16B api_key + packed LE bytes]-->  tcp-server (:8080)
 | **Dashboard** | `/dashboard` | Bento overview: device list with online/offline dots, live telemetry line chart (Supabase Realtime), latest parsed JSON packet, online count + packet count for the selected device |
 | **Devices** | `/dashboard/devices` | Create/delete devices, copy 16-char API keys, assign fleet **tags** (e.g. Location, Version, Status), text search + “offline in last hour” filter, **Send Command** downlinks (`set_interval`, `reboot`, custom hex) |
 | **Destinations** | `/dashboard/destinations` | Add webhook URLs (all devices or one device), enable/disable, delete. TCP server POSTs parsed JSON to each matching destination on every ingest |
-| **Schema** | `/dashboard/schema` | Per-device packed field editor (`float32`, `int32`, `uint8`, `boolean`), live `sizeof` + C++ `#pragma pack` preview, **ChaCha20 Edge Encryption** toggle (generates/copies/rotates 64-char hex key) |
+| **Schema** | `/dashboard/schema` | Per-device packed field editor with **schema versioning**, live `sizeof` + C++ `#pragma pack` preview, **Download C++ Header**, **ChaCha20 Edge Encryption** (timestamp nonce / replay protection) |
 | **Debugger** | `/dashboard/debugger` | Client-side packet simulator: picks a device schema, builds a fake frame, shows **raw hex** (API key + payload) and **parsed JSON** without hitting TCP |
 
 Also: sidebar shows TCP ingestion port; header has sign-out.
 
 ### Ingestion engine (`/tcp-server`)
 - Native Node `net` TCP listener (default `:8080`)
-- Looks up device by API key, loads schema, parses little-endian payload
-- Optional ChaCha20-Poly1305 decrypt before parse
+- Looks up device by API key, routes by **schema version byte**, parses little-endian payload
+- Optional ChaCha20-Poly1305 decrypt before parse (4-byte unix timestamp + nonce replay checks)
+- Per-API-key token-bucket rate limiting (default 30/s, burst 60)
 - Inserts telemetry + updates `last_seen`
 - Fan-out to enabled Destinations webhooks
 - Delivers pending downlinks on the same socket (and via Supabase Realtime if the socket is still live)
@@ -67,6 +68,7 @@ Also: sidebar shows TCP ingestion port; header has sign-out.
    - `supabase/migrations/001_init.sql` — devices, schemas, telemetry + RLS
    - `supabase/migrations/002_fix_devices_rls.sql` — devices RLS hardening
    - `supabase/migrations/003_saas_features.sql` — tags, encryption columns, destinations, pending_commands
+   - `supabase/migrations/004_schema_versioning.sql` — `schemas.version` + immutable `schema_versions`
 3. Copy Project URL, anon key, and service role key.
 
 ### 2. Web (`/web`)
@@ -105,17 +107,29 @@ npm run dev:tcp
 
 ```
 Offset 0     : 16 bytes ASCII api_key (no NUL)
-Offset 16…   : little-endian packed fields in schema order
+Offset 16    : 1 byte schema version (1–255)
+Offset 17…   : little-endian packed fields for that version
 ```
+
+Changing a field type (e.g. `int32` → `float32`) publishes a **new** schema version. Older fleets keep sending their version byte; the gateway loads the matching immutable layout from `schema_versions`.
 
 ### Uplink (ChaCha20-Poly1305)
 
 ```
 Offset 0     : 16 bytes ASCII api_key
-Offset 16    : 12 bytes nonce
-Offset 28…   : ciphertext (same length as packed struct)
+Offset 16    : 1 byte schema version
+Offset 17    : 12 bytes nonce
+Offset 29…   : ciphertext
 …            : 16 bytes Poly1305 auth tag
 ```
+
+Ciphertext plaintext:
+
+```
+[4-byte uint32 LE unix timestamp][packed struct…]
+```
+
+The gateway rejects timestamps outside a skew window (default ±60s) and rejects duplicate nonces per device within that window (replay protection).
 
 ### Downlink (server → device, same TCP session)
 

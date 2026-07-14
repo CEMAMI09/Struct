@@ -7,12 +7,17 @@
       <NuxtLink to="/dashboard/devices" class="text-[#38B6FF] hover:underline">create one</NuxtLink>
       first.
     </p>
-    <SchemaBuilder class="min-h-0 flex-1" :devices="devices" :schemas="schemas" />
+    <SchemaBuilder
+      class="min-h-0 flex-1"
+      :devices="devices"
+      :schemas="schemas"
+      :schema-versions="schemaVersions"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-const { devices, schemas, loading, error, fetchDevices } = useDevices()
+const { devices, schemas, schemaVersions, loading, error, fetchDevices } = useDevices()
 const user = useSupabaseUser()
 
 onMounted(fetchDevices)

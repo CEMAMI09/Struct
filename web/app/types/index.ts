@@ -24,7 +24,18 @@ export interface DeviceSchema {
   id: string
   device_id: string
   schema_definition: SchemaField[]
+  /** Latest published wire version (1–255) */
+  version: number
   updated_at: string
+}
+
+/** Immutable historical layout kept so older fleets keep parsing */
+export interface SchemaVersion {
+  id: string
+  device_id: string
+  version: number
+  schema_definition: SchemaField[]
+  created_at: string
 }
 
 export interface TelemetryRow {
