@@ -31,7 +31,8 @@ const title = computed(() => {
     '/dashboard': 'Overview',
     '/dashboard/schema': 'Schema Builder',
     '/dashboard/debugger': 'Live Debugger',
-    '/dashboard/devices': 'Devices',
+    '/dashboard/devices': 'Fleet',
+    '/dashboard/destinations': 'Destinations',
   }
   return map[route.path] || 'Struct'
 })
@@ -40,6 +41,7 @@ const sectionLabel = computed(() => {
   if (route.path.includes('schema')) return 'Define'
   if (route.path.includes('debugger')) return 'Inspect'
   if (route.path.includes('devices')) return 'Fleet'
+  if (route.path.includes('destinations')) return 'Route'
   return 'Monitor'
 })
 

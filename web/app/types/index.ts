@@ -5,6 +5,9 @@ export interface SchemaField {
   type: FieldType
 }
 
+/** Fleet tags: Location → Chicago_Factory, Version → v1.0.4, etc. */
+export type DeviceTags = Record<string, string>
+
 export interface Device {
   id: string
   user_id: string
@@ -12,6 +15,9 @@ export interface Device {
   api_key: string
   last_seen: string | null
   created_at: string
+  tags: DeviceTags
+  encryption_enabled: boolean
+  encryption_key: string | null
 }
 
 export interface DeviceSchema {
@@ -28,6 +34,30 @@ export interface TelemetryRow {
   timestamp: string
 }
 
+export interface Destination {
+  id: string
+  user_id: string
+  name: string
+  url: string
+  device_id: string | null
+  enabled: boolean
+  created_at: string
+}
+
+export type CommandStatus = 'pending' | 'delivered' | 'failed'
+
+export interface PendingCommand {
+  id: string
+  device_id: string
+  user_id: string
+  command_type: string
+  payload: Record<string, unknown>
+  packed_hex: string
+  status: CommandStatus
+  created_at: string
+  delivered_at: string | null
+}
+
 export const FIELD_TYPES: FieldType[] = ['float32', 'int32', 'uint8', 'boolean']
 
 export const TYPE_SIZES: Record<FieldType, number> = {
@@ -40,4 +70,19 @@ export const TYPE_SIZES: Record<FieldType, number> = {
 export function isDeviceOnline(lastSeen: string | null, windowMs = 30_000): boolean {
   if (!lastSeen) return false
   return Date.now() - new Date(lastSeen).getTime() < windowMs
+}
+
+export function tagsToPairs(tags: DeviceTags | null | undefined): { key: string; value: string }[] {
+  if (!tags) return []
+  return Object.entries(tags).map(([key, value]) => ({ key, value }))
+}
+
+export function pairsToTags(pairs: { key: string; value: string }[]): DeviceTags {
+  const out: DeviceTags = {}
+  for (const { key, value } of pairs) {
+    const k = key.trim()
+    if (!k) continue
+    out[k] = value.trim()
+  }
+  return out
 }

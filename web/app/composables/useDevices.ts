@@ -1,4 +1,4 @@
-import type { Device, DeviceSchema, SchemaField } from '~/types'
+import type { Device, DeviceSchema, DeviceTags, SchemaField } from '~/types'
 
 function randomApiKey(): string {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
@@ -8,6 +8,22 @@ function randomApiKey(): string {
     key += alphabet[bytes[i] % alphabet.length]
   }
   return key
+}
+
+function randomEncryptionKeyHex(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(32))
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+function normalizeDevice(row: any): Device {
+  return {
+    ...row,
+    tags: (row.tags && typeof row.tags === 'object' ? row.tags : {}) as DeviceTags,
+    encryption_enabled: !!row.encryption_enabled,
+    encryption_key: row.encryption_key ?? null,
+  }
 }
 
 export function useDevices() {
@@ -20,7 +36,6 @@ export function useDevices() {
   const error = useState<string | null>('devices-error', () => null)
 
   async function fetchDevices() {
-    // Prefer live JWT — useSupabaseUser can be briefly null right after reload
     const { data: authData } = await supabase.auth.getUser()
     if (!authData.user && !user.value) return
 
@@ -33,7 +48,7 @@ export function useDevices() {
         .order('created_at', { ascending: false })
 
       if (err) throw err
-      devices.value = (data || []) as Device[]
+      devices.value = (data || []).map(normalizeDevice)
 
       const ids = devices.value.map((d) => d.id)
       if (ids.length) {
@@ -59,7 +74,6 @@ export function useDevices() {
   }
 
   async function createDevice(name: string) {
-    // Prefer live auth user from JWT — useSupabaseUser can be briefly stale
     const { data: authData, error: authErr } = await supabase.auth.getUser()
     if (authErr || !authData.user) {
       throw new Error('Not authenticated — sign out and sign in again')
@@ -67,20 +81,21 @@ export function useDevices() {
 
     const api_key = randomApiKey()
 
-    // user_id comes from auth.uid() DB default + explicit match to JWT
     const { data, error: err } = await supabase
       .from('devices')
       .insert({
         name,
         api_key,
         user_id: authData.user.id,
+        tags: {},
+        encryption_enabled: false,
       })
       .select()
       .single()
 
     if (err) throw err
 
-    const device = data as Device
+    const device = normalizeDevice(data)
 
     const { data: schema, error: sErr } = await supabase
       .from('schemas')
@@ -102,6 +117,58 @@ export function useDevices() {
     const next = { ...schemas.value }
     delete next[id]
     schemas.value = next
+  }
+
+  async function updateDeviceTags(id: string, tags: DeviceTags) {
+    const { data, error: err } = await supabase
+      .from('devices')
+      .update({ tags })
+      .eq('id', id)
+      .select()
+      .single()
+    if (err) throw err
+    const device = normalizeDevice(data)
+    devices.value = devices.value.map((d) => (d.id === id ? device : d))
+    return device
+  }
+
+  async function setDeviceEncryption(id: string, enabled: boolean) {
+    const existing = devices.value.find((d) => d.id === id)
+    const patch: Record<string, unknown> = { encryption_enabled: enabled }
+
+    if (enabled && !existing?.encryption_key) {
+      patch.encryption_key = randomEncryptionKeyHex()
+    }
+    if (!enabled) {
+      // keep key around so re-enabling reuses same secret (enterprise convenience)
+    }
+
+    const { data, error: err } = await supabase
+      .from('devices')
+      .update(patch)
+      .eq('id', id)
+      .select()
+      .single()
+    if (err) throw err
+    const device = normalizeDevice(data)
+    devices.value = devices.value.map((d) => (d.id === id ? device : d))
+    return device
+  }
+
+  async function rotateEncryptionKey(id: string) {
+    const { data, error: err } = await supabase
+      .from('devices')
+      .update({
+        encryption_enabled: true,
+        encryption_key: randomEncryptionKeyHex(),
+      })
+      .eq('id', id)
+      .select()
+      .single()
+    if (err) throw err
+    const device = normalizeDevice(data)
+    devices.value = devices.value.map((d) => (d.id === id ? device : d))
+    return device
   }
 
   async function saveSchema(deviceId: string, definition: SchemaField[]) {
@@ -138,8 +205,10 @@ export function useDevices() {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'devices' },
         (payload) => {
-          const updated = payload.new as Device
-          devices.value = devices.value.map((d) => (d.id === updated.id ? { ...d, ...updated } : d))
+          const updated = normalizeDevice(payload.new)
+          devices.value = devices.value.map((d) =>
+            d.id === updated.id ? { ...d, ...updated } : d,
+          )
         },
       )
       .subscribe()
@@ -157,6 +226,9 @@ export function useDevices() {
     fetchDevices,
     createDevice,
     deleteDevice,
+    updateDeviceTags,
+    setDeviceEncryption,
+    rotateEncryptionKey,
     saveSchema,
     subscribePresence,
   }

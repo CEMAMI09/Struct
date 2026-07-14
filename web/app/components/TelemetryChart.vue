@@ -114,19 +114,6 @@ const chartOption = computed(() => {
         data: values,
         lineStyle: { color: '#00FFA3', width: 2 },
         itemStyle: { color: '#00FFA3' },
-        areaStyle: {
-          color: {
-            type: 'linear',
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [
-              { offset: 0, color: 'rgba(0,255,163,0.25)' },
-              { offset: 1, color: 'rgba(0,255,163,0)' },
-            ],
-          },
-        },
       },
     ],
   }

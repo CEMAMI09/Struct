@@ -1,20 +1,26 @@
 /**
  * Struct TCP Ingestion Engine
  *
- * Protocol:
- *   [16-byte API key (ASCII)] + [packed little-endian struct payload]
+ * Uplink protocol:
+ *   [16-byte API key (ASCII)] + [payload]
  *
- * Schema types → buffer readers (LE, matching ESP32 packed structs):
- *   float32 → readFloatLE (4)
- *   int32   → readInt32LE (4)
- *   uint8   → readUInt8   (1)
- *   boolean → readUInt8   (1)  — 0 = false, non-zero = true
+ * Payload (plaintext):
+ *   packed little-endian struct per schema
+ *
+ * Payload (ChaCha20-Poly1305 when encryption_enabled):
+ *   [12-byte nonce][ciphertext][16-byte tag]
+ *
+ * Downlink (after successful ingest, same socket):
+ *   [uint16 LE length][packed command…]  (may send multiple)
  */
 
 require('dotenv').config()
 const net = require('net')
 const { createClient } = require('@supabase/supabase-js')
 const { parsePayload, schemaByteLength, TYPE_SIZES } = require('./parser')
+const { decryptPayload, encryptedFrameLength } = require('./crypto')
+const { dispatchWebhooks } = require('./webhooks')
+const { deliverPendingDownlinks } = require('./downlinks')
 
 const PORT = Number(process.env.TCP_PORT || 8080)
 const SUPABASE_URL = process.env.SUPABASE_URL
@@ -31,10 +37,15 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
 
 const API_KEY_LEN = 16
 
+/** @type {Map<string, import('net').Socket>} */
+const liveSockets = new Map()
+
 async function lookupDevice(apiKey) {
   const { data: device, error } = await supabase
     .from('devices')
-    .select('id, name, api_key, schemas(schema_definition)')
+    .select(
+      'id, name, api_key, user_id, encryption_enabled, encryption_key, schemas(schema_definition)',
+    )
     .eq('api_key', apiKey)
     .maybeSingle()
 
@@ -42,32 +53,56 @@ async function lookupDevice(apiKey) {
   return device
 }
 
-async function ingestPacket(buf) {
+function getSchemaDef(device) {
+  const schemaRel = device.schemas
+  return Array.isArray(schemaRel)
+    ? schemaRel[0]?.schema_definition
+    : schemaRel?.schema_definition
+}
+
+function payloadRegionLength(device, schemaDef) {
+  const plain = schemaByteLength(schemaDef)
+  if (device.encryption_enabled) {
+    return encryptedFrameLength(plain)
+  }
+  return plain
+}
+
+async function ingestPacket(buf, socket) {
   if (buf.length < API_KEY_LEN) {
     throw new Error(`Packet too short: ${buf.length} bytes (need ≥ ${API_KEY_LEN} for API key)`)
   }
 
   const apiKey = buf.subarray(0, API_KEY_LEN).toString('ascii')
-  const payload = buf.subarray(API_KEY_LEN)
+  const encryptedOrPlain = buf.subarray(API_KEY_LEN)
 
   const device = await lookupDevice(apiKey)
   if (!device) {
     throw new Error(`Unrecognized API key: ${JSON.stringify(apiKey)}`)
   }
 
-  const schemaRel = device.schemas
-  const schemaDef = Array.isArray(schemaRel)
-    ? schemaRel[0]?.schema_definition
-    : schemaRel?.schema_definition
-
+  const schemaDef = getSchemaDef(device)
   if (!schemaDef || !Array.isArray(schemaDef) || schemaDef.length === 0) {
     throw new Error(`Device "${device.name}" has no schema defined`)
   }
 
-  const expected = schemaByteLength(schemaDef)
-  if (payload.length < expected) {
+  const expectedPlain = schemaByteLength(schemaDef)
+  let payload = encryptedOrPlain
+
+  if (device.encryption_enabled) {
+    if (!device.encryption_key) {
+      throw new Error(`Device "${device.name}" has encryption enabled but no key`)
+    }
+    const expectedEnc = encryptedFrameLength(expectedPlain)
+    if (encryptedOrPlain.length < expectedEnc) {
+      throw new Error(
+        `Encrypted underrun for "${device.name}": got ${encryptedOrPlain.length}B, need ${expectedEnc}`,
+      )
+    }
+    payload = decryptPayload(encryptedOrPlain.subarray(0, expectedEnc), device.encryption_key)
+  } else if (encryptedOrPlain.length < expectedPlain) {
     throw new Error(
-      `Payload underrun for "${device.name}": got ${payload.length} bytes, schema needs ${expected}`,
+      `Payload underrun for "${device.name}": got ${encryptedOrPlain.length} bytes, schema needs ${expectedPlain}`,
     )
   }
 
@@ -87,7 +122,22 @@ async function ingestPacket(buf) {
     .update({ last_seen: new Date().toISOString() })
     .eq('id', device.id)
 
-  return { device, parsed, expected, received: payload.length }
+  // Fan-out to destinations (non-blocking on failure)
+  dispatchWebhooks(supabase, device, parsed).catch((err) => {
+    console.warn(`[struct] webhook fan-out error: ${err.message}`)
+  })
+
+  // Push pending downlinks on this socket
+  if (socket && !socket.destroyed) {
+    liveSockets.set(device.id, socket)
+    try {
+      await deliverPendingDownlinks(supabase, socket, device.id)
+    } catch (err) {
+      console.warn(`[struct] downlink error: ${err.message}`)
+    }
+  }
+
+  return { device, parsed, expected: expectedPlain, received: payload.length }
 }
 
 const server = net.createServer((socket) => {
@@ -95,13 +145,11 @@ const server = net.createServer((socket) => {
   console.log(`[struct] connect ${remote}`)
 
   let buffer = Buffer.alloc(0)
+  let boundDeviceId = null
 
   socket.on('data', async (chunk) => {
     buffer = Buffer.concat([buffer, chunk])
 
-    // Process complete frames: API key + one payload matching looked-up schema.
-    // Devices typically send one packet per connection or one packet per write.
-    // We try to parse greedily when we have at least an API key.
     try {
       while (buffer.length >= API_KEY_LEN) {
         const apiKey = buffer.subarray(0, API_KEY_LEN).toString('ascii')
@@ -114,11 +162,10 @@ const server = net.createServer((socket) => {
           return
         }
 
-        const schemaRel = device.schemas
-        const schemaDef = Array.isArray(schemaRel)
-          ? schemaRel[0]?.schema_definition
-          : schemaRel?.schema_definition
+        boundDeviceId = device.id
+        liveSockets.set(device.id, socket)
 
+        const schemaDef = getSchemaDef(device)
         if (!schemaDef || !Array.isArray(schemaDef) || schemaDef.length === 0) {
           console.warn(`[struct] no schema for device ${device.name}`)
           buffer = Buffer.alloc(0)
@@ -126,23 +173,22 @@ const server = net.createServer((socket) => {
           return
         }
 
-        const frameLen = API_KEY_LEN + schemaByteLength(schemaDef)
+        const frameLen = API_KEY_LEN + payloadRegionLength(device, schemaDef)
         if (buffer.length < frameLen) break
 
         const frame = buffer.subarray(0, frameLen)
         buffer = buffer.subarray(frameLen)
 
-        const result = await ingestPacket(frame)
+        const result = await ingestPacket(frame, socket)
         console.log(
           `[struct] ✓ ${result.device.name} →`,
           JSON.stringify(result.parsed),
-          `(${result.expected}B)`,
+          `(${result.expected}B${result.device.encryption_enabled ? ', enc' : ''})`,
         )
       }
     } catch (err) {
       console.error(`[struct] error from ${remote}:`, err.message)
       buffer = Buffer.alloc(0)
-      // Keep socket alive for subsequent packets unless the client closes.
     }
   })
 
@@ -151,9 +197,40 @@ const server = net.createServer((socket) => {
   })
 
   socket.on('close', () => {
+    if (boundDeviceId && liveSockets.get(boundDeviceId) === socket) {
+      liveSockets.delete(boundDeviceId)
+    }
     console.log(`[struct] disconnect ${remote}`)
   })
 })
+
+// Realtime: if a command is queued while a socket is live, push immediately
+function subscribeDownlinkRealtime() {
+  const channel = supabase
+    .channel('tcp-pending-commands')
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'pending_commands' },
+      async (payload) => {
+        const row = payload.new
+        if (!row || row.status !== 'pending') return
+        const sock = liveSockets.get(row.device_id)
+        if (!sock || sock.destroyed) return
+        try {
+          await deliverPendingDownlinks(supabase, sock, row.device_id)
+        } catch (err) {
+          console.warn(`[struct] realtime downlink failed: ${err.message}`)
+        }
+      },
+    )
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        console.log('[struct] listening for pending_commands (realtime)')
+      }
+    })
+
+  return channel
+}
 
 server.on('error', (err) => {
   console.error('[struct] server error:', err.message)
@@ -162,6 +239,7 @@ server.on('error', (err) => {
 server.listen(PORT, () => {
   console.log(`[struct] TCP ingestion listening on :${PORT}`)
   console.log(`[struct] type sizes: ${JSON.stringify(TYPE_SIZES)}`)
+  subscribeDownlinkRealtime()
 })
 
 process.on('uncaughtException', (err) => {

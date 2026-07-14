@@ -44,8 +44,9 @@ const tcpPort = computed(() => config.public.tcpPort)
 const links = [
   { to: '/dashboard', label: 'Dashboard', glyph: '01' },
   { to: '/dashboard/devices', label: 'Devices', glyph: '02' },
-  { to: '/dashboard/schema', label: 'Schema', glyph: '03' },
-  { to: '/dashboard/debugger', label: 'Debugger', glyph: '04' },
+  { to: '/dashboard/destinations', label: 'Destinations', glyph: '03' },
+  { to: '/dashboard/schema', label: 'Schema', glyph: '04' },
+  { to: '/dashboard/debugger', label: 'Debugger', glyph: '05' },
 ]
 
 function isActive(path: string) {

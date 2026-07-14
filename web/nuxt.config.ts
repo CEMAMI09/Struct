@@ -12,7 +12,7 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/login',
       callback: '/confirm',
-      exclude: ['/login', '/signup'],
+      exclude: ['/', '/login', '/signup'],
     },
   },
 
@@ -25,11 +25,12 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'Struct — Binary Telemetry',
+      title: 'Struct — Ultra-Lightweight IoT Gateway',
       meta: [
         {
           name: 'description',
-          content: 'Send packed C++ structs over TCP. We turn them into live JSON dashboards.',
+          content:
+            'Extend edge battery life by 10×. Send raw binary over TCP; we handle secure routing, parsing, and cloud integration.',
         },
       ],
       link: [
@@ -37,7 +38,7 @@ export default defineNuxtConfig({
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {
           rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap',
+          href: 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap',
         },
       ],
     },

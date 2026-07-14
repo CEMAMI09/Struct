@@ -10,7 +10,7 @@
           </span>
           <span class="text-2xl font-bold tracking-tight text-[#E8EAEF]">Struct</span>
         </NuxtLink>
-        <p class="mt-3 text-sm text-[#8B93A7]">Packed structs in. Clean JSON out.</p>
+        <p class="mt-3 text-sm text-[#8B93A7]">Ultra-lightweight IoT gateway for battery fleets.</p>
       </div>
       <slot />
     </div>

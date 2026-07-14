@@ -11,6 +11,9 @@ export interface Database {
           api_key: string
           last_seen: string | null
           created_at: string
+          tags: Json
+          encryption_enabled: boolean
+          encryption_key: string | null
         }
         Insert: {
           id?: string
@@ -19,6 +22,9 @@ export interface Database {
           api_key: string
           last_seen?: string | null
           created_at?: string
+          tags?: Json
+          encryption_enabled?: boolean
+          encryption_key?: string | null
         }
         Update: {
           id?: string
@@ -27,6 +33,9 @@ export interface Database {
           api_key?: string
           last_seen?: string | null
           created_at?: string
+          tags?: Json
+          encryption_enabled?: boolean
+          encryption_key?: string | null
         }
       }
       schemas: {
@@ -67,6 +76,70 @@ export interface Database {
           device_id?: string
           parsed_json?: Json
           timestamp?: string
+        }
+      }
+      destinations: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          url: string
+          device_id: string | null
+          enabled: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          url: string
+          device_id?: string | null
+          enabled?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          url?: string
+          device_id?: string | null
+          enabled?: boolean
+          created_at?: string
+        }
+      }
+      pending_commands: {
+        Row: {
+          id: string
+          device_id: string
+          user_id: string
+          command_type: string
+          payload: Json
+          packed_hex: string
+          status: string
+          created_at: string
+          delivered_at: string | null
+        }
+        Insert: {
+          id?: string
+          device_id: string
+          user_id: string
+          command_type?: string
+          payload?: Json
+          packed_hex: string
+          status?: string
+          created_at?: string
+          delivered_at?: string | null
+        }
+        Update: {
+          id?: string
+          device_id?: string
+          user_id?: string
+          command_type?: string
+          payload?: Json
+          packed_hex?: string
+          status?: string
+          created_at?: string
+          delivered_at?: string | null
         }
       }
     }

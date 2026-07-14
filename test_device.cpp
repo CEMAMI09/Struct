@@ -1,11 +1,23 @@
 /*
  * Struct — ESP32 reference sketch
  *
- * Mirrors the dummy schema used in the dashboard Schema Builder:
+ * Mirrors a typical dashboard schema:
  *   [{"name":"temp","type":"float32"},{"name":"humidity","type":"float32"},{"name":"is_active","type":"boolean"}]
  *
  * Wire format (little-endian, packed):
  *   [16-byte ASCII api_key][float temp][float humidity][uint8 is_active]
+ *
+ * Optional ChaCha20-Poly1305 (enable in Schema Builder):
+ *   [16-byte api_key][12-byte nonce][ciphertext][16-byte tag]
+ *   Paste the 64-char hex key from the dashboard into ENCRYPTION_KEY_HEX below
+ *   and set ENCRYPTION_ENABLED to true (requires a ChaCha20-Poly1305 lib such as
+ *   Arduino Cryptography / mbedtls — left as a hook; keep false for plaintext).
+ *
+ * Downlink (after uplink, same TCP session):
+ *   [uint16 LE length][cmd…]
+ *   0x01 + uint32 sec  → set wake interval
+ *   0x02               → reboot
+ *   0xFF + bytes       → custom
  *
  * Flash with Arduino IDE / PlatformIO (board: ESP32). Update WiFi + server IP
  * and paste your device api_key from the Struct Devices page.
@@ -27,6 +39,12 @@ const uint16_t STRUCT_PORT = 8080;
 const char API_KEY[16] = {
   'a','b','c','d','e','f','0','1','2','3','4','5','6','7','8','9'
 };
+
+// Set true only after you wire in a ChaCha20-Poly1305 encrypt helper
+const bool ENCRYPTION_ENABLED = false;
+// const char* ENCRYPTION_KEY_HEX = "…64 hex chars from Schema Builder…";
+
+uint32_t wakeIntervalMs = 2000;
 
 // ─── Packed payload matching schemas.schema_definition ────────────────────────
 #pragma pack(push, 1)
@@ -54,6 +72,41 @@ void connectWiFi() {
   Serial.println(WiFi.localIP());
 }
 
+void handleDownlink() {
+  // Read zero or more length-prefixed command frames while data remains
+  while (client.available() >= 2) {
+    uint8_t hdr[2];
+    if (client.readBytes(hdr, 2) != 2) break;
+    uint16_t len = (uint16_t)hdr[0] | ((uint16_t)hdr[1] << 8);
+    if (len == 0 || len > 256) break;
+
+    uint8_t buf[256];
+    size_t got = client.readBytes(buf, len);
+    if (got != len || len < 1) break;
+
+    uint8_t cmd = buf[0];
+    if (cmd == 0x01 && len >= 5) {
+      uint32_t secs =
+        (uint32_t)buf[1] |
+        ((uint32_t)buf[2] << 8) |
+        ((uint32_t)buf[3] << 16) |
+        ((uint32_t)buf[4] << 24);
+      wakeIntervalMs = secs * 1000UL;
+      Serial.print("Downlink set_interval → ");
+      Serial.print(secs);
+      Serial.println("s");
+    } else if (cmd == 0x02) {
+      Serial.println("Downlink reboot");
+      delay(100);
+      ESP.restart();
+    } else {
+      Serial.print("Downlink custom ");
+      Serial.print(len);
+      Serial.println("B");
+    }
+  }
+}
+
 bool sendPacket(const TelemetryPacket& packet) {
   if (!client.connect(STRUCT_HOST, STRUCT_PORT)) {
     Serial.println("TCP connect failed");
@@ -63,10 +116,20 @@ bool sendPacket(const TelemetryPacket& packet) {
   // 1) 16-byte API key (no null terminator on the wire)
   client.write(reinterpret_cast<const uint8_t*>(API_KEY), 16);
 
-  // 2) Packed struct bytes immediately after
+  // 2) Packed struct bytes (plaintext). When ENCRYPTION_ENABLED, wrap with
+  //    ChaCha20-Poly1305: nonce(12) + ciphertext + tag(16) instead.
+  (void)ENCRYPTION_ENABLED;
   client.write(reinterpret_cast<const uint8_t*>(&packet), sizeof(packet));
 
   client.flush();
+
+  // Allow gateway to push pending downlinks on this socket
+  unsigned long start = millis();
+  while (millis() - start < 400) {
+    if (client.available()) handleDownlink();
+    delay(10);
+  }
+
   client.stop();
   return true;
 }
@@ -89,5 +152,5 @@ void loop() {
     Serial.println(" bytes");
   }
 
-  delay(2000);
+  delay(wakeIntervalMs);
 }
