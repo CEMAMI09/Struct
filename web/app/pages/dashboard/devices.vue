@@ -32,7 +32,7 @@
         placeholder="Filter: Chicago_Factory, offline, v1.0.4…"
       />
       <label class="flex cursor-pointer items-center gap-2 text-xs text-[#8B93A7]">
-        <input v-model="offlineOnly" type="checkbox" class="accent-[#00FFA3]" />
+        <input v-model="offlineOnly" type="checkbox" class="accent-[#38B6FF]" />
         Offline in last hour
       </label>
       <span class="self-center font-mono text-[10px] text-[#8B93A7]">
@@ -42,22 +42,26 @@
 
     <p v-if="error" class="mb-4 text-sm text-red-400">{{ error }}</p>
 
-    <div class="card divide-y divide-[#2A2F3A] overflow-hidden">
-      <div v-if="!filtered.length" class="p-8 text-center text-sm text-[#8B93A7]">
-        {{ devices.length ? 'No devices match this filter.' : 'No devices yet. Create one to get an API key.' }}
-      </div>
+    <div v-if="!filtered.length" class="card p-8 text-center text-sm text-[#8B93A7]">
+      {{ devices.length ? 'No devices match this filter.' : 'No devices yet. Create one to get an API key.' }}
+    </div>
 
-      <div v-for="device in filtered" :key="device.id" class="p-4">
+    <div v-else class="space-y-3 p-0.5">
+      <div
+        v-for="device in filtered"
+        :key="device.id"
+        class="device-card rounded-xl bg-[#1A1D24] p-4"
+      >
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div class="flex items-start gap-3">
             <StatusDot :online="isDeviceOnline(device.last_seen)" class="mt-1.5" />
             <div>
               <p class="font-medium text-[#E8EAEF]">{{ device.name }}</p>
-              <p class="mt-1 font-mono text-xs text-[#00FFA3]">{{ device.api_key }}</p>
+              <p class="mt-1 font-mono text-xs text-[#38B6FF]">{{ device.api_key }}</p>
               <p class="mt-1 text-[10px] text-[#8B93A7]">
                 Last seen:
                 {{ device.last_seen ? new Date(device.last_seen).toLocaleString() : 'never' }}
-                <span v-if="device.encryption_enabled" class="ml-2 text-[#00FFA3]">· ChaCha20</span>
+                <span v-if="device.encryption_enabled" class="ml-2 text-[#38B6FF]">· ChaCha20</span>
               </p>
               <div v-if="Object.keys(device.tags || {}).length" class="mt-2 flex flex-wrap gap-1.5">
                 <span
@@ -144,7 +148,7 @@
               Packed binary is delivered on the device’s next TCP session (or immediately if the
               socket is still open).
             </p>
-            <p v-if="cmdMsg" class="mt-2 text-xs" :class="cmdErr ? 'text-red-400' : 'text-[#00FFA3]'">
+            <p v-if="cmdMsg" class="mt-2 text-xs" :class="cmdErr ? 'text-red-400' : 'text-[#38B6FF]'">
               {{ cmdMsg }}
             </p>
           </div>
@@ -290,3 +294,10 @@ async function onSendCommand(deviceId: string) {
   }
 }
 </script>
+
+<style scoped>
+/* Inset stroke avoids parent overflow-auto clipping outer borders */
+.device-card {
+  box-shadow: inset 0 0 0 1px #2a2f3a;
+}
+</style>

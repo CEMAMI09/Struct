@@ -41,7 +41,7 @@
 
     <p v-if="error" class="mb-4 text-sm text-red-400">{{ error }}</p>
 
-    <div class="card divide-y divide-[#2A2F3A] overflow-hidden">
+    <div class="card divide-y divide-[#2A2F3A]">
       <div v-if="!destinations.length" class="p-8 text-center text-sm text-[#8B93A7]">
         No destinations yet. Add a URL and every parsed JSON packet will POST there instantly.
       </div>
@@ -55,7 +55,7 @@
           <div class="flex items-center gap-2">
             <span
               class="h-2 w-2 rounded-full"
-              :class="dest.enabled ? 'bg-[#00FFA3]' : 'bg-[#8B93A7]'"
+              :class="dest.enabled ? 'bg-[#38B6FF]' : 'bg-[#8B93A7]'"
             />
             <p class="font-medium text-[#E8EAEF]">{{ dest.name }}</p>
           </div>
@@ -80,7 +80,7 @@
 
     <div class="card mt-6 p-4">
       <p class="label">Webhook body</p>
-      <pre class="mono overflow-x-auto rounded-lg bg-[#0F1115] p-3 text-xs leading-relaxed text-[#00FFA3]">{{ webhookExample }}</pre>
+      <pre class="mono overflow-x-auto rounded-lg bg-[#0F1115] p-3 text-xs leading-relaxed text-[#38B6FF]">{{ webhookExample }}</pre>
     </div>
   </div>
 </template>

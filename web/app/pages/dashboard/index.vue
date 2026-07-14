@@ -25,14 +25,14 @@
           </span>
         </div>
         <pre
-          class="mono whitespace-pre-wrap break-all rounded-lg bg-[#0F1115] p-3 text-xs leading-6 text-[#00FFA3]"
+          class="mono whitespace-pre-wrap break-all rounded-lg bg-[#0F1115] p-3 text-xs leading-6 text-[#38B6FF]"
         >{{ latestJson }}</pre>
       </section>
 
       <section class="card grid grid-cols-2 gap-4 p-4 lg:col-span-3 lg:row-span-1">
         <div>
           <p class="text-[10px] uppercase tracking-wider text-[#8B93A7]">Online</p>
-          <p class="mt-1 text-2xl font-semibold text-[#00FFA3]">{{ onlineCount }}</p>
+          <p class="mt-1 text-2xl font-semibold text-[#38B6FF]">{{ onlineCount }}</p>
         </div>
         <div>
           <p class="text-[10px] uppercase tracking-wider text-[#8B93A7]">Packets</p>

@@ -38,7 +38,7 @@
           <button
             type="button"
             class="relative h-7 w-12 shrink-0 rounded-full transition"
-            :class="encryptionOn ? 'bg-[#00FFA3]' : 'bg-[#2A2F3A]'"
+            :class="encryptionOn ? 'bg-[#38B6FF]' : 'bg-[#2A2F3A]'"
             :aria-pressed="encryptionOn"
             :disabled="togglingEnc"
             @click="onToggleEncryption"
@@ -67,12 +67,12 @@
               </button>
             </div>
           </div>
-          <pre class="mono overflow-x-auto rounded-lg bg-[#0F1115] p-3 text-xs text-[#00FFA3]">{{ selectedDevice.encryption_key }}</pre>
+          <pre class="mono overflow-x-auto rounded-lg bg-[#0F1115] p-3 text-xs text-[#38B6FF]">{{ selectedDevice.encryption_key }}</pre>
           <p class="mt-2 font-mono text-[10px] text-[#8B93A7]">
             Wire: [16B api_key][12B nonce][ciphertext][16B Poly1305 tag]
           </p>
         </div>
-        <p v-if="encMsg" class="mt-3 text-xs" :class="encErr ? 'text-red-400' : 'text-[#00FFA3]'">
+        <p v-if="encMsg" class="mt-3 text-xs" :class="encErr ? 'text-red-400' : 'text-[#38B6FF]'">
           {{ encMsg }}
         </p>
       </div>
@@ -132,10 +132,10 @@
 
       <div class="card shrink-0 p-4">
         <p class="label">C++ preview</p>
-        <pre class="mono overflow-x-auto rounded-lg bg-[#0F1115] p-3 text-xs leading-relaxed text-[#00FFA3]">{{ cppPreview }}</pre>
+        <pre class="mono overflow-x-auto rounded-lg bg-[#0F1115] p-3 text-xs leading-relaxed text-[#38B6FF]">{{ cppPreview }}</pre>
       </div>
 
-      <p v-if="message" class="text-xs" :class="error ? 'text-red-400' : 'text-[#00FFA3]'">
+      <p v-if="message" class="text-xs" :class="error ? 'text-red-400' : 'text-[#38B6FF]'">
         {{ message }}
       </p>
     </template>

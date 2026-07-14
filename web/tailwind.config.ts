@@ -15,7 +15,7 @@ export default {
           bg: '#0F1115',
           card: '#1A1D24',
           border: '#2A2F3A',
-          green: '#00FFA3',
+          blue: '#38B6FF',
           muted: '#8B93A7',
         },
       },

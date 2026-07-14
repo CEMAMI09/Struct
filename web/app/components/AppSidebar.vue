@@ -1,15 +1,9 @@
 <template>
   <aside class="flex w-56 shrink-0 flex-col border-r border-[#2A2F3A] bg-[#0F1115]/80">
-    <div class="flex h-14 items-center gap-2 border-b border-[#2A2F3A] px-4">
-      <span
-        class="flex h-8 w-8 items-center justify-center rounded-md bg-[#00FFA3]/15 font-mono text-sm font-bold text-[#00FFA3]"
-      >
-        S
-      </span>
-      <div>
-        <p class="text-sm font-semibold leading-none text-[#E8EAEF]">Struct</p>
-        <p class="mt-0.5 font-mono text-[10px] text-[#8B93A7]">v0.1.0-mvp</p>
-      </div>
+    <div class="flex h-14 items-center justify-center border-b border-[#2A2F3A] px-3">
+      <NuxtLink to="/dashboard" class="flex w-full items-center justify-center">
+        <StructLogo size="sm" class="max-w-[140px]" />
+      </NuxtLink>
     </div>
 
     <nav class="flex flex-1 flex-col gap-1 p-3">
@@ -20,7 +14,7 @@
         class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition"
         :class="
           isActive(link.to)
-            ? 'bg-[#1A1D24] text-[#00FFA3]'
+            ? 'bg-[#1A1D24] text-[#38B6FF]'
             : 'text-[#8B93A7] hover:bg-[#1A1D24]/60 hover:text-[#E8EAEF]'
         "
       >

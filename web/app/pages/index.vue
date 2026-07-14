@@ -2,13 +2,8 @@
   <div class="landing">
     <!-- Nav -->
     <header class="landing-nav">
-      <NuxtLink to="/" class="flex items-center gap-2.5">
-        <span
-          class="flex h-9 w-9 items-center justify-center rounded-lg bg-[#00FFA3]/15 font-mono text-lg font-bold text-[#00FFA3]"
-        >
-          S
-        </span>
-        <span class="font-display text-xl font-semibold tracking-tight text-[#E8EAEF]">Struct</span>
+      <NuxtLink to="/" class="flex items-center justify-center">
+        <StructLogo size="md" class="max-w-[150px]" />
       </NuxtLink>
       <div class="flex items-center gap-3">
         <template v-if="user">
@@ -28,7 +23,7 @@
         <p
           class="mb-6 inline-flex items-center gap-2 rounded-full border border-[#2A2F3A] bg-[#1A1D24]/80 px-3 py-1 font-mono text-[11px] text-[#8B93A7]"
         >
-          <span class="h-1.5 w-1.5 rounded-full bg-[#00FFA3] shadow-[0_0_10px_rgba(0,255,163,0.8)]" />
+          <span class="h-1.5 w-1.5 rounded-full bg-[#38B6FF] shadow-[0_0_10px_rgba(56,182,255,0.8)]" />
           Binary over TCP · No MQTT tax
         </p>
 
@@ -36,7 +31,7 @@
           class="font-display mx-auto max-w-4xl text-4xl font-semibold leading-[1.08] tracking-[-0.03em] text-[#F4F5F7] sm:text-5xl lg:text-[3.75rem]"
         >
           The Ultra-Lightweight IoT Gateway for
-          <span class="text-[#00FFA3]">Battery-Constrained Fleets.</span>
+          <span class="text-[#38B6FF]">Battery-Constrained Fleets.</span>
         </h1>
 
         <p class="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-[#8B93A7] sm:text-lg">
@@ -139,7 +134,7 @@
             <h3 class="arch-title">Dumb Edge Device</h3>
             <p class="arch-body">
               ESP32 packs a fixed struct. No ArduinoJson. Sends
-              <span class="font-mono text-[#00FFA3]">25 raw bytes</span> over TCP.
+              <span class="font-mono text-[#38B6FF]">25 raw bytes</span> over TCP.
             </p>
           </div>
           <div class="arch-gap" aria-hidden="true">
@@ -147,7 +142,7 @@
             <span class="font-mono text-[10px] text-[#5A6275]">25B</span>
           </div>
           <div class="arch-node arch-node--accent">
-            <div class="arch-glyph text-[#00FFA3]">02</div>
+            <div class="arch-glyph text-[#38B6FF]">02</div>
             <h3 class="arch-title">Struct Gateway</h3>
             <p class="arch-body">
               Authenticates, optionally ChaCha20-descrambles, parses with your schema, routes
@@ -175,14 +170,14 @@
             <div class="arch-glyph">01 · Edge</div>
             <h3 class="arch-title">Dumb Edge Device</h3>
             <p class="arch-body">
-              Sends <span class="font-mono text-[#00FFA3]">25 raw bytes</span> over TCP.
+              Sends <span class="font-mono text-[#38B6FF]">25 raw bytes</span> over TCP.
             </p>
           </div>
           <div class="arch-gap-m" aria-hidden="true">
             <span class="arch-gap-line-m" />
           </div>
           <div class="arch-node arch-node--accent">
-            <div class="arch-glyph text-[#00FFA3]">02 · Gateway</div>
+            <div class="arch-glyph text-[#38B6FF]">02 · Gateway</div>
             <h3 class="arch-title">Struct Gateway</h3>
             <p class="arch-body">Auth · parse · route.</p>
           </div>
@@ -217,7 +212,7 @@
     <footer class="border-t border-[#2A2F3A] py-8">
       <div class="mx-auto flex max-w-5xl items-center justify-between px-6">
         <p class="font-mono text-[11px] text-[#8B93A7]">Struct · binary telemetry gateway</p>
-        <NuxtLink to="/login" class="text-xs text-[#8B93A7] hover:text-[#67E8F9]">Sign in</NuxtLink>
+        <NuxtLink to="/login" class="text-xs text-[#8B93A7] hover:text-[#38B6FF]">Sign in</NuxtLink>
       </div>
     </footer>
   </div>
@@ -366,11 +361,11 @@ const mathCards = [
   text-decoration-color: rgba(90, 98, 117, 0.85);
 }
 .t-ok {
-  color: #67e8f9;
+  color: #38b6ff;
 }
 .t-hi {
-  color: #00ffa3;
-  text-shadow: 0 0 12px rgba(0, 255, 163, 0.35);
+  color: #38b6ff;
+  text-shadow: 0 0 12px rgba(56, 182, 255, 0.35);
 }
 
 /* Math bento cards */
@@ -386,8 +381,8 @@ const mathCards = [
 }
 
 .bento-card:hover {
-  border-color: rgba(103, 232, 249, 0.35);
-  box-shadow: 0 0 0 1px rgba(103, 232, 249, 0.08);
+  border-color: rgba(56, 182, 255, 0.35);
+  box-shadow: 0 0 0 1px rgba(56, 182, 255, 0.08);
 }
 
 .metric-row {
@@ -405,7 +400,7 @@ const mathCards = [
   font-weight: 600;
   letter-spacing: -0.04em;
   line-height: 1;
-  color: #00ffa3;
+  color: #38b6ff;
 }
 
 .metric-tail {
@@ -426,9 +421,9 @@ const mathCards = [
 }
 
 .arch-node--accent {
-  border-color: rgba(0, 255, 163, 0.28);
-  background: linear-gradient(160deg, rgba(0, 255, 163, 0.05), rgba(26, 29, 36, 1) 55%);
-  box-shadow: 0 0 40px -16px rgba(0, 255, 163, 0.3);
+  border-color: rgba(56, 182, 255, 0.28);
+  background: linear-gradient(160deg, rgba(56, 182, 255, 0.05), rgba(26, 29, 36, 1) 55%);
+  box-shadow: 0 0 40px -16px rgba(56, 182, 255, 0.3);
 }
 
 .arch-glyph {

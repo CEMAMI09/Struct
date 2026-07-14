@@ -1,7 +1,7 @@
 <template>
   <span
     class="inline-block h-2 w-2 rounded-full"
-    :class="online ? 'bg-[#00FFA3] shadow-[0_0_8px_#00FFA3]' : 'bg-[#4A5160]'"
+    :class="online ? 'bg-[#38B6FF] shadow-[0_0_8px_#38B6FF]' : 'bg-[#4A5160]'"
     :title="online ? 'Online' : 'Offline'"
   />
 </template>

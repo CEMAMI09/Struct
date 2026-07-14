@@ -34,7 +34,7 @@
           <p class="mb-2 text-[10px] uppercase tracking-wider text-[#8B93A7]">
             API key (16 B) + payload
           </p>
-          <pre class="mono whitespace-pre-wrap break-all text-xs leading-6 text-[#00FFA3]">{{ hexOutput || '— click Simulate —' }}</pre>
+          <pre class="mono whitespace-pre-wrap break-all text-xs leading-6 text-[#38B6FF]">{{ hexOutput || '— click Simulate —' }}</pre>
         </div>
       </div>
 

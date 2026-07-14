@@ -5,9 +5,9 @@
       <div class="flex items-center gap-2">
         <span
           v-if="live"
-          class="flex items-center gap-1.5 font-mono text-[10px] text-[#00FFA3]"
+          class="flex items-center gap-1.5 font-mono text-[10px] text-[#38B6FF]"
         >
-          <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-[#00FFA3]" />
+          <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-[#38B6FF]" />
           LIVE
         </span>
         <span class="font-mono text-[10px] text-[#8B93A7]">{{ fieldLabel }}</span>
@@ -112,8 +112,8 @@ const chartOption = computed(() => {
         showSymbol: props.rows.length < 20,
         symbolSize: 6,
         data: values,
-        lineStyle: { color: '#00FFA3', width: 2 },
-        itemStyle: { color: '#00FFA3' },
+        lineStyle: { color: '#38B6FF', width: 2 },
+        itemStyle: { color: '#38B6FF' },
       },
     ],
   }

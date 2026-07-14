@@ -21,7 +21,7 @@
         />
       </div>
       <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
-      <p v-if="info" class="text-sm text-[#00FFA3]">{{ info }}</p>
+      <p v-if="info" class="text-sm text-[#38B6FF]">{{ info }}</p>
       <button type="submit" class="btn-primary w-full" :disabled="loading">
         {{ loading ? 'Creating…' : 'Sign up' }}
       </button>
@@ -29,7 +29,7 @@
 
     <p class="mt-6 text-center text-sm text-[#8B93A7]">
       Already have an account?
-      <NuxtLink to="/login" class="text-[#00FFA3] hover:underline">Sign in</NuxtLink>
+      <NuxtLink to="/login" class="text-[#38B6FF] hover:underline">Sign in</NuxtLink>
     </p>
   </div>
 </template>

@@ -12,8 +12,10 @@
           <button class="btn-ghost text-xs" @click="signOut">Sign out</button>
         </div>
       </header>
-      <div class="flex-1 overflow-auto p-6">
-        <slot />
+      <div class="flex-1 overflow-y-auto overflow-x-hidden p-6">
+        <div class="min-h-0">
+          <slot />
+        </div>
       </div>
     </main>
   </div>
