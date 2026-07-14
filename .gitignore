@@ -1,0 +1,14 @@
+node_modules/
+.nuxt/
+.output/
+dist/
+.env
+.env.local
+.DS_Store
+*.log
+.idea/
+.vscode/
+tcp-server/node_modules/
+web/node_modules/
+web/.nuxt/
+web/.output/

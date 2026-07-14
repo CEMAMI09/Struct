@@ -1,0 +1,12 @@
+{
+  "name": "struct",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Binary TCP struct ingestion micro-SaaS",
+  "scripts": {
+    "dev:web": "npm --prefix web run dev",
+    "dev:tcp": "npm --prefix tcp-server run dev",
+    "build:web": "npm --prefix web run build",
+    "start:tcp": "npm --prefix tcp-server run start"
+  }
+}
