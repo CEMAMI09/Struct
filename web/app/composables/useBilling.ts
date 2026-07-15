@@ -3,7 +3,7 @@ import type { SubscriptionTier } from '~/types'
 type PaidTier = Exclude<SubscriptionTier, 'free'>
 
 export function useBilling() {
-  const { currentOrgId, requireWrite } = useOrganization()
+  const { currentOrgId, requireWrite, fetchMemberships } = useOrganization()
   const loading = useState('billing-loading', () => false)
   const error = useState<string | null>('billing-error', () => null)
 
@@ -15,10 +15,21 @@ export function useBilling() {
     loading.value = true
     error.value = null
     try {
-      const result = await $fetch<{ url: string }>('/api/stripe/checkout', {
+      const result = await $fetch<{
+        url?: string
+        upgraded?: boolean
+        subscriptionTier?: SubscriptionTier
+        stripeQuantity?: number
+      }>('/api/stripe/checkout', {
         method: 'POST',
         body: { orgId, targetTier },
       })
+
+      if (result.upgraded) {
+        await fetchMemberships()
+        return result
+      }
+
       if (import.meta.client && result.url) {
         window.location.href = result.url
       }
@@ -76,11 +87,36 @@ export function useBilling() {
     }
   }
 
+  async function syncFromStripe() {
+    const orgId = currentOrgId.value
+    if (!orgId) return null
+
+    try {
+      const result = await $fetch<{
+        ok: boolean
+        synced: boolean
+        subscriptionTier: SubscriptionTier
+        stripeQuantity: number
+        deviceLimit: number
+      }>('/api/stripe/sync', {
+        method: 'POST',
+        body: { orgId },
+      })
+      await fetchMemberships()
+      return result
+    } catch (e: any) {
+      // Non-fatal on page load — keep showing last known org state.
+      console.warn('[billing] stripe sync failed', e?.data?.message || e?.message || e)
+      return null
+    }
+  }
+
   return {
     loading,
     error,
     startCheckout,
     openPortal,
     syncCheckout,
+    syncFromStripe,
   }
 }

@@ -8,5 +8,13 @@
     "dev:tcp": "npm --prefix tcp-server run dev",
     "build:web": "npm --prefix web run build",
     "start:tcp": "npm --prefix tcp-server run start"
+  },
+  "dependencies": {
+    "papaparse": "^5.5.4",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/papaparse": "^5.5.2",
+    "vitest": "^4.1.10"
   }
 }

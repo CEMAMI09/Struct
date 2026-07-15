@@ -10,14 +10,24 @@
           {{ devices.length }} / {{ deviceLimit }} devices on this plan
         </p>
       </div>
-      <button
-        v-if="canWrite"
-        class="btn-primary w-full shrink-0 sm:w-auto"
-        @click="showForm = !showForm"
-      >
-        {{ showForm ? 'Cancel' : 'Add device' }}
-      </button>
+      <div v-if="canWrite" class="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
+        <button class="btn-ghost w-full sm:w-auto" @click="showBulk = true">
+          Bulk upload
+        </button>
+        <button
+          class="btn-primary w-full sm:w-auto"
+          @click="showForm = !showForm"
+        >
+          {{ showForm ? 'Cancel' : 'Add device' }}
+        </button>
+      </div>
     </div>
+
+    <BulkDeviceUpload
+      v-if="showBulk && canWrite"
+      @close="showBulk = false"
+      @imported="onBulkImported"
+    />
 
     <form
       v-if="showForm && canWrite"
@@ -69,6 +79,12 @@
             <div>
               <p class="font-medium text-[#E8EAEF]">{{ device.name }}</p>
               <p class="mt-1 break-all font-mono text-xs text-[#38B6FF]">{{ device.api_key }}</p>
+              <p
+                v-if="device.mac_address"
+                class="mt-1 font-mono text-[10px] text-[#8B93A7]"
+              >
+                MAC {{ formatMacAddress(device.mac_address) }}
+              </p>
               <p class="mt-1 text-[10px] text-[#8B93A7]">
                 Last seen:
                 {{ device.last_seen ? new Date(device.last_seen).toLocaleString() : 'never' }}
@@ -190,13 +206,22 @@
 import { isDeviceOnline, pairsToTags, tagsToPairs } from '~/types'
 import type { Device } from '~/types'
 
-const { devices, error, fetchDevices, createDevice, deleteDevice, updateDeviceTags } = useDevices()
+const {
+  devices,
+  error,
+  fetchDevices,
+  createDevice,
+  deleteDevice,
+  updateDeviceTags,
+  formatMacAddress,
+} = useDevices()
 const { sendCommand } = useDownlinks()
 const { canWrite, deviceLimit } = useOrganization()
 const { hasEntitlement } = useEntitlements()
 const canUseDownlinks = computed(() => hasEntitlement('downlinks'))
 
 const showForm = ref(false)
+const showBulk = ref(false)
 const newName = ref('')
 const creating = ref(false)
 const copied = ref('')
@@ -232,6 +257,8 @@ const filtered = computed(() => {
     const hay = [
       d.name,
       d.api_key,
+      d.mac_address || '',
+      d.mac_address ? formatMacAddress(d.mac_address) : '',
       ...Object.entries(d.tags || {}).flatMap(([k, v]) => [k, v, `${k}:${v}`]),
     ]
       .join(' ')
@@ -242,6 +269,10 @@ const filtered = computed(() => {
 })
 
 onMounted(fetchDevices)
+
+async function onBulkImported() {
+  await fetchDevices()
+}
 
 async function onCreate() {
   creating.value = true

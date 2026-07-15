@@ -1,6 +1,7 @@
 /**
  * Fan-out parsed telemetry to user-configured webhook destinations.
  */
+const crypto = require('crypto')
 
 async function loadDestinations(supabase, userId, deviceId, organizationId) {
   let canUseRouting = false
@@ -20,7 +21,7 @@ async function loadDestinations(supabase, userId, deviceId, organizationId) {
 
   let query = supabase
     .from('destinations')
-    .select('id, name, url, device_id, enabled, routing_rule')
+    .select('id, name, url, device_id, enabled, routing_rule, event_types, signing_secret')
     .eq('enabled', true)
 
   query = organizationId
@@ -89,18 +90,30 @@ function matchesRoutingRule(payload, rule) {
   }
 }
 
+function signWebhookBody(secret, serializedBody) {
+  if (!secret) return ''
+  return `sha256=${crypto
+    .createHmac('sha256', secret)
+    .update(serializedBody)
+    .digest('hex')}`
+}
+
 async function fireWebhook(dest, body) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 8000)
   try {
+    const serialized = JSON.stringify(body)
+    const signature = signWebhookBody(dest.signing_secret, serialized)
     const res = await fetch(dest.url, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
         'user-agent': 'Struct-Gateway/0.1',
         'x-struct-destination': dest.id,
+        'x-struct-event': body.type,
+        ...(signature ? { 'x-struct-signature': signature } : {}),
       },
-      body: JSON.stringify(body),
+      body: serialized,
       signal: controller.signal,
     })
     if (!res.ok) {
@@ -130,6 +143,7 @@ async function dispatchWebhooks(supabase, device, parsed) {
   if (!destinations.length) return
 
   const body = {
+    type: 'telemetry.received',
     device_id: device.id,
     device_name: device.name,
     timestamp: new Date().toISOString(),
@@ -137,6 +151,9 @@ async function dispatchWebhooks(supabase, device, parsed) {
   }
 
   const matched = destinations.filter((destination) => {
+    if (!(destination.event_types || ['telemetry.received']).includes(body.type)) {
+      return false
+    }
     const matches = matchesRoutingRule(parsed, destination.routing_rule)
     if (!matches && destination.routing_rule) {
       console.log(`[struct] webhook skipped by routing rule: ${destination.name}`)
@@ -147,9 +164,32 @@ async function dispatchWebhooks(supabase, device, parsed) {
   await Promise.allSettled(matched.map((d) => fireWebhook(d, body)))
 }
 
+async function dispatchDeviceEvent(supabase, device, type) {
+  const destinations = await loadDestinations(
+    supabase,
+    device.user_id,
+    device.id,
+    device.organization_id,
+  )
+  const matched = destinations.filter((destination) =>
+    (destination.event_types || ['telemetry.received']).includes(type),
+  )
+  if (!matched.length) return
+
+  const body = {
+    type,
+    device_id: device.id,
+    device_name: device.name,
+    timestamp: new Date().toISOString(),
+  }
+  await Promise.allSettled(matched.map((d) => fireWebhook(d, body)))
+}
+
 module.exports = {
   dispatchWebhooks,
+  dispatchDeviceEvent,
   loadDestinations,
   fireWebhook,
   matchesRoutingRule,
+  signWebhookBody,
 }

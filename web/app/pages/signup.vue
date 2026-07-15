@@ -3,7 +3,7 @@
     <h1 class="mb-1 text-xl font-semibold text-[#E8EAEF]">Create account</h1>
     <p class="mb-6 text-sm text-[#8B93A7]">Start ingesting packed structs</p>
 
-    <form class="space-y-4" @submit.prevent="onSubmit">
+    <form class="space-y-4" method="post" action="#" @submit.prevent="onSubmit">
       <div>
         <label class="label" for="email">Email</label>
         <input

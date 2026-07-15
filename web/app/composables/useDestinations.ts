@@ -1,4 +1,4 @@
-import type { Destination, RoutingRule } from '~/types'
+import type { Destination, RoutingRule, WebhookEventType } from '~/types'
 
 export function useDestinations() {
   const supabase = useSupabaseClient()
@@ -43,6 +43,7 @@ export function useDestinations() {
     url: string
     device_id?: string | null
     routing_rule?: RoutingRule | null
+    event_types?: WebhookEventType[]
   }) {
     const { data: authData, error: authErr } = await supabase.auth.getUser()
     if (authErr || !authData.user) {
@@ -60,6 +61,9 @@ export function useDestinations() {
         url: input.url,
         device_id: input.device_id || null,
         routing_rule: input.routing_rule || null,
+        event_types: input.event_types?.length
+          ? input.event_types
+          : ['telemetry.received'],
         user_id: authData.user.id,
         organization_id,
         enabled: true,
@@ -69,6 +73,29 @@ export function useDestinations() {
 
     if (err) throw err
     destinations.value = [data as Destination, ...destinations.value]
+    return data as Destination
+  }
+
+  async function updateDestinationEvents(
+    id: string,
+    eventTypes: WebhookEventType[],
+  ) {
+    requireWrite()
+    const organizationId = requireOrgId()
+    if (!eventTypes.length) throw new Error('Select at least one webhook event')
+
+    const { data, error: err } = await supabase
+      .from('destinations')
+      .update({ event_types: eventTypes })
+      .eq('id', id)
+      .eq('organization_id', organizationId)
+      .select()
+      .single()
+
+    if (err) throw err
+    destinations.value = destinations.value.map((destination) =>
+      destination.id === id ? (data as Destination) : destination,
+    )
     return data as Destination
   }
 
@@ -117,6 +144,7 @@ export function useDestinations() {
     error,
     fetchDestinations,
     createDestination,
+    updateDestinationEvents,
     toggleDestination,
     updateDestinationRoutingRule,
     deleteDestination,

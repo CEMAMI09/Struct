@@ -24,7 +24,7 @@
           <h1
             class="font-display max-w-xl text-[2.35rem] font-semibold leading-[1.08] tracking-[-0.04em] text-[#F4F5F7] sm:text-5xl lg:text-[3.5rem]"
           >
-            Multiply Your Edge Battery Life by
+            Multiply Your Battery Life by
             <span class="text-[#38B6FF]">10x.</span>
           </h1>
 
@@ -201,6 +201,79 @@
       </div>
     </section>
 
+    <!-- Pricing -->
+    <section id="pricing" class="border-t border-[#2A2F3A] py-20 sm:py-24">
+      <div class="mx-auto max-w-[96rem] px-4 sm:px-6">
+        <div class="mb-14 text-center">
+          <p class="label mb-2 text-center">Pricing</p>
+          <h2
+            class="font-display text-3xl font-semibold tracking-[-0.03em] text-[#F4F5F7] sm:text-4xl"
+          >
+            Start free. Scale when your fleet does.
+          </h2>
+          <p class="mx-auto mt-3 max-w-xl text-sm text-[#8B93A7]">
+            Every plan includes the binary telemetry gateway, dashboard, and live debugger.
+          </p>
+        </div>
+
+        <div
+          v-for="group in pricingGroups"
+          :key="group.label"
+          class="pricing-group"
+        >
+          <div class="mb-4 flex items-center gap-3">
+            <p class="font-mono text-[10px] uppercase tracking-[0.16em] text-[#8B93A7]">
+              {{ group.label }}
+            </p>
+            <span class="h-px flex-1 bg-[#2A2F3A]" />
+          </div>
+          <div class="pricing-grid" :class="`pricing-grid--${group.layout}`">
+            <article
+              v-for="plan in group.plans"
+              :key="plan.name"
+              class="pricing-card"
+              :class="{ 'pricing-card--featured': plan.featured }"
+            >
+            <span v-if="plan.featured" class="pricing-badge">Most popular</span>
+            <p class="font-mono text-[10px] uppercase tracking-[0.16em] text-[#8B93A7]">
+              {{ plan.name }}
+            </p>
+            <div class="mt-5 flex items-baseline gap-1.5">
+              <span class="font-display text-4xl font-semibold tracking-[-0.04em] text-[#F4F5F7]">
+                {{ plan.price }}
+              </span>
+              <span v-if="plan.interval" class="font-mono text-xs text-[#8B93A7]">
+                {{ plan.interval }}
+              </span>
+            </div>
+            <p class="mt-3 min-h-10 text-sm leading-relaxed text-[#8B93A7]">
+              {{ plan.description }}
+            </p>
+            <p class="mt-5 border-t border-[#2A2F3A] pt-5 font-mono text-xs text-[#E8EAEF]">
+              {{ plan.devices }}
+            </p>
+            <p v-if="plan.deviceRate" class="mt-2 font-mono text-xs text-[#38B6FF]">
+              {{ plan.deviceRate }}
+            </p>
+            <ul class="mt-5 flex-1 space-y-2.5 text-sm text-[#8B93A7]">
+              <li v-for="feature in plan.features" :key="feature" class="flex gap-2.5">
+                <span class="text-[#38B6FF]">✓</span>
+                <span>{{ feature }}</span>
+              </li>
+            </ul>
+            <NuxtLink
+              :to="plan.to"
+              class="mt-7 inline-flex w-full items-center justify-center px-5 py-3 text-xs"
+              :class="plan.featured ? 'btn-primary' : 'btn-ghost'"
+            >
+              {{ plan.cta }}
+            </NuxtLink>
+              </article>
+            </div>
+          </div>
+      </div>
+    </section>
+
     <!-- CTA -->
     <section class="border-t border-[#2A2F3A] py-20">
       <div class="mx-auto max-w-3xl px-6 text-center">
@@ -234,7 +307,7 @@ definePageMeta({ layout: false })
 const user = useSupabaseUser()
 
 useSeoMeta({
-  title: 'Struct — Multiply Your Edge Battery Life by 10x',
+  title: 'Struct — Multiply Your Battery Life by 10x',
   description:
     'Ditch heavy JSON and TLS handshakes. Securely route encrypted, raw C++ structs to your cloud using 80% less bandwidth.',
 })
@@ -263,6 +336,82 @@ const mathCards = [
     winNote: 'fixed memory',
     lose: 'High',
     loseNote: 'heap fragmentation',
+  },
+]
+
+const pricingPlans = [
+  {
+    name: 'Free (Developer)',
+    price: '$0',
+    interval: 'forever',
+    description: 'Build, connect, and validate your first edge fleet.',
+    devices: 'Up to 5 devices',
+    deviceRate: '',
+    features: ['Standard dashboard', 'Basic webhooks', '24-hour telemetry retention'],
+    cta: 'Start free',
+    to: '/signup',
+    featured: false,
+  },
+  {
+    name: 'Flexible',
+    price: '$1.00',
+    interval: 'per device / month',
+    description: 'Start small and scale your fleet one device at a time.',
+    devices: 'Minimum 5 devices',
+    deviceRate: '',
+    features: ['Everything in Free', 'Automatic device scaling', '7-day telemetry retention'],
+    cta: 'Choose Flexible',
+    to: '/signup',
+    featured: false,
+  },
+  {
+    name: 'Pro',
+    price: '$49',
+    interval: '/ month',
+    description: 'Secure operations and bulk pricing for growing fleets.',
+    devices: '155-device starting allowance',
+    deviceRate: '$0.50 per extra device / month',
+    features: ['ChaCha20 encryption', 'Device downlinks', '30-day telemetry retention'],
+    cta: 'Choose Pro',
+    to: '/signup',
+    featured: true,
+  },
+  {
+    name: 'Scale',
+    price: '$249',
+    interval: '/ month',
+    description: 'Governance and advanced routing for large fleets.',
+    devices: '1,005-device starting allowance',
+    deviceRate: '$0.20 per extra device / month',
+    features: ['Team RBAC', 'Immutable audit logs', 'Webhook logical routing'],
+    cta: 'Buy Now',
+    to: '/signup',
+    featured: false,
+  },
+  {
+    name: 'Enterprise',
+    price: 'Custom',
+    interval: '',
+    description: 'Custom infrastructure and commercial terms for demanding fleets.',
+    devices: 'Custom device allowance',
+    deviceRate: '',
+    features: ['SAML SSO', 'Dedicated ingestion ports', 'Custom SLAs'],
+    cta: 'Contact sales',
+    to: 'mailto:sales@struct.dev?subject=Struct Enterprise',
+    featured: false,
+  },
+]
+
+const pricingGroups = [
+  {
+    label: 'Self-serve',
+    layout: 'self-serve',
+    plans: pricingPlans.slice(0, 3),
+  },
+  {
+    label: 'Scale & Enterprise',
+    layout: 'scale',
+    plans: pricingPlans.slice(3),
   },
 ]
 </script>
@@ -642,4 +791,76 @@ const mathCards = [
     transparent 3px 6px
   );
 }
+
+/* Pricing */
+.pricing-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.pricing-group + .pricing-group {
+  margin-top: 3.5rem;
+}
+
+.pricing-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border: 1px solid #2a2f3a;
+  border-radius: 16px;
+  background: #1a1d24;
+  padding: 2rem;
+}
+
+.pricing-card--featured {
+  border-color: rgba(56, 182, 255, 0.58);
+  background: linear-gradient(165deg, rgba(56, 182, 255, 0.09), #1a1d24 48%);
+  box-shadow:
+    0 0 0 1px rgba(56, 182, 255, 0.08),
+    0 28px 55px -32px rgba(56, 182, 255, 0.58);
+}
+
+.pricing-badge {
+  position: absolute;
+  top: 0;
+  right: 1.25rem;
+  transform: translateY(-50%);
+  border: 1px solid rgba(56, 182, 255, 0.5);
+  border-radius: 999px;
+  background: #101b24;
+  padding: 0.3rem 0.65rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #38b6ff;
+}
+
+@media (min-width: 768px) {
+  .pricing-grid--self-serve {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pricing-grid--scale {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: calc((100% - 1rem) * 2 / 3);
+    margin-inline: auto;
+  }
+
+  .pricing-grid {
+    align-items: stretch;
+    padding-top: 1.25rem;
+  }
+
+  .pricing-card--featured {
+    transform: translateY(-1.25rem);
+  }
+
+  .pricing-grid .pricing-card {
+    min-height: 32rem;
+  }
+}
+
 </style>

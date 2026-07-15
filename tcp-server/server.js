@@ -20,7 +20,7 @@ const net = require('net')
 const { createClient } = require('@supabase/supabase-js')
 const { parsePayload, schemaByteLength, TYPE_SIZES } = require('./parser')
 const { decryptPayload, encryptedFrameLength, splitEncryptedRegion } = require('./crypto')
-const { dispatchWebhooks } = require('./webhooks')
+const { dispatchDeviceEvent, dispatchWebhooks } = require('./webhooks')
 const { deliverPendingDownlinks, writeCommandFrame } = require('./downlinks')
 const {
   checkIpConnection,
@@ -231,6 +231,8 @@ const server = net.createServer((socket) => {
 
   let buffer = Buffer.alloc(0)
   let boundDeviceId = null
+  let boundDevice = null
+  let connectedEventSent = false
   /** @type {{ name: string, enc: boolean, need: number, have: number } | null} */
   let pendingFrame = null
 
@@ -252,7 +254,14 @@ const server = net.createServer((socket) => {
         }
 
         boundDeviceId = device.id
+        boundDevice = device
         liveSockets.set(device.id, socket)
+        if (!connectedEventSent) {
+          connectedEventSent = true
+          dispatchDeviceEvent(supabase, device, 'device.connected').catch((err) => {
+            console.warn(`[struct] connected webhook error: ${err.message}`)
+          })
+        }
 
         const schemaDef = await resolveSchemaDefinition(device, schemaVersion)
         if (!schemaDef || !Array.isArray(schemaDef) || schemaDef.length === 0) {
@@ -320,6 +329,11 @@ const server = net.createServer((socket) => {
     }
     if (boundDeviceId && liveSockets.get(boundDeviceId) === socket) {
       liveSockets.delete(boundDeviceId)
+    }
+    if (boundDevice) {
+      dispatchDeviceEvent(supabase, boundDevice, 'device.disconnected').catch((err) => {
+        console.warn(`[struct] disconnected webhook error: ${err.message}`)
+      })
     }
     console.log(`[struct] disconnect ${remote}`)
   })

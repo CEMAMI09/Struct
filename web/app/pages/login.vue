@@ -3,7 +3,7 @@
     <h1 class="mb-1 text-xl font-semibold text-[#E8EAEF]">Sign in</h1>
     <p class="mb-6 text-sm text-[#8B93A7]">Access your Struct dashboard</p>
 
-    <form class="space-y-4" @submit.prevent="onSubmit">
+    <form class="space-y-4" method="post" @submit.prevent="onSubmit">
       <div>
         <label class="label" for="email">Email</label>
         <input
@@ -49,6 +49,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'auth' })
 
+const route = useRoute()
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const emailEl = ref<HTMLInputElement | null>(null)
@@ -75,6 +76,17 @@ function readCredentials() {
   return { emailVal, passwordVal }
 }
 
+onMounted(() => {
+  loading.value = false
+  // Strip credentials that landed in the URL from a non-hydrated native form submit.
+  if (import.meta.client && (route.query.email || route.query.password)) {
+    const emailFromQuery =
+      typeof route.query.email === 'string' ? route.query.email : ''
+    if (emailFromQuery && !email.value) email.value = emailFromQuery
+    navigateTo({ path: '/login', query: {} }, { replace: true })
+  }
+})
+
 async function onSubmit() {
   if (loading.value) return
 
@@ -87,7 +99,7 @@ async function onSubmit() {
   loading.value = true
   error.value = ''
   try {
-    const { error: err } = await supabase.auth.signInWithPassword({
+    const { data, error: err } = await supabase.auth.signInWithPassword({
       email: emailVal,
       password: passwordVal,
     })
@@ -95,9 +107,15 @@ async function onSubmit() {
       error.value = err.message
       return
     }
+    if (!data.session) {
+      error.value = 'Sign in succeeded but no session was returned. Try again.'
+      return
+    }
     await supabase.auth.getSession()
     await waitForUser()
     await navigateTo('/dashboard', { replace: true })
+  } catch (e: any) {
+    error.value = e?.message || 'Sign in failed. Check your connection and try again.'
   } finally {
     loading.value = false
   }

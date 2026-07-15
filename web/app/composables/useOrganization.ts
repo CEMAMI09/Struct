@@ -52,6 +52,75 @@ export function useOrganization() {
     return currentOrgId.value
   }
 
+  function isEmptyFreePersonal(org: Organization) {
+    return (
+      org.name.trim().toLowerCase() === 'personal' &&
+      org.subscription_tier === 'free' &&
+      !org.stripe_customer_id &&
+      !org.stripe_subscription_id
+    )
+  }
+
+  function scoreOrganization(org: Organization) {
+    let score = 0
+    if (org.stripe_customer_id || org.stripe_subscription_id) score += 100
+    if (org.subscription_tier !== 'free') score += 50
+    score += org.stripe_quantity || 0
+    if (!isEmptyFreePersonal(org)) score += 10
+    return score
+  }
+
+  function pickDefaultOrgId(
+    rows: OrgMembership[],
+    preferred: string | null,
+    current: string | null,
+  ) {
+    if (!rows.length) return null
+
+    const preferredRow = preferred
+      ? rows.find((m) => m.organization_id === preferred)
+      : null
+    if (preferredRow) {
+      const better = rows
+        .filter((m) => m.organization_id !== preferredRow.organization_id)
+        .sort(
+          (a, b) =>
+            scoreOrganization(b.organization) - scoreOrganization(a.organization),
+        )[0]
+      // Recover from accidental empty Personal orgs created after a failed fetch.
+      if (
+        better &&
+        isEmptyFreePersonal(preferredRow.organization) &&
+        scoreOrganization(better.organization) > scoreOrganization(preferredRow.organization)
+      ) {
+        return better.organization_id
+      }
+      return preferredRow.organization_id
+    }
+
+    if (current && rows.some((m) => m.organization_id === current)) {
+      const currentRow = rows.find((m) => m.organization_id === current)!
+      const better = rows
+        .filter((m) => m.organization_id !== current)
+        .sort(
+          (a, b) =>
+            scoreOrganization(b.organization) - scoreOrganization(a.organization),
+        )[0]
+      if (
+        better &&
+        isEmptyFreePersonal(currentRow.organization) &&
+        scoreOrganization(better.organization) > scoreOrganization(currentRow.organization)
+      ) {
+        return better.organization_id
+      }
+      return current
+    }
+
+    return [...rows].sort(
+      (a, b) => scoreOrganization(b.organization) - scoreOrganization(a.organization),
+    )[0]!.organization_id
+  }
+
   async function fetchMemberships() {
     const { data: authData } = await supabase.auth.getUser()
     const uid = authData.user?.id || user.value?.id
@@ -85,28 +154,24 @@ export function useOrganization() {
 
       memberships.value = rows.filter((m) => m.organization)
 
-      // Restore last org or pick first membership
       let preferred: string | null = null
       if (import.meta.client) {
         preferred = localStorage.getItem(STORAGE_KEY)
       }
-      if (preferred && memberships.value.some((m) => m.organization_id === preferred)) {
-        currentOrgId.value = preferred
-      } else if (
-        currentOrgId.value &&
-        memberships.value.some((m) => m.organization_id === currentOrgId.value)
-      ) {
-        // keep
-      } else {
-        currentOrgId.value = memberships.value[0]?.organization_id ?? null
-      }
+
+      currentOrgId.value = pickDefaultOrgId(
+        memberships.value,
+        preferred,
+        currentOrgId.value,
+      )
 
       if (currentOrgId.value && import.meta.client) {
         localStorage.setItem(STORAGE_KEY, currentOrgId.value)
       }
     } catch (e: any) {
       error.value = e.message || 'Failed to load organizations'
-      memberships.value = []
+      // Keep any previously loaded memberships — never wipe on transient failures.
+      // Clearing here caused ensureOrganization() to create a brand-new empty Personal org.
     } finally {
       loading.value = false
       ready.value = true
@@ -119,7 +184,15 @@ export function useOrganization() {
    */
   async function ensureOrganization() {
     await fetchMemberships()
-    if (memberships.value.length > 0 && currentOrgId.value) return currentOrganization.value
+
+    // Never invent a workspace when we failed to load the real ones.
+    if (error.value) {
+      throw new Error(error.value)
+    }
+
+    if (memberships.value.length > 0 && currentOrgId.value) {
+      return currentOrganization.value
+    }
 
     const { data: authData, error: authErr } = await supabase.auth.getUser()
     if (authErr || !authData.user) {
@@ -132,7 +205,21 @@ export function useOrganization() {
     if (orgErr) throw orgErr
 
     await fetchMemberships()
+    if (error.value) {
+      throw new Error(error.value)
+    }
     return currentOrganization.value
+  }
+
+  function clearOrganizationState() {
+    memberships.value = []
+    currentOrgId.value = null
+    loading.value = false
+    ready.value = false
+    error.value = null
+    if (import.meta.client) {
+      localStorage.removeItem(STORAGE_KEY)
+    }
   }
 
   function setCurrentOrg(orgId: string) {
@@ -285,6 +372,7 @@ export function useOrganization() {
     error,
     fetchMemberships,
     ensureOrganization,
+    clearOrganizationState,
     setCurrentOrg,
     requireWrite,
     requireOrgId,

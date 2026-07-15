@@ -2,6 +2,7 @@ import type Stripe from 'stripe'
 import { serverSupabaseServiceRole } from '#supabase/server'
 import type { PaidTier, SubscriptionTier } from '../../utils/billing'
 import { useStripeClient } from '../../utils/stripe'
+import { applyStripeSubscriptionToOrg } from '../../utils/syncStripeSubscription'
 
 const PAID_TIERS = new Set<PaidTier>(['flexible', 'pro', 'scale'])
 
@@ -10,68 +11,6 @@ function parseTier(value: string | null | undefined): SubscriptionTier | null {
   if (value === 'free') return 'free'
   if (PAID_TIERS.has(value as PaidTier)) return value as PaidTier
   return null
-}
-
-function tierForPrice(
-  priceId: string | undefined,
-  prices: { flexible: string; pro: string; scale: string },
-): PaidTier | null {
-  if (!priceId) return null
-  if (priceId === prices.flexible) return 'flexible'
-  if (priceId === prices.pro) return 'pro'
-  if (priceId === prices.scale) return 'scale'
-  return null
-}
-
-async function syncSubscription(
-  supabase: Awaited<ReturnType<typeof serverSupabaseServiceRole>>,
-  subscription: Stripe.Subscription,
-  prices: { flexible: string; pro: string; scale: string },
-) {
-  const orgId = subscription.metadata?.orgId
-  const item = subscription.items.data[0]
-  if (!item) return
-
-  const patch: Record<string, unknown> = {
-    stripe_subscription_id: subscription.id,
-    stripe_customer_id:
-      typeof subscription.customer === 'string'
-        ? subscription.customer
-        : subscription.customer?.id || null,
-    stripe_item_id: item.id,
-    stripe_quantity: item.quantity ?? 0,
-  }
-
-  // The current price is authoritative because Customer Portal plan switches
-  // don't rewrite the metadata originally attached by Checkout.
-  const tier =
-    tierForPrice(item.price.id, prices) ||
-    parseTier(subscription.metadata?.targetTier) ||
-    parseTier(subscription.metadata?.tier)
-
-  if (tier && tier !== 'free') {
-    patch.subscription_tier = tier
-  }
-
-  if (subscription.status === 'canceled' || subscription.status === 'incomplete_expired') {
-    patch.subscription_tier = 'free'
-    patch.stripe_subscription_id = null
-    patch.stripe_item_id = null
-    patch.stripe_quantity = 0
-  }
-
-  let query = supabase.from('organizations').update(patch)
-
-  if (orgId) {
-    query = query.eq('id', orgId)
-  } else {
-    query = query.eq('stripe_subscription_id', subscription.id)
-  }
-
-  const { error } = await query
-  if (error) {
-    console.error('[stripe webhook] failed to sync subscription:', error.message)
-  }
 }
 
 export default defineEventHandler(async (event) => {
@@ -110,6 +49,11 @@ export default defineEventHandler(async (event) => {
   }
 
   const serviceSupabase = await serverSupabaseServiceRole(event)
+  const prices = {
+    flexible: config.stripePriceFlexible,
+    pro: config.stripePricePro,
+    scale: config.stripePriceScale,
+  }
 
   switch (stripeEvent.type) {
     case 'checkout.session.completed': {
@@ -126,28 +70,69 @@ export default defineEventHandler(async (event) => {
           ? session.subscription
           : session.subscription?.id || null
 
-      const patch: Record<string, unknown> = {
-        stripe_customer_id: customerId,
-        stripe_subscription_id: subscriptionId,
-        subscription_tier: targetTier,
+      if (!subscriptionId) break
+
+      const { data: previousOrg } = await serviceSupabase
+        .from('organizations')
+        .select('stripe_subscription_id')
+        .eq('id', orgId)
+        .maybeSingle()
+
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+      try {
+        await applyStripeSubscriptionToOrg(serviceSupabase, subscription, prices, orgId)
+        await serviceSupabase
+          .from('organizations')
+          .update({ subscription_tier: targetTier })
+          .eq('id', orgId)
+      } catch (err: any) {
+        console.error('[stripe webhook] checkout.session.completed failed:', err?.message || err)
       }
 
-      if (subscriptionId) {
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId)
-        const item = subscription.items.data[0]
-        if (item) {
-          patch.stripe_item_id = item.id
-          patch.stripe_quantity = item.quantity ?? 0
+      const previousSubscriptionId =
+        session.metadata?.previousSubscriptionId || previousOrg?.stripe_subscription_id || null
+      if (
+        previousSubscriptionId &&
+        subscriptionId &&
+        previousSubscriptionId !== subscriptionId
+      ) {
+        try {
+          await stripe.subscriptions.cancel(previousSubscriptionId, { prorate: true })
+        } catch (err: any) {
+          console.error(
+            `[stripe webhook] failed to cancel previous subscription ${previousSubscriptionId}:`,
+            err?.message || err,
+          )
         }
       }
 
-      const { error } = await serviceSupabase
-        .from('organizations')
-        .update(patch)
-        .eq('id', orgId)
-
-      if (error) {
-        console.error('[stripe webhook] checkout.session.completed failed:', error.message)
+      if (customerId && subscriptionId) {
+        try {
+          const siblings = await stripe.subscriptions.list({
+            customer: customerId,
+            status: 'active',
+            limit: 20,
+          })
+          await Promise.all(
+            siblings.data
+              .filter((sub) => sub.id !== subscriptionId)
+              .map((sub) =>
+                stripe.subscriptions
+                  .cancel(sub.id, { prorate: true })
+                  .catch((err: any) => {
+                    console.error(
+                      `[stripe webhook] failed to cancel orphan ${sub.id}:`,
+                      err?.message || err,
+                    )
+                  }),
+              ),
+          )
+        } catch (err: any) {
+          console.error(
+            '[stripe webhook] failed listing sibling subscriptions:',
+            err?.message || err,
+          )
+        }
       }
       break
     }
@@ -155,11 +140,11 @@ export default defineEventHandler(async (event) => {
     case 'customer.subscription.created':
     case 'customer.subscription.updated': {
       const subscription = stripeEvent.data.object as Stripe.Subscription
-      await syncSubscription(serviceSupabase, subscription, {
-        flexible: config.stripePriceFlexible,
-        pro: config.stripePricePro,
-        scale: config.stripePriceScale,
-      })
+      try {
+        await applyStripeSubscriptionToOrg(serviceSupabase, subscription, prices)
+      } catch (err: any) {
+        console.error('[stripe webhook] failed to sync subscription:', err?.message || err)
+      }
       break
     }
 
@@ -174,10 +159,15 @@ export default defineEventHandler(async (event) => {
         stripe_quantity: 0,
       }
 
-      let query = serviceSupabase.from('organizations').update(patch)
-      query = orgId
-        ? query.eq('id', orgId)
-        : query.eq('stripe_subscription_id', subscription.id)
+      // Only clear billing when THIS subscription is the one currently linked.
+      // Orphan cancellations share metadata.orgId and must not wipe a paid plan.
+      let query = serviceSupabase
+        .from('organizations')
+        .update(patch)
+        .eq('stripe_subscription_id', subscription.id)
+      if (orgId) {
+        query = query.eq('id', orgId)
+      }
 
       const { error } = await query
       if (error) {

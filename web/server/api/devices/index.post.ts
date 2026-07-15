@@ -1,81 +1,21 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
-import {
-  getDeviceLimit,
-  getRequiredQuantity,
-  isPaidTier,
-} from '../../utils/billing'
 import { requireOrgWriter } from '../../utils/auth'
+import { randomApiKey } from '../../utils/bulkDevices'
 import {
-  countOrganizationDevices,
-  getOrganizationBilling,
-} from '../../utils/organizations'
-import { useStripeClient } from '../../utils/stripe'
-
-function randomApiKey() {
-  const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
-  const bytes = crypto.getRandomValues(new Uint8Array(16))
-  let key = ''
-  for (let i = 0; i < 16; i++) {
-    key += alphabet[bytes[i]! % alphabet.length]
-  }
-  return key
-}
-
-async function scaleUpIfNeeded(
-  supabase: Awaited<ReturnType<typeof serverSupabaseServiceRole>>,
-  orgId: string,
-) {
-  const org = await getOrganizationBilling(supabase, orgId)
-  const currentCount = await countOrganizationDevices(supabase, orgId)
-  const limit = getDeviceLimit(org.stripe_quantity)
-
-  if (currentCount < limit) {
-    return org
-  }
-
-  if (!isPaidTier(org.subscription_tier)) {
-    throw createError({
-      statusCode: 402,
-      statusMessage: 'Payment Required',
-      message: 'Free tier supports up to 5 devices. Upgrade to add more.',
-    })
-  }
-
-  if (!org.stripe_item_id) {
-    throw createError({
-      statusCode: 402,
-      statusMessage: 'Payment Required',
-      message: 'Paid plan is missing a Stripe subscription item. Open billing to fix your plan.',
-    })
-  }
-
-  const nextQuantity = org.stripe_quantity + 1
-  const stripe = useStripeClient()
-
-  await stripe.subscriptionItems.update(org.stripe_item_id, {
-    quantity: nextQuantity,
-    proration_behavior: 'create_prorations',
-  })
-
-  const { error } = await supabase
-    .from('organizations')
-    .update({ stripe_quantity: nextQuantity })
-    .eq('id', orgId)
-
-  if (error) {
-    throw createError({ statusCode: 500, message: error.message })
-  }
-
-  return {
-    ...org,
-    stripe_quantity: nextQuantity,
-  }
-}
+  applyStripeQuantity,
+  persistStripeQuantity,
+  resolveCapacityPlan,
+} from '../../utils/deviceCapacity'
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody<{ name?: string; orgId?: string }>(event)
+  const body = await readBody<{
+    name?: string
+    orgId?: string
+    macAddress?: string
+  }>(event)
   const name = body?.name?.trim()
   const orgId = body?.orgId?.trim()
+  const macAddress = body?.macAddress?.trim() || null
 
   if (!name || !orgId) {
     throw createError({ statusCode: 400, message: 'name and orgId are required' })
@@ -84,7 +24,15 @@ export default defineEventHandler(async (event) => {
   const { user } = await requireOrgWriter(event, orgId)
   const serviceSupabase = await serverSupabaseServiceRole(event)
 
-  await scaleUpIfNeeded(serviceSupabase, orgId)
+  const plan = await resolveCapacityPlan(serviceSupabase, orgId, 1)
+  if (plan.needsStripeUpdate) {
+    const nextQuantity = await applyStripeQuantity(
+      plan.org,
+      plan.targetQuantity,
+      `device-create:${orgId}:${plan.currentCount + 1}`,
+    )
+    await persistStripeQuantity(serviceSupabase, orgId, nextQuantity)
+  }
 
   const apiKey = randomApiKey()
   const { data: device, error: deviceError } = await serviceSupabase
@@ -96,6 +44,7 @@ export default defineEventHandler(async (event) => {
       organization_id: orgId,
       tags: {},
       encryption_enabled: false,
+      mac_address: macAddress,
     })
     .select()
     .single()

@@ -103,6 +103,7 @@ export interface Database {
           organization_id: string
           name: string
           api_key: string
+          mac_address: string | null
           last_seen: string | null
           created_at: string
           tags: Json
@@ -115,6 +116,7 @@ export interface Database {
           organization_id: string
           name: string
           api_key: string
+          mac_address?: string | null
           last_seen?: string | null
           created_at?: string
           tags?: Json
@@ -127,11 +129,80 @@ export interface Database {
           organization_id?: string
           name?: string
           api_key?: string
+          mac_address?: string | null
           last_seen?: string | null
           created_at?: string
           tags?: Json
           encryption_enabled?: boolean
           encryption_key?: string | null
+        }
+      }
+      bulk_device_imports: {
+        Row: {
+          id: string
+          organization_id: string
+          user_id: string
+          payload_hash: string
+          devices: Json
+          status: 'quoted' | 'processing' | 'completed' | 'failed' | 'expired'
+          current_device_count: number
+          projected_device_count: number
+          previous_stripe_quantity: number
+          target_stripe_quantity: number
+          estimated_proration_amount: number | null
+          currency: string | null
+          stripe_idempotency_key: string
+          error_message: string | null
+          created_device_ids: string[]
+          quoted_at: string
+          expires_at: string
+          claimed_at: string | null
+          completed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          user_id: string
+          payload_hash: string
+          devices: Json
+          status?: 'quoted' | 'processing' | 'completed' | 'failed' | 'expired'
+          current_device_count: number
+          projected_device_count: number
+          previous_stripe_quantity: number
+          target_stripe_quantity: number
+          estimated_proration_amount?: number | null
+          currency?: string | null
+          stripe_idempotency_key: string
+          error_message?: string | null
+          created_device_ids?: string[]
+          quoted_at?: string
+          expires_at: string
+          claimed_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          user_id?: string
+          payload_hash?: string
+          devices?: Json
+          status?: 'quoted' | 'processing' | 'completed' | 'failed' | 'expired'
+          current_device_count?: number
+          projected_device_count?: number
+          previous_stripe_quantity?: number
+          target_stripe_quantity?: number
+          estimated_proration_amount?: number | null
+          currency?: string | null
+          stripe_idempotency_key?: string
+          error_message?: string | null
+          created_device_ids?: string[]
+          quoted_at?: string
+          expires_at?: string
+          claimed_at?: string | null
+          completed_at?: string | null
+          created_at?: string
         }
       }
       schemas: {
@@ -212,6 +283,8 @@ export interface Database {
           url: string
           device_id: string | null
           routing_rule: Json | null
+          event_types: string[]
+          signing_secret: string
           enabled: boolean
           created_at: string
         }
@@ -223,6 +296,8 @@ export interface Database {
           url: string
           device_id?: string | null
           routing_rule?: Json | null
+          event_types?: string[]
+          signing_secret?: string
           enabled?: boolean
           created_at?: string
         }
@@ -234,6 +309,8 @@ export interface Database {
           url?: string
           device_id?: string | null
           routing_rule?: Json | null
+          event_types?: string[]
+          signing_secret?: string
           enabled?: boolean
           created_at?: string
         }
@@ -294,6 +371,15 @@ export interface Database {
       create_organization: {
         Args: { p_name: string }
         Returns: Database['public']['Tables']['organizations']['Row']
+      }
+      bulk_insert_devices: {
+        Args: {
+          p_org_id: string
+          p_user_id: string
+          p_devices: Json
+          p_expected_current_count: number
+        }
+        Returns: Database['public']['Tables']['devices']['Row'][]
       }
     }
   }

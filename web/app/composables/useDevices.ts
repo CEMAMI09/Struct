@@ -1,4 +1,13 @@
-import type { Device, DeviceSchema, DeviceTags, SchemaField, SchemaVersion } from '~/types'
+import type {
+  BulkDeviceInput,
+  BulkUploadQuote,
+  Device,
+  DeviceSchema,
+  DeviceTags,
+  SchemaField,
+  SchemaVersion,
+} from '~/types'
+import { formatMacAddress } from '#shared/bulkUpload'
 
 function randomEncryptionKeyHex(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(32))
@@ -11,6 +20,7 @@ function normalizeDevice(row: any): Device {
   return {
     ...row,
     organization_id: row.organization_id,
+    mac_address: row.mac_address ?? null,
     tags: (row.tags && typeof row.tags === 'object' ? row.tags : {}) as DeviceTags,
     encryption_enabled: !!row.encryption_enabled,
     encryption_key: row.encryption_key ?? null,
@@ -171,6 +181,73 @@ export function useDevices() {
     return device
   }
 
+  async function previewBulkUpload(rows: BulkDeviceInput[]): Promise<BulkUploadQuote> {
+    await ensureOrganization()
+    requireWrite()
+    const organization_id = requireOrgId()
+
+    try {
+      return await $fetch<BulkUploadQuote>('/api/devices/bulk/preview', {
+        method: 'POST',
+        body: { orgId: organization_id, devices: rows },
+      })
+    } catch (e: any) {
+      const message =
+        e?.data?.message || e?.message || 'Failed to calculate bulk upload cost'
+      throw new Error(message)
+    }
+  }
+
+  async function confirmBulkUpload(importId: string) {
+    await ensureOrganization()
+    requireWrite()
+    const organization_id = requireOrgId()
+
+    let response: {
+      importId: string
+      devices: any[]
+      alreadyCompleted?: boolean
+    }
+    try {
+      response = await $fetch('/api/devices/bulk', {
+        method: 'POST',
+        body: { orgId: organization_id, importId },
+      })
+    } catch (e: any) {
+      const err = new Error(
+        e?.data?.message || e?.message || 'Failed to complete bulk upload',
+      ) as Error & { refreshRequired?: boolean }
+      err.refreshRequired = !!e?.data?.data?.refreshRequired || !!e?.data?.refreshRequired
+      throw err
+    }
+
+    const created = (response.devices || []).map(normalizeDevice)
+    if (created.length) {
+      devices.value = [...created, ...devices.value]
+      for (const device of created) {
+        schemas.value = {
+          ...schemas.value,
+          [device.id]: {
+            id: '',
+            device_id: device.id,
+            organization_id: device.organization_id,
+            schema_definition: [],
+            version: 1,
+            updated_at: new Date().toISOString(),
+          },
+        }
+        schemaVersions.value = {
+          ...schemaVersions.value,
+          [device.id]: [],
+        }
+      }
+    }
+
+    await fetchDevices()
+    await fetchMembershipsFromOrg()
+    return response
+  }
+
   async function fetchMembershipsFromOrg() {
     const { fetchMemberships } = useOrganization()
     await fetchMemberships()
@@ -197,6 +274,27 @@ export function useDevices() {
     schemaVersions.value = nextVers
 
     await fetchMembershipsFromOrg()
+  }
+
+  async function rotateDeviceApiKey(id: string) {
+    requireWrite()
+    const organization_id = requireOrgId()
+
+    let response: { device: any }
+    try {
+      response = await $fetch<{ device: any }>(`/api/devices/${id}/key`, {
+        method: 'POST',
+        body: { orgId: organization_id },
+      })
+    } catch (e: any) {
+      throw new Error(e?.data?.message || e.message || 'Failed to rotate API key')
+    }
+
+    const device = normalizeDevice(response.device)
+    devices.value = devices.value.map((existing) =>
+      existing.id === id ? device : existing,
+    )
+    return device
   }
 
   async function updateDeviceTags(id: string, tags: DeviceTags) {
@@ -371,11 +469,15 @@ export function useDevices() {
     error,
     fetchDevices,
     createDevice,
+    previewBulkUpload,
+    confirmBulkUpload,
     deleteDevice,
+    rotateDeviceApiKey,
     updateDeviceTags,
     setDeviceEncryption,
     rotateEncryptionKey,
     saveSchema,
     subscribePresence,
+    formatMacAddress,
   }
 }

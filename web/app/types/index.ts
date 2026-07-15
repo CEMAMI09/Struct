@@ -36,11 +36,34 @@ export interface Device {
   organization_id: string
   name: string
   api_key: string
+  mac_address: string | null
   last_seen: string | null
   created_at: string
   tags: DeviceTags
   encryption_enabled: boolean
   encryption_key: string | null
+}
+
+export interface BulkDeviceInput {
+  name: string
+  mac_address: string
+  tags: DeviceTags
+}
+
+export interface BulkUploadQuote {
+  importId: string
+  expiresAt: string
+  deviceCount: number
+  currentDeviceCount: number
+  projectedDeviceCount: number
+  previousStripeQuantity: number
+  targetStripeQuantity: number
+  quantityDelta: number
+  estimatedProrationAmount: number
+  currency: string
+  estimatedProrationFormatted: string
+  needsStripeUpdate: boolean
+  disclaimer: string
 }
 
 export interface DeviceSchema {
@@ -85,9 +108,16 @@ export interface Destination {
   url: string
   device_id: string | null
   routing_rule: RoutingRule | null
+  event_types: WebhookEventType[]
+  signing_secret: string
   enabled: boolean
   created_at: string
 }
+
+export type WebhookEventType =
+  | 'telemetry.received'
+  | 'device.connected'
+  | 'device.disconnected'
 
 export type AuditAction = 'INSERT' | 'UPDATE' | 'DELETE'
 

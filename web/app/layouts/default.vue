@@ -51,10 +51,18 @@
           <span class="mono hidden max-w-[10rem] truncate text-xs text-[#8B93A7] lg:inline lg:max-w-none">
             {{ userEmail }}
           </span>
-          <button class="btn-ghost text-xs" @click="signOut">Sign out</button>
+          <button class="btn-ghost text-xs" type="button" :disabled="signingOut" @click="signOut">
+            {{ signingOut ? 'Signing out…' : 'Sign out' }}
+          </button>
         </div>
       </header>
       <div class="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6">
+        <p
+          v-if="orgError"
+          class="mb-4 rounded-lg border border-red-400/30 bg-red-400/5 px-3 py-2 text-xs text-red-300"
+        >
+          Could not load your organizations: {{ orgError }}
+        </p>
         <p
           v-if="isViewer"
           class="mb-4 rounded-lg border border-[#2A2F3A] bg-[#1A1D24] px-3 py-2 text-xs text-[#8B93A7]"
@@ -76,9 +84,20 @@ const user = useSupabaseUser()
 const supabase = useSupabaseClient()
 const navOpen = ref(false)
 
-const { currentOrganization, role, isViewer, showOrgBadge, ensureOrganization } = useOrganization()
+const {
+  currentOrganization,
+  role,
+  isViewer,
+  showOrgBadge,
+  canWrite,
+  error: orgError,
+  ensureOrganization,
+  clearOrganizationState,
+} = useOrganization()
+const { syncFromStripe } = useBilling()
 
 const userEmail = computed(() => user.value?.email || '')
+const signingOut = ref(false)
 
 const title = computed(() => {
   const map: Record<string, string> = {
@@ -112,16 +131,50 @@ watch(
   },
 )
 
+async function bootstrapOrg() {
+  await ensureOrganization()
+  if (canWrite.value && currentOrganization.value?.stripe_customer_id) {
+    await syncFromStripe()
+  }
+}
+
 onMounted(() => {
-  ensureOrganization().catch(() => {})
+  bootstrapOrg().catch(() => {})
 })
 
 watch(user, (u) => {
-  if (u) ensureOrganization().catch(() => {})
+  if (u) bootstrapOrg().catch(() => {})
 })
 
 async function signOut() {
-  await supabase.auth.signOut()
-  navigateTo('/login')
+  if (signingOut.value) return
+  signingOut.value = true
+  clearOrganizationState()
+  try {
+    // Prefer local scope so a network hang can't block logout forever.
+    await Promise.race([
+      supabase.auth.signOut({ scope: 'local' }),
+      new Promise<void>((_, reject) =>
+        setTimeout(() => reject(new Error('Sign out timed out')), 4000),
+      ),
+    ])
+  } catch (e) {
+    console.error('Sign out failed', e)
+    // Best-effort wipe of auth storage if the client hung.
+    if (import.meta.client) {
+      try {
+        for (const key of Object.keys(localStorage)) {
+          if (key.includes('supabase') || key.startsWith('sb-')) {
+            localStorage.removeItem(key)
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+  } finally {
+    await navigateTo('/login', { replace: true, external: true })
+    signingOut.value = false
+  }
 }
 </script>

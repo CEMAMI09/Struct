@@ -1,6 +1,7 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 import type { PaidTier, SubscriptionTier } from '../../utils/billing'
 import { requireOrgWriter } from '../../utils/auth'
+import { getOrganizationBilling } from '../../utils/organizations'
 import { useStripeClient } from '../../utils/stripe'
 
 const PAID_TIERS = new Set<PaidTier>(['flexible', 'pro', 'scale'])
@@ -42,6 +43,9 @@ export default defineEventHandler(async (event) => {
 
   await requireOrgWriter(event, orgId)
 
+  const serviceSupabase = await serverSupabaseServiceRole(event)
+  const previousOrg = await getOrganizationBilling(serviceSupabase, orgId)
+
   const customerId =
     typeof session.customer === 'string' ? session.customer : session.customer?.id || null
   const subscriptionId =
@@ -64,11 +68,48 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const serviceSupabase = await serverSupabaseServiceRole(event)
   const { error } = await serviceSupabase.from('organizations').update(patch).eq('id', orgId)
 
   if (error) {
     throw createError({ statusCode: 500, message: error.message })
+  }
+
+  // Cancel the previous subscription if Checkout created a replacement.
+  const previousSubscriptionId =
+    session.metadata?.previousSubscriptionId || previousOrg.stripe_subscription_id
+  if (
+    previousSubscriptionId &&
+    subscriptionId &&
+    previousSubscriptionId !== subscriptionId
+  ) {
+    try {
+      await stripe.subscriptions.cancel(previousSubscriptionId, { prorate: true })
+    } catch (err: any) {
+      console.error(
+        `[stripe] failed to cancel previous subscription ${previousSubscriptionId}:`,
+        err?.message || err,
+      )
+    }
+  }
+
+  if (customerId && subscriptionId) {
+    const siblings = await stripe.subscriptions.list({
+      customer: customerId,
+      status: 'active',
+      limit: 20,
+    })
+    await Promise.all(
+      siblings.data
+        .filter((sub) => sub.id !== subscriptionId)
+        .map((sub) =>
+          stripe.subscriptions.cancel(sub.id, { prorate: true }).catch((err: any) => {
+            console.error(
+              `[stripe] failed to cancel orphan subscription ${sub.id}:`,
+              err?.message || err,
+            )
+          }),
+        ),
+    )
   }
 
   return {

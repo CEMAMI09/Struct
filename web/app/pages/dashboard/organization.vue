@@ -44,6 +44,13 @@
     <!-- Switch / create org -->
     <section class="card mb-4 p-4">
       <p class="label">Workspaces</p>
+      <p
+        v-if="memberships.length > 1"
+        class="mt-1 text-xs text-[#8B93A7]"
+      >
+        You belong to {{ memberships.length }} workspaces. Switch here if devices or billing look
+        wrong — an empty free Personal workspace may have been created by accident.
+      </p>
       <div class="mt-2 space-y-2">
         <div
           v-for="m in memberships"
@@ -60,7 +67,12 @@
             "
             @click="onSwitchOrg(m.organization_id)"
           >
-            <span class="truncate">{{ m.organization.name }}</span>
+            <span class="min-w-0 truncate">
+              {{ m.organization.name }}
+              <span class="ml-2 font-mono text-[10px] capitalize text-[#8B93A7]">
+                {{ m.organization.subscription_tier }}
+              </span>
+            </span>
             <span class="shrink-0 font-mono text-[10px] uppercase">{{ m.role }}</span>
           </button>
           <button

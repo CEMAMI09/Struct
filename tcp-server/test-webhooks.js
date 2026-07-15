@@ -4,7 +4,7 @@
  */
 
 const assert = require('assert')
-const { matchesRoutingRule } = require('./webhooks')
+const { matchesRoutingRule, signWebhookBody } = require('./webhooks')
 
 const payload = {
   temperature: 120,
@@ -43,5 +43,9 @@ assert.strictEqual(
   false,
 )
 assert.strictEqual(matchesRoutingRule(payload, {}), false)
+assert.strictEqual(
+  signWebhookBody('secret', '{"type":"telemetry.received"}'),
+  'sha256=f84a8b746f383fc0baa8be22576d9e31439ee6eadd17ae0bfab9fe98a05d460f',
+)
 
-console.log('[test-webhooks] ok — logical routing rules evaluated')
+console.log('[test-webhooks] ok — routing and signatures evaluated')
