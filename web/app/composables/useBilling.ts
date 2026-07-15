@@ -55,10 +55,32 @@ export function useBilling() {
     }
   }
 
+  async function syncCheckout(sessionId: string) {
+    requireWrite()
+    loading.value = true
+    error.value = null
+    try {
+      return await $fetch<{
+        ok: boolean
+        subscriptionTier: SubscriptionTier
+        stripeQuantity: number
+      }>('/api/stripe/sync-checkout', {
+        method: 'POST',
+        body: { sessionId },
+      })
+    } catch (e: any) {
+      error.value = e?.data?.message || e.message || 'Failed to sync subscription'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     loading,
     error,
     startCheckout,
     openPortal,
+    syncCheckout,
   }
 }

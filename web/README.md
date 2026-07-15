@@ -1,75 +1,39 @@
-# Nuxt Minimal Starter
+# Struct web
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Nuxt 4 dashboard, marketing site, auth, and Stripe billing routes for Struct.
 
-## Setup
+For product overview, setup, environment variables, migrations, Stripe, and the TCP protocol, see the repository root [`README.md`](../README.md).
 
-Make sure to install dependencies:
+## Local development
 
 ```bash
-# npm
+cp .env.example .env
+# fill Supabase + Stripe values from the root README
+
 npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
-```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
 npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
+App: [http://127.0.0.1:3000](http://127.0.0.1:3000)
 
-Build the application for production:
+From the monorepo root you can also run:
 
 ```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
+npm run dev:web
+npm run build:web
 ```
 
-Locally preview production build:
+## Useful routes
 
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+| Route | Purpose |
+| --- | --- |
+| `/` | Landing page |
+| `/signup`, `/login`, `/confirm` | Auth |
+| `/dashboard` | Fleet overview and live telemetry |
+| `/dashboard/devices` | Devices, tags, downlinks |
+| `/dashboard/destinations` | Webhook destinations |
+| `/dashboard/schema` | Packed schemas and encryption |
+| `/dashboard/debugger` | Client-side packet simulator |
+| `/dashboard/organization` | Workspaces and members |
+| `/dashboard/settings` | Plans and billing |
+| `/dashboard/audit-logs` | Scale-tier audit history |

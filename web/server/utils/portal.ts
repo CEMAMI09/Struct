@@ -1,0 +1,80 @@
+import type Stripe from 'stripe'
+import { TIER_CHECKOUT_QUANTITY, type PaidTier } from './billing'
+
+const PORTAL_META_KEY = 'struct'
+const PORTAL_META_VALUE = 'quantity_floors_v1'
+
+async function productIdForPrice(stripe: Stripe, priceId: string) {
+  const price = await stripe.prices.retrieve(priceId)
+  return typeof price.product === 'string' ? price.product : price.product.id
+}
+
+/**
+ * Portal config with tier-specific quantity floors (Flexible 5, Pro 150, Scale 1000).
+ * Reuses an existing config when present so we don't create one per click.
+ */
+export async function getOrCreateQuantityPortalConfiguration(
+  stripe: Stripe,
+  prices: { flexible: string; pro: string; scale: string },
+) {
+  if (!prices.flexible || !prices.pro || !prices.scale) {
+    throw createError({
+      statusCode: 500,
+      message: 'Stripe price IDs are not configured',
+    })
+  }
+
+  const tiers: PaidTier[] = ['flexible', 'pro', 'scale']
+  const products: Stripe.BillingPortal.ConfigurationCreateParams.Features.SubscriptionUpdate.Product[] =
+    []
+
+  for (const tier of tiers) {
+    const priceId = prices[tier]
+    const product = await productIdForPrice(stripe, priceId)
+    const minimum = TIER_CHECKOUT_QUANTITY[tier]
+    products.push({
+      product,
+      prices: [priceId],
+      adjustable_quantity: {
+        enabled: true,
+        minimum,
+        maximum: 999999,
+      },
+    })
+  }
+
+  const features: Stripe.BillingPortal.ConfigurationCreateParams.Features = {
+    customer_update: {
+      enabled: true,
+      allowed_updates: ['email', 'address', 'tax_id'],
+    },
+    invoice_history: { enabled: true },
+    payment_method_update: { enabled: true },
+    subscription_cancel: { enabled: true },
+    subscription_update: {
+      enabled: true,
+      default_allowed_updates: ['price', 'quantity'],
+      proration_behavior: 'create_prorations',
+      products,
+    },
+  }
+
+  const existing = await stripe.billingPortal.configurations.list({ limit: 100 })
+  const match = existing.data.find(
+    (config) => config.active && config.metadata?.[PORTAL_META_KEY] === PORTAL_META_VALUE,
+  )
+
+  if (match) {
+    return stripe.billingPortal.configurations.update(match.id, { features })
+  }
+
+  return stripe.billingPortal.configurations.create({
+    features,
+    business_profile: {
+      headline: 'Manage your Struct subscription',
+    },
+    metadata: {
+      [PORTAL_META_KEY]: PORTAL_META_VALUE,
+    },
+  })
+}

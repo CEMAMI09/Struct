@@ -1,6 +1,7 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 import { requireOrgWriter } from '../../utils/auth'
 import { getOrganizationBilling } from '../../utils/organizations'
+import { getOrCreateQuantityPortalConfiguration } from '../../utils/portal'
 import { useStripeClient } from '../../utils/stripe'
 
 export default defineEventHandler(async (event) => {
@@ -23,11 +24,19 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  const config = useRuntimeConfig()
   const stripe = useStripeClient()
   const origin = getRequestURL(event).origin
 
+  const portalConfiguration = await getOrCreateQuantityPortalConfiguration(stripe, {
+    flexible: config.stripePriceFlexible,
+    pro: config.stripePricePro,
+    scale: config.stripePriceScale,
+  })
+
   const session = await stripe.billingPortal.sessions.create({
     customer: org.stripe_customer_id,
+    configuration: portalConfiguration.id,
     return_url: `${origin}/dashboard/settings`,
   })
 

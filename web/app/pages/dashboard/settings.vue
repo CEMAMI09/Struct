@@ -128,8 +128,13 @@ const {
   ensureOrganization,
   fetchMemberships,
 } = useOrganization()
-const { loading: billingLoading, error: billingError, startCheckout, openPortal } =
-  useBilling()
+const {
+  loading: billingLoading,
+  error: billingError,
+  startCheckout,
+  openPortal,
+  syncCheckout,
+} = useBilling()
 
 const pageError = ref('')
 const pageMsg = ref('')
@@ -152,7 +157,7 @@ const plans: PricingPlan[] = [
   {
     id: 'flexible',
     checkoutTier: 'flexible',
-    name: 'Flexible Scale',
+    name: 'Flexible',
     subtitle: 'Start small and scale one device at a time.',
     price: '$5/mo',
     devices: '10-device starting allowance',
@@ -172,7 +177,7 @@ const plans: PricingPlan[] = [
     devices: '155-device starting allowance',
     overage: '+$0.50 per device / month',
     features: [
-      'Everything in Flexible Scale',
+      'Everything in Flexible',
       'ChaCha20 encryption',
       'Device downlinks',
       '30-day telemetry retention',
@@ -214,8 +219,21 @@ onMounted(async () => {
   await fetchDevices()
 
   if (route.query.billing === 'success') {
-    await fetchMemberships()
-    pageMsg.value = 'Subscription updated. Your new capabilities are now available.'
+    const sessionId =
+      typeof route.query.session_id === 'string' ? route.query.session_id : ''
+
+    try {
+      if (sessionId) {
+        await syncCheckout(sessionId)
+      }
+      await fetchMemberships()
+      pageMsg.value = 'Subscription updated. Your new capabilities are now available.'
+    } catch (error: any) {
+      pageError.value =
+        error?.data?.message ||
+        error.message ||
+        'Payment succeeded, but we could not refresh your plan yet. Try Manage billing or contact support.'
+    }
   } else if (route.query.billing === 'cancel') {
     pageMsg.value = 'Checkout was canceled. Your subscription was not changed.'
   }

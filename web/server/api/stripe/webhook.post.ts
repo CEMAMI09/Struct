@@ -12,10 +12,21 @@ function parseTier(value: string | null | undefined): SubscriptionTier | null {
   return null
 }
 
+function tierForPrice(
+  priceId: string | undefined,
+  prices: { flexible: string; pro: string; scale: string },
+): PaidTier | null {
+  if (!priceId) return null
+  if (priceId === prices.flexible) return 'flexible'
+  if (priceId === prices.pro) return 'pro'
+  if (priceId === prices.scale) return 'scale'
+  return null
+}
+
 async function syncSubscription(
   supabase: Awaited<ReturnType<typeof serverSupabaseServiceRole>>,
   subscription: Stripe.Subscription,
-  fallbackTier?: SubscriptionTier | null,
+  prices: { flexible: string; pro: string; scale: string },
 ) {
   const orgId = subscription.metadata?.orgId
   const item = subscription.items.data[0]
@@ -31,9 +42,11 @@ async function syncSubscription(
     stripe_quantity: item.quantity ?? 0,
   }
 
+  // The current price is authoritative because Customer Portal plan switches
+  // don't rewrite the metadata originally attached by Checkout.
   const tier =
+    tierForPrice(item.price.id, prices) ||
     parseTier(subscription.metadata?.targetTier) ||
-    fallbackTier ||
     parseTier(subscription.metadata?.tier)
 
   if (tier && tier !== 'free') {
@@ -142,7 +155,11 @@ export default defineEventHandler(async (event) => {
     case 'customer.subscription.created':
     case 'customer.subscription.updated': {
       const subscription = stripeEvent.data.object as Stripe.Subscription
-      await syncSubscription(serviceSupabase, subscription)
+      await syncSubscription(serviceSupabase, subscription, {
+        flexible: config.stripePriceFlexible,
+        pro: config.stripePricePro,
+        scale: config.stripePriceScale,
+      })
       break
     }
 

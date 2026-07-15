@@ -55,9 +55,14 @@ export default defineEventHandler(async (event) => {
       {
         price: priceId,
         quantity: TIER_CHECKOUT_QUANTITY[targetTier as PaidTier],
+        adjustable_quantity: {
+          enabled: true,
+          minimum: TIER_CHECKOUT_QUANTITY[targetTier as PaidTier],
+          maximum: 999999,
+        },
       },
     ],
-    success_url: `${origin}/dashboard/settings?billing=success`,
+    success_url: `${origin}/dashboard/settings?billing=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/dashboard/settings?billing=cancel`,
     metadata: {
       orgId,
