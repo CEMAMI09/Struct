@@ -1,0 +1,183 @@
+Date : 2026-07-15 12:35:44
+Directory : /Users/user/Desktop/Struct
+Total : 116 files,  26629 codes, 409 comments, 1821 blanks, all 28859 lines
+
+Languages
++--------------------+------------+------------+------------+------------+------------+
+| language           | files      | code       | comment    | blank      | total      |
++--------------------+------------+------------+------------+------------+------------+
+| JSON               |          7 |     14,820 |          0 |          7 |     14,827 |
+| TypeScript         |         38 |      4,238 |         69 |        582 |      4,889 |
+| vue                |         23 |      4,003 |         20 |        379 |      4,402 |
+| MS SQL             |         17 |      1,593 |        102 |        283 |      1,978 |
+| JavaScript         |         13 |      1,079 |        178 |        200 |      1,457 |
+| Markdown           |          9 |        702 |          0 |        330 |      1,032 |
+| C++                |          1 |        103 |         38 |         26 |        167 |
+| PostCSS            |          1 |         68 |          1 |         13 |         82 |
+| JSON with Comments |          1 |         17 |          1 |          1 |         19 |
+| XML                |          6 |          6 |          0 |          0 |          6 |
++--------------------+------------+------------+------------+------------+------------+
+
+Directories
++----------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                   | files      | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                      |        116 |     26,629 |        409 |      1,821 |     28,859 |
+| . (Files)                                                                              |         10 |      2,012 |         51 |        175 |      2,238 |
+| .agents                                                                                |          7 |        335 |          0 |        192 |        527 |
+| .agents/skills                                                                         |          7 |        335 |          0 |        192 |        527 |
+| .agents/skills/stripe-best-practices                                                   |          7 |        335 |          0 |        192 |        527 |
+| .agents/skills/stripe-best-practices (Files)                                           |          1 |         36 |          0 |         13 |         49 |
+| .agents/skills/stripe-best-practices/references                                        |          6 |        299 |          0 |        179 |        478 |
+| supabase                                                                               |         17 |      1,593 |        102 |        283 |      1,978 |
+| supabase/migrations                                                                    |         17 |      1,593 |        102 |        283 |      1,978 |
+| tcp-server                                                                             |         14 |      1,475 |        165 |        183 |      1,823 |
+| web                                                                                    |         68 |     21,214 |         91 |        988 |     22,293 |
+| web (Files)                                                                            |          7 |     13,008 |          2 |         29 |     13,039 |
+| web/app                                                                                |         38 |      6,201 |         53 |        652 |      6,906 |
+| web/app (Files)                                                                        |          1 |          5 |          0 |          1 |          6 |
+| web/app/assets                                                                         |          1 |         68 |          1 |         13 |         82 |
+| web/app/assets/css                                                                     |          1 |         68 |          1 |         13 |         82 |
+| web/app/components                                                                     |          8 |      1,035 |          1 |        116 |      1,152 |
+| web/app/composables                                                                    |         10 |      1,461 |         27 |        212 |      1,700 |
+| web/app/layouts                                                                        |          2 |        181 |          0 |         14 |        195 |
+| web/app/middleware                                                                     |          1 |         17 |          2 |          5 |         24 |
+| web/app/pages                                                                          |         12 |      2,782 |         19 |        248 |      3,049 |
+| web/app/pages (Files)                                                                  |          4 |      1,003 |          8 |         98 |      1,109 |
+| web/app/pages/dashboard                                                                |          8 |      1,779 |         11 |        150 |      1,940 |
+| web/app/types                                                                          |          2 |        534 |          3 |         28 |        565 |
+| web/app/utils                                                                          |          1 |        118 |          0 |         15 |        133 |
+| web/public                                                                             |          2 |          2 |          0 |          0 |          2 |
+| web/server                                                                             |         19 |      1,617 |         35 |        253 |      1,905 |
+| web/server/api                                                                         |         10 |      1,019 |         17 |        161 |      1,197 |
+| web/server/api/devices                                                                 |          5 |        440 |          0 |         74 |        514 |
+| web/server/api/devices (Files)                                                         |          2 |        135 |          0 |         28 |        163 |
+| web/server/api/devices/[id]                                                            |          1 |         28 |          0 |          7 |         35 |
+| web/server/api/devices/bulk                                                            |          2 |        277 |          0 |         39 |        316 |
+| web/server/api/stripe                                                                  |          5 |        579 |         17 |         87 |        683 |
+| web/server/utils                                                                       |          9 |        598 |         18 |         92 |        708 |
+| web/shared                                                                             |          2 |        386 |          1 |         54 |        441 |
++----------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++----------------------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+
+| filename                                                                               | language           | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+
+| /Users/user/Desktop/Struct/.agents/skills/stripe-best-practices/SKILL.md               | Markdown           |         36 |          0 |         13 |         49 |
+| /Users/user/Desktop/Struct/.agents/skills/stripe-best-practices/references/billing.md  | Markdown           |         41 |          0 |         18 |         59 |
+| /Users/user/Desktop/Struct/.agents/skills/stripe-best-practices/references/connect.md  | Markdown           |        113 |          0 |         61 |        174 |
+| /Users/user/Desktop/Struct/.agents/skills/stripe-best-practices/references/payments.md | Markdown           |         50 |          0 |         30 |         80 |
+| /Users/user/Desktop/Struct/.agents/skills/stripe-best-practices/references/security.md | Markdown           |         64 |          0 |         46 |        110 |
+| /Users/user/Desktop/Struct/.agents/skills/stripe-best-practices/references/tax.md      | Markdown           |         22 |          0 |         16 |         38 |
+| /Users/user/Desktop/Struct/.agents/skills/stripe-best-practices/references/treasury.md | Markdown           |          9 |          0 |          8 |         17 |
+| /Users/user/Desktop/Struct/README.md                                                   | Markdown           |        338 |          0 |        127 |        465 |
+| /Users/user/Desktop/Struct/dummy-device.js                                             | JavaScript         |        130 |         13 |         19 |        162 |
+| /Users/user/Desktop/Struct/hero shot.svg                                               | XML                |          1 |          0 |          0 |          1 |
+| /Users/user/Desktop/Struct/logo 5.svg                                                  | XML                |          1 |          0 |          0 |          1 |
+| /Users/user/Desktop/Struct/package-lock.json                                           | JSON               |      1,407 |          0 |          1 |      1,408 |
+| /Users/user/Desktop/Struct/package.json                                                | JSON               |         20 |          0 |          1 |         21 |
+| /Users/user/Desktop/Struct/skills-lock.json                                            | JSON               |         10 |          0 |          1 |         11 |
+| /Users/user/Desktop/Struct/struct logo 2.svg                                           | XML                |          1 |          0 |          0 |          1 |
+| /Users/user/Desktop/Struct/struct logo 4.svg                                           | XML                |          1 |          0 |          0 |          1 |
+| /Users/user/Desktop/Struct/supabase/migrations/001_init.sql                            | MS SQL             |        113 |         12 |         23 |        148 |
+| /Users/user/Desktop/Struct/supabase/migrations/002_fix_devices_rls.sql                 | MS SQL             |         70 |          7 |         15 |         92 |
+| /Users/user/Desktop/Struct/supabase/migrations/003_saas_features.sql                   | MS SQL             |         79 |          8 |         23 |        110 |
+| /Users/user/Desktop/Struct/supabase/migrations/004_schema_versioning.sql               | MS SQL             |         66 |          6 |         13 |         85 |
+| /Users/user/Desktop/Struct/supabase/migrations/005_organizations_rbac.sql              | MS SQL             |        357 |         26 |         63 |        446 |
+| /Users/user/Desktop/Struct/supabase/migrations/006_org_member_rpcs.sql                 | MS SQL             |        144 |          3 |         21 |        168 |
+| /Users/user/Desktop/Struct/supabase/migrations/007_fix_org_create_rls.sql              | MS SQL             |         39 |          5 |          9 |         53 |
+| /Users/user/Desktop/Struct/supabase/migrations/008_leave_organization.sql              | MS SQL             |         38 |          2 |          8 |         48 |
+| /Users/user/Desktop/Struct/supabase/migrations/009_remove_member_owner_only.sql        | MS SQL             |         44 |          4 |          7 |         55 |
+| /Users/user/Desktop/Struct/supabase/migrations/010_destination_routing_rules.sql       | MS SQL             |          4 |          2 |          2 |          8 |
+| /Users/user/Desktop/Struct/supabase/migrations/011_audit_logs.sql                      | MS SQL             |        128 |          6 |         21 |        155 |
+| /Users/user/Desktop/Struct/supabase/migrations/012_stripe_billing.sql                  | MS SQL             |         57 |          3 |         11 |         71 |
+| /Users/user/Desktop/Struct/supabase/migrations/013_rename_studio_to_scale.sql          | MS SQL             |         32 |          1 |          3 |         36 |
+| /Users/user/Desktop/Struct/supabase/migrations/014_subscription_entitlements.sql       | MS SQL             |        137 |          3 |         19 |        159 |
+| /Users/user/Desktop/Struct/supabase/migrations/015_telemetry_retention.sql             | MS SQL             |         65 |          5 |         10 |         80 |
+| /Users/user/Desktop/Struct/supabase/migrations/016_bulk_device_upload.sql              | MS SQL             |        195 |          8 |         27 |        230 |
+| /Users/user/Desktop/Struct/supabase/migrations/017_settings_webhook_security.sql       | MS SQL             |         25 |          1 |          8 |         34 |
+| /Users/user/Desktop/Struct/tcp-server/crypto.js                                        | JavaScript         |         58 |         23 |         11 |         92 |
+| /Users/user/Desktop/Struct/tcp-server/downlinks.js                                     | JavaScript         |         54 |         14 |         10 |         78 |
+| /Users/user/Desktop/Struct/tcp-server/package-lock.json                                | JSON               |        505 |          0 |          1 |        506 |
+| /Users/user/Desktop/Struct/tcp-server/package.json                                     | JSON               |         21 |          0 |          1 |         22 |
+| /Users/user/Desktop/Struct/tcp-server/parser.js                                        | JavaScript         |         91 |         12 |         16 |        119 |
+| /Users/user/Desktop/Struct/tcp-server/rateLimit.js                                     | JavaScript         |         80 |         23 |         17 |        120 |
+| /Users/user/Desktop/Struct/tcp-server/replay.js                                        | JavaScript         |         54 |         30 |         14 |         98 |
+| /Users/user/Desktop/Struct/tcp-server/server.js                                        | JavaScript         |        311 |         25 |         54 |        390 |
+| /Users/user/Desktop/Struct/tcp-server/test-crypto.js                                   | JavaScript         |         24 |          4 |          8 |         36 |
+| /Users/user/Desktop/Struct/tcp-server/test-parser.js                                   | JavaScript         |         17 |          5 |          7 |         29 |
+| /Users/user/Desktop/Struct/tcp-server/test-rateLimit.js                                | JavaScript         |         30 |          4 |         10 |         44 |
+| /Users/user/Desktop/Struct/tcp-server/test-replay.js                                   | JavaScript         |         28 |          4 |          9 |         41 |
+| /Users/user/Desktop/Struct/tcp-server/test-webhooks.js                                 | JavaScript         |         43 |          4 |          5 |         52 |
+| /Users/user/Desktop/Struct/tcp-server/webhooks.js                                      | JavaScript         |        159 |         17 |         20 |        196 |
+| /Users/user/Desktop/Struct/test_device.cpp                                             | C++                |        103 |         38 |         26 |        167 |
+| /Users/user/Desktop/Struct/web/README.md                                               | Markdown           |         29 |          0 |         11 |         40 |
+| /Users/user/Desktop/Struct/web/app/app.vue                                             | vue                |          5 |          0 |          1 |          6 |
+| /Users/user/Desktop/Struct/web/app/assets/css/main.css                                 | PostCSS            |         68 |          1 |         13 |         82 |
+| /Users/user/Desktop/Struct/web/app/components/AppSidebar.vue                           | vue                |         73 |          0 |          8 |         81 |
+| /Users/user/Desktop/Struct/web/app/components/BulkDeviceUpload.vue                     | vue                |        258 |          0 |         20 |        278 |
+| /Users/user/Desktop/Struct/web/app/components/DeviceList.vue                           | vue                |         46 |          0 |          8 |         54 |
+| /Users/user/Desktop/Struct/web/app/components/LiveDebugger.vue                         | vue                |        123 |          0 |         18 |        141 |
+| /Users/user/Desktop/Struct/web/app/components/SchemaBuilder.vue                        | vue                |        383 |          1 |         42 |        426 |
+| /Users/user/Desktop/Struct/web/app/components/StatusDot.vue                            | vue                |         10 |          0 |          2 |         12 |
+| /Users/user/Desktop/Struct/web/app/components/StructLogo.vue                           | vue                |         33 |          0 |          5 |         38 |
+| /Users/user/Desktop/Struct/web/app/components/TelemetryChart.vue                       | vue                |        109 |          0 |         13 |        122 |
+| /Users/user/Desktop/Struct/web/app/composables/useAuditLogs.ts                         | TypeScript         |         42 |          0 |          9 |         51 |
+| /Users/user/Desktop/Struct/web/app/composables/useBilling.ts                           | TypeScript         |        109 |          1 |         13 |        123 |
+| /Users/user/Desktop/Struct/web/app/composables/useBinaryParser.ts                      | TypeScript         |         91 |          0 |         14 |        105 |
+| /Users/user/Desktop/Struct/web/app/composables/useCppHeader.ts                         | TypeScript         |        118 |          3 |         12 |        133 |
+| /Users/user/Desktop/Struct/web/app/composables/useDestinations.ts                      | TypeScript         |        134 |          0 |         19 |        153 |
+| /Users/user/Desktop/Struct/web/app/composables/useDevices.ts                           | TypeScript         |        426 |          0 |         58 |        484 |
+| /Users/user/Desktop/Struct/web/app/composables/useDownlinks.ts                         | TypeScript         |        109 |         11 |         18 |        138 |
+| /Users/user/Desktop/Struct/web/app/composables/useEntitlements.ts                      | TypeScript         |         51 |          0 |         10 |         61 |
+| /Users/user/Desktop/Struct/web/app/composables/useOrganization.ts                      | TypeScript         |        327 |         12 |         50 |        389 |
+| /Users/user/Desktop/Struct/web/app/composables/useTelemetry.ts                         | TypeScript         |         54 |          0 |          9 |         63 |
+| /Users/user/Desktop/Struct/web/app/layouts/auth.vue                                    | vue                |         13 |          0 |          1 |         14 |
+| /Users/user/Desktop/Struct/web/app/layouts/default.vue                                 | vue                |        168 |          0 |         13 |        181 |
+| /Users/user/Desktop/Struct/web/app/middleware/auth.global.ts                           | TypeScript         |         17 |          2 |          5 |         24 |
+| /Users/user/Desktop/Struct/web/app/pages/confirm.vue                                   | vue                |         11 |          0 |          3 |         14 |
+| /Users/user/Desktop/Struct/web/app/pages/dashboard/audit-logs.vue                      | vue                |        106 |          0 |         17 |        123 |
+| /Users/user/Desktop/Struct/web/app/pages/dashboard/debugger.vue                        | vue                |          9 |          0 |          2 |         11 |
+| /Users/user/Desktop/Struct/web/app/pages/dashboard/destinations.vue                    | vue                |        352 |          0 |         23 |        375 |
+| /Users/user/Desktop/Struct/web/app/pages/dashboard/devices.vue                         | vue                |        336 |          2 |         28 |        366 |
+| /Users/user/Desktop/Struct/web/app/pages/dashboard/index.vue                           | vue                |         83 |          0 |         12 |         95 |
+| /Users/user/Desktop/Struct/web/app/pages/dashboard/organization.vue                    | vue                |        350 |          5 |         27 |        382 |
+| /Users/user/Desktop/Struct/web/app/pages/dashboard/schema.vue                          | vue                |         29 |          0 |          4 |         33 |
+| /Users/user/Desktop/Struct/web/app/pages/dashboard/settings.vue                        | vue                |        514 |          4 |         37 |        555 |
+| /Users/user/Desktop/Struct/web/app/pages/index.vue                                     | vue                |        784 |          8 |         75 |        867 |
+| /Users/user/Desktop/Struct/web/app/pages/login.vue                                     | vue                |        113 |          0 |         11 |        124 |
+| /Users/user/Desktop/Struct/web/app/pages/signup.vue                                    | vue                |         95 |          0 |          9 |        104 |
+| /Users/user/Desktop/Struct/web/app/types/database.types.ts                             | TypeScript         |        384 |          0 |          3 |        387 |
+| /Users/user/Desktop/Struct/web/app/types/index.ts                                      | TypeScript         |        150 |          3 |         25 |        178 |
+| /Users/user/Desktop/Struct/web/app/utils/parseBulkUpload.ts                            | TypeScript         |        118 |          0 |         15 |        133 |
+| /Users/user/Desktop/Struct/web/nuxt.config.ts                                          | TypeScript         |         64 |          1 |         11 |         76 |
+| /Users/user/Desktop/Struct/web/package-lock.json                                       | JSON               |     12,825 |          0 |          1 |     12,826 |
+| /Users/user/Desktop/Struct/web/package.json                                            | JSON               |         32 |          0 |          1 |         33 |
+| /Users/user/Desktop/Struct/web/public/hero-shot.svg                                    | XML                |          1 |          0 |          0 |          1 |
+| /Users/user/Desktop/Struct/web/public/struct-logo.svg                                  | XML                |          1 |          0 |          0 |          1 |
+| /Users/user/Desktop/Struct/web/server/api/devices/[id].delete.ts                       | TypeScript         |         66 |          0 |         16 |         82 |
+| /Users/user/Desktop/Struct/web/server/api/devices/[id]/key.post.ts                     | TypeScript         |         28 |          0 |          7 |         35 |
+| /Users/user/Desktop/Struct/web/server/api/devices/bulk/index.post.ts                   | TypeScript         |        196 |          0 |         30 |        226 |
+| /Users/user/Desktop/Struct/web/server/api/devices/bulk/preview.post.ts                 | TypeScript         |         81 |          0 |          9 |         90 |
+| /Users/user/Desktop/Struct/web/server/api/devices/index.post.ts                        | TypeScript         |         69 |          0 |         12 |         81 |
+| /Users/user/Desktop/Struct/web/server/api/stripe/checkout.post.ts                      | TypeScript         |        169 |          6 |         20 |        195 |
+| /Users/user/Desktop/Struct/web/server/api/stripe/portal.post.ts                        | TypeScript         |         69 |          1 |         11 |         81 |
+| /Users/user/Desktop/Struct/web/server/api/stripe/sync-checkout.post.ts                 | TypeScript         |        101 |          1 |         19 |        121 |
+| /Users/user/Desktop/Struct/web/server/api/stripe/sync.post.ts                          | TypeScript         |         81 |          7 |         13 |        101 |
+| /Users/user/Desktop/Struct/web/server/api/stripe/webhook.post.ts                       | TypeScript         |        159 |          2 |         24 |        185 |
+| /Users/user/Desktop/Struct/web/server/utils/auth.ts                                    | TypeScript         |         28 |          0 |          7 |         35 |
+| /Users/user/Desktop/Struct/web/server/utils/billing.ts                                 | TypeScript         |         43 |          2 |          9 |         54 |
+| /Users/user/Desktop/Struct/web/server/utils/bulkDevices.ts                             | TypeScript         |         95 |          0 |         13 |        108 |
+| /Users/user/Desktop/Struct/web/server/utils/deviceCapacity.test.ts                     | TypeScript         |         51 |          2 |          6 |         59 |
+| /Users/user/Desktop/Struct/web/server/utils/deviceCapacity.ts                          | TypeScript         |        159 |          1 |         21 |        181 |
+| /Users/user/Desktop/Struct/web/server/utils/organizations.ts                           | TypeScript         |         34 |          0 |          7 |         41 |
+| /Users/user/Desktop/Struct/web/server/utils/portal.ts                                  | TypeScript         |         67 |          4 |         10 |         81 |
+| /Users/user/Desktop/Struct/web/server/utils/stripe.ts                                  | TypeScript         |         11 |          0 |          3 |         14 |
+| /Users/user/Desktop/Struct/web/server/utils/syncStripeSubscription.ts                  | TypeScript         |        110 |          9 |         16 |        135 |
+| /Users/user/Desktop/Struct/web/shared/bulkUpload.test.ts                               | TypeScript         |        122 |          0 |         13 |        135 |
+| /Users/user/Desktop/Struct/web/shared/bulkUpload.ts                                    | TypeScript         |        264 |          1 |         41 |        306 |
+| /Users/user/Desktop/Struct/web/tailwind.config.ts                                      | TypeScript         |         28 |          0 |          2 |         30 |
+| /Users/user/Desktop/Struct/web/tsconfig.json                                           | JSON with Comments |         17 |          1 |          1 |         19 |
+| /Users/user/Desktop/Struct/web/vitest.config.ts                                        | TypeScript         |         13 |          0 |          2 |         15 |
+| Total                                                                                  |                    |     26,629 |        409 |      1,821 |     28,859 |
++----------------------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+

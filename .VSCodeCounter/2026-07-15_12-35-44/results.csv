@@ -1,0 +1,118 @@
+"filename", "language", "JSON", "Markdown", "MS SQL", "JavaScript", "XML", "TypeScript", "JSON with Comments", "C++", "vue", "PostCSS", "comment", "blank", "total"
+"/Users/user/Desktop/Struct/.agents/skills/stripe-best-practices/SKILL.md", "Markdown", 0, 36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 49
+"/Users/user/Desktop/Struct/.agents/skills/stripe-best-practices/references/billing.md", "Markdown", 0, 41, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 59
+"/Users/user/Desktop/Struct/.agents/skills/stripe-best-practices/references/connect.md", "Markdown", 0, 113, 0, 0, 0, 0, 0, 0, 0, 0, 0, 61, 174
+"/Users/user/Desktop/Struct/.agents/skills/stripe-best-practices/references/payments.md", "Markdown", 0, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 30, 80
+"/Users/user/Desktop/Struct/.agents/skills/stripe-best-practices/references/security.md", "Markdown", 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 46, 110
+"/Users/user/Desktop/Struct/.agents/skills/stripe-best-practices/references/tax.md", "Markdown", 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 38
+"/Users/user/Desktop/Struct/.agents/skills/stripe-best-practices/references/treasury.md", "Markdown", 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 17
+"/Users/user/Desktop/Struct/README.md", "Markdown", 0, 338, 0, 0, 0, 0, 0, 0, 0, 0, 0, 127, 465
+"/Users/user/Desktop/Struct/dummy-device.js", "JavaScript", 0, 0, 0, 130, 0, 0, 0, 0, 0, 0, 13, 19, 162
+"/Users/user/Desktop/Struct/hero shot.svg", "XML", 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1
+"/Users/user/Desktop/Struct/logo 5.svg", "XML", 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1
+"/Users/user/Desktop/Struct/package-lock.json", "JSON", 1407, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1408
+"/Users/user/Desktop/Struct/package.json", "JSON", 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 21
+"/Users/user/Desktop/Struct/skills-lock.json", "JSON", 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 11
+"/Users/user/Desktop/Struct/struct logo 2.svg", "XML", 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1
+"/Users/user/Desktop/Struct/struct logo 4.svg", "XML", 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1
+"/Users/user/Desktop/Struct/supabase/migrations/001_init.sql", "MS SQL", 0, 0, 113, 0, 0, 0, 0, 0, 0, 0, 12, 23, 148
+"/Users/user/Desktop/Struct/supabase/migrations/002_fix_devices_rls.sql", "MS SQL", 0, 0, 70, 0, 0, 0, 0, 0, 0, 0, 7, 15, 92
+"/Users/user/Desktop/Struct/supabase/migrations/003_saas_features.sql", "MS SQL", 0, 0, 79, 0, 0, 0, 0, 0, 0, 0, 8, 23, 110
+"/Users/user/Desktop/Struct/supabase/migrations/004_schema_versioning.sql", "MS SQL", 0, 0, 66, 0, 0, 0, 0, 0, 0, 0, 6, 13, 85
+"/Users/user/Desktop/Struct/supabase/migrations/005_organizations_rbac.sql", "MS SQL", 0, 0, 357, 0, 0, 0, 0, 0, 0, 0, 26, 63, 446
+"/Users/user/Desktop/Struct/supabase/migrations/006_org_member_rpcs.sql", "MS SQL", 0, 0, 144, 0, 0, 0, 0, 0, 0, 0, 3, 21, 168
+"/Users/user/Desktop/Struct/supabase/migrations/007_fix_org_create_rls.sql", "MS SQL", 0, 0, 39, 0, 0, 0, 0, 0, 0, 0, 5, 9, 53
+"/Users/user/Desktop/Struct/supabase/migrations/008_leave_organization.sql", "MS SQL", 0, 0, 38, 0, 0, 0, 0, 0, 0, 0, 2, 8, 48
+"/Users/user/Desktop/Struct/supabase/migrations/009_remove_member_owner_only.sql", "MS SQL", 0, 0, 44, 0, 0, 0, 0, 0, 0, 0, 4, 7, 55
+"/Users/user/Desktop/Struct/supabase/migrations/010_destination_routing_rules.sql", "MS SQL", 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 2, 2, 8
+"/Users/user/Desktop/Struct/supabase/migrations/011_audit_logs.sql", "MS SQL", 0, 0, 128, 0, 0, 0, 0, 0, 0, 0, 6, 21, 155
+"/Users/user/Desktop/Struct/supabase/migrations/012_stripe_billing.sql", "MS SQL", 0, 0, 57, 0, 0, 0, 0, 0, 0, 0, 3, 11, 71
+"/Users/user/Desktop/Struct/supabase/migrations/013_rename_studio_to_scale.sql", "MS SQL", 0, 0, 32, 0, 0, 0, 0, 0, 0, 0, 1, 3, 36
+"/Users/user/Desktop/Struct/supabase/migrations/014_subscription_entitlements.sql", "MS SQL", 0, 0, 137, 0, 0, 0, 0, 0, 0, 0, 3, 19, 159
+"/Users/user/Desktop/Struct/supabase/migrations/015_telemetry_retention.sql", "MS SQL", 0, 0, 65, 0, 0, 0, 0, 0, 0, 0, 5, 10, 80
+"/Users/user/Desktop/Struct/supabase/migrations/016_bulk_device_upload.sql", "MS SQL", 0, 0, 195, 0, 0, 0, 0, 0, 0, 0, 8, 27, 230
+"/Users/user/Desktop/Struct/supabase/migrations/017_settings_webhook_security.sql", "MS SQL", 0, 0, 25, 0, 0, 0, 0, 0, 0, 0, 1, 8, 34
+"/Users/user/Desktop/Struct/tcp-server/crypto.js", "JavaScript", 0, 0, 0, 58, 0, 0, 0, 0, 0, 0, 23, 11, 92
+"/Users/user/Desktop/Struct/tcp-server/downlinks.js", "JavaScript", 0, 0, 0, 54, 0, 0, 0, 0, 0, 0, 14, 10, 78
+"/Users/user/Desktop/Struct/tcp-server/package-lock.json", "JSON", 505, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 506
+"/Users/user/Desktop/Struct/tcp-server/package.json", "JSON", 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 22
+"/Users/user/Desktop/Struct/tcp-server/parser.js", "JavaScript", 0, 0, 0, 91, 0, 0, 0, 0, 0, 0, 12, 16, 119
+"/Users/user/Desktop/Struct/tcp-server/rateLimit.js", "JavaScript", 0, 0, 0, 80, 0, 0, 0, 0, 0, 0, 23, 17, 120
+"/Users/user/Desktop/Struct/tcp-server/replay.js", "JavaScript", 0, 0, 0, 54, 0, 0, 0, 0, 0, 0, 30, 14, 98
+"/Users/user/Desktop/Struct/tcp-server/server.js", "JavaScript", 0, 0, 0, 311, 0, 0, 0, 0, 0, 0, 25, 54, 390
+"/Users/user/Desktop/Struct/tcp-server/test-crypto.js", "JavaScript", 0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 4, 8, 36
+"/Users/user/Desktop/Struct/tcp-server/test-parser.js", "JavaScript", 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 5, 7, 29
+"/Users/user/Desktop/Struct/tcp-server/test-rateLimit.js", "JavaScript", 0, 0, 0, 30, 0, 0, 0, 0, 0, 0, 4, 10, 44
+"/Users/user/Desktop/Struct/tcp-server/test-replay.js", "JavaScript", 0, 0, 0, 28, 0, 0, 0, 0, 0, 0, 4, 9, 41
+"/Users/user/Desktop/Struct/tcp-server/test-webhooks.js", "JavaScript", 0, 0, 0, 43, 0, 0, 0, 0, 0, 0, 4, 5, 52
+"/Users/user/Desktop/Struct/tcp-server/webhooks.js", "JavaScript", 0, 0, 0, 159, 0, 0, 0, 0, 0, 0, 17, 20, 196
+"/Users/user/Desktop/Struct/test_device.cpp", "C++", 0, 0, 0, 0, 0, 0, 0, 103, 0, 0, 38, 26, 167
+"/Users/user/Desktop/Struct/web/README.md", "Markdown", 0, 29, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 40
+"/Users/user/Desktop/Struct/web/app/app.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 1, 6
+"/Users/user/Desktop/Struct/web/app/assets/css/main.css", "PostCSS", 0, 0, 0, 0, 0, 0, 0, 0, 0, 68, 1, 13, 82
+"/Users/user/Desktop/Struct/web/app/components/AppSidebar.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 73, 0, 0, 8, 81
+"/Users/user/Desktop/Struct/web/app/components/BulkDeviceUpload.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 258, 0, 0, 20, 278
+"/Users/user/Desktop/Struct/web/app/components/DeviceList.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 46, 0, 0, 8, 54
+"/Users/user/Desktop/Struct/web/app/components/LiveDebugger.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 123, 0, 0, 18, 141
+"/Users/user/Desktop/Struct/web/app/components/SchemaBuilder.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 383, 0, 1, 42, 426
+"/Users/user/Desktop/Struct/web/app/components/StatusDot.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 2, 12
+"/Users/user/Desktop/Struct/web/app/components/StructLogo.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 33, 0, 0, 5, 38
+"/Users/user/Desktop/Struct/web/app/components/TelemetryChart.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 109, 0, 0, 13, 122
+"/Users/user/Desktop/Struct/web/app/composables/useAuditLogs.ts", "TypeScript", 0, 0, 0, 0, 0, 42, 0, 0, 0, 0, 0, 9, 51
+"/Users/user/Desktop/Struct/web/app/composables/useBilling.ts", "TypeScript", 0, 0, 0, 0, 0, 109, 0, 0, 0, 0, 1, 13, 123
+"/Users/user/Desktop/Struct/web/app/composables/useBinaryParser.ts", "TypeScript", 0, 0, 0, 0, 0, 91, 0, 0, 0, 0, 0, 14, 105
+"/Users/user/Desktop/Struct/web/app/composables/useCppHeader.ts", "TypeScript", 0, 0, 0, 0, 0, 118, 0, 0, 0, 0, 3, 12, 133
+"/Users/user/Desktop/Struct/web/app/composables/useDestinations.ts", "TypeScript", 0, 0, 0, 0, 0, 134, 0, 0, 0, 0, 0, 19, 153
+"/Users/user/Desktop/Struct/web/app/composables/useDevices.ts", "TypeScript", 0, 0, 0, 0, 0, 426, 0, 0, 0, 0, 0, 58, 484
+"/Users/user/Desktop/Struct/web/app/composables/useDownlinks.ts", "TypeScript", 0, 0, 0, 0, 0, 109, 0, 0, 0, 0, 11, 18, 138
+"/Users/user/Desktop/Struct/web/app/composables/useEntitlements.ts", "TypeScript", 0, 0, 0, 0, 0, 51, 0, 0, 0, 0, 0, 10, 61
+"/Users/user/Desktop/Struct/web/app/composables/useOrganization.ts", "TypeScript", 0, 0, 0, 0, 0, 327, 0, 0, 0, 0, 12, 50, 389
+"/Users/user/Desktop/Struct/web/app/composables/useTelemetry.ts", "TypeScript", 0, 0, 0, 0, 0, 54, 0, 0, 0, 0, 0, 9, 63
+"/Users/user/Desktop/Struct/web/app/layouts/auth.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 13, 0, 0, 1, 14
+"/Users/user/Desktop/Struct/web/app/layouts/default.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 168, 0, 0, 13, 181
+"/Users/user/Desktop/Struct/web/app/middleware/auth.global.ts", "TypeScript", 0, 0, 0, 0, 0, 17, 0, 0, 0, 0, 2, 5, 24
+"/Users/user/Desktop/Struct/web/app/pages/confirm.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 11, 0, 0, 3, 14
+"/Users/user/Desktop/Struct/web/app/pages/dashboard/audit-logs.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 106, 0, 0, 17, 123
+"/Users/user/Desktop/Struct/web/app/pages/dashboard/debugger.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 2, 11
+"/Users/user/Desktop/Struct/web/app/pages/dashboard/destinations.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 352, 0, 0, 23, 375
+"/Users/user/Desktop/Struct/web/app/pages/dashboard/devices.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 336, 0, 2, 28, 366
+"/Users/user/Desktop/Struct/web/app/pages/dashboard/index.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 83, 0, 0, 12, 95
+"/Users/user/Desktop/Struct/web/app/pages/dashboard/organization.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 350, 0, 5, 27, 382
+"/Users/user/Desktop/Struct/web/app/pages/dashboard/schema.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 29, 0, 0, 4, 33
+"/Users/user/Desktop/Struct/web/app/pages/dashboard/settings.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 514, 0, 4, 37, 555
+"/Users/user/Desktop/Struct/web/app/pages/index.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 784, 0, 8, 75, 867
+"/Users/user/Desktop/Struct/web/app/pages/login.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 113, 0, 0, 11, 124
+"/Users/user/Desktop/Struct/web/app/pages/signup.vue", "vue", 0, 0, 0, 0, 0, 0, 0, 0, 95, 0, 0, 9, 104
+"/Users/user/Desktop/Struct/web/app/types/database.types.ts", "TypeScript", 0, 0, 0, 0, 0, 384, 0, 0, 0, 0, 0, 3, 387
+"/Users/user/Desktop/Struct/web/app/types/index.ts", "TypeScript", 0, 0, 0, 0, 0, 150, 0, 0, 0, 0, 3, 25, 178
+"/Users/user/Desktop/Struct/web/app/utils/parseBulkUpload.ts", "TypeScript", 0, 0, 0, 0, 0, 118, 0, 0, 0, 0, 0, 15, 133
+"/Users/user/Desktop/Struct/web/nuxt.config.ts", "TypeScript", 0, 0, 0, 0, 0, 64, 0, 0, 0, 0, 1, 11, 76
+"/Users/user/Desktop/Struct/web/package-lock.json", "JSON", 12825, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 12826
+"/Users/user/Desktop/Struct/web/package.json", "JSON", 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 33
+"/Users/user/Desktop/Struct/web/public/hero-shot.svg", "XML", 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1
+"/Users/user/Desktop/Struct/web/public/struct-logo.svg", "XML", 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1
+"/Users/user/Desktop/Struct/web/server/api/devices/[id].delete.ts", "TypeScript", 0, 0, 0, 0, 0, 66, 0, 0, 0, 0, 0, 16, 82
+"/Users/user/Desktop/Struct/web/server/api/devices/[id]/key.post.ts", "TypeScript", 0, 0, 0, 0, 0, 28, 0, 0, 0, 0, 0, 7, 35
+"/Users/user/Desktop/Struct/web/server/api/devices/bulk/index.post.ts", "TypeScript", 0, 0, 0, 0, 0, 196, 0, 0, 0, 0, 0, 30, 226
+"/Users/user/Desktop/Struct/web/server/api/devices/bulk/preview.post.ts", "TypeScript", 0, 0, 0, 0, 0, 81, 0, 0, 0, 0, 0, 9, 90
+"/Users/user/Desktop/Struct/web/server/api/devices/index.post.ts", "TypeScript", 0, 0, 0, 0, 0, 69, 0, 0, 0, 0, 0, 12, 81
+"/Users/user/Desktop/Struct/web/server/api/stripe/checkout.post.ts", "TypeScript", 0, 0, 0, 0, 0, 169, 0, 0, 0, 0, 6, 20, 195
+"/Users/user/Desktop/Struct/web/server/api/stripe/portal.post.ts", "TypeScript", 0, 0, 0, 0, 0, 69, 0, 0, 0, 0, 1, 11, 81
+"/Users/user/Desktop/Struct/web/server/api/stripe/sync-checkout.post.ts", "TypeScript", 0, 0, 0, 0, 0, 101, 0, 0, 0, 0, 1, 19, 121
+"/Users/user/Desktop/Struct/web/server/api/stripe/sync.post.ts", "TypeScript", 0, 0, 0, 0, 0, 81, 0, 0, 0, 0, 7, 13, 101
+"/Users/user/Desktop/Struct/web/server/api/stripe/webhook.post.ts", "TypeScript", 0, 0, 0, 0, 0, 159, 0, 0, 0, 0, 2, 24, 185
+"/Users/user/Desktop/Struct/web/server/utils/auth.ts", "TypeScript", 0, 0, 0, 0, 0, 28, 0, 0, 0, 0, 0, 7, 35
+"/Users/user/Desktop/Struct/web/server/utils/billing.ts", "TypeScript", 0, 0, 0, 0, 0, 43, 0, 0, 0, 0, 2, 9, 54
+"/Users/user/Desktop/Struct/web/server/utils/bulkDevices.ts", "TypeScript", 0, 0, 0, 0, 0, 95, 0, 0, 0, 0, 0, 13, 108
+"/Users/user/Desktop/Struct/web/server/utils/deviceCapacity.test.ts", "TypeScript", 0, 0, 0, 0, 0, 51, 0, 0, 0, 0, 2, 6, 59
+"/Users/user/Desktop/Struct/web/server/utils/deviceCapacity.ts", "TypeScript", 0, 0, 0, 0, 0, 159, 0, 0, 0, 0, 1, 21, 181
+"/Users/user/Desktop/Struct/web/server/utils/organizations.ts", "TypeScript", 0, 0, 0, 0, 0, 34, 0, 0, 0, 0, 0, 7, 41
+"/Users/user/Desktop/Struct/web/server/utils/portal.ts", "TypeScript", 0, 0, 0, 0, 0, 67, 0, 0, 0, 0, 4, 10, 81
+"/Users/user/Desktop/Struct/web/server/utils/stripe.ts", "TypeScript", 0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 0, 3, 14
+"/Users/user/Desktop/Struct/web/server/utils/syncStripeSubscription.ts", "TypeScript", 0, 0, 0, 0, 0, 110, 0, 0, 0, 0, 9, 16, 135
+"/Users/user/Desktop/Struct/web/shared/bulkUpload.test.ts", "TypeScript", 0, 0, 0, 0, 0, 122, 0, 0, 0, 0, 0, 13, 135
+"/Users/user/Desktop/Struct/web/shared/bulkUpload.ts", "TypeScript", 0, 0, 0, 0, 0, 264, 0, 0, 0, 0, 1, 41, 306
+"/Users/user/Desktop/Struct/web/tailwind.config.ts", "TypeScript", 0, 0, 0, 0, 0, 28, 0, 0, 0, 0, 0, 2, 30
+"/Users/user/Desktop/Struct/web/tsconfig.json", "JSON with Comments", 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 1, 1, 19
+"/Users/user/Desktop/Struct/web/vitest.config.ts", "TypeScript", 0, 0, 0, 0, 0, 13, 0, 0, 0, 0, 0, 2, 15
+"Total", "-", 14820, 702, 1593, 1079, 6, 4238, 17, 103, 4003, 68, 409, 1821, 28859

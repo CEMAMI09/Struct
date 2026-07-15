@@ -30,12 +30,12 @@ Authenticated users are redirected away from login/signup to the dashboard. Unau
 | Navigation | Route | Current behavior |
 | --- | --- | --- |
 | Dashboard | `/dashboard` | Fleet overview, online/offline state, selected-device telemetry chart, packet count, and latest parsed packet; telemetry updates through Supabase Realtime |
-| Devices | `/dashboard/devices` | Create and delete devices, copy 16-character API keys, edit tags, search/filter the fleet, filter devices offline for an hour, and queue downlink commands |
+| Devices | `/dashboard/devices` | Create, bulk import, and delete devices; rotate or copy 16-character API keys; edit tags; search/filter the fleet; filter devices offline for an hour; and queue downlink commands |
 | Destinations | `/dashboard/destinations` | Create, enable, disable, scope, and delete HTTPS webhook destinations; destinations can target every device or one device |
 | Schema | `/dashboard/schema` | Build a packed per-device schema, see byte size and generated C++, publish immutable schema versions, download an ESP32/C++ header, and manage optional ChaCha20-Poly1305 encryption |
 | Debugger | `/dashboard/debugger` | Generate a client-side test frame from a device schema and inspect its raw hexadecimal wire representation and parsed JSON without sending TCP traffic |
 | Organization | `/dashboard/organization` | Rename, create, switch, leave, or delete workspaces; inspect members and manage owner/admin/viewer roles when the plan allows it |
-| Settings | `/dashboard/settings` | See the current plan and device allowance, start Stripe Checkout, open Stripe Customer Portal, change plan/quantity, update billing details, and cancel |
+| Settings | `/dashboard/settings` | Billing, API Keys, Webhooks, and Account tabs for viewing live Stripe capacity, opening the Customer Portal, rotating device credentials, configuring signed event webhooks, and managing account preferences |
 | Audit Log | `/dashboard/audit-logs` | Scale-only immutable history for device, schema, and destination inserts/updates/deletes, including previous/new state and actor |
 
 The dashboard is responsive, has a mobile navigation drawer, displays the active workspace/role, and treats viewers as read-only.
@@ -44,6 +44,7 @@ The dashboard is responsive, has a mobile navigation drawer, displays the active
 
 - Every device receives a random 16-character API key.
 - Device records belong to an organization.
+- Bulk imports accept CSV or XLSX files parsed in the browser. Imported devices require an organization-unique MAC address.
 - Tags are editable key/value metadata and are searchable from the Fleet page.
 - `last_seen` drives online/offline display and filtering.
 - Creating a device also creates its initial empty schema and schema-history entry.
@@ -51,6 +52,19 @@ The dashboard is responsive, has a mobile navigation drawer, displays the active
 - Schema changes publish a new version so old firmware can continue sending its original version byte.
 - Pro and Scale organizations can enable or rotate per-device ChaCha20-Poly1305 keys.
 - Pro and Scale organizations can queue `set_interval`, `reboot`, or custom hexadecimal downlinks.
+
+### Bulk device imports
+
+The Fleet page provides a downloadable CSV template and a drag-and-drop importer:
+
+1. CSV/XLSX parsing and row validation happen in the browser.
+2. The required columns are `Device Name`, `MAC Address`, and `Tags`.
+3. MAC addresses are normalized to 12 lowercase hexadecimal characters and must be unique within the organization.
+4. The preview endpoint checks conflicts and obtains a Stripe invoice preview when more paid capacity is required.
+5. The user explicitly confirms the estimated proration before the import proceeds.
+6. The server uses a short-lived, payload-bound quote, idempotent Stripe quantity update, and atomic Postgres RPC to create devices and their initial schemas.
+
+Imports are limited to 1,000 rows. If the database insert fails after Stripe capacity is raised, the server attempts to restore the previous Stripe quantity.
 
 ### Organizations and permissions
 
@@ -82,7 +96,7 @@ The values below reflect the current Settings UI. Stripe Price objects remain th
 | Scale | $249/month | 1,000 | 1,005 | Pro features, team RBAC, immutable audit logs, logical webhook routing | 30 days |
 | Enterprise | Contact sales | Custom | Custom | The UI advertises SAML SSO, dedicated L4 ingestion ports, and custom SLAs; these are sales-led offerings, not self-service features in this repository | Custom |
 
-The Settings UI also displays incremental rates of `$1.00`, `$0.50`, and `$0.20` per paid device/month for Flexible, Pro, and Scale respectively.
+The pricing UI displays incremental rates of `$1.00`, `$0.50`, and `$0.20` per paid device/month for Flexible, Pro, and Scale respectively.
 
 Entitlements are checked in the Vue UI and enforced in Postgres triggers/functions to prevent direct API bypass. When an organization loses Scale, existing destination routing rules are ignored and webhooks revert to unconditional delivery. Telemetry retention is enforced hourly through `pg_cron`.
 
@@ -98,7 +112,7 @@ Paid subscriptions use Stripe Checkout in `subscription` mode with one recurring
 - Checkout allows the customer to increase quantity above the floor.
 - Quantity means paid devices in addition to the five free devices.
 
-The Checkout success URL contains `{CHECKOUT_SESSION_ID}`. On return, the app retrieves that session server-side and synchronizes the organization immediately. This provides a local-development fallback when webhook delivery is unavailable.
+The Checkout success URL contains `{CHECKOUT_SESSION_ID}`. On return, the app retrieves that session server-side and synchronizes the organization immediately. This provides a local-development fallback when webhook delivery is unavailable. Existing paid subscriptions are updated in place when changing tiers so upgrades do not create a second subscription or discard paid quantity above the new tier's floor.
 
 ### Automatic scaling
 
@@ -110,7 +124,7 @@ Paid plans grow and shrink with active device count:
 
 ### Customer Portal
 
-**Manage billing** creates a Stripe Customer Portal session. Struct maintains a portal configuration that:
+**Manage in Stripe** creates a Stripe Customer Portal session. Struct maintains a portal configuration that:
 
 - allows payment method, billing address, email, and tax ID updates;
 - displays invoice history;
@@ -119,7 +133,7 @@ Paid plans grow and shrink with active device count:
 - allows quantity changes with the plan-specific minimums `5`, `150`, and `1000`;
 - applies prorations to subscription updates.
 
-Portal plan changes are mapped back to tiers using the current Stripe Price ID, while quantity and cancellation changes are synchronized by webhook.
+Portal plan changes are mapped back to tiers using the current Stripe Price ID, while quantity and cancellation changes are synchronized by webhook. The dashboard also pulls the live active subscription from Stripe on load, and the Billing tab provides a **Refresh** action. When legacy duplicate subscriptions exist, Struct keeps the active subscription with the highest billed quantity and cancels lower-quantity siblings.
 
 ### Webhooks
 
@@ -191,10 +205,11 @@ Basic destinations receive every parsed payload in scope. Scale can add one payl
 
 Missing keys and invalid rules fail closed. Numeric comparisons coerce both sides to numbers. A destination can apply to all devices in an organization or one selected device.
 
-Destination request example:
+Telemetry destination request example:
 
 ```json
 {
+  "type": "telemetry.received",
   "device_id": "00000000-0000-0000-0000-000000000000",
   "device_name": "ESP32 Chicago",
   "timestamp": "2026-07-14T18:00:00.000Z",
@@ -205,7 +220,15 @@ Destination request example:
 }
 ```
 
-Requests include `Content-Type: application/json`, `User-Agent: Struct-Gateway/0.1`, and `X-Struct-Destination`.
+Destinations can subscribe to `telemetry.received`, `device.connected`, and `device.disconnected`. Requests include `Content-Type: application/json`, `User-Agent: Struct-Gateway/0.1`, `X-Struct-Destination`, and `X-Struct-Event`.
+
+Every destination has a secret used to sign the exact serialized request body with HMAC-SHA256:
+
+```text
+X-Struct-Signature: sha256=<hex digest>
+```
+
+Receivers should compute the signature from the raw body and compare it with a timing-safe equality function before parsing JSON.
 
 ## Wire protocol
 
@@ -260,6 +283,7 @@ Packed type sizes: `float32=4`, `int32=4`, `uint8=1`, `boolean=1`.
 ### Main technology
 
 - Nuxt 4, Vue 3, TypeScript, and Tailwind CSS
+- Papa Parse and SheetJS for browser-side CSV/XLSX imports; Vitest for web tests
 - Supabase Auth, Postgres, Row Level Security, Realtime, and `pg_cron`
 - Stripe Checkout, Billing, Customer Portal, and signed webhooks
 - Node.js TCP gateway
@@ -301,6 +325,8 @@ Run every migration in filename order:
 | `013_rename_studio_to_scale.sql` | Backward-compatible Studio-to-Scale rename |
 | `014_subscription_entitlements.sql` | Database-enforced plan capabilities |
 | `015_telemetry_retention.sql` | Tier-based retention and hourly `pg_cron` cleanup |
+| `016_bulk_device_upload.sql` | Organization-unique MAC addresses, short-lived import quotes, and atomic bulk device creation |
+| `017_settings_webhook_security.sql` | Selectable webhook event types and per-destination HMAC signing secrets |
 
 Migration 015 creates the `pg_cron` extension and schedules `purge-expired-telemetry` at minute 15 of every hour. The project/database user applying it must be allowed to create and schedule cron jobs.
 
@@ -385,6 +411,8 @@ Open [http://127.0.0.1:3000](http://127.0.0.1:3000).
 9. Use Debugger to compare generated hex and parsed JSON.
 10. On Pro or Scale, queue a command and confirm the device receives the downlink.
 11. In Stripe test mode, subscribe with a test card and confirm Settings updates through the success sync/webhook.
+12. Import the CSV template from Devices and confirm the preview, capacity, and created device count.
+13. Send a webhook event and verify `X-Struct-Signature` against the raw request body.
 
 ## Commands
 
@@ -401,6 +429,9 @@ npm run dev:tcp
 # TCP production process
 npm run start:tcp
 
+# Web unit tests
+npm --prefix web test
+
 # TCP unit-style scripts
 node tcp-server/test-parser.js
 node tcp-server/test-crypto.js
@@ -416,6 +447,7 @@ node dummy-device.js
 
 - Organization access is protected with Supabase RLS plus server-side role checks.
 - Stripe webhook signatures are verified against the raw body.
+- Outbound destination webhooks are signed with a per-destination HMAC-SHA256 secret.
 - Checkout session synchronization verifies authentication and organization writer access.
 - Service-role and Stripe secret keys must stay server-side.
 - ChaCha20-Poly1305 supplies payload confidentiality/integrity; timestamps and nonce tracking mitigate replay.
