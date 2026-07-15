@@ -1,15 +1,5 @@
 import type { Device, DeviceSchema, DeviceTags, SchemaField, SchemaVersion } from '~/types'
 
-function randomApiKey(): string {
-  const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
-  let key = ''
-  const bytes = crypto.getRandomValues(new Uint8Array(16))
-  for (let i = 0; i < 16; i++) {
-    key += alphabet[bytes[i] % alphabet.length]
-  }
-  return key
-}
-
 function randomEncryptionKeyHex(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(32))
   return Array.from(bytes)
@@ -20,6 +10,7 @@ function randomEncryptionKeyHex(): string {
 function normalizeDevice(row: any): Device {
   return {
     ...row,
+    organization_id: row.organization_id,
     tags: (row.tags && typeof row.tags === 'object' ? row.tags : {}) as DeviceTags,
     encryption_enabled: !!row.encryption_enabled,
     encryption_key: row.encryption_key ?? null,
@@ -30,6 +21,7 @@ function normalizeSchema(row: any): DeviceSchema {
   return {
     id: row.id,
     device_id: row.device_id,
+    organization_id: row.organization_id,
     schema_definition: Array.isArray(row.schema_definition) ? row.schema_definition : [],
     version: Number(row.version) >= 1 ? Number(row.version) : 1,
     updated_at: row.updated_at,
@@ -43,6 +35,7 @@ function definitionsEqual(a: SchemaField[], b: SchemaField[]) {
 export function useDevices() {
   const supabase = useSupabaseClient()
   const user = useSupabaseUser()
+  const { currentOrgId, requireOrgId, requireWrite, ensureOrganization } = useOrganization()
 
   const devices = useState<Device[]>('devices', () => [])
   const schemas = useState<Record<string, DeviceSchema>>('schemas', () => ({}))
@@ -78,9 +71,19 @@ export function useDevices() {
     loading.value = true
     error.value = null
     try {
+      await ensureOrganization()
+      const orgId = currentOrgId.value
+      if (!orgId) {
+        devices.value = []
+        schemas.value = {}
+        schemaVersions.value = {}
+        return
+      }
+
       const { data, error: err } = await supabase
         .from('devices')
         .select('*')
+        .eq('organization_id', orgId)
         .order('created_at', { ascending: false })
 
       if (err) throw err
@@ -118,56 +121,73 @@ export function useDevices() {
       throw new Error('Not authenticated — sign out and sign in again')
     }
 
-    const api_key = randomApiKey()
+    await ensureOrganization()
+    requireWrite()
+    const organization_id = requireOrgId()
 
-    const { data, error: err } = await supabase
-      .from('devices')
-      .insert({
-        name,
-        api_key,
-        user_id: authData.user.id,
-        tags: {},
-        encryption_enabled: false,
+    let response: { device: any }
+    try {
+      response = await $fetch<{ device: any }>('/api/devices', {
+        method: 'POST',
+        body: { name, orgId: organization_id },
       })
-      .select()
-      .single()
+    } catch (e: any) {
+      const message =
+        e?.statusCode === 402
+          ? e?.data?.message ||
+            'Free tier supports up to 5 devices. Upgrade your plan to add more.'
+          : e?.data?.message || e.message || 'Failed to create device'
+      throw new Error(message)
+    }
 
-    if (err) throw err
-
-    const device = normalizeDevice(data)
+    const device = normalizeDevice(response.device)
 
     const { data: schema, error: sErr } = await supabase
       .from('schemas')
-      .insert({ device_id: device.id, schema_definition: [], version: 1 })
-      .select()
-      .single()
+      .select('*')
+      .eq('device_id', device.id)
+      .maybeSingle()
 
     if (sErr) throw sErr
 
-    const { data: verRow, error: vErr } = await supabase
+    const { data: versionRows, error: vErr } = await supabase
       .from('schema_versions')
-      .insert({
-        device_id: device.id,
-        version: 1,
-        schema_definition: [],
-      })
-      .select()
-      .single()
+      .select('*')
+      .eq('device_id', device.id)
+      .order('version', { ascending: true })
 
     if (vErr) throw vErr
 
     devices.value = [device, ...devices.value]
-    schemas.value = { ...schemas.value, [device.id]: normalizeSchema(schema) }
+    if (schema) {
+      schemas.value = { ...schemas.value, [device.id]: normalizeSchema(schema) }
+    }
     schemaVersions.value = {
       ...schemaVersions.value,
-      [device.id]: [verRow as SchemaVersion],
+      [device.id]: (versionRows || []) as SchemaVersion[],
     }
+
+    await fetchMembershipsFromOrg()
     return device
   }
 
+  async function fetchMembershipsFromOrg() {
+    const { fetchMemberships } = useOrganization()
+    await fetchMemberships()
+  }
+
   async function deleteDevice(id: string) {
-    const { error: err } = await supabase.from('devices').delete().eq('id', id)
-    if (err) throw err
+    requireWrite()
+    const organization_id = requireOrgId()
+
+    try {
+      await $fetch(`/api/devices/${id}?orgId=${encodeURIComponent(organization_id)}`, {
+        method: 'DELETE',
+      })
+    } catch (e: any) {
+      throw new Error(e?.data?.message || e.message || 'Failed to delete device')
+    }
+
     devices.value = devices.value.filter((d) => d.id !== id)
     const next = { ...schemas.value }
     delete next[id]
@@ -175,9 +195,12 @@ export function useDevices() {
     const nextVers = { ...schemaVersions.value }
     delete nextVers[id]
     schemaVersions.value = nextVers
+
+    await fetchMembershipsFromOrg()
   }
 
   async function updateDeviceTags(id: string, tags: DeviceTags) {
+    requireWrite()
     const { data, error: err } = await supabase
       .from('devices')
       .update({ tags })
@@ -191,6 +214,7 @@ export function useDevices() {
   }
 
   async function setDeviceEncryption(id: string, enabled: boolean) {
+    requireWrite()
     const existing = devices.value.find((d) => d.id === id)
     const patch: Record<string, unknown> = { encryption_enabled: enabled }
 
@@ -211,6 +235,7 @@ export function useDevices() {
   }
 
   async function rotateEncryptionKey(id: string) {
+    requireWrite()
     const { data, error: err } = await supabase
       .from('devices')
       .update({
@@ -226,14 +251,13 @@ export function useDevices() {
     return device
   }
 
-  /**
-   * Persist schema. Bumps the wire version when replacing a non-empty layout
-   * so fleets still on older structs keep parsing via schema_versions.
-   */
   async function saveSchema(deviceId: string, definition: SchemaField[]) {
+    requireWrite()
     const existing = schemas.value[deviceId]
     const prevDef = existing?.schema_definition || []
     const prevVer = existing?.version || 1
+    const device = devices.value.find((d) => d.id === deviceId)
+    const organization_id = existing?.organization_id || device?.organization_id || requireOrgId()
 
     if (existing && definitionsEqual(prevDef, definition)) {
       return existing
@@ -251,6 +275,7 @@ export function useDevices() {
         .update({
           schema_definition: definition,
           version: nextVersion,
+          organization_id,
           updated_at: new Date().toISOString(),
         })
         .eq('device_id', deviceId)
@@ -289,6 +314,7 @@ export function useDevices() {
       .from('schemas')
       .insert({
         device_id: deviceId,
+        organization_id,
         schema_definition: definition,
         version: nextVersion,
       })
@@ -324,6 +350,7 @@ export function useDevices() {
         { event: 'UPDATE', schema: 'public', table: 'devices' },
         (payload) => {
           const updated = normalizeDevice(payload.new)
+          if (currentOrgId.value && updated.organization_id !== currentOrgId.value) return
           devices.value = devices.value.map((d) =>
             d.id === updated.id ? { ...d, ...updated } : d,
           )

@@ -17,9 +17,20 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+    stripePriceFlexible: process.env.STRIPE_PRICE_FLEXIBLE,
+    stripePricePro: process.env.STRIPE_PRICE_PRO,
+    stripePriceScale: process.env.STRIPE_PRICE_SCALE || process.env.STRIPE_PRICE_STUDIO,
     public: {
       tcpHost: process.env.NUXT_PUBLIC_TCP_HOST || '127.0.0.1',
       tcpPort: Number(process.env.NUXT_PUBLIC_TCP_PORT || 8080),
+    },
+  },
+
+  routeRules: {
+    '/api/stripe/webhook': {
+      bodyParser: false,
     },
   },
 

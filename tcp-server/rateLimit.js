@@ -1,53 +1,119 @@
 /**
- * Per-API-key token-bucket rate limiter for the TCP ingestion path.
+ * In-memory DDoS / spam rate limiter for the TCP ingestion path.
  *
- * Defaults (override with env):
- *   TCP_RATE_LIMIT_PER_SEC  — refill rate (tokens/sec), default 30
- *   TCP_RATE_LIMIT_BURST    — bucket capacity, default 60
+ * Two sliding-window trackers:
+ *   - Per IP: max connections per second (default 10)
+ *   - Per API key: max payloads per minute (default 50)
+ *
+ * Override with env:
+ *   TCP_IP_CONN_LIMIT_PER_SEC
+ *   TCP_PAYLOAD_LIMIT_PER_MIN
  */
 
-const RATE_PER_SEC = Number(process.env.TCP_RATE_LIMIT_PER_SEC || 30)
-const BURST = Number(process.env.TCP_RATE_LIMIT_BURST || 60)
+const IP_CONN_LIMIT = Number(process.env.TCP_IP_CONN_LIMIT_PER_SEC || 10)
+const IP_WINDOW_MS = 1000
+const PAYLOAD_LIMIT = Number(process.env.TCP_PAYLOAD_LIMIT_PER_MIN || 50)
+const PAYLOAD_WINDOW_MS = 60_000
+const CLEANUP_INTERVAL_MS = 60_000
 
-/** @type {Map<string, { tokens: number, updatedAt: number }>} */
-const buckets = new Map()
+/** Custom downlink: 0xFF (custom) + 0xE1 (rate limited — back off) */
+const RATE_LIMIT_DOWNLINK_HEX = 'ffe1'
+
+/** @type {Map<string, number[]>} */
+const ipConnections = new Map()
+
+/** @type {Map<string, number[]>} */
+const apiKeyPayloads = new Map()
+
+function normalizeIp(address) {
+  if (!address) return 'unknown'
+  if (address.startsWith('::ffff:')) return address.slice(7)
+  return address
+}
+
+function pruneTimestamps(timestamps, windowMs, now) {
+  const cutoff = now - windowMs
+  while (timestamps.length && timestamps[0] <= cutoff) {
+    timestamps.shift()
+  }
+}
+
+/**
+ * @param {string} ip
+ * @returns {{ allowed: boolean }}
+ */
+function checkIpConnection(ip) {
+  const now = Date.now()
+  const key = normalizeIp(ip)
+  let timestamps = ipConnections.get(key)
+  if (!timestamps) {
+    timestamps = []
+    ipConnections.set(key, timestamps)
+  }
+  pruneTimestamps(timestamps, IP_WINDOW_MS, now)
+
+  if (timestamps.length >= IP_CONN_LIMIT) {
+    return { allowed: false }
+  }
+
+  timestamps.push(now)
+  return { allowed: true }
+}
 
 /**
  * @param {string} apiKey
  * @returns {{ allowed: boolean, retryAfterMs: number }}
  */
-function checkRateLimit(apiKey) {
+function checkPayloadRateLimit(apiKey) {
   const now = Date.now()
-  let bucket = buckets.get(apiKey)
-
-  if (!bucket) {
-    bucket = { tokens: BURST - 1, updatedAt: now }
-    buckets.set(apiKey, bucket)
-    return { allowed: true, retryAfterMs: 0 }
+  let timestamps = apiKeyPayloads.get(apiKey)
+  if (!timestamps) {
+    timestamps = []
+    apiKeyPayloads.set(apiKey, timestamps)
   }
+  pruneTimestamps(timestamps, PAYLOAD_WINDOW_MS, now)
 
-  const elapsedSec = (now - bucket.updatedAt) / 1000
-  bucket.tokens = Math.min(BURST, bucket.tokens + elapsedSec * RATE_PER_SEC)
-  bucket.updatedAt = now
-
-  if (bucket.tokens < 1) {
-    const need = 1 - bucket.tokens
-    const retryAfterMs = Math.ceil((need / RATE_PER_SEC) * 1000)
+  if (timestamps.length >= PAYLOAD_LIMIT) {
+    const oldest = timestamps[0]
+    const retryAfterMs = Math.max(0, PAYLOAD_WINDOW_MS - (now - oldest) + 1)
     return { allowed: false, retryAfterMs }
   }
 
-  bucket.tokens -= 1
+  timestamps.push(now)
   return { allowed: true, retryAfterMs: 0 }
 }
 
-/** Test helper — clear all buckets. */
+function sweepRateLimitMaps() {
+  const now = Date.now()
+  for (const [ip, timestamps] of ipConnections) {
+    pruneTimestamps(timestamps, IP_WINDOW_MS, now)
+    if (!timestamps.length) ipConnections.delete(ip)
+  }
+  for (const [key, timestamps] of apiKeyPayloads) {
+    pruneTimestamps(timestamps, PAYLOAD_WINDOW_MS, now)
+    if (!timestamps.length) apiKeyPayloads.delete(key)
+  }
+}
+
+function startRateLimitCleanup() {
+  const id = setInterval(sweepRateLimitMaps, CLEANUP_INTERVAL_MS)
+  if (typeof id.unref === 'function') id.unref()
+  return id
+}
+
+/** Test helper — clear all trackers. */
 function resetRateLimits() {
-  buckets.clear()
+  ipConnections.clear()
+  apiKeyPayloads.clear()
 }
 
 module.exports = {
-  checkRateLimit,
+  checkIpConnection,
+  checkPayloadRateLimit,
+  startRateLimitCleanup,
   resetRateLimits,
-  RATE_PER_SEC,
-  BURST,
+  normalizeIp,
+  RATE_LIMIT_DOWNLINK_HEX,
+  IP_CONN_LIMIT,
+  PAYLOAD_LIMIT,
 }

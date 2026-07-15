@@ -1,6 +1,5 @@
 <template>
   <div class="flex min-h-screen min-w-0">
-    <!-- Mobile nav backdrop -->
     <button
       v-if="navOpen"
       type="button"
@@ -34,14 +33,35 @@
             <h1 class="truncate text-base font-semibold text-[#E8EAEF]">{{ title }}</h1>
           </div>
         </div>
-        <div class="flex shrink-0 items-center gap-2 sm:gap-3">
-          <span class="mono hidden max-w-[10rem] truncate text-xs text-[#8B93A7] sm:inline lg:max-w-none">
+        <div class="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
+          <NuxtLink
+            v-if="showOrgBadge && currentOrganization"
+            to="/dashboard/organization"
+            class="hidden min-w-0 items-center gap-2 rounded-lg border border-[#2A2F3A] px-2.5 py-1.5 transition hover:border-[#38B6FF]/40 sm:flex"
+            title="Organization settings"
+          >
+            <span class="truncate text-xs text-[#E8EAEF]">{{ currentOrganization.name }}</span>
+            <span
+              class="shrink-0 rounded border border-[#2A2F3A] px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider"
+              :class="isViewer ? 'text-[#8B93A7]' : 'text-[#38B6FF]'"
+            >
+              {{ role || '—' }}
+            </span>
+          </NuxtLink>
+          <span class="mono hidden max-w-[10rem] truncate text-xs text-[#8B93A7] lg:inline lg:max-w-none">
             {{ userEmail }}
           </span>
           <button class="btn-ghost text-xs" @click="signOut">Sign out</button>
         </div>
       </header>
       <div class="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6">
+        <p
+          v-if="isViewer"
+          class="mb-4 rounded-lg border border-[#2A2F3A] bg-[#1A1D24] px-3 py-2 text-xs text-[#8B93A7]"
+        >
+          You have <span class="text-[#E8EAEF]">viewer</span> access — you can inspect devices,
+          schemas, and telemetry, but cannot create or edit.
+        </p>
         <div class="min-h-0 min-w-0">
           <slot />
         </div>
@@ -56,6 +76,8 @@ const user = useSupabaseUser()
 const supabase = useSupabaseClient()
 const navOpen = ref(false)
 
+const { currentOrganization, role, isViewer, showOrgBadge, ensureOrganization } = useOrganization()
+
 const userEmail = computed(() => user.value?.email || '')
 
 const title = computed(() => {
@@ -65,11 +87,17 @@ const title = computed(() => {
     '/dashboard/debugger': 'Live Debugger',
     '/dashboard/devices': 'Fleet',
     '/dashboard/destinations': 'Destinations',
+    '/dashboard/organization': 'Organization',
+    '/dashboard/settings': 'Settings',
+    '/dashboard/audit-logs': 'Audit Log',
   }
   return map[route.path] || 'Struct'
 })
 
 const sectionLabel = computed(() => {
+  if (route.path.includes('organization')) return 'Team'
+  if (route.path.includes('settings')) return 'Account'
+  if (route.path.includes('audit-logs')) return 'Govern'
   if (route.path.includes('schema')) return 'Define'
   if (route.path.includes('debugger')) return 'Inspect'
   if (route.path.includes('devices')) return 'Fleet'
@@ -83,6 +111,14 @@ watch(
     navOpen.value = false
   },
 )
+
+onMounted(() => {
+  ensureOrganization().catch(() => {})
+})
+
+watch(user, (u) => {
+  if (u) ensureOrganization().catch(() => {})
+})
 
 async function signOut() {
   await supabase.auth.signOut()

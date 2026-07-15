@@ -58,14 +58,20 @@ const emit = defineEmits<{
 const route = useRoute()
 const config = useRuntimeConfig()
 const tcpPort = computed(() => config.public.tcpPort)
+const { isEnterprise } = useOrganization()
 
-const links = [
+const links = computed(() => [
   { to: '/dashboard', label: 'Dashboard', glyph: '01' },
   { to: '/dashboard/devices', label: 'Devices', glyph: '02' },
   { to: '/dashboard/destinations', label: 'Destinations', glyph: '03' },
   { to: '/dashboard/schema', label: 'Schema', glyph: '04' },
   { to: '/dashboard/debugger', label: 'Debugger', glyph: '05' },
-]
+  { to: '/dashboard/organization', label: 'Organization', glyph: '06' },
+  { to: '/dashboard/settings', label: 'Settings', glyph: '07' },
+  ...(isEnterprise.value
+    ? [{ to: '/dashboard/audit-logs', label: 'Audit Log', glyph: '08' }]
+    : []),
+])
 
 function isActive(path: string) {
   if (path === '/dashboard') return route.path === '/dashboard'

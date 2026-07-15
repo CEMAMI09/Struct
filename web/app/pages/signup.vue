@@ -6,13 +6,22 @@
     <form class="space-y-4" @submit.prevent="onSubmit">
       <div>
         <label class="label" for="email">Email</label>
-        <input id="email" v-model="email" type="email" class="input" required autocomplete="email" />
+        <input
+          id="email"
+          v-model="email"
+          name="email"
+          type="email"
+          class="input"
+          required
+          autocomplete="email"
+        />
       </div>
       <div>
         <label class="label" for="password">Password</label>
         <input
           id="password"
           v-model="password"
+          name="password"
           type="password"
           class="input"
           required
@@ -38,29 +47,57 @@
 definePageMeta({ layout: 'auth' })
 
 const supabase = useSupabaseClient()
+const user = useSupabaseUser()
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref('')
 const info = ref('')
 
-async function onSubmit() {
+async function waitForUser(timeoutMs = 3000) {
+  const start = Date.now()
+  while (!user.value && Date.now() - start < timeoutMs) {
+    await new Promise((r) => setTimeout(r, 40))
+  }
+  return !!user.value
+}
+
+async function onSubmit(e: Event) {
+  if (loading.value) return
+
+  const form = e.target as HTMLFormElement
+  const fd = new FormData(form)
+  const emailVal = String(fd.get('email') || email.value).trim()
+  const passwordVal = String(fd.get('password') || password.value)
+  email.value = emailVal
+  password.value = passwordVal
+
   loading.value = true
   error.value = ''
   info.value = ''
-  const { data, error: err } = await supabase.auth.signUp({
-    email: email.value,
-    password: password.value,
-  })
-  loading.value = false
-  if (err) {
-    error.value = err.message
-    return
+  try {
+    const { data, error: err } = await supabase.auth.signUp({
+      email: emailVal,
+      password: passwordVal,
+    })
+    if (err) {
+      error.value = err.message
+      return
+    }
+    if (data.session) {
+      try {
+        await useOrganization().ensureOrganization()
+      } catch {
+        // org bootstrap is retried on dashboard mount
+      }
+      await supabase.auth.getSession()
+      await waitForUser()
+      await navigateTo('/dashboard', { replace: true })
+      return
+    }
+    info.value = 'Check your email to confirm, then sign in.'
+  } finally {
+    loading.value = false
   }
-  if (data.session) {
-    navigateTo('/dashboard')
-    return
-  }
-  info.value = 'Check your email to confirm, then sign in.'
 }
 </script>

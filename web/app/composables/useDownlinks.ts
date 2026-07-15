@@ -64,6 +64,7 @@ function packDownlinkBytes(
 export function useDownlinks() {
   const supabase = useSupabaseClient()
   const user = useSupabaseUser()
+  const { requireWrite } = useOrganization()
 
   const commands = useState<PendingCommand[]>('pending-commands', () => [])
   const loading = useState('downlinks-loading', () => false)
@@ -99,6 +100,7 @@ export function useDownlinks() {
     commandType: string,
     payload: Record<string, unknown>,
   ) {
+    requireWrite()
     const { data: authData, error: authErr } = await supabase.auth.getUser()
     if (authErr || !authData.user) {
       throw new Error('Not authenticated — sign out and sign in again')

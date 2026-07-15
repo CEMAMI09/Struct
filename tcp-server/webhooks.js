@@ -2,19 +2,91 @@
  * Fan-out parsed telemetry to user-configured webhook destinations.
  */
 
-async function loadDestinations(supabase, userId, deviceId) {
-  const { data, error } = await supabase
+async function loadDestinations(supabase, userId, deviceId, organizationId) {
+  let canUseRouting = false
+  if (organizationId) {
+    const { data: organization, error: organizationError } = await supabase
+      .from('organizations')
+      .select('subscription_tier')
+      .eq('id', organizationId)
+      .maybeSingle()
+
+    if (organizationError) {
+      console.warn(`[struct] organization tier lookup failed: ${organizationError.message}`)
+    } else {
+      canUseRouting = organization?.subscription_tier === 'scale'
+    }
+  }
+
+  let query = supabase
     .from('destinations')
-    .select('id, name, url, device_id, enabled')
-    .eq('user_id', userId)
+    .select('id, name, url, device_id, enabled, routing_rule')
     .eq('enabled', true)
+
+  query = organizationId
+    ? query.eq('organization_id', organizationId)
+    : query.eq('user_id', userId)
+
+  const { data, error } = await query
 
   if (error) {
     console.warn(`[struct] destinations lookup failed: ${error.message}`)
     return []
   }
 
-  return (data || []).filter((d) => !d.device_id || d.device_id === deviceId)
+  return (data || [])
+    .filter((d) => !d.device_id || d.device_id === deviceId)
+    .map((destination) => ({
+      ...destination,
+      // Downgrading from Scale restores basic unconditional webhooks.
+      routing_rule: canUseRouting ? destination.routing_rule : null,
+    }))
+}
+
+/**
+ * Evaluate one destination rule against the parsed telemetry object.
+ * A missing rule preserves unconditional delivery. Invalid rules and missing
+ * payload keys fail closed so they cannot accidentally fan out data.
+ *
+ * @param {Record<string, unknown>} payload
+ * @param {{ key?: unknown, operator?: unknown, value?: unknown } | null} rule
+ */
+function matchesRoutingRule(payload, rule) {
+  if (rule == null) return true
+  if (
+    typeof rule !== 'object' ||
+    Array.isArray(rule) ||
+    typeof rule.key !== 'string' ||
+    !rule.key ||
+    !Object.prototype.hasOwnProperty.call(rule, 'value') ||
+    !Object.prototype.hasOwnProperty.call(payload, rule.key)
+  ) {
+    return false
+  }
+
+  const actual = payload[rule.key]
+  const expected = rule.value
+
+  switch (rule.operator) {
+    case '==':
+      return actual === expected
+    case '!=':
+      return actual !== expected
+    case '>':
+    case '>=':
+    case '<':
+    case '<=': {
+      const left = Number(actual)
+      const right = Number(expected)
+      if (!Number.isFinite(left) || !Number.isFinite(right)) return false
+      if (rule.operator === '>') return left > right
+      if (rule.operator === '>=') return left >= right
+      if (rule.operator === '<') return left < right
+      return left <= right
+    }
+    default:
+      return false
+  }
 }
 
 async function fireWebhook(dest, body) {
@@ -45,11 +117,16 @@ async function fireWebhook(dest, body) {
 
 /**
  * @param {import('@supabase/supabase-js').SupabaseClient} supabase
- * @param {{ id: string, name: string, user_id: string }} device
+ * @param {{ id: string, name: string, user_id: string, organization_id?: string }} device
  * @param {Record<string, unknown>} parsed
  */
 async function dispatchWebhooks(supabase, device, parsed) {
-  const destinations = await loadDestinations(supabase, device.user_id, device.id)
+  const destinations = await loadDestinations(
+    supabase,
+    device.user_id,
+    device.id,
+    device.organization_id,
+  )
   if (!destinations.length) return
 
   const body = {
@@ -59,7 +136,20 @@ async function dispatchWebhooks(supabase, device, parsed) {
     payload: parsed,
   }
 
-  await Promise.allSettled(destinations.map((d) => fireWebhook(d, body)))
+  const matched = destinations.filter((destination) => {
+    const matches = matchesRoutingRule(parsed, destination.routing_rule)
+    if (!matches && destination.routing_rule) {
+      console.log(`[struct] webhook skipped by routing rule: ${destination.name}`)
+    }
+    return matches
+  })
+
+  await Promise.allSettled(matched.map((d) => fireWebhook(d, body)))
 }
 
-module.exports = { dispatchWebhooks, loadDestinations, fireWebhook }
+module.exports = {
+  dispatchWebhooks,
+  loadDestinations,
+  fireWebhook,
+  matchesRoutingRule,
+}

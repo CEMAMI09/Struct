@@ -1,5 +1,27 @@
 export type FieldType = 'float32' | 'int32' | 'uint8' | 'boolean'
 
+export type OrgRole = 'owner' | 'admin' | 'viewer'
+export type SubscriptionTier = 'free' | 'flexible' | 'pro' | 'scale'
+
+export interface Organization {
+  id: string
+  name: string
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
+  stripe_item_id: string | null
+  stripe_quantity: number
+  subscription_tier: SubscriptionTier
+  created_at: string
+}
+
+export interface OrganizationMember {
+  id: string
+  organization_id: string
+  user_id: string
+  role: OrgRole
+  created_at: string
+}
+
 export interface SchemaField {
   name: string
   type: FieldType
@@ -11,6 +33,7 @@ export type DeviceTags = Record<string, string>
 export interface Device {
   id: string
   user_id: string
+  organization_id: string
   name: string
   api_key: string
   last_seen: string | null
@@ -23,6 +46,7 @@ export interface Device {
 export interface DeviceSchema {
   id: string
   device_id: string
+  organization_id: string
   schema_definition: SchemaField[]
   /** Latest published wire version (1–255) */
   version: number
@@ -45,13 +69,37 @@ export interface TelemetryRow {
   timestamp: string
 }
 
+export type RoutingOperator = '>' | '>=' | '<' | '<=' | '==' | '!='
+
+export interface RoutingRule {
+  key: string
+  operator: RoutingOperator
+  value: string | number | boolean
+}
+
 export interface Destination {
   id: string
   user_id: string
+  organization_id: string
   name: string
   url: string
   device_id: string | null
+  routing_rule: RoutingRule | null
   enabled: boolean
+  created_at: string
+}
+
+export type AuditAction = 'INSERT' | 'UPDATE' | 'DELETE'
+
+export interface AuditLog {
+  id: string
+  organization_id: string
+  user_id: string | null
+  action: AuditAction
+  table_name: 'devices' | 'schemas' | 'destinations'
+  record_id: string
+  previous_data: Record<string, unknown> | null
+  new_data: Record<string, unknown> | null
   created_at: string
 }
 

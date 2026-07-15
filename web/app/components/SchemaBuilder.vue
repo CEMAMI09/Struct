@@ -44,13 +44,17 @@
               descrambles at the gateway before JSON routing. Encrypted frames include a
               4-byte unix timestamp (replay protection).
             </p>
+            <p v-if="!canUseEncryption" class="mt-2 text-xs text-amber-300">
+              ChaCha20 encryption requires Pro or higher.
+              <NuxtLink to="/dashboard/settings" class="underline">View plans</NuxtLink>
+            </p>
           </div>
           <button
             type="button"
             class="relative h-7 w-12 shrink-0 rounded-full transition"
             :class="encryptionOn ? 'bg-[#38B6FF]' : 'bg-[#2A2F3A]'"
             :aria-pressed="encryptionOn"
-            :disabled="togglingEnc"
+            :disabled="togglingEnc || !canWrite || (!canUseEncryption && !encryptionOn)"
             @click="onToggleEncryption"
           >
             <span
@@ -70,7 +74,7 @@
               <button
                 type="button"
                 class="btn-ghost py-1 text-[10px]"
-                :disabled="rotating"
+                :disabled="rotating || !canWrite || !canUseEncryption"
                 @click="onRotate"
               >
                 {{ rotating ? 'Rotating…' : 'Rotate' }}
@@ -137,14 +141,16 @@
               class="input mono"
               placeholder="field_name"
               pattern="[A-Za-z_][A-Za-z0-9_]*"
+              :disabled="!canWrite"
             />
-            <select v-model="field.type" class="input">
+            <select v-model="field.type" class="input" :disabled="!canWrite">
               <option v-for="t in FIELD_TYPES" :key="t" :value="t">{{ t }}</option>
             </select>
             <button
               type="button"
               class="btn-ghost min-h-10 text-[#8B93A7] hover:text-red-400 sm:min-h-0 sm:px-0"
               title="Remove field"
+              :disabled="!canWrite"
               @click="removeField(idx)"
             >
               ×
@@ -199,6 +205,9 @@ const props = defineProps<{
 }>()
 
 const { saveSchema, setDeviceEncryption, rotateEncryptionKey } = useDevices()
+const { canWrite } = useOrganization()
+const { hasEntitlement } = useEntitlements()
+const canUseEncryption = computed(() => hasEntitlement('chacha20'))
 const { generateCppHeader, downloadCppHeader, headerFilename, cppPreview } = useCppHeader()
 const selectedDeviceId = useState('schema-selected-device', () => '')
 const fields = ref<SchemaField[]>([])
@@ -214,7 +223,12 @@ const encErr = ref(false)
 
 const { schemaByteLength } = useBinaryParser()
 
-const canEdit = computed(() => !!selectedDeviceId.value && props.devices.some((d) => d.id === selectedDeviceId.value))
+const canEdit = computed(
+  () =>
+    canWrite.value &&
+    !!selectedDeviceId.value &&
+    props.devices.some((d) => d.id === selectedDeviceId.value),
+)
 const selectedDevice = computed(() => props.devices.find((d) => d.id === selectedDeviceId.value))
 const encryptionOn = computed(() => !!selectedDevice.value?.encryption_enabled)
 

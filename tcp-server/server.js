@@ -21,8 +21,13 @@ const { createClient } = require('@supabase/supabase-js')
 const { parsePayload, schemaByteLength, TYPE_SIZES } = require('./parser')
 const { decryptPayload, encryptedFrameLength, splitEncryptedRegion } = require('./crypto')
 const { dispatchWebhooks } = require('./webhooks')
-const { deliverPendingDownlinks } = require('./downlinks')
-const { checkRateLimit } = require('./rateLimit')
+const { deliverPendingDownlinks, writeCommandFrame } = require('./downlinks')
+const {
+  checkIpConnection,
+  checkPayloadRateLimit,
+  startRateLimitCleanup,
+  RATE_LIMIT_DOWNLINK_HEX,
+} = require('./rateLimit')
 const {
   TIMESTAMP_LEN,
   stripAndValidateTimestamp,
@@ -53,7 +58,7 @@ async function lookupDevice(apiKey) {
   const { data: device, error } = await supabase
     .from('devices')
     .select(
-      'id, name, api_key, user_id, encryption_enabled, encryption_key, schemas(version, schema_definition)',
+      'id, name, api_key, user_id, organization_id, encryption_enabled, encryption_key, schemas(version, schema_definition)',
     )
     .eq('api_key', apiKey)
     .maybeSingle()
@@ -214,6 +219,14 @@ async function ingestPacket(buf, socket) {
 
 const server = net.createServer((socket) => {
   const remote = `${socket.remoteAddress}:${socket.remotePort}`
+
+  const ipCheck = checkIpConnection(socket.remoteAddress)
+  if (!ipCheck.allowed) {
+    console.warn(`[struct] IP rate-limited — destroying connection from ${remote}`)
+    socket.destroy()
+    return
+  }
+
   console.log(`[struct] connect ${remote}`)
 
   let buffer = Buffer.alloc(0)
@@ -263,18 +276,19 @@ const server = net.createServer((socket) => {
         }
 
         pendingFrame = null
-        const rate = checkRateLimit(apiKey)
-        if (!rate.allowed) {
-          console.warn(
-            `[struct] rate-limited ${remote} device=${device.name} retry~${rate.retryAfterMs}ms`,
-          )
-          buffer = Buffer.alloc(0)
-          socket.end()
-          return
-        }
-
         const frame = buffer.subarray(0, frameLen)
         buffer = buffer.subarray(frameLen)
+
+        const rate = checkPayloadRateLimit(apiKey)
+        if (!rate.allowed) {
+          console.warn(
+            `[struct] payload rate-limited ${remote} device=${device.name} retry~${rate.retryAfterMs}ms`,
+          )
+          if (!socket.destroyed) {
+            writeCommandFrame(socket, RATE_LIMIT_DOWNLINK_HEX)
+          }
+          continue
+        }
 
         const result = await ingestPacket(frame, socket)
         console.log(
@@ -348,6 +362,7 @@ server.listen(PORT, () => {
   console.log(
     `[struct] header: ${API_KEY_LEN}B api_key + ${SCHEMA_VERSION_LEN}B schema_version`,
   )
+  startRateLimitCleanup()
   subscribeDownlinkRealtime()
 })
 

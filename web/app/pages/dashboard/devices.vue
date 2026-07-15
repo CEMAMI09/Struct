@@ -6,14 +6,21 @@
         <p class="text-sm text-[#8B93A7]">
           Tag devices like industrial assets. Filter 400 sensors down to the 12 that matter.
         </p>
+        <p class="mt-1 font-mono text-[10px] text-[#8B93A7]">
+          {{ devices.length }} / {{ deviceLimit }} devices on this plan
+        </p>
       </div>
-      <button class="btn-primary w-full shrink-0 sm:w-auto" @click="showForm = !showForm">
+      <button
+        v-if="canWrite"
+        class="btn-primary w-full shrink-0 sm:w-auto"
+        @click="showForm = !showForm"
+      >
         {{ showForm ? 'Cancel' : 'Add device' }}
       </button>
     </div>
 
     <form
-      v-if="showForm"
+      v-if="showForm && canWrite"
       class="card mb-6 flex flex-col gap-3 p-4 sm:flex-row"
       @submit.prevent="onCreate"
     >
@@ -82,10 +89,15 @@
             <button class="btn-ghost text-xs" @click="copyKey(device.api_key)">
               {{ copied === device.api_key ? 'Copied' : 'Copy key' }}
             </button>
-            <button class="btn-ghost text-xs" @click="toggleEdit(device.id)">
+            <button
+              v-if="canWrite"
+              class="btn-ghost text-xs"
+              @click="toggleEdit(device.id)"
+            >
               {{ editingId === device.id ? 'Close' : 'Tags / Command' }}
             </button>
             <button
+              v-if="canWrite"
               class="btn-ghost text-xs text-red-400 hover:border-red-400/40"
               @click="onDelete(device.id)"
             >
@@ -125,13 +137,20 @@
 
           <div>
             <p class="label">Send Command (downlink)</p>
-            <select v-model="cmdType" class="input mb-2 text-xs">
+            <div
+              v-if="!canUseDownlinks"
+              class="rounded-lg border border-amber-400/20 bg-amber-400/5 p-3 text-xs text-amber-300"
+            >
+              Downlinks require Pro or higher.
+              <NuxtLink to="/dashboard/settings" class="underline">View plans</NuxtLink>
+            </div>
+            <select v-if="canUseDownlinks" v-model="cmdType" class="input mb-2 text-xs">
               <option value="set_interval">set_interval — wake period (sec)</option>
               <option value="reboot">reboot</option>
               <option value="custom">custom hex</option>
             </select>
             <input
-              v-if="cmdType === 'set_interval'"
+              v-if="canUseDownlinks && cmdType === 'set_interval'"
               v-model.number="cmdInterval"
               class="input mb-2 mono text-xs"
               type="number"
@@ -139,12 +158,13 @@
               placeholder="600"
             />
             <input
-              v-if="cmdType === 'custom'"
+              v-if="canUseDownlinks && cmdType === 'custom'"
               v-model="cmdHex"
               class="input mb-2 mono text-xs"
               placeholder="deadbeef"
             />
             <button
+              v-if="canUseDownlinks"
               type="button"
               class="btn-primary w-full text-xs"
               :disabled="sendingCmd"
@@ -152,7 +172,7 @@
             >
               {{ sendingCmd ? 'Queuing…' : 'Queue downlink' }}
             </button>
-            <p class="mt-2 text-[10px] leading-relaxed text-[#8B93A7]">
+            <p v-if="canUseDownlinks" class="mt-2 text-[10px] leading-relaxed text-[#8B93A7]">
               Packed binary is delivered on the device’s next TCP session (or immediately if the
               socket is still open).
             </p>
@@ -172,6 +192,9 @@ import type { Device } from '~/types'
 
 const { devices, error, fetchDevices, createDevice, deleteDevice, updateDeviceTags } = useDevices()
 const { sendCommand } = useDownlinks()
+const { canWrite, deviceLimit } = useOrganization()
+const { hasEntitlement } = useEntitlements()
+const canUseDownlinks = computed(() => hasEntitlement('downlinks'))
 
 const showForm = ref(false)
 const newName = ref('')

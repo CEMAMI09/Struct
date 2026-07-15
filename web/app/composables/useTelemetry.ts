@@ -2,6 +2,7 @@ import type { TelemetryRow } from '~/types'
 
 export function useTelemetry() {
   const supabase = useSupabaseClient()
+  const { telemetryRetentionDays } = useEntitlements()
 
   const rows = useState<TelemetryRow[]>('telemetry-rows', () => [])
   const live = useState('telemetry-live', () => false)
@@ -9,10 +10,14 @@ export function useTelemetry() {
 
   async function fetchTelemetry(deviceId: string, limit = 50) {
     selectedDeviceId.value = deviceId
+    const retentionStart = new Date(
+      Date.now() - telemetryRetentionDays.value * 24 * 60 * 60 * 1000,
+    ).toISOString()
     const { data, error } = await supabase
       .from('telemetry')
       .select('*')
       .eq('device_id', deviceId)
+      .gte('timestamp', retentionStart)
       .order('timestamp', { ascending: false })
       .limit(limit)
 

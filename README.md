@@ -69,6 +69,11 @@ Also: sidebar shows TCP ingestion port; header has sign-out.
    - `supabase/migrations/002_fix_devices_rls.sql` — devices RLS hardening
    - `supabase/migrations/003_saas_features.sql` — tags, encryption columns, destinations, pending_commands
    - `supabase/migrations/004_schema_versioning.sql` — `schemas.version` + immutable `schema_versions`
+   - `supabase/migrations/005_organizations_rbac.sql` — B2B organizations + RBAC (`owner` / `admin` / `viewer`)
+   - `supabase/migrations/006_org_member_rpcs.sql` — list/invite members by email
+   - `supabase/migrations/007_fix_org_create_rls.sql` — atomic `create_organization` RPC (fixes RLS on create)
+   - `supabase/migrations/008_leave_organization.sql` — any role can leave a workspace
+   - `supabase/migrations/009_remove_member_owner_only.sql` — only owners can remove other members
 3. Copy Project URL, anon key, and service role key.
 
 ### 2. Web (`/web`)
