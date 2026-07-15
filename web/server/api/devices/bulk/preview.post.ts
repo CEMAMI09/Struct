@@ -6,10 +6,7 @@ import {
   normalizeAndValidateBulkPayload,
   QUOTE_TTL_MS,
 } from '../../../utils/bulkDevices'
-import {
-  estimateProrationCents,
-  resolveCapacityPlan,
-} from '../../../utils/deviceCapacity'
+import { estimateProrationCents, resolveCapacityPlan } from '../../../utils/deviceCapacity'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{ orgId?: string; devices?: unknown }>(event)
@@ -34,9 +31,9 @@ export default defineEventHandler(async (event) => {
   }
 
   const plan = await resolveCapacityPlan(supabase, orgId, devices.length)
-  const estimate = plan.needsStripeUpdate
-    ? await estimateProrationCents(plan.org, plan.targetQuantity)
-    : { amount: 0, currency: 'usd' }
+  const estimate = plan.needsUsageUpdate
+    ? await estimateProrationCents(plan.org, plan.projectedPeakPaidQuantity)
+    : { amount: plan.estimatedTrueUpCents, currency: 'usd' }
 
   const expiresAt = new Date(Date.now() + QUOTE_TTL_MS).toISOString()
   const stripeIdempotencyKey = `bulk-import:${orgId}:${payloadHash}`
@@ -51,8 +48,8 @@ export default defineEventHandler(async (event) => {
       status: 'quoted',
       current_device_count: plan.currentCount,
       projected_device_count: plan.projectedCount,
-      previous_stripe_quantity: plan.previousQuantity,
-      target_stripe_quantity: plan.targetQuantity,
+      previous_stripe_quantity: plan.currentPeakDeviceCount,
+      target_stripe_quantity: plan.projectedPeakPaidQuantity,
       estimated_proration_amount: estimate.amount,
       currency: estimate.currency,
       stripe_idempotency_key: stripeIdempotencyKey,
@@ -73,17 +70,17 @@ export default defineEventHandler(async (event) => {
     deviceCount: devices.length,
     currentDeviceCount: quote.current_device_count,
     projectedDeviceCount: quote.projected_device_count,
-    previousStripeQuantity: quote.previous_stripe_quantity,
-    targetStripeQuantity: quote.target_stripe_quantity,
+    previousPeakPaidQuantity: quote.previous_stripe_quantity,
+    projectedPeakPaidQuantity: quote.target_stripe_quantity,
     quantityDelta: quote.target_stripe_quantity - quote.previous_stripe_quantity,
-    estimatedProrationAmount: quote.estimated_proration_amount ?? 0,
+    estimatedTrueUpAmount: quote.estimated_proration_amount ?? 0,
     currency: quote.currency || 'usd',
-    estimatedProrationFormatted: formatMoney(
+    estimatedTrueUpFormatted: formatMoney(
       quote.estimated_proration_amount ?? 0,
       quote.currency || 'usd',
     ),
-    needsStripeUpdate: plan.needsStripeUpdate,
+    needsUsageUpdate: plan.needsUsageUpdate,
     disclaimer:
-      'Estimated prorated charge from Stripe. Tax and invoice timing can affect the final amount billed.',
+      'Estimated month-end overage from your billing period high-water mark. Billed once at period close, not per device add/delete.',
   }
 })

@@ -108,17 +108,17 @@
             <span class="text-[#E8EAEF]">{{ quote.projectedDeviceCount }}</span>
           </li>
           <li>
-            Stripe quantity
-            <span class="text-[#E8EAEF]">{{ quote.previousStripeQuantity }}</span>
+            Period peak paid quantity
+            <span class="text-[#E8EAEF]">{{ quote.previousPeakPaidQuantity }}</span>
             →
-            <span class="text-[#E8EAEF]">{{ quote.targetStripeQuantity }}</span>
+            <span class="text-[#E8EAEF]">{{ quote.projectedPeakPaidQuantity }}</span>
             <span v-if="quote.quantityDelta">
               (+{{ quote.quantityDelta }})
             </span>
           </li>
           <li>
-            Estimated prorated charge:
-            <span class="text-amber-200">{{ quote.estimatedProrationFormatted }}</span>
+            Estimated month-end overage:
+            <span class="text-amber-200">{{ quote.estimatedTrueUpFormatted }}</span>
           </li>
         </ul>
         <p class="mt-2 text-[11px] leading-relaxed text-[#8B93A7]">
@@ -129,9 +129,9 @@
           <span>
             I understand adding
             {{ quote.deviceCount }}
-            devices may cost
-            {{ quote.estimatedProrationFormatted }}
-            based on my current subscription.
+            devices             may add
+            {{ quote.estimatedTrueUpFormatted }}
+            to my next monthly true-up invoice.
           </span>
         </label>
       </div>

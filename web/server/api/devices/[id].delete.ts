@@ -1,43 +1,5 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
-import { getRequiredQuantity, isPaidTier } from '../../utils/billing'
 import { requireOrgWriter } from '../../utils/auth'
-import {
-  countOrganizationDevices,
-  getOrganizationBilling,
-} from '../../utils/organizations'
-import { useStripeClient } from '../../utils/stripe'
-
-async function scaleDownIfNeeded(
-  supabase: Awaited<ReturnType<typeof serverSupabaseServiceRole>>,
-  orgId: string,
-) {
-  const org = await getOrganizationBilling(supabase, orgId)
-  if (!isPaidTier(org.subscription_tier) || !org.stripe_item_id) {
-    return
-  }
-
-  const remainingDevices = await countOrganizationDevices(supabase, orgId)
-  const requiredQuantity = getRequiredQuantity(org.subscription_tier, remainingDevices)
-
-  if (requiredQuantity >= org.stripe_quantity) {
-    return
-  }
-
-  const stripe = useStripeClient()
-  await stripe.subscriptionItems.update(org.stripe_item_id, {
-    quantity: requiredQuantity,
-    proration_behavior: 'create_prorations',
-  })
-
-  const { error } = await supabase
-    .from('organizations')
-    .update({ stripe_quantity: requiredQuantity })
-    .eq('id', orgId)
-
-  if (error) {
-    throw createError({ statusCode: 500, message: error.message })
-  }
-}
 
 export default defineEventHandler(async (event) => {
   const deviceId = getRouterParam(event, 'id')?.trim()
@@ -74,8 +36,6 @@ export default defineEventHandler(async (event) => {
   if (deleteError) {
     throw createError({ statusCode: 500, message: deleteError.message })
   }
-
-  await scaleDownIfNeeded(serviceSupabase, orgId)
 
   return { ok: true }
 })

@@ -277,9 +277,13 @@ async function onBulkImported() {
 async function onCreate() {
   creating.value = true
   try {
-    await createDevice(newName.value.trim())
+    const result = await createDevice(newName.value.trim())
     newName.value = ''
     showForm.value = false
+    if (result.credentials) {
+      const msg = `Save these credentials now — the secret is shown once.\n\nKey ID: ${result.credentials.keyId}\nAPI Secret: ${result.credentials.apiSecret}`
+      if (import.meta.client) window.alert(msg)
+    }
   } catch (e: any) {
     error.value = e.message
   } finally {

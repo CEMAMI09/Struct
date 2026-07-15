@@ -1,11 +1,10 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 import { requireOrgWriter } from '../../utils/auth'
-import { randomApiKey } from '../../utils/bulkDevices'
 import {
-  applyStripeQuantity,
-  persistStripeQuantity,
-  resolveCapacityPlan,
-} from '../../utils/deviceCapacity'
+  createDeviceCredentials,
+  sanitizeDeviceForClient,
+} from '../../utils/deviceCredentials'
+import { recordCapacityUsage, resolveCapacityPlan } from '../../utils/deviceCapacity'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{
@@ -25,21 +24,17 @@ export default defineEventHandler(async (event) => {
   const serviceSupabase = await serverSupabaseServiceRole(event)
 
   const plan = await resolveCapacityPlan(serviceSupabase, orgId, 1)
-  if (plan.needsStripeUpdate) {
-    const nextQuantity = await applyStripeQuantity(
-      plan.org,
-      plan.targetQuantity,
-      `device-create:${orgId}:${plan.currentCount + 1}`,
-    )
-    await persistStripeQuantity(serviceSupabase, orgId, nextQuantity)
-  }
+  const creds = createDeviceCredentials()
 
-  const apiKey = randomApiKey()
   const { data: device, error: deviceError } = await serviceSupabase
     .from('devices')
     .insert({
       name,
-      api_key: apiKey,
+      api_key: creds.keyId,
+      key_id: creds.keyId,
+      api_secret_encrypted: creds.apiSecretEncrypted,
+      api_secret_preview: creds.apiSecretPreview,
+      protocol_version: 2,
       user_id: user.id,
       organization_id: orgId,
       tags: {},
@@ -76,5 +71,13 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, message: versionError.message })
   }
 
-  return { device }
+  await recordCapacityUsage(serviceSupabase, orgId, plan.projectedCount)
+
+  return {
+    device: sanitizeDeviceForClient(device),
+    credentials: {
+      keyId: creds.keyId,
+      apiSecret: creds.apiSecret,
+    },
+  }
 })

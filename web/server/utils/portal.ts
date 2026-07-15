@@ -2,7 +2,7 @@ import type Stripe from 'stripe'
 import { TIER_CHECKOUT_QUANTITY, type PaidTier } from './billing'
 
 const PORTAL_META_KEY = 'struct'
-const PORTAL_META_VALUE = 'quantity_floors_v1'
+const PORTAL_META_VALUE = 'true_up_v2'
 
 async function productIdForPrice(stripe: Stripe, priceId: string) {
   const price = await stripe.prices.retrieve(priceId)
@@ -10,8 +10,7 @@ async function productIdForPrice(stripe: Stripe, priceId: string) {
 }
 
 /**
- * Portal config with tier-specific quantity floors (Flexible 5, Pro 150, Scale 1000).
- * Reuses an existing config when present so we don't create one per click.
+ * Portal config for plan changes only — device overage is billed monthly via true-up.
  */
 export async function getOrCreateQuantityPortalConfiguration(
   stripe: Stripe,
@@ -31,15 +30,9 @@ export async function getOrCreateQuantityPortalConfiguration(
   for (const tier of tiers) {
     const priceId = prices[tier]
     const product = await productIdForPrice(stripe, priceId)
-    const minimum = TIER_CHECKOUT_QUANTITY[tier]
     products.push({
       product,
       prices: [priceId],
-      adjustable_quantity: {
-        enabled: true,
-        minimum,
-        maximum: 999999,
-      },
     })
   }
 
@@ -53,7 +46,7 @@ export async function getOrCreateQuantityPortalConfiguration(
     subscription_cancel: { enabled: true },
     subscription_update: {
       enabled: true,
-      default_allowed_updates: ['price', 'quantity'],
+      default_allowed_updates: ['price'],
       proration_behavior: 'create_prorations',
       products,
     },

@@ -1,6 +1,9 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 import { requireOrgWriter } from '../../../utils/auth'
-import { randomApiKey } from '../../../utils/bulkDevices'
+import {
+  createDeviceCredentials,
+  sanitizeDeviceForClient,
+} from '../../../utils/deviceCredentials'
 
 export default defineEventHandler(async (event) => {
   const deviceId = getRouterParam(event, 'id')?.trim()
@@ -13,11 +16,17 @@ export default defineEventHandler(async (event) => {
 
   await requireOrgWriter(event, orgId)
   const supabase = await serverSupabaseServiceRole(event)
-  const nextKey = randomApiKey()
+  const creds = createDeviceCredentials()
 
   const { data, error } = await supabase
     .from('devices')
-    .update({ api_key: nextKey })
+    .update({
+      api_key: creds.keyId,
+      key_id: creds.keyId,
+      api_secret_encrypted: creds.apiSecretEncrypted,
+      api_secret_preview: creds.apiSecretPreview,
+      protocol_version: 2,
+    })
     .eq('id', deviceId)
     .eq('organization_id', orgId)
     .select()
@@ -30,5 +39,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Device not found' })
   }
 
-  return { device: data }
+  return {
+    device: sanitizeDeviceForClient(data),
+    credentials: {
+      keyId: creds.keyId,
+      apiSecret: creds.apiSecret,
+    },
+  }
 })

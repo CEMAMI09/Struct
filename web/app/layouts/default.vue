@@ -133,9 +133,12 @@ watch(
 
 async function bootstrapOrg() {
   await ensureOrganization()
+  const { syncFromStripe } = useBilling()
+  const { fetchUsageStats } = useOrganization()
   if (canWrite.value && currentOrganization.value?.stripe_customer_id) {
     await syncFromStripe()
   }
+  await fetchUsageStats()
 }
 
 onMounted(() => {

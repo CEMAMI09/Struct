@@ -3,6 +3,7 @@ import { serverSupabaseServiceRole } from '#supabase/server'
 import type { PaidTier, SubscriptionTier } from '../../utils/billing'
 import { useStripeClient } from '../../utils/stripe'
 import { applyStripeSubscriptionToOrg } from '../../utils/syncStripeSubscription'
+import { processPeriodTrueUp, syncUsagePeriodFromSubscription } from '../../utils/trueUpBilling'
 
 const PAID_TIERS = new Set<PaidTier>(['flexible', 'pro', 'scale'])
 
@@ -140,10 +141,36 @@ export default defineEventHandler(async (event) => {
     case 'customer.subscription.created':
     case 'customer.subscription.updated': {
       const subscription = stripeEvent.data.object as Stripe.Subscription
+      const orgId = subscription.metadata?.orgId || null
       try {
-        await applyStripeSubscriptionToOrg(serviceSupabase, subscription, prices)
+        await applyStripeSubscriptionToOrg(serviceSupabase, subscription, prices, orgId)
+        if (orgId) {
+          await syncUsagePeriodFromSubscription(serviceSupabase, subscription, orgId)
+        }
       } catch (err: any) {
         console.error('[stripe webhook] failed to sync subscription:', err?.message || err)
+      }
+      break
+    }
+
+    case 'invoice.created': {
+      const invoice = stripeEvent.data.object as Stripe.Invoice
+      const subscriptionId =
+        typeof invoice.subscription === 'string'
+          ? invoice.subscription
+          : invoice.subscription?.id || null
+      if (!subscriptionId) break
+
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+      const orgId = subscription.metadata?.orgId
+      if (!orgId) break
+
+      const periodStart = new Date(subscription.current_period_start * 1000)
+      try {
+        await processPeriodTrueUp(serviceSupabase, orgId, periodStart)
+        await syncUsagePeriodFromSubscription(serviceSupabase, subscription, orgId)
+      } catch (err: any) {
+        console.error('[stripe webhook] true-up failed:', err?.message || err)
       }
       break
     }

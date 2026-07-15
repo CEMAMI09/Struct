@@ -35,9 +35,12 @@ export function useOrganization() {
   const isEnterprise = computed(
     () => currentOrganization.value?.subscription_tier === 'scale',
   )
-  const deviceLimit = computed(
-    () => 5 + (currentOrganization.value?.stripe_quantity ?? 0),
-  )
+  const usagePeakPaid = useState<number>('org-usage-peak-paid', () => 0)
+  const usageDeviceLimit = useState<number | null>('org-usage-device-limit', () => null)
+  const deviceLimit = computed(() => {
+    if (usageDeviceLimit.value != null) return usageDeviceLimit.value
+    return 5 + (currentOrganization.value?.stripe_quantity ?? 0)
+  })
 
   function requireWrite() {
     if (!canWrite.value) {
@@ -355,6 +358,23 @@ export function useOrganization() {
     return org.name.trim().toLowerCase() !== 'personal'
   })
 
+  async function fetchUsageStats() {
+    const orgId = currentOrgId.value
+    if (!orgId) return null
+    try {
+      const stats = await $fetch<{
+        deviceLimit: number
+        peakPaidQuantity: number
+        peakDeviceCount: number
+      }>(`/api/billing/usage?orgId=${encodeURIComponent(orgId)}`)
+      usageDeviceLimit.value = stats.deviceLimit
+      usagePeakPaid.value = stats.peakPaidQuantity
+      return stats
+    } catch {
+      return null
+    }
+  }
+
   return {
     memberships,
     currentOrgId,
@@ -366,6 +386,9 @@ export function useOrganization() {
     isOwner,
     isEnterprise,
     deviceLimit,
+    usagePeakPaid,
+    usageDeviceLimit,
+    fetchUsageStats,
     showOrgBadge,
     loading,
     ready,

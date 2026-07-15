@@ -6,6 +6,7 @@ const CPP_TYPE: Record<string, string> = {
   int32: 'int32_t',
   uint8: 'uint8_t',
   boolean: 'uint8_t',
+  flags: 'uint8_t',
 }
 
 function schemaByteLength(fields: SchemaField[]) {
@@ -18,8 +19,35 @@ function sanitizeIdent(name: string, fallback: string) {
   return cleaned
 }
 
+function flagMaskDefines(field: SchemaField): string[] {
+  if (field.type !== 'flags' || !Array.isArray(field.bits)) return []
+  const group = sanitizeIdent(field.name.toUpperCase(), 'FLAGS')
+  return field.bits.map((bit) => {
+    const flag = sanitizeIdent(bit.name.toUpperCase(), 'BIT')
+    return `#define ${group}_${flag} (1u << ${Number(bit.bit)})`
+  })
+}
+
+function fieldStructLine(f: SchemaField): string {
+  const name = sanitizeIdent(f.name || 'unnamed', 'unnamed')
+  if (f.type === 'flags') {
+    return `  uint8_t ${name}; // packed flags (see masks below)`
+  }
+  const ctype = CPP_TYPE[f.type] || 'uint8_t'
+  const note = f.type === 'boolean' ? ' // boolean 0/1' : ` // ${f.type}`
+  return `  ${ctype} ${name};${note}`
+}
+
+function fieldPreviewLine(f: SchemaField): string {
+  if (f.type === 'flags') {
+    return `  uint8_t ${f.name || 'unnamed'}; // flags`
+  }
+  return `  ${CPP_TYPE[f.type] || 'uint8_t'} ${f.name || 'unnamed'};`
+}
+
 /**
  * Generate a downloadable ESP32-ready header for the packed telemetry struct.
+ * Flags use a backing uint8_t plus #define masks — not compiler bitfields.
  */
 export function useCppHeader() {
   function generateCppHeader(opts: {
@@ -40,23 +68,21 @@ export function useCppHeader() {
     const byteLen = schemaByteLength(opts.fields)
 
     const fieldLines = opts.fields.length
-      ? opts.fields.map((f) => {
-          const ctype = CPP_TYPE[f.type] || 'uint8_t'
-          const name = sanitizeIdent(f.name || 'unnamed', 'unnamed')
-          const note = f.type === 'boolean' ? ' // boolean 0/1' : ` // ${f.type}`
-          return `  ${ctype} ${name};${note}`
-        })
+      ? opts.fields.map(fieldStructLine)
       : ['  // add fields…']
+
+    const maskLines = opts.fields.flatMap(flagMaskDefines)
 
     const encNote = opts.encryptionEnabled
       ? [
-          ' * Encrypted wire (ChaCha20-Poly1305):',
-          ' *   [16B api_key][1B SCHEMA_VERSION][12B nonce]',
-          ' *   [ciphertext = 4B uint32 LE unix_ts + Packet][16B tag]',
+          ' * Encrypted wire (ChaCha20-Poly1305) inside Protocol v2 payload:',
+          ' *   [1B proto=2][16B key_id][1B SCHEMA_VERSION][4B ts][12B nonce]',
+          ' *   [ciphertext = 4B uint32 LE unix_ts + Packet][16B tag][32B hmac]',
         ]
       : [
-          ' * Plaintext wire:',
-          ' *   [16B api_key][1B SCHEMA_VERSION][Packet bytes…]',
+          ' * Protocol v2 plaintext payload:',
+          ' *   [1B proto=2][16B key_id][1B SCHEMA_VERSION][4B ts][12B nonce]',
+          ' *   [Packet bytes…][32B hmac]',
         ]
 
     return [
@@ -70,6 +96,9 @@ export function useCppHeader() {
       `#define STRUCT_SCHEMA_VERSION  ((uint8_t)${version})`,
       `#define STRUCT_PACKET_SIZE     (${byteLen}u)`,
       ``,
+      ...(maskLines.length
+        ? ['/* Packed flags masks (backing field is uint8_t in the struct) */', ...maskLines, ``]
+        : []),
       `/*`,
       ...encNote,
       ` */`,
@@ -107,18 +136,18 @@ export function useCppHeader() {
     if (!fields.length) {
       return `#pragma pack(push, 1)\nstruct Packet {\n  // add fields…\n};\n#pragma pack(pop)`
     }
-    const lines = fields.map((f) => {
-      return `  ${CPP_TYPE[f.type] || 'uint8_t'} ${f.name || 'unnamed'};`
-    })
+    const lines = fields.map(fieldPreviewLine)
+    const masks = fields.flatMap(flagMaskDefines)
     return [
       `#define STRUCT_SCHEMA_VERSION ${version}`,
+      ...(masks.length ? masks : []),
       `#pragma pack(push, 1)`,
       `struct Packet {`,
       ...lines,
       `};`,
       `#pragma pack(pop)`,
       `// sizeof(Packet) == ${byteLength}`,
-      `// Wire: [16B api_key][1B version=${version}][payload]`,
+      `// Wire: Protocol v2 [proto][key_id][version=${version}][ts][nonce][payload][hmac]`,
     ].join('\n')
   }
 

@@ -130,31 +130,86 @@
           <button type="button" class="btn-primary" @click="addField">Add first field</button>
         </div>
 
-        <div v-else class="space-y-2">
+        <div v-else class="space-y-3">
           <div
             v-for="(field, idx) in fields"
             :key="idx"
-            class="grid grid-cols-1 items-center gap-2 sm:grid-cols-[1fr_140px_40px]"
+            class="rounded-lg border border-[#2A2F3A] p-3"
           >
-            <input
-              v-model="field.name"
-              class="input mono"
-              placeholder="field_name"
-              pattern="[A-Za-z_][A-Za-z0-9_]*"
-              :disabled="!canWrite"
-            />
-            <select v-model="field.type" class="input" :disabled="!canWrite">
-              <option v-for="t in FIELD_TYPES" :key="t" :value="t">{{ t }}</option>
-            </select>
-            <button
-              type="button"
-              class="btn-ghost min-h-10 text-[#8B93A7] hover:text-red-400 sm:min-h-0 sm:px-0"
-              title="Remove field"
-              :disabled="!canWrite"
-              @click="removeField(idx)"
-            >
-              ×
-            </button>
+            <div class="grid grid-cols-1 items-center gap-2 sm:grid-cols-[1fr_140px_40px]">
+              <input
+                v-model="field.name"
+                class="input mono"
+                placeholder="field_name"
+                pattern="[A-Za-z_][A-Za-z0-9_]*"
+                :disabled="!canWrite"
+              />
+              <select
+                :value="field.type"
+                class="input"
+                :disabled="!canWrite"
+                @change="onTypeChange(idx, ($event.target as HTMLSelectElement).value)"
+              >
+                <option v-for="t in FIELD_TYPES" :key="t" :value="t">{{ t }}</option>
+              </select>
+              <button
+                type="button"
+                class="btn-ghost min-h-10 text-[#8B93A7] hover:text-red-400 sm:min-h-0 sm:px-0"
+                title="Remove field"
+                :disabled="!canWrite"
+                @click="removeField(idx)"
+              >
+                ×
+              </button>
+            </div>
+
+            <div v-if="field.type === 'flags'" class="mt-3 space-y-2 border-t border-[#2A2F3A] pt-3">
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-[10px] uppercase tracking-wider text-[#8B93A7]">
+                  Packed flags · 1 byte · bits 0–7
+                </p>
+                <button
+                  type="button"
+                  class="btn-ghost py-1 text-[10px]"
+                  :disabled="!canWrite || (field.bits?.length || 0) >= 8"
+                  @click="addFlagBit(idx)"
+                >
+                  + Flag
+                </button>
+              </div>
+              <div
+                v-for="(bit, bIdx) in field.bits || []"
+                :key="bIdx"
+                class="grid grid-cols-1 items-center gap-2 sm:grid-cols-[1fr_80px_40px]"
+              >
+                <input
+                  v-model="bit.name"
+                  class="input mono text-xs"
+                  placeholder="flag_name"
+                  :disabled="!canWrite"
+                />
+                <input
+                  v-model.number="bit.bit"
+                  type="number"
+                  min="0"
+                  max="7"
+                  class="input mono text-xs"
+                  :disabled="!canWrite"
+                />
+                <button
+                  type="button"
+                  class="btn-ghost min-h-10 text-[#8B93A7] hover:text-red-400 sm:min-h-0 sm:px-0"
+                  title="Remove flag"
+                  :disabled="!canWrite"
+                  @click="removeFlagBit(idx, bIdx)"
+                >
+                  ×
+                </button>
+              </div>
+              <p v-if="!(field.bits && field.bits.length)" class="text-[10px] text-amber-300">
+                Add at least one flag bit (positions must be unique 0–7).
+              </p>
+            </div>
           </div>
 
           <button
@@ -195,7 +250,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Device, DeviceSchema, SchemaField, SchemaVersion } from '~/types'
+import type { Device, DeviceSchema, FieldType, SchemaField, SchemaVersion } from '~/types'
 import { FIELD_TYPES } from '~/types'
 
 const props = defineProps<{
@@ -238,9 +293,7 @@ const publishedDef = computed(
 )
 
 const dirty = computed(() => {
-  return JSON.stringify(publishedDef.value) !== JSON.stringify(
-    fields.value.map((f) => ({ name: f.name.trim(), type: f.type })).filter((f) => f.name),
-  )
+  return JSON.stringify(publishedDef.value) !== JSON.stringify(cleanedFields())
 })
 
 const willBumpOnSave = computed(() => dirty.value && publishedDef.value.length > 0)
@@ -260,7 +313,18 @@ const canDownload = computed(() => {
 
 function normalizeFields(def: unknown): SchemaField[] {
   if (!Array.isArray(def)) return []
-  return toRaw(def).map((f) => ({ name: f.name, type: f.type }))
+  return toRaw(def).map((raw: any) => {
+    if (raw?.type === 'flags') {
+      const bits = Array.isArray(raw.bits)
+        ? raw.bits.map((b: any) => ({
+            name: String(b?.name || ''),
+            bit: Number(b?.bit) | 0,
+          }))
+        : []
+      return { name: String(raw.name || ''), type: 'flags' as const, bits }
+    }
+    return { name: String(raw?.name || ''), type: raw?.type || 'float32' }
+  })
 }
 
 function loadFields(id: string, clearMessage = true) {
@@ -319,9 +383,44 @@ const cppPreviewText = computed(() =>
 )
 
 function cleanedFields(): SchemaField[] {
-  return fields.value
-    .map((f) => ({ name: f.name.trim(), type: f.type }))
-    .filter((f) => f.name)
+  const out: SchemaField[] = []
+  for (const f of fields.value) {
+    const name = f.name.trim()
+    if (!name) continue
+    if (f.type === 'flags') {
+      out.push({
+        name,
+        type: 'flags',
+        bits: (f.bits || [])
+          .map((b) => ({ name: String(b.name || '').trim(), bit: Number(b.bit) | 0 }))
+          .filter((b) => b.name),
+      })
+    } else {
+      out.push({ name, type: f.type })
+    }
+  }
+  return out
+}
+
+function validateFlags(fieldsToCheck: SchemaField[]): string | null {
+  for (const f of fieldsToCheck) {
+    if (f.type !== 'flags') continue
+    if (!f.bits.length) return `Flags field "${f.name}" needs at least one bit.`
+    const seen = new Set<number>()
+    for (const bit of f.bits) {
+      if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(bit.name)) {
+        return `Flag name "${bit.name}" must be a valid C identifier.`
+      }
+      if (!Number.isInteger(bit.bit) || bit.bit < 0 || bit.bit > 7) {
+        return `Flags field "${f.name}": bit positions must be 0–7.`
+      }
+      if (seen.has(bit.bit)) {
+        return `Flags field "${f.name}": duplicate bit position ${bit.bit}.`
+      }
+      seen.add(bit.bit)
+    }
+  }
+  return null
 }
 
 function addField() {
@@ -333,6 +432,41 @@ function removeField(idx: number) {
   fields.value.splice(idx, 1)
 }
 
+function onTypeChange(idx: number, next: string) {
+  const type = next as FieldType
+  const current = fields.value[idx]
+  if (!current) return
+  if (type === 'flags') {
+    fields.value[idx] = {
+      name: current.name,
+      type: 'flags',
+      bits: current.type === 'flags' && current.bits?.length
+        ? current.bits
+        : [{ name: 'flag_0', bit: 0 }],
+    }
+  } else {
+    fields.value[idx] = { name: current.name, type }
+  }
+}
+
+function addFlagBit(fieldIdx: number) {
+  const field = fields.value[fieldIdx]
+  if (!field || field.type !== 'flags') return
+  if (!field.bits) field.bits = []
+  if (field.bits.length >= 8) return
+  const used = new Set(field.bits.map((b) => Number(b.bit)))
+  let nextBit = 0
+  while (used.has(nextBit) && nextBit < 8) nextBit += 1
+  if (nextBit > 7) return
+  field.bits.push({ name: `flag_${nextBit}`, bit: nextBit })
+}
+
+function removeFlagBit(fieldIdx: number, bitIdx: number) {
+  const field = fields.value[fieldIdx]
+  if (!field || field.type !== 'flags') return
+  field.bits.splice(bitIdx, 1)
+}
+
 async function save() {
   if (!canEdit.value) return
   const cleaned = cleanedFields()
@@ -340,6 +474,13 @@ async function save() {
   if (cleaned.some((f) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(f.name))) {
     error.value = true
     message.value = 'Field names must be valid C identifiers.'
+    return
+  }
+
+  const flagsErr = validateFlags(cleaned)
+  if (flagsErr) {
+    error.value = true
+    message.value = flagsErr
     return
   }
 
@@ -365,6 +506,13 @@ function downloadHeader() {
   if (cleaned.some((f) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(f.name))) {
     error.value = true
     message.value = 'Field names must be valid C identifiers before download.'
+    return
+  }
+
+  const flagsErr = validateFlags(cleaned)
+  if (flagsErr) {
+    error.value = true
+    message.value = flagsErr
     return
   }
 

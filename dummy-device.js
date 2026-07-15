@@ -1,18 +1,12 @@
 /**
- * dummy-device.js — simulates an ESP32 sending a packed LE struct over TCP.
+ * dummy-device.js — Protocol v2 simulator with HMAC-authenticated frames.
  *
- * Wire: [16B api_key][1B schema_version][payload]
- *
- * Auto-matches the dashboard ChaCha toggle by looking up the device
- * (uses tcp-server/.env). You can also force a mode:
- *
- *   node dummy-device.js              # auto (preferred)
- *   node dummy-device.js --encrypt    # force ChaCha ON
- *   node dummy-device.js --plain      # force plaintext
- *   API_KEY=xxxxxxxxxxxxxxxx node dummy-device.js
+ *   KEY_ID=xxxxxxxxxxxxxxxx API_SECRET=64hex node dummy-device.js
+ *   TRANSPORT=udp KEY_ID=… API_SECRET=… node dummy-device.js
  */
-
 const net = require('net')
+const dgram = require('dgram')
+const crypto = require('crypto')
 const path = require('path')
 const tcpRoot = path.join(__dirname, 'tcp-server')
 
@@ -23,17 +17,22 @@ require(path.join(tcpRoot, 'node_modules', 'dotenv')).config({
 const { createClient } = require(path.join(tcpRoot, 'node_modules', '@supabase/supabase-js'))
 const { encryptPayload } = require(path.join(tcpRoot, 'crypto'))
 const { prependTimestamp } = require(path.join(tcpRoot, 'replay'))
+const { buildTelemetryFrame } = require(path.join(tcpRoot, 'protocol'))
+const { decryptSecret } = require(path.join(tcpRoot, 'auth'))
 
 const args = new Set(process.argv.slice(2))
 const FORCE_ENCRYPT = args.has('--encrypt') || args.has('-e')
 const FORCE_PLAIN = args.has('--plain') || args.has('-p')
+const FORCE_UDP = args.has('--udp') || process.env.TRANSPORT === 'udp'
 
 const HOST = process.env.HOST || '127.0.0.1'
-const PORT = Number(process.env.PORT || process.env.TCP_PORT || 8080)
-const API_KEY = process.env.API_KEY || 'v3tz2m0fv57c6p05'
+const TCP_PORT = Number(process.env.PORT || process.env.TCP_PORT || 8080)
+const UDP_PORT = Number(process.env.UDP_PORT || 8081)
+const KEY_ID = process.env.KEY_ID || process.env.API_KEY || ''
+const API_SECRET = process.env.API_SECRET || ''
 const SCHEMA_VERSION = Number(process.env.SCHEMA_VERSION || 1)
 
-async function lookupDevice(apiKey) {
+async function lookupDevice(keyId) {
   const url = process.env.SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !key) return null
@@ -43,76 +42,83 @@ async function lookupDevice(apiKey) {
   })
   const { data, error } = await supabase
     .from('devices')
-    .select('id, name, encryption_enabled, encryption_key, schemas(version)')
-    .eq('api_key', apiKey)
+    .select('id, name, key_id, api_secret_encrypted, encryption_enabled, encryption_key, schemas(version)')
+    .eq('key_id', keyId)
     .maybeSingle()
   if (error) throw new Error(error.message)
   return data
 }
 
 function resolveMode(device) {
-  const forcePlain =
-    FORCE_PLAIN || process.env.ENCRYPTION === '0' || process.env.ENCRYPTION === 'false'
-  const forceEnc =
-    FORCE_ENCRYPT || process.env.ENCRYPTION === '1' || process.env.ENCRYPTION === 'true'
-
-  if (device) {
-    if (forcePlain && device.encryption_enabled) {
-      throw new Error(
-        `Dashboard ChaCha is ON for "${device.name}" but you forced plaintext. ` +
-          `Turn ChaCha off in Schema, or run: node dummy-device.js (auto) / --encrypt`,
-      )
-    }
-    if (forceEnc && !device.encryption_enabled) {
-      throw new Error(
-        `Dashboard ChaCha is OFF for "${device.name}" but you forced encrypt. ` +
-          `Turn ChaCha on in Schema first, then: node dummy-device.js`,
-      )
-    }
-  }
-
-  if (forcePlain) {
-    return { enabled: false, key: null, source: 'forced plaintext' }
-  }
-  if (forceEnc) {
-    const key = process.env.ENCRYPTION_KEY || device?.encryption_key
-    if (!key) {
-      throw new Error(
-        'Forced encrypt but no key — copy the 64-char key from Schema, then:\n' +
-          '  ENCRYPTION_KEY=… node dummy-device.js --encrypt',
-      )
-    }
-    return { enabled: true, key, source: 'forced encrypt' }
-  }
+  if (FORCE_PLAIN) return { enabled: false, key: null }
   if (device?.encryption_enabled) {
     if (!device.encryption_key) {
-      throw new Error(`Device "${device.name}" has ChaCha ON but no encryption_key in dashboard`)
+      throw new Error(`Device "${device.name}" has ChaCha ON but no encryption_key`)
     }
-    return { enabled: true, key: device.encryption_key, source: 'dashboard ChaCha ON' }
+    return { enabled: true, key: device.encryption_key }
   }
-  return { enabled: false, key: null, source: 'dashboard ChaCha OFF' }
+  if (FORCE_ENCRYPT) {
+    const key = process.env.ENCRYPTION_KEY || device?.encryption_key
+    if (!key) throw new Error('Forced encrypt but no ENCRYPTION_KEY')
+    return { enabled: true, key }
+  }
+  return { enabled: false, key: null }
+}
+
+function sendTcp(buf, mode, version) {
+  return new Promise((resolve, reject) => {
+    const socket = net.createConnection({ host: HOST, port: TCP_PORT }, () => {
+      socket.write(buf)
+      console.log(
+        `[dummy-device] fired ${buf.length}B → ${HOST}:${TCP_PORT} TCP (v2 ${mode}, schema v${version})`,
+      )
+      console.log(`[dummy-device] hex: ${buf.toString('hex')}`)
+      setTimeout(() => socket.end(), 500)
+    })
+    socket.on('error', (err) => {
+      console.error(`[dummy-device] TCP error: ${err.message}`)
+      reject(err)
+    })
+    socket.on('close', () => {
+      console.log('[dummy-device] TCP connection closed')
+      resolve()
+    })
+  })
+}
+
+function sendUdp(buf, mode, version) {
+  return new Promise((resolve, reject) => {
+    const socket = dgram.createSocket('udp4')
+    socket.send(buf, UDP_PORT, HOST, (err) => {
+      if (err) {
+        console.error(`[dummy-device] UDP error: ${err.message}`)
+        socket.close()
+        reject(err)
+        return
+      }
+      console.log(
+        `[dummy-device] fired ${buf.length}B → ${HOST}:${UDP_PORT} UDP (v2 ${mode}, schema v${version})`,
+      )
+      console.log(`[dummy-device] hex: ${buf.toString('hex')}`)
+      socket.close()
+      resolve()
+    })
+  })
 }
 
 async function main() {
   let device = null
   try {
-    device = await lookupDevice(API_KEY)
+    device = await lookupDevice(KEY_ID)
   } catch (err) {
-    console.warn(`[dummy-device] could not look up device: ${err.message}`)
+    console.warn(`[dummy-device] lookup failed: ${err.message}`)
   }
 
-  if (!device) {
-    console.warn(`[dummy-device] no device for API_KEY=${JSON.stringify(API_KEY)}`)
-    if (!FORCE_ENCRYPT && !FORCE_PLAIN && process.env.ENCRYPTION == null) {
-      console.warn(
-        '[dummy-device] defaulting to plaintext. If ChaCha is ON in the dashboard, run:\n' +
-          '  node dummy-device.js --encrypt',
-      )
-    }
-  } else {
-    console.log(
-      `[dummy-device] device "${device.name}" · ChaCha ${device.encryption_enabled ? 'ON' : 'OFF'}`,
-    )
+  const secret =
+    API_SECRET ||
+    (device?.api_secret_encrypted ? decryptSecret(device.api_secret_encrypted) : '')
+  if (!KEY_ID || !secret) {
+    throw new Error('Set KEY_ID and API_SECRET (from device create/rotate response)')
   }
 
   const enc = resolveMode(device)
@@ -129,30 +135,23 @@ async function main() {
     ? encryptPayload(prependTimestamp(packed), enc.key)
     : packed
 
-  const buf = Buffer.alloc(16 + 1 + payload.length)
-  buf.write(API_KEY, 0, 16, 'utf8')
-  buf.writeUInt8(version & 0xff, 16)
-  payload.copy(buf, 17)
-
-  await new Promise((resolve, reject) => {
-    const socket = net.createConnection({ host: HOST, port: PORT }, () => {
-      socket.write(buf)
-      const mode = enc.enabled ? 'ChaCha20' : 'plaintext'
-      console.log(
-        `[dummy-device] fired ${buf.length}B → ${HOST}:${PORT} (${mode}, v${version}, ${enc.source})`,
-      )
-      console.log(`[dummy-device] hex: ${buf.toString('hex')}`)
-      setTimeout(() => socket.end(), 500)
-    })
-    socket.on('error', (err) => {
-      console.error(`[dummy-device] connection error: ${err.message}`)
-      reject(err)
-    })
-    socket.on('close', () => {
-      console.log('[dummy-device] connection closed')
-      resolve()
-    })
+  const nonce = crypto.randomBytes(12)
+  const timestampSec = Math.floor(Date.now() / 1000)
+  const buf = buildTelemetryFrame({
+    keyId: KEY_ID,
+    schemaVersion: version,
+    timestampSec,
+    nonce,
+    payload,
+    secret,
   })
+
+  const mode = enc.enabled ? 'ChaCha20' : 'plaintext'
+  if (FORCE_UDP) {
+    await sendUdp(buf, mode, version)
+  } else {
+    await sendTcp(buf, mode, version)
+  }
 }
 
 main().catch((err) => {

@@ -1,0 +1,30 @@
+{
+  "name": "struct-native-parser",
+  "version": "0.1.0",
+  "description": "napi-rs Schema payload parser for Struct",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "napi": {
+    "name": "struct-native-parser",
+    "triples": {
+      "defaults": true
+    }
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "*.node"
+  ],
+  "scripts": {
+    "artifacts": "napi artifacts",
+    "build": "napi build --platform --release",
+    "build:debug": "napi build --platform",
+    "prepublishOnly": "napi prepublish -t npm"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^2.18.4"
+  },
+  "engines": {
+    "node": ">= 18"
+  }
+}

@@ -8,6 +8,10 @@
           <option v-for="d in devices" :key="d.id" :value="d.id">{{ d.name }}</option>
         </select>
       </div>
+      <div class="min-w-0 w-full flex-1 sm:min-w-[180px]">
+        <label class="label">API secret (64 hex)</label>
+        <input v-model="apiSecret" class="input font-mono text-xs" placeholder="From device create/rotate" />
+      </div>
       <button class="btn-primary w-full sm:w-auto" :disabled="!canSimulate" @click="simulate">
         Simulate packet
       </button>
@@ -32,7 +36,7 @@
         </div>
         <div class="flex-1 overflow-auto p-4">
           <p class="mb-2 text-[10px] uppercase tracking-wider text-[#8B93A7]">
-            API key (16 B) + schema version (1 B) + payload
+            Protocol v2: header + timestamp + nonce + payload + HMAC
           </p>
           <pre class="mono whitespace-pre-wrap break-all text-xs leading-6 text-[#38B6FF]">{{ hexOutput || '— click Simulate —' }}</pre>
         </div>
@@ -59,9 +63,10 @@ const props = defineProps<{
   schemas: Record<string, DeviceSchema>
 }>()
 
-const { encodeApiKey, encodePayload, parsePayload, toHex, schemaByteLength } = useBinaryParser()
+const { encodePayload, parsePayload, toHex, buildV2TelemetryFrame, schemaByteLength } = useBinaryParser()
 
 const selectedDeviceId = ref('')
+const apiSecret = ref('')
 const hexOutput = ref('')
 const jsonOutput = ref('')
 
@@ -71,19 +76,21 @@ const schemaRow = computed(() => props.schemas[selectedDeviceId.value])
 const schema = computed(() => schemaRow.value?.schema_definition || ([] as SchemaField[]))
 const schemaVersion = computed(() => schemaRow.value?.version || 1)
 
-const canSimulate = computed(() => !!selectedDevice.value && schema.value.length > 0)
+const canSimulate = computed(
+  () => !!selectedDevice.value && schema.value.length > 0 && apiSecret.value.length >= 32,
+)
 
 const totalBytes = computed(() => {
   if (!schema.value.length) return 0
   try {
-    return 16 + 1 + schemaByteLength(schema.value)
+    return 1 + 16 + 1 + 4 + 12 + schemaByteLength(schema.value) + 32
   } catch {
     return 0
   }
 })
 
-function randomValues(fields: SchemaField[]): Record<string, number | boolean> {
-  const out: Record<string, number | boolean> = {}
+function randomValues(fields: SchemaField[]): Record<string, number | boolean | Record<string, boolean>> {
+  const out: Record<string, number | boolean | Record<string, boolean>> = {}
   for (const f of fields) {
     switch (f.type) {
       case 'float32':
@@ -98,34 +105,42 @@ function randomValues(fields: SchemaField[]): Record<string, number | boolean> {
       case 'boolean':
         out[f.name] = Math.random() > 0.5
         break
+      case 'flags': {
+        const flags: Record<string, boolean> = {}
+        for (const bit of f.bits || []) {
+          flags[bit.name] = Math.random() > 0.5
+        }
+        out[f.name] = flags
+        break
+      }
     }
   }
   return out
 }
 
-function simulate() {
-  if (!selectedDevice.value || !schema.value.length) return
+async function simulate() {
+  if (!selectedDevice.value || !schema.value.length || !apiSecret.value) return
 
   const values = randomValues(schema.value)
-  const keyBytes = encodeApiKey(selectedDevice.value.api_key)
-  const versionByte = new Uint8Array([schemaVersion.value & 0xff])
   const payload = encodePayload(values, schema.value)
-  const frame = new Uint8Array(keyBytes.length + 1 + payload.length)
-  frame.set(keyBytes, 0)
-  frame.set(versionByte, keyBytes.length)
-  frame.set(payload, keyBytes.length + 1)
+  const { frame, timestampSec, nonce } = await buildV2TelemetryFrame({
+    keyId: selectedDevice.value.key_id || selectedDevice.value.api_key,
+    schemaVersion: schemaVersion.value,
+    payload,
+    secret: apiSecret.value,
+  })
 
-  const keyHex = toHex(keyBytes)
-  const versionHex = toHex(versionByte)
-  const payloadHex = toHex(payload)
-  hexOutput.value = `${keyHex}\n\n${versionHex}  // schema v${schemaVersion.value}\n\n${payloadHex}`
+  hexOutput.value = toHex(frame)
 
   const parsed = parsePayload(payload, schema.value)
   jsonOutput.value = JSON.stringify(
     {
-      api_key: selectedDevice.value.api_key,
+      protocol: 2,
+      key_id: selectedDevice.value.key_id,
       device: selectedDevice.value.name,
       schema_version: schemaVersion.value,
+      timestamp: timestampSec,
+      nonce_hex: toHex(nonce, false),
       payload: parsed,
     },
     null,

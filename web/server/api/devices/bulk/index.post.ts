@@ -2,16 +2,11 @@ import { serverSupabaseServiceRole } from '#supabase/server'
 import { requireOrgWriter } from '../../../utils/auth'
 import {
   findConflictingMacs,
-  randomApiKey,
   type BulkDeviceInput,
   type BulkImportRow,
 } from '../../../utils/bulkDevices'
-import {
-  applyStripeQuantity,
-  persistStripeQuantity,
-  resolveCapacityPlan,
-  restoreStripeQuantity,
-} from '../../../utils/deviceCapacity'
+import { createDeviceCredentials } from '../../../utils/deviceCredentials'
+import { recordCapacityUsage, resolveCapacityPlan } from '../../../utils/deviceCapacity'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{ orgId?: string; importId?: string }>(event)
@@ -125,7 +120,7 @@ export default defineEventHandler(async (event) => {
 
     if (
       plan.currentCount !== claimed.current_device_count ||
-      plan.targetQuantity !== claimed.target_stripe_quantity
+      plan.projectedPeakPaidQuantity !== claimed.target_stripe_quantity
     ) {
       throw createError({
         statusCode: 409,
@@ -135,23 +130,17 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    let stripeRaised = false
-    if (plan.needsStripeUpdate) {
-      await applyStripeQuantity(
-        plan.org,
-        plan.targetQuantity,
-        claimed.stripe_idempotency_key,
-      )
-      stripeRaised = true
-      await persistStripeQuantity(supabase, orgId, plan.targetQuantity)
-    }
-
-    const enriched = devices.map((d) => ({
-      name: d.name,
-      mac_address: d.mac_address,
-      tags: d.tags || {},
-      api_key: randomApiKey(),
-    }))
+    const enriched = devices.map((d) => {
+      const creds = createDeviceCredentials()
+      return {
+        name: d.name,
+        mac_address: d.mac_address,
+        tags: d.tags || {},
+        key_id: creds.keyId,
+        api_secret_encrypted: creds.apiSecretEncrypted,
+        api_secret_preview: creds.apiSecretPreview,
+      }
+    })
 
     const { data: inserted, error: rpcError } = await supabase.rpc('bulk_insert_devices', {
       p_org_id: orgId,
@@ -161,19 +150,6 @@ export default defineEventHandler(async (event) => {
     })
 
     if (rpcError) {
-      if (stripeRaised) {
-        try {
-          await restoreStripeQuantity(
-            { ...plan.org, stripe_quantity: plan.targetQuantity },
-            plan.previousQuantity,
-            claimed.stripe_idempotency_key,
-          )
-          await persistStripeQuantity(supabase, orgId, plan.previousQuantity)
-        } catch (restoreErr: any) {
-          console.error('Failed to restore Stripe quantity after bulk insert failure', restoreErr)
-        }
-      }
-
       const message = rpcError.message || 'Bulk insert failed'
       if (message.includes('DEVICE_COUNT_CHANGED') || message.includes('MAC_CONFLICT')) {
         throw createError({
@@ -185,6 +161,8 @@ export default defineEventHandler(async (event) => {
       }
       throw createError({ statusCode: 500, message })
     }
+
+    await recordCapacityUsage(supabase, orgId, plan.projectedCount)
 
     const created = (inserted || []) as Array<Record<string, unknown>>
     const createdIds = created.map((d) => String(d.id))
@@ -203,7 +181,7 @@ export default defineEventHandler(async (event) => {
       importId,
       devices: created,
       alreadyCompleted: false,
-      quantityDelta: plan.quantityDelta,
+      peakPaidDelta: plan.overageDelta,
       projectedDeviceCount: plan.projectedCount,
     }
   } catch (err: any) {
@@ -213,7 +191,7 @@ export default defineEventHandler(async (event) => {
     await supabase
       .from('bulk_device_imports')
       .update({
-        status: statusCode === 409 ? 'failed' : 'failed',
+        status: 'failed',
         error_message: message,
       })
       .eq('id', importId)

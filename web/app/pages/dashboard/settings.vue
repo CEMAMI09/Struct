@@ -42,7 +42,7 @@
               {{ deviceLimit }} device limit
             </p>
             <p class="mt-1 text-xs text-[#8B93A7]">
-              5 free + {{ currentOrganization?.stripe_quantity ?? 0 }} paid slots from Stripe
+              5 free + {{ usagePeakPaid || currentOrganization?.stripe_quantity || 0 }} paid peak this period
             </p>
           </div>
           <div class="flex shrink-0 flex-col gap-2 sm:items-end">
@@ -310,8 +310,10 @@ const {
   currentOrganization,
   canWrite,
   deviceLimit,
+  usagePeakPaid,
   ensureOrganization,
   fetchMemberships,
+  fetchUsageStats,
 } = useOrganization()
 const {
   destinations,
@@ -375,6 +377,7 @@ onMounted(async () => {
     if (currentOrganization.value?.stripe_customer_id) {
       await syncFromStripe()
     }
+    await fetchUsageStats()
 
     const saved = user.value?.user_metadata?.notifications
     if (saved && typeof saved === 'object') {
@@ -457,12 +460,22 @@ async function onRotateToken() {
   rotatingToken.value = true
   setMessage()
   try {
-    const device = await rotateDeviceApiKey(tokenDeviceId.value)
+    const result = await rotateDeviceApiKey(tokenDeviceId.value)
+    const device = result.device
     const next = new Set(revealedKeys.value)
     next.add(device.id)
     revealedKeys.value = next
     showTokenForm.value = false
-    pageMsg.value = `Generated a new token for ${device.name}.`
+    if (result.credentials) {
+      pageMsg.value = `New credentials for ${device.name}. Key ID: ${result.credentials.keyId} — secret shown once in alert.`
+      if (import.meta.client) {
+        window.alert(
+          `Save these credentials now.\n\nKey ID: ${result.credentials.keyId}\nAPI Secret: ${result.credentials.apiSecret}`,
+        )
+      }
+    } else {
+      pageMsg.value = `Generated a new token for ${device.name}.`
+    }
   } catch (error: any) {
     pageError.value = error.message
   } finally {

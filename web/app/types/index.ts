@@ -1,4 +1,11 @@
-export type FieldType = 'float32' | 'int32' | 'uint8' | 'boolean'
+export type ScalarFieldType = 'float32' | 'int32' | 'uint8' | 'boolean'
+export type FieldType = ScalarFieldType | 'flags'
+
+export interface FlagBit {
+  name: string
+  /** Bit position 0–7 within the packed byte */
+  bit: number
+}
 
 export type OrgRole = 'owner' | 'admin' | 'viewer'
 export type SubscriptionTier = 'free' | 'flexible' | 'pro' | 'scale'
@@ -22,10 +29,18 @@ export interface OrganizationMember {
   created_at: string
 }
 
-export interface SchemaField {
+export interface ScalarSchemaField {
   name: string
-  type: FieldType
+  type: ScalarFieldType
 }
+
+export interface FlagsSchemaField {
+  name: string
+  type: 'flags'
+  bits: FlagBit[]
+}
+
+export type SchemaField = ScalarSchemaField | FlagsSchemaField
 
 /** Fleet tags: Location → Chicago_Factory, Version → v1.0.4, etc. */
 export type DeviceTags = Record<string, string>
@@ -36,12 +51,20 @@ export interface Device {
   organization_id: string
   name: string
   api_key: string
+  key_id: string
+  api_secret_preview: string | null
+  protocol_version: number
   mac_address: string | null
   last_seen: string | null
   created_at: string
   tags: DeviceTags
   encryption_enabled: boolean
   encryption_key: string | null
+}
+
+export interface DeviceCredentials {
+  keyId: string
+  apiSecret: string
 }
 
 export interface BulkDeviceInput {
@@ -56,13 +79,13 @@ export interface BulkUploadQuote {
   deviceCount: number
   currentDeviceCount: number
   projectedDeviceCount: number
-  previousStripeQuantity: number
-  targetStripeQuantity: number
+  previousPeakPaidQuantity: number
+  projectedPeakPaidQuantity: number
   quantityDelta: number
-  estimatedProrationAmount: number
+  estimatedTrueUpAmount: number
   currency: string
-  estimatedProrationFormatted: string
-  needsStripeUpdate: boolean
+  estimatedTrueUpFormatted: string
+  needsUsageUpdate: boolean
   disclaimer: string
 }
 
@@ -85,10 +108,12 @@ export interface SchemaVersion {
   created_at: string
 }
 
+export type TelemetryValue = number | boolean | Record<string, boolean>
+
 export interface TelemetryRow {
   id: string
   device_id: string
-  parsed_json: Record<string, number | boolean>
+  parsed_json: Record<string, TelemetryValue>
   timestamp: string
 }
 
@@ -133,7 +158,7 @@ export interface AuditLog {
   created_at: string
 }
 
-export type CommandStatus = 'pending' | 'delivered' | 'failed'
+export type CommandStatus = 'pending' | 'claimed' | 'sent' | 'acknowledged' | 'delivered' | 'failed'
 
 export interface PendingCommand {
   id: string
@@ -142,18 +167,31 @@ export interface PendingCommand {
   command_type: string
   payload: Record<string, unknown>
   packed_hex: string
+  command_id: string
   status: CommandStatus
   created_at: string
   delivered_at: string | null
+  sent_at: string | null
+  acknowledged_at: string | null
 }
 
-export const FIELD_TYPES: FieldType[] = ['float32', 'int32', 'uint8', 'boolean']
+export const FIELD_TYPES: FieldType[] = ['float32', 'int32', 'uint8', 'boolean', 'flags']
 
 export const TYPE_SIZES: Record<FieldType, number> = {
   float32: 4,
   int32: 4,
   uint8: 1,
   boolean: 1,
+  flags: 1,
+}
+
+export function fieldByteLength(field: SchemaField): number {
+  if (field.type === 'flags') return 1
+  return TYPE_SIZES[field.type]
+}
+
+export function isFlagsField(field: SchemaField): field is FlagsSchemaField {
+  return field.type === 'flags'
 }
 
 export function isDeviceOnline(lastSeen: string | null, windowMs = 30_000): boolean {

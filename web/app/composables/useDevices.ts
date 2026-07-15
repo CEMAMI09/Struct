@@ -17,8 +17,13 @@ function randomEncryptionKeyHex(): string {
 }
 
 function normalizeDevice(row: any): Device {
+  const keyId = row.key_id || row.api_key || ''
   return {
     ...row,
+    api_key: keyId,
+    key_id: keyId,
+    api_secret_preview: row.api_secret_preview ?? null,
+    protocol_version: Number(row.protocol_version) || 2,
     organization_id: row.organization_id,
     mac_address: row.mac_address ?? null,
     tags: (row.tags && typeof row.tags === 'object' ? row.tags : {}) as DeviceTags,
@@ -135,9 +140,9 @@ export function useDevices() {
     requireWrite()
     const organization_id = requireOrgId()
 
-    let response: { device: any }
+    let response: { device: any; credentials?: { keyId: string; apiSecret: string } }
     try {
-      response = await $fetch<{ device: any }>('/api/devices', {
+      response = await $fetch<{ device: any; credentials?: { keyId: string; apiSecret: string } }>('/api/devices', {
         method: 'POST',
         body: { name, orgId: organization_id },
       })
@@ -178,7 +183,7 @@ export function useDevices() {
     }
 
     await fetchMembershipsFromOrg()
-    return device
+    return { device, credentials: response.credentials ?? null }
   }
 
   async function previewBulkUpload(rows: BulkDeviceInput[]): Promise<BulkUploadQuote> {
@@ -280,9 +285,9 @@ export function useDevices() {
     requireWrite()
     const organization_id = requireOrgId()
 
-    let response: { device: any }
+    let response: { device: any; credentials?: { keyId: string; apiSecret: string } }
     try {
-      response = await $fetch<{ device: any }>(`/api/devices/${id}/key`, {
+      response = await $fetch<{ device: any; credentials?: { keyId: string; apiSecret: string } }>(`/api/devices/${id}/key`, {
         method: 'POST',
         body: { orgId: organization_id },
       })
@@ -294,7 +299,7 @@ export function useDevices() {
     devices.value = devices.value.map((existing) =>
       existing.id === id ? device : existing,
     )
-    return device
+    return { device, credentials: response.credentials ?? null }
   }
 
   async function updateDeviceTags(id: string, tags: DeviceTags) {

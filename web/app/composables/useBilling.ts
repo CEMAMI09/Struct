@@ -103,6 +103,8 @@ export function useBilling() {
         body: { orgId },
       })
       await fetchMemberships()
+      const { fetchUsageStats } = useOrganization()
+      await fetchUsageStats()
       return result
     } catch (e: any) {
       // Non-fatal on page load — keep showing last known org state.

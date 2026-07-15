@@ -372,6 +372,14 @@
           </p>
         </div>
 
+        <div class="mt-6 flex items-start gap-3 rounded-lg border border-[#38B6FF]/20 bg-[#38B6FF]/5 p-4">
+          <span class="mt-0.5 font-mono text-xs text-[#38B6FF]">✓</span>
+          <p class="text-sm leading-relaxed text-[#A8B2C4]">
+            <strong class="font-semibold text-[#E8EAEF]">Zero Plaintext Secrets:</strong>
+            Device API keys never cross the wire. All payloads are authenticated via HMAC-SHA256.
+          </p>
+        </div>
+
         <div class="security-grid mt-12">
           <article class="security-card security-card--wide">
             <div class="security-icon">ENC</div>
