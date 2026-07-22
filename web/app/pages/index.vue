@@ -18,7 +18,12 @@
 
     <!-- Hero -->
     <section class="hero">
-      <div class="hero-grid" aria-hidden="true" />
+      <div
+        id="parallax-grid"
+        ref="parallaxGridEl"
+        class="hero-grid"
+        aria-hidden="true"
+      />
       <div class="hero-layout">
         <div class="hero-copy min-w-0 text-left">
           <h1
@@ -541,6 +546,30 @@ useSeoMeta({
     'Replace verbose JSON with secure packed structs. Cut cellular payload, debug raw TCP visually, and protect fleets with authenticated encryption.',
 })
 
+const parallaxGridEl = ref<HTMLElement | null>(null)
+const prefersReducedMotion = ref(false)
+
+function onLandingScroll() {
+  const layer = parallaxGridEl.value
+  if (!layer) return
+  if (prefersReducedMotion.value) {
+    layer.style.transform = 'translateY(0px)'
+    return
+  }
+  // Same motor as the reference: layer lags behind content (scrollY * 0.5).
+  layer.style.transform = `translateY(${window.scrollY * 0.5}px)`
+}
+
+onMounted(() => {
+  prefersReducedMotion.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  onLandingScroll()
+  window.addEventListener('scroll', onLandingScroll, { passive: true })
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', onLandingScroll)
+})
+
 const mathCards = [
   {
     label: 'Payload Size',
@@ -679,12 +708,22 @@ const pricingGroups = [
 .hero-grid {
   position: absolute;
   inset: 0;
+  height: 150%;
   background-image:
     linear-gradient(rgba(42, 47, 58, 0.22) 1px, transparent 1px),
     linear-gradient(90deg, rgba(42, 47, 58, 0.22) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: radial-gradient(ellipse 80% 70% at 78% 42%, black 18%, transparent 78%);
   pointer-events: none;
+  transform: translateY(0px);
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-grid {
+    will-change: auto;
+    transform: none !important;
+  }
 }
 
 .hero-layout {

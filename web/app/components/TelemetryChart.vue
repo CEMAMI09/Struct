@@ -1,16 +1,29 @@
 <template>
   <div class="flex h-full flex-col">
-    <div class="mb-3 flex items-center justify-between">
+    <div class="mb-3 flex items-center justify-between gap-2">
       <h2 class="text-sm font-semibold text-[#E8EAEF]">Telemetry</h2>
-      <div class="flex items-center gap-2">
+      <div class="flex min-w-0 items-center gap-2">
         <span
           v-if="live"
-          class="flex items-center gap-1.5 font-mono text-[10px] text-[#38B6FF]"
+          class="flex shrink-0 items-center gap-1.5 font-mono text-[10px] text-[#38B6FF]"
         >
           <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-[#38B6FF]" />
           LIVE
         </span>
-        <span class="font-mono text-[10px] text-[#8B93A7]">{{ fieldLabel }}</span>
+        <select
+          v-if="numericFields.length > 1"
+          v-model="selectedField"
+          class="input max-w-[10rem] py-1 font-mono text-[10px]"
+          aria-label="Chart field"
+        >
+          <option v-for="field in numericFields" :key="field" :value="field">
+            {{ field }}
+          </option>
+        </select>
+        <span
+          v-else
+          class="truncate font-mono text-[10px] text-[#8B93A7]"
+        >{{ fieldLabel }}</span>
       </div>
     </div>
 
@@ -52,6 +65,8 @@ const props = defineProps<{
   field?: string | null
 }>()
 
+const selectedField = ref<string | null>(null)
+
 const numericFields = computed(() => {
   const keys = new Set<string>()
   for (const row of props.rows) {
@@ -62,8 +77,24 @@ const numericFields = computed(() => {
   return [...keys]
 })
 
+watch(
+  numericFields,
+  (fields) => {
+    if (props.field && fields.includes(props.field)) {
+      selectedField.value = props.field
+      return
+    }
+    if (selectedField.value && fields.includes(selectedField.value)) return
+    selectedField.value = fields[0] || null
+  },
+  { immediate: true },
+)
+
 const activeField = computed(() => {
   if (props.field && numericFields.value.includes(props.field)) return props.field
+  if (selectedField.value && numericFields.value.includes(selectedField.value)) {
+    return selectedField.value
+  }
   return numericFields.value[0] || null
 })
 
