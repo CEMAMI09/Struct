@@ -8,7 +8,12 @@
       @click="navOpen = false"
     />
 
-    <AppSidebar :open="navOpen" @close="navOpen = false" />
+    <AppSidebar
+      :open="navOpen"
+      :collapsed="navCollapsed"
+      @close="navOpen = false"
+      @toggle-collapse="toggleNavCollapsed"
+    />
 
     <main class="flex min-h-screen min-w-0 flex-1 flex-col overflow-hidden">
       <header
@@ -26,6 +31,17 @@
               <span class="block h-0.5 w-4 rounded bg-current" />
               <span class="block h-0.5 w-4 rounded bg-current" />
               <span class="block h-0.5 w-4 rounded bg-current" />
+            </span>
+          </button>
+          <button
+            type="button"
+            class="btn-ghost hidden shrink-0 px-2.5 py-2 md:inline-flex"
+            :aria-label="navCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+            :aria-expanded="!navCollapsed"
+            @click="toggleNavCollapsed"
+          >
+            <span class="font-mono text-xs opacity-70" aria-hidden="true">
+              {{ navCollapsed ? '»' : '«' }}
             </span>
           </button>
           <div class="min-w-0">
@@ -82,7 +98,16 @@
 const route = useRoute()
 const user = useSupabaseUser()
 const supabase = useSupabaseClient()
+const NAV_COLLAPSED_KEY = 'struct-nav-collapsed'
 const navOpen = ref(false)
+const navCollapsed = ref(false)
+
+function toggleNavCollapsed() {
+  navCollapsed.value = !navCollapsed.value
+  if (import.meta.client) {
+    localStorage.setItem(NAV_COLLAPSED_KEY, navCollapsed.value ? '1' : '0')
+  }
+}
 
 const {
   currentOrganization,
@@ -142,6 +167,9 @@ async function bootstrapOrg() {
 }
 
 onMounted(() => {
+  if (import.meta.client) {
+    navCollapsed.value = localStorage.getItem(NAV_COLLAPSED_KEY) === '1'
+  }
   bootstrapOrg().catch(() => {})
 })
 

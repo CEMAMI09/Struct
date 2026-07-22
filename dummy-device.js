@@ -127,7 +127,7 @@ async function main() {
   const version = Number(process.env.SCHEMA_VERSION) || Number(tip?.version) || SCHEMA_VERSION
 
   const packed = Buffer.alloc(9)
-  packed.writeFloatLE(120.5, 0)
+  packed.writeFloatLE(60.5, 0)
   packed.writeFloatLE(65.2, 4)
   packed.writeUInt8(1, 8)
 

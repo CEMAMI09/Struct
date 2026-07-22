@@ -16,14 +16,19 @@ const props = withDefaults(
   { size: 'md' },
 )
 
-/** Cache-bust when replacing the SVG asset */
-const src = '/struct-logo.svg?v=5'
+/** Cache-bust when replacing logo assets */
+const MARK_SRC = '/struct-logo-mini.svg?v=1'
+const FULL_SRC = '/struct-logo.svg?v=8'
+
+const isMark = computed(() => props.size === 'sm')
+
+const src = computed(() => (isMark.value ? MARK_SRC : FULL_SRC))
 
 const sizeClass = computed(() => {
-  // Horizontal wordmark — size by width so it reads large in the nav
-  if (props.size === 'sm') return 'h-auto w-[120px]'
+  // Dashboard uses the compact mark; landing/auth use the full logo
+  if (props.size === 'sm') return 'h-10 w-auto'
   if (props.size === 'lg') return 'h-auto w-[180px]'
-  return 'h-auto w-[140px] sm:w-[155px]'
+  return 'h-12 w-auto'
 })
 </script>
 

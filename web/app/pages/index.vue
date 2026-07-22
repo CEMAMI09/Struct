@@ -2,7 +2,7 @@
   <div class="landing">
     <!-- Nav -->
     <header class="landing-nav">
-      <NuxtLink to="/" class="flex min-w-0 items-center justify-center">
+      <NuxtLink to="/" class="ml-3 flex min-w-0 items-center justify-center sm:ml-5">
         <StructLogo size="md" />
       </NuxtLink>
       <div class="flex shrink-0 items-center gap-2 sm:gap-3">
@@ -647,15 +647,15 @@ const pricingGroups = [
 
 <style scoped>
 .landing {
-  font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
 }
 
 .font-display {
-  font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
 }
 
 .landing-nav {
-  @apply sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-[#2A2F3A] bg-[#0F1115]/80 px-4 py-3 backdrop-blur-xl sm:px-6 sm:py-4;
+  @apply sticky top-0 z-20 flex h-20 items-center justify-between gap-3 border-b border-[#2A2F3A] bg-[#0F1115]/80 px-4 backdrop-blur-xl sm:px-6;
 }
 
 .hero {
@@ -939,7 +939,7 @@ const pricingGroups = [
 }
 
 .metric-num {
-  font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
   font-size: clamp(2.25rem, 4vw, 3rem);
   font-weight: 600;
   letter-spacing: -0.04em;
@@ -948,7 +948,7 @@ const pricingGroups = [
 }
 
 .metric-tail {
-  font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
   font-size: 1.05rem;
   font-weight: 500;
   line-height: 1.2;
@@ -975,7 +975,7 @@ const pricingGroups = [
 }
 
 .arch-title {
-  font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
   @apply text-base font-semibold tracking-tight text-[#E8EAEF];
 }
 
@@ -1359,7 +1359,7 @@ const pricingGroups = [
 
 .security-title {
   margin-top: 0.5rem;
-  font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
   font-size: 1.1rem;
   font-weight: 600;
   letter-spacing: -0.02em;
