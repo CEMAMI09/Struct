@@ -28,8 +28,8 @@ const FORCE_UDP = args.has('--udp') || process.env.TRANSPORT === 'udp'
 const HOST = process.env.HOST || '127.0.0.1'
 const TCP_PORT = Number(process.env.PORT || process.env.TCP_PORT || 8080)
 const UDP_PORT = Number(process.env.UDP_PORT || 8081)
-const KEY_ID = process.env.KEY_ID || process.env.API_KEY || ''
-const API_SECRET = process.env.API_SECRET || ''
+const KEY_ID = process.env.KEY_ID || process.env.API_KEY || 'anpsv5lxh0in9v9c'
+const API_SECRET = process.env.API_SECRET || '3c38fad83419cf7aec7915f270ad194b49d6fc2503a3b465027402bdc9b176c1'
 const SCHEMA_VERSION = Number(process.env.SCHEMA_VERSION || 1)
 
 async function lookupDevice(keyId) {
@@ -127,7 +127,7 @@ async function main() {
   const version = Number(process.env.SCHEMA_VERSION) || Number(tip?.version) || SCHEMA_VERSION
 
   const packed = Buffer.alloc(9)
-  packed.writeFloatLE(60.5, 0)
+  packed.writeFloatLE(137.5, 0)
   packed.writeFloatLE(65.2, 4)
   packed.writeUInt8(1, 8)
 

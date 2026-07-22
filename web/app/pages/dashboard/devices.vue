@@ -63,6 +63,13 @@
 
     <p v-if="error" class="mb-4 text-sm text-red-400">{{ error }}</p>
 
+    <DeviceCredentialsModal
+      v-if="pendingCredentials"
+      :credentials="pendingCredentials"
+      :device-name="pendingCredentialsName"
+      @close="clearPendingCredentials"
+    />
+
     <div v-if="!filtered.length" class="card p-8 text-center text-sm text-[#8B93A7]">
       {{ devices.length ? 'No devices match this filter.' : 'No devices yet. Create one to get an API key.' }}
     </div>
@@ -204,7 +211,7 @@
 
 <script setup lang="ts">
 import { isDeviceOnline, pairsToTags, tagsToPairs } from '~/types'
-import type { Device } from '~/types'
+import type { Device, DeviceCredentials } from '~/types'
 
 const {
   devices,
@@ -225,6 +232,8 @@ const showBulk = ref(false)
 const newName = ref('')
 const creating = ref(false)
 const copied = ref('')
+const pendingCredentials = ref<DeviceCredentials | null>(null)
+const pendingCredentialsName = ref('')
 const query = ref('')
 const offlineOnly = ref(false)
 const editingId = ref<string | null>(null)
@@ -274,15 +283,21 @@ async function onBulkImported() {
   await fetchDevices()
 }
 
+function clearPendingCredentials() {
+  pendingCredentials.value = null
+  pendingCredentialsName.value = ''
+}
+
 async function onCreate() {
   creating.value = true
   try {
-    const result = await createDevice(newName.value.trim())
+    const name = newName.value.trim()
+    const result = await createDevice(name)
     newName.value = ''
     showForm.value = false
     if (result.credentials) {
-      const msg = `Save these credentials now — the secret is shown once.\n\nKey ID: ${result.credentials.keyId}\nAPI Secret: ${result.credentials.apiSecret}`
-      if (import.meta.client) window.alert(msg)
+      pendingCredentialsName.value = result.device?.name || name
+      pendingCredentials.value = result.credentials
     }
   } catch (e: any) {
     error.value = e.message

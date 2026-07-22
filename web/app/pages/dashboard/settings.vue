@@ -29,6 +29,13 @@
     </p>
     <p v-if="pageMsg" class="mb-4 text-sm text-[#38B6FF]">{{ pageMsg }}</p>
 
+    <DeviceCredentialsModal
+      v-if="pendingCredentials"
+      :credentials="pendingCredentials"
+      :device-name="pendingCredentialsName"
+      @close="clearPendingCredentials"
+    />
+
     <!-- Billing -->
     <section v-if="activeTab === 'billing'" class="space-y-4">
       <div class="card p-5">
@@ -293,7 +300,7 @@
 </template>
 
 <script setup lang="ts">
-import type { WebhookEventType } from '~/types'
+import type { DeviceCredentials, WebhookEventType } from '~/types'
 
 type SettingsTab = 'billing' | 'api-keys' | 'webhooks' | 'account'
 
@@ -337,6 +344,8 @@ const tabs: { id: SettingsTab; name: string }[] = [
   { id: 'account', name: 'Account' },
 ]
 const activeTab = ref<SettingsTab>('billing')
+const pendingCredentials = ref<DeviceCredentials | null>(null)
+const pendingCredentialsName = ref('')
 const pageError = ref('')
 const pageMsg = ref('')
 const usagePercent = computed(() =>
@@ -455,6 +464,11 @@ function toggleSecret(id: string) {
   toggleSet(revealedSecrets, id)
 }
 
+function clearPendingCredentials() {
+  pendingCredentials.value = null
+  pendingCredentialsName.value = ''
+}
+
 async function onRotateToken() {
   if (!tokenDeviceId.value) return
   rotatingToken.value = true
@@ -467,12 +481,9 @@ async function onRotateToken() {
     revealedKeys.value = next
     showTokenForm.value = false
     if (result.credentials) {
-      pageMsg.value = `New credentials for ${device.name}. Key ID: ${result.credentials.keyId} — secret shown once in alert.`
-      if (import.meta.client) {
-        window.alert(
-          `Save these credentials now.\n\nKey ID: ${result.credentials.keyId}\nAPI Secret: ${result.credentials.apiSecret}`,
-        )
-      }
+      pendingCredentialsName.value = device.name
+      pendingCredentials.value = result.credentials
+      pageMsg.value = `New credentials for ${device.name}. Save the API secret now — it won’t be shown again.`
     } else {
       pageMsg.value = `Generated a new token for ${device.name}.`
     }

@@ -107,9 +107,11 @@ function payloadRegionLength(device, schemaDef) {
 
 async function reserveNonce(supabase, deviceId, nonce, timestampSec) {
   const frameTimestamp = new Date(timestampSec * 1000).toISOString()
+  // PostgREST expects Postgres bytea as "\x" + hex (raw Buffer/base64 fail length checks).
+  const nonceBytes = Buffer.isBuffer(nonce) ? nonce : Buffer.from(nonce)
   const { error } = await supabase.rpc('reserve_device_nonce', {
     p_device_id: deviceId,
-    p_nonce: nonce,
+    p_nonce: `\\x${nonceBytes.toString('hex')}`,
     p_frame_timestamp: frameTimestamp,
     p_skew_seconds: REPLAY_SKEW_SEC,
   })

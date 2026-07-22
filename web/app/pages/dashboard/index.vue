@@ -2,6 +2,20 @@
   <div
     class="flex min-h-0 flex-col gap-4 lg:h-[calc(100vh-8rem)] lg:min-h-[520px]"
   >
+    <div class="flex shrink-0 items-center justify-between gap-3">
+      <p class="text-xs text-[#8B93A7]">
+        Live view for the selected device. Refresh if a packet doesn’t appear.
+      </p>
+      <button
+        type="button"
+        class="btn-ghost shrink-0 text-xs"
+        :disabled="refreshing"
+        @click="onRefresh"
+      >
+        {{ refreshing ? 'Refreshing…' : 'Refresh' }}
+      </button>
+    </div>
+
     <div class="grid min-h-0 flex-1 gap-4 lg:grid-cols-12 lg:grid-rows-2">
       <section class="card min-h-[220px] p-4 lg:col-span-4 lg:row-span-2 lg:min-h-0">
         <DeviceList
@@ -54,6 +68,7 @@ const { devices, fetchDevices, subscribePresence } = useDevices()
 const { rows, live, fetchTelemetry, subscribe } = useTelemetry()
 
 const selectedId = ref<string | null>(null)
+const refreshing = ref(false)
 let unsubPresence: (() => void) | undefined
 let unsubTelemetry: (() => void) | undefined
 
@@ -77,6 +92,23 @@ async function onSelectDevice(id: string) {
   unsubTelemetry?.()
   await fetchTelemetry(id)
   unsubTelemetry = subscribe(id)
+}
+
+async function onRefresh() {
+  refreshing.value = true
+  try {
+    await fetchDevices()
+    const id = selectedId.value || devices.value[0]?.id || null
+    if (id) {
+      if (selectedId.value !== id) {
+        await onSelectDevice(id)
+      } else {
+        await fetchTelemetry(id)
+      }
+    }
+  } finally {
+    refreshing.value = false
+  }
 }
 
 onMounted(async () => {
