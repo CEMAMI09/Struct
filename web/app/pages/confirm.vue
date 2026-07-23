@@ -7,7 +7,15 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'auth' })
 
-onMounted(() => {
-  navigateTo('/dashboard')
-})
+const user = useSupabaseUser()
+
+watch(
+  user,
+  (u) => {
+    if (u) {
+      return navigateTo('/dashboard', { replace: true })
+    }
+  },
+  { immediate: true },
+)
 </script>

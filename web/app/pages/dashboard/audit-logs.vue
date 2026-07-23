@@ -73,6 +73,8 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({ middleware: 'auth' })
+
 import type { AuditAction } from '~/types'
 
 const { currentOrgId, isEnterprise, ensureOrganization } = useOrganization()

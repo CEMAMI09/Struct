@@ -210,6 +210,8 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({ middleware: 'auth' })
+
 import { isDeviceOnline, pairsToTags, tagsToPairs } from '~/types'
 import type { Device, DeviceCredentials } from '~/types'
 

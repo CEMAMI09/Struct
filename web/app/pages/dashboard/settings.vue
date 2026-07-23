@@ -300,6 +300,8 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({ middleware: 'auth' })
+
 import type { DeviceCredentials, WebhookEventType } from '~/types'
 
 type SettingsTab = 'billing' | 'api-keys' | 'webhooks' | 'account'

@@ -17,6 +17,8 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({ middleware: 'auth' })
+
 const { devices, schemas, schemaVersions, loading, error, fetchDevices } = useDevices()
 const user = useSupabaseUser()
 

@@ -62,6 +62,8 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({ middleware: 'auth' })
+
 import { isDeviceOnline } from '~/types'
 
 const { devices, fetchDevices, subscribePresence } = useDevices()

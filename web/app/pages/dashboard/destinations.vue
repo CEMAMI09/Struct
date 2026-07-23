@@ -212,6 +212,8 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({ middleware: 'auth' })
+
 import type { Destination, RoutingOperator, RoutingRule } from '~/types'
 
 const { devices, fetchDevices } = useDevices()

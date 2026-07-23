@@ -200,6 +200,8 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({ middleware: 'auth' })
+
 import type { OrgRole } from '~/types'
 
 const user = useSupabaseUser()
