@@ -16,17 +16,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'orgId is required' })
   }
 
-  await requireOrgWriter(event, orgId)
+  const { user } = await requireOrgWriter(event, orgId)
 
   const serviceSupabase = await serverSupabaseServiceRole(event)
   const org = await getOrganizationBilling(serviceSupabase, orgId)
-
-  if (!org.stripe_customer_id) {
-    throw createError({
-      statusCode: 400,
-      message: 'No Stripe customer on file — subscribe to a paid plan first',
-    })
-  }
 
   const config = useRuntimeConfig()
   const stripe = useStripeClient()
@@ -37,9 +30,29 @@ export default defineEventHandler(async (event) => {
     scale: config.stripePriceScale,
   }
 
+  // Free orgs may not have a Stripe customer yet — create one so they can
+  // open the portal and subscribe / upgrade.
+  let customerId = org.stripe_customer_id
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      email: user.email || undefined,
+      metadata: { orgId },
+    })
+    customerId = customer.id
+
+    const { error } = await serviceSupabase
+      .from('organizations')
+      .update({ stripe_customer_id: customerId })
+      .eq('id', orgId)
+
+    if (error) {
+      throw createError({ statusCode: 500, message: error.message })
+    }
+  }
+
   // Repair stacked subscriptions: keep the highest-quantity plan, cancel orphans.
   const siblings = await stripe.subscriptions.list({
-    customer: org.stripe_customer_id,
+    customer: customerId,
     status: 'active',
     limit: 20,
   })
@@ -71,7 +84,7 @@ export default defineEventHandler(async (event) => {
   })
 
   const session = await stripe.billingPortal.sessions.create({
-    customer: org.stripe_customer_id,
+    customer: customerId,
     configuration: portalConfiguration.id,
     return_url: `${origin}/dashboard/settings`,
   })

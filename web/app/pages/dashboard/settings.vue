@@ -54,13 +54,13 @@
           </div>
           <div class="flex shrink-0 flex-col gap-2 sm:items-end">
             <button
-              v-if="canWrite && currentOrganization?.stripe_customer_id"
+              v-if="canWrite"
               type="button"
               class="btn-primary"
               :disabled="billingLoading"
-              @click="onOpenPortal"
+              @click="onManageBilling"
             >
-              {{ billingLoading ? 'Opening…' : 'Manage in Stripe' }}
+              {{ billingLoading ? 'Opening…' : 'Manage billing' }}
             </button>
             <button
               v-if="canWrite && currentOrganization?.stripe_customer_id"
@@ -88,6 +88,36 @@
           <p class="mt-2 text-[11px] text-[#8B93A7]">
             {{ Math.max(0, deviceLimit - devices.length) }} device slots remaining.
           </p>
+        </div>
+      </div>
+
+      <div v-if="canWrite && showUpgradePlans" class="space-y-3">
+        <div>
+          <p class="label">Upgrade plan</p>
+          <p class="text-xs text-[#8B93A7]">
+            Choose a paid plan to unlock more devices and features.
+          </p>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-3">
+          <article
+            v-for="plan in upgradePlans"
+            :key="plan.id"
+            class="card flex flex-col p-4"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <h3 class="font-semibold text-[#E8EAEF]">{{ plan.name }}</h3>
+              <span class="shrink-0 font-mono text-sm text-[#38B6FF]">{{ plan.price }}</span>
+            </div>
+            <p class="mt-1 text-xs text-[#8B93A7]">{{ plan.blurb }}</p>
+            <button
+              type="button"
+              class="btn-primary mt-4 w-full text-xs"
+              :disabled="billingLoading"
+              @click="onUpgrade(plan.id)"
+            >
+              {{ billingLoading ? 'Redirecting…' : `Choose ${plan.name}` }}
+            </button>
+          </article>
         </div>
       </div>
     </section>
@@ -302,9 +332,10 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'auth' })
 
-import type { DeviceCredentials, WebhookEventType } from '~/types'
+import type { DeviceCredentials, SubscriptionTier, WebhookEventType } from '~/types'
 
 type SettingsTab = 'billing' | 'api-keys' | 'webhooks' | 'account'
+type PaidTier = Exclude<SubscriptionTier, 'free'>
 
 const route = useRoute()
 const user = useSupabaseUser()
@@ -334,10 +365,37 @@ const {
 const {
   loading: billingLoading,
   error: billingError,
+  startCheckout,
   openPortal,
   syncCheckout,
   syncFromStripe,
 } = useBilling()
+
+const upgradePlans: { id: PaidTier; name: string; price: string; blurb: string }[] = [
+  {
+    id: 'flexible',
+    name: 'Flexible',
+    price: '$5/mo',
+    blurb: '10-device start · +$1.00 / device',
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    price: '$49/mo',
+    blurb: '155-device start · encryption & downlinks',
+  },
+  {
+    id: 'scale',
+    name: 'Scale',
+    price: '$249/mo',
+    blurb: '1,005-device start · RBAC & audit logs',
+  },
+]
+
+const hasPaidSubscription = computed(
+  () => !!currentOrganization.value?.stripe_subscription_id,
+)
+const showUpgradePlans = ref(false)
 
 const tabs: { id: SettingsTab; name: string }[] = [
   { id: 'billing', name: 'Billing' },
@@ -384,6 +442,8 @@ onMounted(async () => {
     await ensureOrganization()
     await Promise.all([fetchDevices(), fetchDestinations()])
 
+    showUpgradePlans.value = !currentOrganization.value?.stripe_subscription_id
+
     // Pull live Stripe quantity (portal increases often aren't in local DB yet).
     if (currentOrganization.value?.stripe_customer_id) {
       await syncFromStripe()
@@ -403,6 +463,7 @@ onMounted(async () => {
       if (sessionId) await syncCheckout(sessionId)
       await syncFromStripe()
       await fetchMemberships()
+      showUpgradePlans.value = !currentOrganization.value?.stripe_subscription_id
       pageMsg.value = 'Subscription updated.'
     } else if (route.query.billing === 'cancel') {
       pageMsg.value = 'Checkout was canceled.'
@@ -417,10 +478,24 @@ function setMessage(message = '', error = '') {
   pageError.value = error
 }
 
-async function onOpenPortal() {
+async function onManageBilling() {
   setMessage()
+  if (!hasPaidSubscription.value) {
+    showUpgradePlans.value = true
+    pageMsg.value = 'Choose a plan below to upgrade.'
+    return
+  }
   try {
     await openPortal()
+  } catch (error: any) {
+    pageError.value = error?.data?.message || error.message
+  }
+}
+
+async function onUpgrade(tier: PaidTier) {
+  setMessage()
+  try {
+    await startCheckout(tier)
   } catch (error: any) {
     pageError.value = error?.data?.message || error.message
   }
