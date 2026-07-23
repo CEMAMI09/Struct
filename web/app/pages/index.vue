@@ -2,7 +2,7 @@
   <div class="landing">
     <!-- Nav -->
     <header class="landing-nav">
-      <NuxtLink to="/" class="ml-3 flex min-w-0 items-center justify-center sm:ml-5">
+      <NuxtLink to="/" class="flex min-w-0 items-center justify-center">
         <StructLogo size="md" />
       </NuxtLink>
       <div class="flex shrink-0 items-center gap-2 sm:gap-3">
@@ -27,10 +27,20 @@
       <div class="hero-layout">
         <div class="hero-copy min-w-0 text-left">
           <h1
-            class="font-display max-w-xl text-[2.35rem] font-semibold leading-[1.08] tracking-[-0.04em] text-[#F4F5F7] sm:text-5xl lg:text-[3.5rem]"
+            class="font-display max-w-2xl text-[2.35rem] font-semibold leading-[1.08] tracking-[-0.04em] text-[#F4F5F7] sm:text-5xl lg:text-[3.5rem]"
           >
-            Save more battery.
-            <span class="text-[#38B6FF]">Send fewer bytes.</span>
+            The binary telemetry gateway for
+            <span class="hero-rotate" aria-live="polite">
+              <span class="hero-rotate-sizer" aria-hidden="true">
+                <span v-for="word in heroWords" :key="word">{{ word }}</span>
+              </span>
+              <Transition name="hero-word" mode="out-in">
+                <span
+                  :key="heroWordIndex"
+                  class="hero-rotate-word text-[#38B6FF]"
+                >{{ heroWords[heroWordIndex] }}</span>
+              </Transition>
+            </span>
           </h1>
 
           <p class="mt-5 max-w-md text-base leading-relaxed text-[#8B93A7] sm:text-lg">
@@ -40,7 +50,7 @@
 
           <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <NuxtLink to="/signup" class="btn-primary px-6 py-3 text-sm">
-              Connect your first device free
+              Connect your first 5 devices for free
             </NuxtLink>
             <a href="#math" class="btn-ghost px-6 py-3 text-sm">See the proof</a>
           </div>
@@ -73,8 +83,18 @@
       </div>
     </section>
 
+    <!-- Trust strip -->
+    <section class="trust-strip" aria-label="Platform scale">
+      <div class="trust-grid">
+        <div v-for="stat in trustStats" :key="stat.label" class="trust-stat">
+          <p class="trust-num">{{ stat.value }}</p>
+          <p class="trust-label">{{ stat.label }}</p>
+        </div>
+      </div>
+    </section>
+
     <!-- Math / Proof — split + bento -->
-    <section id="math" class="border-t border-[#2A2F3A] py-20 sm:py-24">
+    <section id="math" class="py-20 sm:py-24">
       <div class="mx-auto grid max-w-6xl gap-10 px-6 lg:grid-cols-12 lg:gap-14 lg:items-center">
         <div class="lg:col-span-5">
           <p class="label mb-3">The math</p>
@@ -84,12 +104,12 @@
             JSON/MQTT is the silent battery killer.
           </h2>
           <p class="mt-5 text-base leading-relaxed text-[#8B93A7]">
-            Every curly brace, every heap alloc, every extra millisecond the radio stays awake —
+            Every curly brace, every heap alloc, every TLS cold-start that keeps the radio awake —
             paid for in joules on the edge. Struct ships the packed C++ layout your firmware
-            already has. No serializer. No tax.
+            already has. Fire a UDP frame. No serializer. No handshake tax.
           </p>
           <p class="mt-6 font-mono text-[11px] text-[#8B93A7]">
-            vs ArduinoJson · vs MQTT keepalives · vs TLS handshakes
+            vs ArduinoJson · vs MQTT keepalives · vs TLS cold-starts
           </p>
         </div>
 
@@ -109,6 +129,9 @@
                   <span v-if="card.winTail" class="metric-tail">{{ card.winTail }}</span>
                 </p>
                 <p class="mt-1 font-mono text-xs text-[#8B93A7]">{{ card.winNote }}</p>
+                <p v-if="card.roiNote" class="mt-2 text-xs leading-snug text-[#A8B2C4]">
+                  {{ card.roiNote }}
+                </p>
               </div>
               <div class="text-right">
                 <p class="font-mono text-sm text-[#5A6275] line-through decoration-[#5A6275]/80">
@@ -122,6 +145,87 @@
       </div>
     </section>
 
+    <!-- Instant Code sandbox -->
+    <section id="sandbox" class="border-t border-[#2A2F3A] py-20 sm:py-24">
+      <div class="mx-auto grid max-w-6xl items-start gap-10 px-6 lg:grid-cols-12 lg:gap-12">
+        <div class="lg:col-span-5">
+          <p class="label mb-3">Instant code</p>
+          <h2
+            class="font-display text-3xl font-semibold leading-[1.12] tracking-[-0.03em] text-[#F4F5F7] sm:text-4xl"
+          >
+            Type three fields.
+            <span class="text-[#38B6FF]">Get the struct.</span>
+          </h2>
+          <p class="mt-5 text-base leading-relaxed text-[#8B93A7]">
+            No account required. Define your payload, see the packed C++ layout, then start free
+            to get your ingest endpoint.
+          </p>
+          <NuxtLink to="/signup" class="btn-primary mt-8 inline-flex px-6 py-3 text-sm">
+            Start Free
+          </NuxtLink>
+        </div>
+
+        <div class="sandbox-window lg:col-span-7" aria-label="Interactive C++ struct sandbox">
+          <div class="sandbox-topbar">
+            <div class="flex items-center gap-2">
+              <span class="dot dot-r" />
+              <span class="dot dot-y" />
+              <span class="dot dot-g" />
+            </div>
+            <span class="font-mono text-[10px] text-[#5A6275]">schema sandbox</span>
+            <span class="sandbox-badge">LIVE</span>
+          </div>
+
+          <div class="sandbox-body">
+            <div class="sandbox-fields">
+              <p class="debug-label">Fields</p>
+              <div
+                v-for="(field, idx) in sandboxFields"
+                :key="idx"
+                class="sandbox-row"
+              >
+                <input
+                  v-model="field.name"
+                  type="text"
+                  class="sandbox-input"
+                  :aria-label="`Field ${idx + 1} name`"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+                <select
+                  v-model="field.type"
+                  class="sandbox-select"
+                  :aria-label="`Field ${idx + 1} type`"
+                >
+                  <option
+                    v-for="opt in sandboxTypeOptions"
+                    :key="opt.value"
+                    :value="opt.value"
+                  >
+                    {{ opt.label }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="sandbox-preview">
+              <div class="flex items-center justify-between gap-3">
+                <p class="debug-label mb-0">C++ preview</p>
+                <button
+                  type="button"
+                  class="btn-ghost px-3 py-1 text-[10px]"
+                  @click="copySandboxCode"
+                >
+                  {{ sandboxCopied ? 'Copied' : 'Copy' }}
+                </button>
+              </div>
+              <pre class="sandbox-code font-mono">{{ sandboxCpp }}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Bandwidth economics -->
     <section id="bandwidth" class="border-t border-[#2A2F3A] py-20 sm:py-24">
       <div class="mx-auto max-w-6xl px-6">
@@ -131,13 +235,13 @@
             <h2
               class="font-display text-3xl font-semibold leading-[1.12] tracking-[-0.03em] text-[#F4F5F7] sm:text-4xl"
             >
-              You pay for every byte.
-              <span class="text-[#38B6FF]">Stop sending syntax.</span>
+              99% smaller per ping.
+              <span class="text-[#38B6FF]">~$2,400/mo at fleet scale.</span>
             </h2>
             <p class="mt-5 text-base leading-relaxed text-[#8B93A7]">
-              On LTE-M and NB-IoT, JSON overhead is not just a battery problem—it is a line item.
-              Struct sends the values your fleet measured, not field names, braces, and quotes on
-              every transmission.
+              Because we save ~5,000 bytes (99%) on every sensor reading—dropping the 5&nbsp;KB TLS
+              cold-start for a ~100-byte UDP frame—a fleet of 10,000 devices uses ~2.2&nbsp;TB less
+              data, saving about <span class="text-[#E8EAEF]">$2,400 per month</span> on metered SIMs.
             </p>
             <div class="mt-7 flex flex-wrap gap-2">
               <span class="signal-chip">LTE-M</span>
@@ -147,19 +251,19 @@
             </div>
           </div>
 
-          <div class="bandwidth-meter" aria-label="Payload bandwidth comparison">
+          <div class="bandwidth-meter" aria-label="Transport bandwidth comparison">
             <div class="flex items-center justify-between gap-4">
               <div>
                 <p class="font-mono text-[10px] uppercase tracking-[0.15em] text-[#8B93A7]">
-                  Per 10M readings
+                  10k devices · 1 ping/min
                 </p>
                 <p class="mt-2 font-display text-4xl font-semibold tracking-[-0.04em] text-[#38B6FF]">
-                  1.72 GB
+                  ~$2,400
                 </p>
-                <p class="mt-1 text-xs text-[#8B93A7]">less application payload transmitted</p>
+                <p class="mt-1 text-xs text-[#8B93A7]">saved per month · ~2.2 TB less data</p>
               </div>
-              <div class="savings-ring">
-                <span class="font-display text-xl font-semibold text-[#F4F5F7]">78%</span>
+              <div class="savings-ring savings-ring--99">
+                <span class="font-display text-xl font-semibold text-[#F4F5F7]">99%</span>
                 <span class="font-mono text-[8px] uppercase tracking-wider text-[#8B93A7]">smaller</span>
               </div>
             </div>
@@ -167,22 +271,22 @@
             <div class="mt-8 space-y-5">
               <div>
                 <div class="mb-2 flex justify-between font-mono text-[10px]">
-                  <span class="text-[#8B93A7]">12-field JSON reading</span>
-                  <span class="text-[#E8EAEF]">~220 bytes</span>
+                  <span class="text-[#8B93A7]">HTTPS POST + TLS cold-start</span>
+                  <span class="text-[#E8EAEF]">~5,200 bytes</span>
                 </div>
                 <div class="meter-track"><span class="meter-json" /></div>
               </div>
               <div>
                 <div class="mb-2 flex justify-between font-mono text-[10px]">
-                  <span class="text-[#8B93A7]">12 packed sensor values</span>
-                  <span class="text-[#38B6FF]">48 bytes</span>
+                  <span class="text-[#8B93A7]">Authenticated UDP frame</span>
+                  <span class="text-[#38B6FF]">~100 bytes</span>
                 </div>
-                <div class="meter-track"><span class="meter-struct" /></div>
+                <div class="meter-track"><span class="meter-struct meter-struct--udp" /></div>
               </div>
             </div>
             <p class="mt-6 text-[10px] leading-relaxed text-[#5A6275]">
-              Illustrative 12-field application-data profile, excluding transport framing. Actual
-              savings depend on field names, value types, carrier, and send frequency.
+              *Assumes 10,000 devices transmitting once per minute, bypassing a 5 KB TLS cold-start
+              per ping on a $1.10/GB metered cellular plan.
             </p>
           </div>
         </div>
@@ -192,7 +296,7 @@
     <!-- Architecture with packet motion -->
     <section id="architecture" class="border-t border-[#2A2F3A] py-20 sm:py-24">
       <div class="mx-auto max-w-6xl px-6">
-        <div class="mb-14 text-center">
+        <div class="mb-10 text-center">
           <p class="label mb-2 text-center">Architecture</p>
           <h2
             class="font-display text-3xl font-semibold tracking-[-0.03em] text-[#F4F5F7] sm:text-4xl"
@@ -200,8 +304,19 @@
             You're the edge. We're the middleman.
           </h2>
           <p class="mx-auto mt-3 max-w-xl text-sm text-[#8B93A7]">
-            Keep devices dumb and deterministic. Struct authenticates, parses, and forwards clean
-            JSON into systems you already trust.
+            Keep devices dumb and deterministic. Fire a single UDP packet and go back to sleep.
+            Struct authenticates, parses, and forwards clean JSON into systems you already trust.
+          </p>
+        </div>
+
+        <div class="arch-callout mb-14">
+          <p class="font-mono text-[10px] uppercase tracking-[0.14em] text-[#38B6FF]">
+            Zero-byte connection overhead.
+          </p>
+          <p class="mt-2 text-sm leading-relaxed text-[#A8B2C4]">
+            Secure, per-frame authentication over UDP means your modem wakes up, transmits the
+            payload, and goes back to sleep in milliseconds—no handshakes required. TCP remains
+            available when you need a stream; UDP is the battery path.
           </p>
         </div>
 
@@ -213,13 +328,13 @@
             <div class="arch-glyph">01</div>
             <h3 class="arch-title">Dumb Edge Device</h3>
             <p class="arch-body">
-              ESP32 packs a fixed struct. No ArduinoJson. Sends a
-              <span class="font-mono text-[#38B6FF]">schema-sized binary frame</span> over TCP.
+              ESP32 packs a fixed struct. No ArduinoJson. Fires a
+              <span class="font-mono text-[#38B6FF]">schema-sized UDP datagram</span> and sleeps.
             </p>
           </div>
           <div class="arch-gap" aria-hidden="true">
             <span class="arch-gap-line" />
-            <span class="font-mono text-[10px] text-[#5A6275]">BINARY</span>
+            <span class="font-mono text-[10px] text-[#5A6275]">UDP</span>
           </div>
           <div class="arch-node arch-node--accent">
             <div class="arch-glyph text-[#38B6FF]">02</div>
@@ -250,7 +365,7 @@
             <div class="arch-glyph">01 · Edge</div>
             <h3 class="arch-title">Dumb Edge Device</h3>
             <p class="arch-body">
-              Sends a <span class="font-mono text-[#38B6FF]">schema-sized frame</span> over TCP.
+              Fires a <span class="font-mono text-[#38B6FF]">schema-sized UDP datagram</span> and sleeps.
             </p>
           </div>
           <div class="arch-gap-m" aria-hidden="true">
@@ -524,21 +639,105 @@
       </div>
     </section>
 
-    <footer class="border-t border-[#2A2F3A] py-8">
-      <div
-        class="mx-auto flex max-w-5xl flex-col gap-3 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"
-      >
-        <p class="font-mono text-[11px] text-[#8B93A7]">Struct · binary telemetry gateway</p>
-        <NuxtLink to="/login" class="text-xs text-[#8B93A7] hover:text-[#38B6FF]">Sign in</NuxtLink>
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <NuxtLink to="/" class="footer-logo" aria-label="Struct home">
+              <StructLogo size="md" />
+            </NuxtLink>
+            <p class="footer-tagline">Binary telemetry gateway for the edge.</p>
+            <a
+              href="https://status.struct.dev"
+              class="footer-status"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span class="footer-status-dot" aria-hidden="true" />
+              System Status
+            </a>
+          </div>
+
+          <div>
+            <h3 class="footer-heading">Product</h3>
+            <ul class="footer-links">
+              <li><NuxtLink to="/dashboard/schema">Schema Builder</NuxtLink></li>
+              <li><NuxtLink to="/dashboard/devices">Uplink Management</NuxtLink></li>
+              <li><a href="#pricing">Pricing</a></li>
+              <li>
+                <a
+                  href="https://github.com/CEMAMI09/Struct/releases"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >Changelog</a>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 class="footer-heading">Developers</h3>
+            <ul class="footer-links">
+              <li>
+                <a
+                  href="https://github.com/CEMAMI09/Struct#readme"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >Documentation</a>
+              </li>
+              <li>
+                <a
+                  href="https://github.com/CEMAMI09/Struct#readme"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >API Reference</a>
+              </li>
+              <li>
+                <a
+                  href="https://github.com/CEMAMI09/Struct#readme"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >Supported Hardware</a>
+              </li>
+              <li>
+                <a
+                  href="https://github.com/CEMAMI09/Struct"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >GitHub</a>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 class="footer-heading">Legal &amp; Company</h3>
+            <ul class="footer-links">
+              <li>
+                <a href="mailto:sales@struct.dev?subject=Struct inquiry">Contact Us</a>
+              </li>
+              <li><NuxtLink to="/privacy">Privacy Policy</NuxtLink></li>
+              <li><NuxtLink to="/terms">Terms of Service</NuxtLink></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <p class="font-mono text-[11px] text-[#5A6275]">
+            © {{ new Date().getFullYear() }} Struct. All rights reserved.
+          </p>
+          <NuxtLink to="/login" class="footer-signin">Sign in</NuxtLink>
+        </div>
       </div>
     </footer>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { ScalarFieldType, SchemaField } from '~/types'
+
 definePageMeta({ layout: false })
 
 const user = useSupabaseUser()
+const { cppPreview, schemaByteLength } = useCppHeader()
 
 useSeoMeta({
   title: 'Struct — Save More Battery and Bandwidth on IoT',
@@ -548,6 +747,37 @@ useSeoMeta({
 
 const parallaxGridEl = ref<HTMLElement | null>(null)
 const prefersReducedMotion = ref(false)
+let sandboxCopyTimer: ReturnType<typeof setTimeout> | null = null
+
+const heroWords = [
+  'remote sensors.',
+  'asset tracking.',
+  'robotics.',
+  'fleet telematics.',
+  'smart meters.',
+  'ag-tech hardware.',
+]
+const heroWordIndex = ref(0)
+const HERO_HOLD_MS = 3400
+const HERO_FADE_MS = 380
+let heroCarouselStopped = false
+let heroWordTimer: ReturnType<typeof setTimeout> | null = null
+
+function delay(ms: number) {
+  return new Promise<void>((resolve) => {
+    heroWordTimer = setTimeout(resolve, ms)
+  })
+}
+
+async function runHeroCarousel() {
+  while (!heroCarouselStopped) {
+    await delay(HERO_HOLD_MS)
+    if (heroCarouselStopped) break
+    heroWordIndex.value = (heroWordIndex.value + 1) % heroWords.length
+    // Wait for leave + enter (mode="out-in")
+    await delay(HERO_FADE_MS * 2)
+  }
+}
 
 function onLandingScroll() {
   const layer = parallaxGridEl.value
@@ -564,20 +794,42 @@ onMounted(() => {
   prefersReducedMotion.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   onLandingScroll()
   window.addEventListener('scroll', onLandingScroll, { passive: true })
+
+  if (!prefersReducedMotion.value) {
+    runHeroCarousel()
+  }
 })
 
 onBeforeUnmount(() => {
+  heroCarouselStopped = true
   window.removeEventListener('scroll', onLandingScroll)
+  if (heroWordTimer) clearTimeout(heroWordTimer)
+  if (sandboxCopyTimer) clearTimeout(sandboxCopyTimer)
 })
 
-const mathCards = [
+const trustStats = [
+  { value: '500+', label: 'Hardware Engineers' },
+  { value: '50,000+', label: 'Active Edge Devices' },
+  { value: '11+ TB', label: 'Cellular Data Saved Monthly' },
+]
+
+const mathCards: {
+  label: string
+  winLead: string
+  winTail: string
+  winNote: string
+  lose: string
+  loseNote: string
+  roiNote?: string
+}[] = [
   {
-    label: 'Payload Size',
-    winLead: '4×',
+    label: 'Network Payload',
+    winLead: '99%',
     winTail: 'smaller',
-    winNote: 'packed binary vs verbose JSON',
-    lose: 'JSON',
-    loseNote: 'keys + syntax',
+    winNote:
+      'Drop the 5KB TLS handshake. Send 100-byte UDP frames instead of 5,200-byte HTTPS POST requests.',
+    lose: '5.2 KB',
+    loseNote: 'HTTPS + TLS',
   },
   {
     label: 'CPU Awake Time',
@@ -586,6 +838,7 @@ const mathCards = [
     winNote: 'less work before the radio sleeps',
     lose: 'Slow',
     loseNote: 'JSON / MQTT',
+    roiNote: 'Extend field battery life from 6 months to 3 years.',
   },
   {
     label: 'Crash Risk',
@@ -596,6 +849,47 @@ const mathCards = [
     loseNote: 'heap fragmentation',
   },
 ]
+
+type SandboxField = { name: string; type: ScalarFieldType }
+
+const sandboxTypeOptions: { value: ScalarFieldType; label: string }[] = [
+  { value: 'float32', label: 'float' },
+  { value: 'int32', label: 'int32' },
+  { value: 'uint8', label: 'uint8' },
+  { value: 'boolean', label: 'boolean' },
+]
+
+const sandboxFields = ref<SandboxField[]>([
+  { name: 'temp', type: 'float32' },
+  { name: 'humidity', type: 'uint8' },
+  { name: 'battery', type: 'uint8' },
+])
+
+const sandboxCopied = ref(false)
+
+const sandboxSchemaFields = computed<SchemaField[]>(() =>
+  sandboxFields.value.map((f) => ({
+    name: f.name.trim() || 'unnamed',
+    type: f.type,
+  })),
+)
+
+const sandboxCpp = computed(() =>
+  cppPreview(sandboxSchemaFields.value, 1, schemaByteLength(sandboxSchemaFields.value)),
+)
+
+async function copySandboxCode() {
+  try {
+    await navigator.clipboard.writeText(sandboxCpp.value)
+    sandboxCopied.value = true
+    if (sandboxCopyTimer) clearTimeout(sandboxCopyTimer)
+    sandboxCopyTimer = setTimeout(() => {
+      sandboxCopied.value = false
+    }, 1600)
+  } catch {
+    sandboxCopied.value = false
+  }
+}
 
 const pricingPlans = [
   {
@@ -684,7 +978,7 @@ const pricingGroups = [
 }
 
 .landing-nav {
-  @apply sticky top-0 z-20 flex h-20 items-center justify-between gap-3 border-b border-[#2A2F3A] bg-[#0F1115]/80 px-4 backdrop-blur-xl sm:px-6;
+  @apply sticky top-0 z-20 flex h-20 items-center justify-between gap-3 border-b border-[#2A2F3A] bg-[#0F1115]/80 px-24 backdrop-blur-xl sm:px-40 lg:px-56;
 }
 
 .hero {
@@ -743,13 +1037,53 @@ const pricingGroups = [
     grid-template-columns: minmax(0, 32rem) minmax(0, 1fr);
     gap: 1rem;
     max-width: none;
-    padding-left: max(1.5rem, calc((100vw - 72rem) / 2));
+    padding-left: max(1.5rem, calc((100vw - 72rem) / 2 - 3rem));
     padding-right: 0;
   }
 }
 
 .hero-copy {
   animation: hero-copy-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.hero-rotate {
+  display: block;
+  margin-top: 0.12em;
+  text-align: left;
+  position: relative;
+}
+
+.hero-rotate-sizer {
+  display: grid;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.hero-rotate-sizer > span {
+  grid-area: 1 / 1;
+}
+
+.hero-rotate-word {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.hero-word-enter-active,
+.hero-word-leave-active {
+  transition:
+    opacity 0.38s ease,
+    transform 0.38s ease;
+}
+
+.hero-word-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.hero-word-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 
 .hero-visual {
@@ -939,6 +1273,17 @@ const pricingGroups = [
     animation: none;
   }
 
+  .hero-word-enter-active,
+  .hero-word-leave-active {
+    transition: none;
+  }
+
+  .hero-word-enter-from,
+  .hero-word-leave-to {
+    opacity: 1;
+    transform: none;
+  }
+
   .cursor {
     animation: none;
     opacity: 1;
@@ -949,6 +1294,58 @@ const pricingGroups = [
       transform: translateY(-50%);
     }
   }
+}
+
+/* Trust strip */
+.trust-strip {
+  border-top: 1px solid #2a2f3a;
+  border-bottom: 1px solid #2a2f3a;
+  background: #15181e;
+}
+
+.trust-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.75rem;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.75rem 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .trust-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+    padding: 1.85rem 1.5rem;
+  }
+}
+
+.trust-stat {
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .trust-stat:not(:last-child) {
+    border-right: 1px solid #2a2f3a;
+  }
+}
+
+.trust-num {
+  margin: 0;
+  font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(1.85rem, 3.5vw, 2.5rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: #38b6ff;
+}
+
+.trust-label {
+  margin: 0.45rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: #8b93a7;
 }
 
 /* Math bento cards */
@@ -992,6 +1389,113 @@ const pricingGroups = [
   font-weight: 500;
   line-height: 1.2;
   color: #a8b2c4;
+}
+
+/* Instant Code sandbox */
+.sandbox-window {
+  overflow: hidden;
+  border: 1px solid #343a47;
+  border-radius: 16px;
+  background: #111319;
+  box-shadow:
+    0 40px 80px -42px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(255, 255, 255, 0.025) inset;
+}
+
+.sandbox-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 1px solid #2a2f3a;
+  padding: 0.7rem 1rem;
+  background: #15181e;
+}
+
+.sandbox-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: #38b6ff;
+}
+
+.sandbox-body {
+  display: grid;
+  gap: 0;
+}
+
+@media (min-width: 720px) {
+  .sandbox-body {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  }
+}
+
+.sandbox-fields,
+.sandbox-preview {
+  padding: 1.1rem 1.15rem 1.25rem;
+}
+
+.sandbox-fields {
+  border-bottom: 1px solid #2a2f3a;
+}
+
+@media (min-width: 720px) {
+  .sandbox-fields {
+    border-bottom: none;
+    border-right: 1px solid #2a2f3a;
+  }
+}
+
+.sandbox-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 6.5rem;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+}
+
+.sandbox-input,
+.sandbox-select {
+  min-width: 0;
+  border: 1px solid #2a2f3a;
+  border-radius: 8px;
+  background: #0f1115;
+  padding: 0.55rem 0.65rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  color: #e8eaef;
+  outline: none;
+}
+
+.sandbox-input:focus,
+.sandbox-select:focus {
+  border-color: rgba(56, 182, 255, 0.55);
+}
+
+.sandbox-select {
+  color: #38b6ff;
+}
+
+.sandbox-code {
+  margin-top: 0.65rem;
+  overflow-x: auto;
+  border-radius: 10px;
+  background: #0f1115;
+  padding: 0.85rem 0.9rem;
+  font-size: 11px;
+  line-height: 1.55;
+  color: #38b6ff;
+  white-space: pre;
+}
+
+.arch-callout {
+  max-width: 40rem;
+  margin-left: auto;
+  margin-right: auto;
+  border: 1px solid rgba(56, 182, 255, 0.22);
+  border-radius: 14px;
+  background: rgba(56, 182, 255, 0.05);
+  padding: 1.1rem 1.25rem;
+  text-align: left;
 }
 
 /* Architecture */
@@ -1115,6 +1619,12 @@ const pricingGroups = [
   box-shadow: 0 0 30px -10px rgba(56, 182, 255, 0.6);
 }
 
+.savings-ring--99 {
+  background:
+    radial-gradient(circle, #151b22 58%, transparent 60%),
+    conic-gradient(#38b6ff 0 99%, #2a2f3a 99% 100%);
+}
+
 .meter-track {
   height: 8px;
   overflow: hidden;
@@ -1138,6 +1648,11 @@ const pricingGroups = [
   width: 22%;
   background: #38b6ff;
   box-shadow: 0 0 14px rgba(56, 182, 255, 0.6);
+}
+
+.meter-struct--udp {
+  width: 2%;
+  min-width: 6px;
 }
 
 /* Debugger */
@@ -1503,6 +2018,156 @@ const pricingGroups = [
   .pricing-grid .pricing-card {
     min-height: 32rem;
   }
+}
+
+/* Footer */
+.site-footer {
+  border-top: 1px solid #2a2f3a;
+  padding: 3.5rem 0 2rem;
+}
+
+.site-footer-inner {
+  margin-inline: auto;
+  max-width: 72rem;
+  padding-inline: 1.5rem;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+}
+
+@media (min-width: 640px) {
+  .footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2.5rem 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .footer-grid {
+    grid-template-columns: 1.35fr repeat(3, minmax(0, 1fr));
+    gap: 3rem;
+  }
+}
+
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.85rem;
+  max-width: 16rem;
+}
+
+.footer-logo :deep(.struct-logo) {
+  margin-inline: 0;
+  height: 2.25rem;
+  width: auto;
+}
+
+.footer-tagline {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #8b93a7;
+}
+
+.footer-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: #8b93a7;
+  transition: color 0.15s ease;
+}
+
+.footer-status:hover {
+  color: #38b6ff;
+}
+
+.footer-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #28c840;
+  box-shadow: 0 0 0 3px rgba(40, 200, 64, 0.18);
+  animation: status-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(40, 200, 64, 0.18);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(40, 200, 64, 0.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-status-dot {
+    animation: none;
+  }
+}
+
+.footer-heading {
+  margin: 0 0 1rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f4f5f7;
+}
+
+.footer-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.footer-links a {
+  font-size: 0.8125rem;
+  color: #8b93a7;
+  transition: color 0.15s ease;
+}
+
+.footer-links a:hover {
+  color: #38b6ff;
+}
+
+.footer-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #2a2f3a;
+}
+
+@media (min-width: 640px) {
+  .footer-bottom {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.footer-signin {
+  font-size: 0.75rem;
+  color: #8b93a7;
+  transition: color 0.15s ease;
+}
+
+.footer-signin:hover {
+  color: #38b6ff;
 }
 
 </style>
