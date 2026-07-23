@@ -52,7 +52,7 @@
             <NuxtLink to="/signup" class="btn-primary px-6 py-3 text-sm">
               Connect your first 5 devices for free
             </NuxtLink>
-            <a href="#math" class="btn-ghost px-6 py-3 text-sm">See the proof</a>
+            <a href="#bandwidth" class="btn-ghost px-6 py-3 text-sm">See the proof</a>
           </div>
 
           <div class="terminal mt-8 max-w-md text-left" aria-label="Payload size comparison">
@@ -532,8 +532,8 @@
             <p class="security-kicker">Accountability</p>
             <h3 class="security-title">Immutable audit logs</h3>
             <p class="security-copy">
-              Scale workspaces retain actor, previous state, and new state for device, schema, and
-              destination changes.
+              Keep a permanent, diff-based history of exactly who changed a device, schema, or
+              routing destination, and when.
             </p>
           </article>
 
@@ -921,7 +921,7 @@ const pricingPlans = [
     price: '$49',
     interval: '/ month',
     description: 'Secure operations and bulk pricing for growing fleets.',
-    devices: '155-device starting allowance',
+    devices: 'Includes 150 devices',
     deviceRate: '$0.50 per extra device / month',
     features: ['ChaCha20 encryption', 'Device downlinks', '30-day telemetry retention'],
     cta: 'Choose Pro',
@@ -933,7 +933,7 @@ const pricingPlans = [
     price: '$249',
     interval: '/ month',
     description: 'Governance and advanced routing for large fleets.',
-    devices: '1,005-device starting allowance',
+    devices: 'Includes 1,000 devices',
     deviceRate: '$0.20 per extra device / month',
     features: ['Team RBAC', 'Immutable audit logs', 'Webhook logical routing'],
     cta: 'Buy Now',
