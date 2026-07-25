@@ -1,34 +1,62 @@
 <template>
   <div class="landing">
     <!-- Nav -->
-    <header class="landing-nav">
-      <NuxtLink to="/" class="flex min-w-0 items-center justify-center">
+    <header class="nav">
+      <NuxtLink to="/" class="nav-logo" aria-label="Struct home">
         <StructLogo size="md" />
       </NuxtLink>
-      <div class="flex shrink-0 items-center gap-2 sm:gap-3">
+
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#architecture">Platform</a>
+        <a href="#sandbox">Products</a>
+        <a href="#math">Use cases</a>
+        <a href="#bandwidth">Integrations</a>
+        <a href="#pricing">Pricing</a>
+      </nav>
+
+      <div class="nav-actions">
         <template v-if="user">
           <NuxtLink to="/dashboard" class="btn-primary text-xs">Open dashboard</NuxtLink>
         </template>
         <template v-else>
-          <NuxtLink to="/login" class="btn-ghost text-xs">Sign in</NuxtLink>
-          <NuxtLink to="/signup" class="btn-primary text-xs">Start free</NuxtLink>
+          <NuxtLink to="/login" class="nav-signin">Sign in</NuxtLink>
+          <NuxtLink to="/signup" class="btn-primary text-xs">Start Free</NuxtLink>
         </template>
+        <button
+          type="button"
+          class="nav-menu-btn"
+          :aria-expanded="menuOpen"
+          aria-controls="mobile-menu"
+          @click="menuOpen = !menuOpen"
+        >
+          <span class="sr-only">{{ menuOpen ? 'Close menu' : 'Open menu' }}</span>
+          <span class="nav-menu-icon" :class="{ open: menuOpen }" aria-hidden="true" />
+        </button>
       </div>
     </header>
 
+    <div
+      id="mobile-menu"
+      class="mobile-menu"
+      :class="{ open: menuOpen }"
+      :hidden="!menuOpen"
+    >
+      <a href="#architecture" @click="menuOpen = false">Platform</a>
+      <a href="#sandbox" @click="menuOpen = false">Products</a>
+      <a href="#math" @click="menuOpen = false">Use cases</a>
+      <a href="#bandwidth" @click="menuOpen = false">Integrations</a>
+      <a href="#pricing" @click="menuOpen = false">Pricing</a>
+      <NuxtLink to="/signup" class="btn-primary mt-2 w-full" @click="menuOpen = false">
+        Start Free
+      </NuxtLink>
+    </div>
+
     <!-- Hero -->
     <section class="hero">
-      <div
-        id="parallax-grid"
-        ref="parallaxGridEl"
-        class="hero-grid"
-        aria-hidden="true"
-      />
+      <HeroGradientCanvas />
       <div class="hero-layout">
-        <div class="hero-copy min-w-0 text-left">
-          <h1
-            class="font-display max-w-2xl text-[2.35rem] font-semibold leading-[1.08] tracking-[-0.04em] text-[#F4F5F7] sm:text-5xl lg:text-[3.5rem]"
-          >
+        <div class="hero-copy">
+          <h1 class="hero-title">
             Save Data Costs and Battery Life on
             <span class="hero-rotate" aria-live="polite">
               <span class="hero-rotate-sizer" aria-hidden="true">
@@ -37,40 +65,46 @@
               <Transition name="hero-word" mode="out-in">
                 <span
                   :key="heroWordIndex"
-                  class="hero-rotate-word text-[#38B6FF]"
+                  class="hero-rotate-word"
                 >{{ heroWords[heroWordIndex] }}</span>
               </Transition>
             </span>
           </h1>
-
-          <p class="mt-5 max-w-md text-base leading-relaxed text-[#8B93A7] sm:text-lg">
+          <p class="hero-sub">
             Replace verbose JSON with secure packed C++ structs. Keep cellular radios asleep
             longer and stop paying to transmit field names, braces, and quotes.
           </p>
-
-          <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <NuxtLink to="/signup" class="btn-primary px-6 py-3 text-sm">
-              Connect your first 5 devices for free
+          <div class="hero-ctas">
+            <NuxtLink to="/signup" class="btn-primary hero-cta-primary">
+              Start Free →
             </NuxtLink>
-            <a href="#bandwidth" class="btn-ghost px-6 py-3 text-sm">See the proof</a>
-          </div>
-
-          <div class="terminal mt-8 max-w-md text-left" aria-label="Payload size comparison">
-            <div class="terminal-chrome">
-              <span class="dot dot-r" />
-              <span class="dot dot-y" />
-              <span class="dot dot-g" />
-              <span class="terminal-title font-mono">struct — uplink</span>
-            </div>
-            <pre class="terminal-body font-mono"><span class="t-muted">$</span> <span class="t-cmd">compare</span> <span class="t-flag">--demo two-sensor</span>
-<span class="t-dim">JSON</span>   <span class="t-strike">85B</span>  <span class="t-dim">· names + syntax repeated</span>
-<span class="t-ok">STRUCT</span> <span class="t-hi">25B</span>  <span class="t-dim">· fixed binary frame</span>
-<span class="t-muted">→</span> <span class="t-dim">one small example</span> <span class="t-muted">·</span> <span class="t-hi">your schema sets the size</span><span class="cursor" aria-hidden="true" /></pre>
+            <a
+              href="mailto:sales@struct.dev?subject=Struct demo request"
+              class="btn-ghost hero-cta-secondary"
+            >
+              Request a Demo →
+            </a>
           </div>
         </div>
-
         <div class="hero-visual">
           <HeroDataFlowDiagram class="hero-shot" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Compatible with — logo marquee -->
+    <section class="compat" aria-label="Compatible platforms and tools">
+      <p class="compat-label">Compatible with</p>
+      <div class="compat-marquee" aria-hidden="true">
+        <div class="compat-track">
+          <div
+            v-for="(logo, i) in [...compatLogos, ...compatLogos]"
+            :key="`${logo.src}-${i}`"
+            class="compat-item"
+            :class="{ 'compat-item--lg': logo.scale === 'lg' }"
+          >
+            <img :src="logo.src" :alt="logo.name" class="compat-logo" width="120" height="40" />
+          </div>
         </div>
       </div>
     </section>
@@ -737,7 +771,7 @@ useSeoMeta({
     'Replace verbose JSON with secure packed structs. Cut cellular payload, debug raw TCP visually, and protect fleets with authenticated encryption.',
 })
 
-const parallaxGridEl = ref<HTMLElement | null>(null)
+const menuOpen = ref(false)
 const prefersReducedMotion = ref(false)
 let sandboxCopyTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -770,21 +804,13 @@ async function runHeroCarousel() {
   }
 }
 
-function onLandingScroll() {
-  const layer = parallaxGridEl.value
-  if (!layer) return
-  if (prefersReducedMotion.value) {
-    layer.style.transform = 'translateY(0px)'
-    return
-  }
-  // Same motor as the reference: layer lags behind content (scrollY * 0.5).
-  layer.style.transform = `translateY(${window.scrollY * 0.5}px)`
+function onResizeCloseMenu() {
+  if (window.innerWidth >= 1024) menuOpen.value = false
 }
 
 onMounted(() => {
   prefersReducedMotion.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  onLandingScroll()
-  window.addEventListener('scroll', onLandingScroll, { passive: true })
+  window.addEventListener('resize', onResizeCloseMenu)
 
   if (!prefersReducedMotion.value) {
     runHeroCarousel()
@@ -793,10 +819,25 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   heroCarouselStopped = true
-  window.removeEventListener('scroll', onLandingScroll)
+  window.removeEventListener('resize', onResizeCloseMenu)
   if (heroWordTimer) clearTimeout(heroWordTimer)
   if (sandboxCopyTimer) clearTimeout(sandboxCopyTimer)
 })
+
+const compatLogos = [
+  { src: '/aws.svg', name: 'AWS', scale: 'lg' },
+  { src: '/azure.svg', name: 'Azure' },
+  { src: '/cloud.svg', name: 'Google Cloud' },
+  { src: '/discord.svg', name: 'Discord', scale: 'lg' },
+  { src: '/espressif.svg', name: 'Espressif' },
+  { src: '/n.svg', name: 'nRF' },
+  { src: '/slack.svg', name: 'Slack' },
+  { src: '/snow.svg', name: 'Snowflake' },
+  { src: '/spiral.svg', name: 'Spiral' },
+  { src: '/st.svg', name: 'STMicroelectronics', scale: 'lg' },
+  { src: '/supa.svg', name: 'Supabase' },
+  { src: '/zapier.svg', name: 'Zapier' },
+]
 
 const trustStats = [
   { value: '500+', label: 'Hardware Engineers' },
@@ -961,53 +1002,202 @@ const pricingGroups = [
 
 <style scoped>
 .landing {
-  font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
 }
 
 .font-display {
-  font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
 }
 
-.landing-nav {
-  @apply sticky top-0 z-20 flex h-20 items-center justify-between gap-3 border-b border-[#2A2F3A] bg-[#0F1115]/80 px-24 backdrop-blur-xl sm:px-40 lg:px-56;
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  height: 4.25rem;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid #2a2f3a;
+  background: rgba(15, 17, 21, 0.88);
+  backdrop-filter: blur(16px);
+}
+
+@media (min-width: 1024px) {
+  .nav {
+    padding: 0 2.5rem;
+  }
+}
+
+.nav-logo :deep(.struct-logo) {
+  margin-inline: 0;
+  height: 2.25rem;
+}
+
+.nav-links {
+  display: none;
+  align-items: center;
+  gap: 1.75rem;
+}
+
+@media (min-width: 1024px) {
+  .nav-links {
+    display: flex;
+  }
+}
+
+.nav-links a {
+  font-size: 0.875rem;
+  color: #a8b2c4;
+  transition: color 0.15s ease;
+}
+
+.nav-links a:hover {
+  color: #38b6ff;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.nav-signin {
+  display: none;
+  font-size: 0.8125rem;
+  color: #a8b2c4;
+}
+
+@media (min-width: 640px) {
+  .nav-signin {
+    display: inline;
+  }
+}
+
+.nav-signin:hover {
+  color: #38b6ff;
+}
+
+.nav-menu-btn {
+  display: flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: 1px solid #2a2f3a;
+  background: transparent;
+}
+
+@media (min-width: 1024px) {
+  .nav-menu-btn {
+    display: none;
+  }
+}
+
+.nav-menu-icon,
+.nav-menu-icon::before,
+.nav-menu-icon::after {
+  display: block;
+  width: 1rem;
+  height: 1.5px;
+  background: #e8eaef;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.nav-menu-icon {
+  position: relative;
+}
+
+.nav-menu-icon::before,
+.nav-menu-icon::after {
+  content: '';
+  position: absolute;
+  left: 0;
+}
+
+.nav-menu-icon::before {
+  top: -5px;
+}
+
+.nav-menu-icon::after {
+  top: 5px;
+}
+
+.nav-menu-icon.open {
+  background: transparent;
+}
+
+.nav-menu-icon.open::before {
+  top: 0;
+  transform: rotate(45deg);
+}
+
+.nav-menu-icon.open::after {
+  top: 0;
+  transform: rotate(-45deg);
+}
+
+.mobile-menu {
+  display: none;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 1.25rem 1.25rem;
+  border-bottom: 1px solid #2a2f3a;
+  background: #15181e;
+}
+
+.mobile-menu.open {
+  display: flex;
+}
+
+@media (min-width: 1024px) {
+  .mobile-menu,
+  .mobile-menu.open {
+    display: none;
+  }
+}
+
+.mobile-menu a {
+  padding: 0.75rem 0.5rem;
+  font-size: 0.9375rem;
+  color: #e8eaef;
+  border-radius: 0.5rem;
+}
+
+.mobile-menu a:hover {
+  background: rgba(56, 182, 255, 0.08);
+  color: #38b6ff;
 }
 
 .hero {
   position: relative;
   overflow: hidden;
-  padding: 7.5rem 0 8rem;
+  padding: 4.5rem 0 5rem;
 }
 
 @media (min-width: 640px) {
   .hero {
-    padding: 9rem 0 9.5rem;
+    padding: 6rem 0 6.5rem;
   }
 }
 
 @media (min-width: 1024px) {
   .hero {
-    padding: 10.5rem 0 11rem;
-  }
-}
-
-.hero-grid {
-  position: absolute;
-  inset: 0;
-  height: 150%;
-  background-image:
-    linear-gradient(rgba(42, 47, 58, 0.22) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(42, 47, 58, 0.22) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 80% 70% at 78% 42%, black 18%, transparent 78%);
-  pointer-events: none;
-  transform: translateY(0px);
-  will-change: transform;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-grid {
-    will-change: auto;
-    transform: none !important;
+    padding: 7rem 0 8rem;
   }
 }
 
@@ -1030,17 +1220,29 @@ const pricingGroups = [
     max-width: none;
     padding-left: max(1.5rem, calc((100vw - 72rem) / 2 - 3rem));
     padding-right: 0;
+    transform: translateX(0.5rem);
   }
 }
 
 .hero-copy {
-  animation: hero-copy-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+  text-align: left;
+  animation: rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @media (min-width: 1024px) {
   .hero-copy {
-    margin-left: -3rem;
+    margin-left: -1rem;
   }
+}
+
+.hero-title {
+  margin: 0;
+  max-width: 32rem;
+  font-size: clamp(1.85rem, 4.2vw, 3.15rem);
+  font-weight: 650;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  color: #f4f5f7;
 }
 
 .hero-rotate {
@@ -1064,6 +1266,7 @@ const pricingGroups = [
   position: absolute;
   inset: 0;
   display: block;
+  color: #38b6ff;
 }
 
 .hero-word-enter-active,
@@ -1081,6 +1284,36 @@ const pricingGroups = [
 .hero-word-leave-to {
   opacity: 0;
   transform: translateY(-6px);
+}
+
+.hero-sub {
+  margin: 1.25rem 0 0;
+  max-width: 28rem;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: #8b93a7;
+}
+
+.hero-ctas {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
+@media (min-width: 480px) {
+  .hero-ctas {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.hero-cta-primary,
+.hero-cta-secondary {
+  padding: 0.85rem 1.5rem;
+  font-size: 0.9375rem;
+  border-radius: 0.65rem;
 }
 
 .hero-visual {
@@ -1112,17 +1345,80 @@ const pricingGroups = [
     position: absolute;
     left: 0;
     top: 50%;
-    width: min(132%, 60rem);
+    width: min(118%, 54rem);
     max-width: none;
     max-height: none;
     height: auto;
     margin: 0;
-    transform: translate(-1.5rem, -50%);
+    transform: translate(2.75rem, -50%) scale(0.95);
+    transform-origin: left center;
     animation-name: hero-in-lg;
   }
 }
 
-/* Glass terminal under CTAs */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes hero-in-lg {
+  from {
+    opacity: 0;
+    transform: translate(2.75rem, calc(-50% + 20px)) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(2.75rem, -50%) scale(0.95);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-shot,
+  .hero-copy {
+    animation: none;
+  }
+
+  .hero-word-enter-active,
+  .hero-word-leave-active {
+    transition: none;
+  }
+
+  .hero-word-enter-from,
+  .hero-word-leave-to {
+    opacity: 1;
+    transform: none;
+  }
+
+  .cursor {
+    animation: none;
+    opacity: 1;
+  }
+
+  @media (min-width: 1024px) {
+    .hero-shot {
+      transform: translate(2.75rem, -50%) scale(0.95);
+    }
+  }
+}
+
+/* Glass terminal (sandbox / debugger) */
 .terminal {
   border-radius: 12px;
   border: 1px solid rgba(42, 47, 58, 0.9);
@@ -1226,73 +1522,104 @@ const pricingGroups = [
   }
 }
 
-@keyframes hero-in {
-  from {
-    opacity: 0;
-    transform: translateY(16px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+/* Compatible with — logo marquee */
+.compat {
+  padding: 1.5rem 0 3.75rem;
+  border-top: 1px solid #2a2f3a;
+  background: #0f1115;
 }
 
-@keyframes hero-in-lg {
-  from {
-    opacity: 0;
-    transform: translate(-1.5rem, calc(-50% + 20px)) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-1.5rem, -50%) scale(1);
-  }
+.compat-label {
+  margin: 0 0 1.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8b93a7;
 }
 
-@keyframes hero-copy-in {
+.compat-marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 8%,
+    #000 92%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 8%,
+    #000 92%,
+    transparent 100%
+  );
+}
+
+.compat-track {
+  display: flex;
+  width: max-content;
+  gap: 3.5rem;
+  align-items: center;
+  padding-left: 3.5rem;
+  animation: compat-scroll 40s linear infinite;
+}
+
+.compat-item {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 7.5rem;
+  height: 2.75rem;
+}
+
+.compat-item--lg {
+  width: 9.25rem;
+  height: 3.5rem;
+}
+
+.compat-logo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  opacity: 0.85;
+}
+
+@keyframes compat-scroll {
   from {
-    opacity: 0;
-    transform: translateY(10px);
+    transform: translateX(0);
   }
   to {
-    opacity: 1;
-    transform: translateY(0);
+    transform: translateX(-50%);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-shot,
-  .hero-copy {
+  .compat-track {
     animation: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    max-width: 56rem;
+    margin: 0 auto;
+    padding: 0 1.25rem;
+    gap: 2rem 2.5rem;
   }
 
-  .hero-word-enter-active,
-  .hero-word-leave-active {
-    transition: none;
-  }
-
-  .hero-word-enter-from,
-  .hero-word-leave-to {
-    opacity: 1;
-    transform: none;
-  }
-
-  .cursor {
-    animation: none;
-    opacity: 1;
-  }
-
-  @media (min-width: 1024px) {
-    .hero-shot {
-      transform: translate(-1.5rem, -50%);
-    }
+  .compat-marquee {
+    mask-image: none;
+    -webkit-mask-image: none;
   }
 }
 
 /* Trust strip */
 .trust-strip {
-  border-top: 1px solid #2a2f3a;
+  background: #0f1115;
   border-bottom: 1px solid #2a2f3a;
-  background: #15181e;
 }
 
 .trust-grid {
@@ -1301,14 +1628,14 @@ const pricingGroups = [
   gap: 1.75rem;
   max-width: 72rem;
   margin: 0 auto;
-  padding: 1.75rem 1.5rem;
+  padding: 2.75rem 1.5rem 3.75rem;
 }
 
 @media (min-width: 640px) {
   .trust-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1.5rem;
-    padding: 1.85rem 1.5rem;
+    padding: 3rem 1.5rem 4.25rem;
   }
 }
 
@@ -1324,8 +1651,8 @@ const pricingGroups = [
 
 .trust-num {
   margin: 0;
-  font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
-  font-size: clamp(1.85rem, 3.5vw, 2.5rem);
+  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(2.35rem, 4.5vw, 3.25rem);
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1;
@@ -1333,8 +1660,8 @@ const pricingGroups = [
 }
 
 .trust-label {
-  margin: 0.45rem 0 0;
-  font-size: 0.8rem;
+  margin: 0.55rem 0 0;
+  font-size: 1rem;
   font-weight: 500;
   letter-spacing: 0.01em;
   color: #8b93a7;
@@ -1367,7 +1694,7 @@ const pricingGroups = [
 }
 
 .metric-num {
-  font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
   font-size: clamp(2.25rem, 4vw, 3rem);
   font-weight: 600;
   letter-spacing: -0.04em;
@@ -1376,7 +1703,7 @@ const pricingGroups = [
 }
 
 .metric-tail {
-  font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
   font-size: 1.05rem;
   font-weight: 500;
   line-height: 1.2;
@@ -1510,7 +1837,7 @@ const pricingGroups = [
 }
 
 .arch-title {
-  font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
   @apply text-base font-semibold tracking-tight text-[#E8EAEF];
 }
 
@@ -1905,7 +2232,7 @@ const pricingGroups = [
 
 .security-title {
   margin-top: 0.5rem;
-  font-family: 'Lato', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
   font-size: 1.1rem;
   font-weight: 600;
   letter-spacing: -0.02em;
