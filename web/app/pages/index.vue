@@ -29,7 +29,7 @@
           <h1
             class="font-display max-w-2xl text-[2.35rem] font-semibold leading-[1.08] tracking-[-0.04em] text-[#F4F5F7] sm:text-5xl lg:text-[3.5rem]"
           >
-            The binary telemetry gateway for
+            Save Data Costs and Battery Life on
             <span class="hero-rotate" aria-live="polite">
               <span class="hero-rotate-sizer" aria-hidden="true">
                 <span v-for="word in heroWords" :key="word">{{ word }}</span>
@@ -70,15 +70,7 @@
         </div>
 
         <div class="hero-visual">
-          <img
-            src="/hero-shot.svg"
-            alt="Struct gateway parsing packed ESP32 telemetry into live cloud dashboards"
-            class="hero-shot"
-            width="1200"
-            height="600"
-            decoding="async"
-            fetchpriority="high"
-          />
+          <HeroDataFlowDiagram class="hero-shot" />
         </div>
       </div>
     </section>
@@ -750,12 +742,11 @@ const prefersReducedMotion = ref(false)
 let sandboxCopyTimer: ReturnType<typeof setTimeout> | null = null
 
 const heroWords = [
-  'remote sensors.',
-  'asset tracking.',
-  'robotics.',
-  'fleet telematics.',
-  'smart meters.',
-  'ag-tech hardware.',
+  'Remote Sensors',
+  'Asset Trackers',
+  'Field Robotics',
+  'Ag-Tech Devices',
+  'Microcontrollers',
 ]
 const heroWordIndex = ref(0)
 const HERO_HOLD_MS = 3400
@@ -1046,6 +1037,12 @@ const pricingGroups = [
   animation: hero-copy-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+@media (min-width: 1024px) {
+  .hero-copy {
+    margin-left: -3rem;
+  }
+}
+
 .hero-rotate {
   display: block;
   margin-top: 0.12em;
@@ -1105,27 +1102,22 @@ const pricingGroups = [
   display: block;
   width: 100%;
   height: auto;
-  max-height: min(44vh, 340px);
-  object-fit: contain;
-  object-position: center center;
+  max-height: none;
   margin-inline: auto;
-  filter: drop-shadow(0 28px 48px rgba(0, 0, 0, 0.45));
   animation: hero-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @media (min-width: 1024px) {
   .hero-shot {
     position: absolute;
-    left: 6%;
+    left: 0;
     top: 50%;
-    width: 140%;
-    max-width: 62rem;
-    max-height: 560px;
+    width: min(132%, 60rem);
+    max-width: none;
+    max-height: none;
     height: auto;
     margin: 0;
-    object-fit: contain;
-    object-position: left center;
-    transform: translateY(-50%);
+    transform: translate(-1.5rem, -50%);
     animation-name: hero-in-lg;
   }
 }
@@ -1248,11 +1240,11 @@ const pricingGroups = [
 @keyframes hero-in-lg {
   from {
     opacity: 0;
-    transform: translateY(calc(-50% + 20px)) scale(0.97);
+    transform: translate(-1.5rem, calc(-50% + 20px)) scale(0.97);
   }
   to {
     opacity: 1;
-    transform: translateY(-50%) scale(1);
+    transform: translate(-1.5rem, -50%) scale(1);
   }
 }
 
@@ -1291,7 +1283,7 @@ const pricingGroups = [
 
   @media (min-width: 1024px) {
     .hero-shot {
-      transform: translateY(-50%);
+      transform: translate(-1.5rem, -50%);
     }
   }
 }
