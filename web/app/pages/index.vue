@@ -46,7 +46,28 @@
       <a href="#math" @click="menuOpen = false">Use cases</a>
       <a href="#bandwidth" @click="menuOpen = false">Integrations</a>
       <a href="#pricing" @click="menuOpen = false">Pricing</a>
-      <NuxtLink to="/signup" class="btn-primary mt-2 w-full" @click="menuOpen = false">
+      <NuxtLink
+        v-if="!user"
+        to="/login"
+        class="mobile-menu-signin"
+        @click="menuOpen = false"
+      >
+        Sign in
+      </NuxtLink>
+      <NuxtLink
+        v-if="user"
+        to="/dashboard"
+        class="btn-primary mt-2 w-full"
+        @click="menuOpen = false"
+      >
+        Open dashboard
+      </NuxtLink>
+      <NuxtLink
+        v-else
+        to="/signup"
+        class="btn-primary mt-2 w-full"
+        @click="menuOpen = false"
+      >
         Start Free
       </NuxtLink>
     </div>
@@ -139,7 +160,7 @@
           </p>
         </div>
 
-        <div class="grid gap-3 sm:grid-cols-3 lg:col-span-7 lg:grid-cols-1 lg:gap-3">
+        <div class="grid gap-3 lg:col-span-7">
           <article
             v-for="card in mathCards"
             :key="card.label"
@@ -283,7 +304,7 @@
                 <p class="font-mono text-[10px] uppercase tracking-[0.15em] text-[#8B93A7]">
                   10k devices · 1 ping/min
                 </p>
-                <p class="mt-2 font-display text-4xl font-semibold tracking-[-0.04em] text-[#38B6FF]">
+                <p class="bandwidth-savings">
                   ~$2,400
                 </p>
                 <p class="mt-1 text-xs text-[#8B93A7]">saved per month · ~2.2 TB less data</p>
@@ -296,14 +317,14 @@
 
             <div class="mt-8 space-y-5">
               <div>
-                <div class="mb-2 flex justify-between font-mono text-[10px]">
+                <div class="mb-2 flex flex-wrap justify-between gap-x-3 gap-y-1 font-mono text-[10px]">
                   <span class="text-[#8B93A7]">HTTPS POST + TLS cold-start</span>
                   <span class="text-[#E8EAEF]">~5,200 bytes</span>
                 </div>
                 <div class="meter-track"><span class="meter-json" /></div>
               </div>
               <div>
-                <div class="mb-2 flex justify-between font-mono text-[10px]">
+                <div class="mb-2 flex flex-wrap justify-between gap-x-3 gap-y-1 font-mono text-[10px]">
                   <span class="text-[#8B93A7]">Authenticated UDP frame</span>
                   <span class="text-[#38B6FF]">~100 bytes</span>
                 </div>
@@ -772,7 +793,6 @@ useSeoMeta({
 })
 
 const menuOpen = ref(false)
-const prefersReducedMotion = ref(false)
 let sandboxCopyTimer: ReturnType<typeof setTimeout> | null = null
 
 const heroWords = [
@@ -809,12 +829,9 @@ function onResizeCloseMenu() {
 }
 
 onMounted(() => {
-  prefersReducedMotion.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   window.addEventListener('resize', onResizeCloseMenu)
-
-  if (!prefersReducedMotion.value) {
-    runHeroCarousel()
-  }
+  // Decorative: keep running under prefers-reduced-motion; CSS softens transitions.
+  runHeroCarousel()
 })
 
 onBeforeUnmount(() => {
@@ -1003,6 +1020,8 @@ const pricingGroups = [
 <style scoped>
 .landing {
   font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+  overflow-x: clip;
+  width: 100%;
 }
 
 .font-display {
@@ -1028,9 +1047,9 @@ const pricingGroups = [
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 0.75rem;
   height: 4.25rem;
-  padding: 0 1.25rem;
+  padding: 0 max(1rem, env(safe-area-inset-right)) 0 max(1rem, env(safe-area-inset-left));
   border-bottom: 1px solid #2a2f3a;
   background: rgba(15, 17, 21, 0.88);
   backdrop-filter: blur(16px);
@@ -1183,10 +1202,14 @@ const pricingGroups = [
   color: #38b6ff;
 }
 
+.mobile-menu-signin {
+  color: #a8b2c4 !important;
+}
+
 .hero {
   position: relative;
   overflow: hidden;
-  padding: 4.5rem 0 5rem;
+  padding: 3rem 0 3.25rem;
 }
 
 @media (min-width: 640px) {
@@ -1207,10 +1230,10 @@ const pricingGroups = [
   width: 100%;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 2.5rem;
+  gap: 2rem;
   align-items: center;
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
 }
 
 @media (min-width: 1024px) {
@@ -1238,11 +1261,12 @@ const pricingGroups = [
 .hero-title {
   margin: 0;
   max-width: 32rem;
-  font-size: clamp(1.85rem, 4.2vw, 3.15rem);
+  font-size: clamp(1.65rem, 6.2vw, 3.15rem);
   font-weight: 650;
-  line-height: 1.1;
+  line-height: 1.12;
   letter-spacing: -0.035em;
   color: #f4f5f7;
+  overflow-wrap: anywhere;
 }
 
 .hero-rotate {
@@ -1287,11 +1311,17 @@ const pricingGroups = [
 }
 
 .hero-sub {
-  margin: 1.25rem 0 0;
+  margin: 1.1rem 0 0;
   max-width: 28rem;
-  font-size: 1.0625rem;
+  font-size: 0.9875rem;
   line-height: 1.65;
   color: #8b93a7;
+}
+
+@media (min-width: 640px) {
+  .hero-sub {
+    font-size: 1.0625rem;
+  }
 }
 
 .hero-ctas {
@@ -1319,7 +1349,8 @@ const pricingGroups = [
 .hero-visual {
   position: relative;
   width: 100%;
-  min-height: 200px;
+  min-width: 0;
+  min-height: 0;
 }
 
 @media (min-width: 1024px) {
@@ -1390,6 +1421,7 @@ const pricingGroups = [
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Keep entrance/scroll-jarring motion off; soften word swap (no slide). */
   .hero-shot,
   .hero-copy {
     animation: none;
@@ -1397,12 +1429,12 @@ const pricingGroups = [
 
   .hero-word-enter-active,
   .hero-word-leave-active {
-    transition: none;
+    transition: opacity 0.35s ease;
   }
 
   .hero-word-enter-from,
   .hero-word-leave-to {
-    opacity: 1;
+    opacity: 0;
     transform: none;
   }
 
@@ -1524,9 +1556,15 @@ const pricingGroups = [
 
 /* Compatible with — logo marquee */
 .compat {
-  padding: 1.5rem 0 3.75rem;
+  padding: 1.25rem 0 2.75rem;
   border-top: 1px solid #2a2f3a;
   background: #0f1115;
+}
+
+@media (min-width: 640px) {
+  .compat {
+    padding: 1.5rem 0 3.75rem;
+  }
 }
 
 .compat-label {
@@ -1560,10 +1598,17 @@ const pricingGroups = [
 .compat-track {
   display: flex;
   width: max-content;
-  gap: 3.5rem;
+  gap: 2.25rem;
   align-items: center;
-  padding-left: 3.5rem;
+  padding-left: 2.25rem;
   animation: compat-scroll 40s linear infinite;
+}
+
+@media (min-width: 640px) {
+  .compat-track {
+    gap: 3.5rem;
+    padding-left: 3.5rem;
+  }
 }
 
 .compat-item {
@@ -1571,13 +1616,27 @@ const pricingGroups = [
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 7.5rem;
-  height: 2.75rem;
+  width: 5.75rem;
+  height: 2.25rem;
+}
+
+@media (min-width: 640px) {
+  .compat-item {
+    width: 7.5rem;
+    height: 2.75rem;
+  }
 }
 
 .compat-item--lg {
-  width: 9.25rem;
-  height: 3.5rem;
+  width: 7rem;
+  height: 2.75rem;
+}
+
+@media (min-width: 640px) {
+  .compat-item--lg {
+    width: 9.25rem;
+    height: 3.5rem;
+  }
 }
 
 .compat-logo {
@@ -1599,20 +1658,9 @@ const pricingGroups = [
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Still scroll, but slower — static wrap looked broken on marketing pages. */
   .compat-track {
-    animation: none;
-    flex-wrap: wrap;
-    justify-content: center;
-    width: 100%;
-    max-width: 56rem;
-    margin: 0 auto;
-    padding: 0 1.25rem;
-    gap: 2rem 2.5rem;
-  }
-
-  .compat-marquee {
-    mask-image: none;
-    -webkit-mask-image: none;
+    animation-duration: 80s;
   }
 }
 
@@ -1625,10 +1673,10 @@ const pricingGroups = [
 .trust-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.75rem;
+  gap: 1.5rem;
   max-width: 72rem;
   margin: 0 auto;
-  padding: 2.75rem 1.5rem 3.75rem;
+  padding: 2.25rem max(1rem, env(safe-area-inset-right)) 3rem max(1rem, env(safe-area-inset-left));
 }
 
 @media (min-width: 640px) {
@@ -1767,7 +1815,7 @@ const pricingGroups = [
 
 .sandbox-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 6.5rem;
+  grid-template-columns: minmax(0, 1fr) minmax(5.5rem, 6.5rem);
   gap: 0.5rem;
   margin-top: 0.55rem;
 }
@@ -1917,9 +1965,24 @@ const pricingGroups = [
 .bandwidth-meter {
   border: 1px solid rgba(56, 182, 255, 0.2);
   border-radius: 16px;
-  padding: 1.5rem;
+  padding: 1.15rem;
   background: rgba(15, 17, 21, 0.82);
   box-shadow: 0 28px 60px -36px rgba(56, 182, 255, 0.5);
+}
+
+@media (min-width: 640px) {
+  .bandwidth-meter {
+    padding: 1.5rem;
+  }
+}
+
+.bandwidth-savings {
+  margin-top: 0.5rem;
+  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(1.85rem, 7vw, 2.25rem);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  color: #38b6ff;
 }
 
 .savings-ring {
@@ -2006,12 +2069,32 @@ const pricingGroups = [
 
 .debug-topbar {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
   border-bottom: 1px solid #2a2f3a;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 0.85rem;
   background: #181b22;
+}
+
+.debug-topbar > .font-mono {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  font-size: 9px;
+}
+
+@media (min-width: 480px) {
+  .debug-topbar {
+    grid-template-columns: 1fr auto 1fr;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .debug-topbar > .font-mono {
+    font-size: 10px;
+  }
 }
 
 .debug-status {
@@ -2070,11 +2153,21 @@ const pricingGroups = [
 .debug-field {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 0.75rem;
+  gap: 0.45rem;
   align-items: center;
   padding: 0.65rem 0.75rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 9px;
+}
+
+@media (max-width: 379px) {
+  .debug-field {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .debug-field em {
+    display: none;
+  }
 }
 
 .debug-field + .debug-field {
@@ -2198,8 +2291,14 @@ const pricingGroups = [
   overflow: hidden;
   border: 1px solid #2a2f3a;
   border-radius: 16px;
-  padding: 1.5rem;
+  padding: 1.15rem;
   background: #1a1d24;
+}
+
+@media (min-width: 640px) {
+  .security-card {
+    padding: 1.5rem;
+  }
 }
 
 .security-card--wide {
@@ -2286,7 +2385,13 @@ const pricingGroups = [
   border: 1px solid #2a2f3a;
   border-radius: 16px;
   background: #1a1d24;
-  padding: 2rem;
+  padding: 1.35rem 1.25rem 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .pricing-card {
+    padding: 2rem;
+  }
 }
 
 .pricing-card--featured {
@@ -2314,7 +2419,7 @@ const pricingGroups = [
   color: #38b6ff;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 900px) {
   .pricing-grid--self-serve {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -2339,16 +2444,27 @@ const pricingGroups = [
   }
 }
 
+@media (min-width: 900px) and (max-width: 1099px) {
+  .pricing-grid .pricing-card {
+    min-height: 0;
+    padding: 1.5rem 1.25rem;
+  }
+
+  .pricing-card--featured {
+    transform: translateY(-0.75rem);
+  }
+}
+
 /* Footer */
 .site-footer {
   border-top: 1px solid #2a2f3a;
-  padding: 3.5rem 0 2rem;
+  padding: 3rem 0 max(2rem, env(safe-area-inset-bottom));
 }
 
 .site-footer-inner {
   margin-inline: auto;
   max-width: 72rem;
-  padding-inline: 1.5rem;
+  padding-inline: max(1rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-right));
 }
 
 .footer-grid {

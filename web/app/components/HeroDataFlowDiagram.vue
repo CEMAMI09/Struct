@@ -180,10 +180,22 @@ function smoothFunnel(x1: number, y1: number, x2: number, y2: number): string {
   return `M ${x1.toFixed(1)} ${y1.toFixed(1)} C ${c1x.toFixed(1)} ${y1.toFixed(1)}, ${c2x.toFixed(1)} ${y2.toFixed(1)}, ${x2.toFixed(1)} ${y2.toFixed(1)}`
 }
 
+const DESKTOP_MIN = 1024
+
+function isDesktopLayout() {
+  return typeof window !== 'undefined' && window.matchMedia(`(min-width: ${DESKTOP_MIN}px)`).matches
+}
+
 function measure() {
   const root = rootEl.value
   const hub = hubEl.value
   if (!root || !hub) return
+
+  // Stacked mobile layout hides the SVG — skip path math.
+  if (!isDesktopLayout()) {
+    if (paths.value.length) paths.value = []
+    return
+  }
 
   const rr = root.getBoundingClientRect()
   const nextW = Math.max(1, Math.round(rr.width))
@@ -285,22 +297,19 @@ onBeforeUnmount(() => {
   width: 100%;
   isolation: isolate;
   background: transparent;
-  aspect-ratio: 1280 / 560;
-  min-height: 260px;
+  /* Mobile-first: stacked funnel, no fixed aspect */
+  aspect-ratio: auto;
+  min-height: 0;
 }
 
 .hdf-svg {
+  display: none;
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
   z-index: 0;
-}
-
-.hdf-path {
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .hdf-path {
@@ -325,13 +334,12 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 1;
   display: grid;
-  /* Side columns carry the nodes; center stays compact so wire lanes have room */
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr) minmax(0, 1.2fr);
+  grid-template-columns: 1fr;
   align-items: stretch;
-  gap: clamp(1.4rem, 4.2vw, 3.6rem);
+  gap: 0.85rem;
   width: 100%;
-  height: 100%;
-  padding: clamp(0.65rem, 1.8vw, 1.15rem) clamp(0.4rem, 1.4vw, 0.9rem);
+  height: auto;
+  padding: 0.25rem 0;
 }
 
 .hdf-col {
@@ -342,53 +350,69 @@ onBeforeUnmount(() => {
 
 .hdf-col--left,
 .hdf-col--right {
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  justify-content: flex-start;
   align-self: stretch;
-  gap: 0;
 }
 
-/* Pull nodes away from the hub so curves have horizontal run */
-.hdf-col--left {
-  align-items: flex-start;
-}
-
-.hdf-col--right {
-  align-items: flex-end;
+.hdf-col--left > :last-child:nth-child(odd) {
+  grid-column: 1 / -1;
 }
 
 .hdf-col--center {
   align-items: center;
   justify-content: center;
+  gap: 0.55rem;
+  padding-block: 0.35rem;
+}
+
+/* Vertical flow markers between stacked sections */
+.hdf-col--left::after,
+.hdf-col--center::after {
+  content: '';
+  display: block;
+  width: 1px;
+  height: 1.1rem;
+  margin: 0.15rem auto 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(56, 182, 255, 0.55) 0 3px,
+    transparent 3px 6px
+  );
+}
+
+.hdf-col--left::after {
+  grid-column: 1 / -1;
 }
 
 /* Shared node cards */
 .hdf-node {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  width: 12.75rem;
+  gap: 0.5rem;
+  width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  padding: 0.65rem 1rem 0.65rem 0.75rem;
+  padding: 0.6rem 0.75rem;
   border-radius: 10px;
   background: rgba(26, 29, 36, 0.92);
   border: 1px solid rgba(56, 182, 255, 0.32);
   box-shadow: 0 0 14px rgba(56, 182, 255, 0.08);
-  white-space: nowrap;
+  min-width: 0;
 }
 
 .hdf-node--dest {
-  width: 13.25rem;
-  padding: 1.15rem 1.1rem 1.15rem 0.9rem;
-  min-height: 3.35rem;
+  min-height: 2.85rem;
 }
 
 .hdf-node-icon {
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: 1.2rem;
-  height: 1.2rem;
+  width: 1.1rem;
+  height: 1.1rem;
   color: var(--hdf-blue);
   filter: drop-shadow(0 0 6px rgba(56, 182, 255, 0.45));
 }
@@ -399,19 +423,23 @@ onBeforeUnmount(() => {
 }
 
 .hdf-node-label {
-  font-size: clamp(0.7rem, 1.2vw, 0.875rem);
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--hdf-text);
-  line-height: 1.2;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Center hub */
 .hdf-hub {
   position: relative;
-  width: min(100%, clamp(168px, 22vw, 220px));
+  width: min(200px, 58vw);
   aspect-ratio: 1;
   display: grid;
   place-items: center;
+  margin-inline: auto;
 }
 
 .hdf-hub-ring {
@@ -454,7 +482,7 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   gap: 0.2rem;
-  font-size: clamp(0.55rem, 1vw, 0.7rem);
+  font-size: 0.55rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--hdf-muted);
@@ -468,8 +496,8 @@ onBeforeUnmount(() => {
 .hdf-hub-slot-icon {
   display: grid;
   place-items: center;
-  width: 0.95rem;
-  height: 0.95rem;
+  width: 0.85rem;
+  height: 0.85rem;
   color: var(--hdf-blue);
 }
 
@@ -479,67 +507,120 @@ onBeforeUnmount(() => {
 }
 
 .hdf-hub-slot--n {
-  top: 12%;
+  top: 11%;
   left: 50%;
   transform: translateX(-50%);
 }
 
 .hdf-hub-slot--e {
-  right: 9%;
+  right: 8%;
   top: 50%;
   transform: translateY(-50%);
 }
 
 .hdf-hub-slot--s {
-  bottom: 12%;
+  bottom: 11%;
   left: 50%;
   transform: translateX(-50%);
 }
 
 .hdf-hub-slot--w {
-  left: 8%;
+  left: 7%;
   top: 50%;
   transform: translateY(-50%);
 }
 
-@media (max-width: 700px) {
+@media (min-width: 480px) {
+  .hdf-node-label {
+    font-size: 0.8125rem;
+  }
+
+  .hdf-hub-slot {
+    font-size: 0.625rem;
+  }
+}
+
+/* Desktop: side-by-side with animated wire lanes */
+@media (min-width: 1024px) {
   .hdf {
-    aspect-ratio: auto;
-    min-height: 0;
+    aspect-ratio: 1280 / 560;
+    min-height: 260px;
+  }
+
+  .hdf-svg {
+    display: block;
   }
 
   .hdf-layout {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-    height: auto;
-    padding: 0.5rem 0;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr) minmax(0, 1.2fr);
+    align-items: stretch;
+    gap: clamp(1.4rem, 4.2vw, 3.6rem);
+    height: 100%;
+    padding: clamp(0.65rem, 1.8vw, 1.15rem) clamp(0.4rem, 1.4vw, 0.9rem);
   }
 
   .hdf-col--left,
   .hdf-col--right {
-    justify-content: flex-start;
-    gap: 0.65rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0;
   }
 
   .hdf-col--left {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    align-items: flex-start;
+  }
+
+  .hdf-col--right {
+    align-items: flex-end;
+  }
+
+  .hdf-col--left::after,
+  .hdf-col--center::after {
+    display: none;
+  }
+
+  .hdf-col--center {
+    padding-block: 0;
+  }
+
+  .hdf-node {
+    width: 12.75rem;
+    gap: 0.6rem;
+    padding: 0.65rem 1rem 0.65rem 0.75rem;
+    white-space: nowrap;
+  }
+
+  .hdf-node--dest {
+    width: 13.25rem;
+    padding: 1.15rem 1.1rem 1.15rem 0.9rem;
+    min-height: 3.35rem;
+  }
+
+  .hdf-node-label {
+    font-size: clamp(0.7rem, 1.2vw, 0.875rem);
+    overflow: visible;
+    text-overflow: clip;
   }
 
   .hdf-hub {
-    width: min(210px, 60vw);
-    margin-inline: auto;
+    width: min(100%, clamp(168px, 22vw, 220px));
   }
 
-  .hdf-path--flow {
-    opacity: 0.5;
+  .hdf-hub-slot {
+    font-size: clamp(0.55rem, 1vw, 0.7rem);
+  }
+
+  .hdf-hub-slot-icon {
+    width: 0.95rem;
+    height: 0.95rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Keep a gentle dash crawl instead of freezing the diagram. */
   .hdf-path--flow {
-    animation: none;
-    stroke-dasharray: none;
+    animation-duration: 2.6s;
   }
 }
 </style>
