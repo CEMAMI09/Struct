@@ -92,8 +92,9 @@
             </span>
           </h1>
           <p class="hero-sub">
-            Replace verbose JSON with secure packed C++ structs. Keep cellular radios asleep
-            longer and stop paying to transmit field names, braces, and quotes.
+            Keep devices dumb and deterministic. Send the smallest authenticated packet the
+            workload allows; Struct handles parsing, schema interpretation, and cloud-friendly
+            conversion.
           </p>
           <div class="hero-ctas">
             <NuxtLink to="/signup" class="btn-primary hero-cta-primary">
@@ -115,7 +116,7 @@
 
     <!-- Compatible with — logo marquee -->
     <section class="compat" aria-label="Compatible platforms and tools">
-      <p class="compat-label">Compatible with</p>
+      <p class="compat-label">MCU families and HTTPS webhook targets</p>
       <div class="compat-marquee" aria-hidden="true">
         <div class="compat-track">
           <div
@@ -124,14 +125,22 @@
             class="compat-item"
             :class="{ 'compat-item--lg': logo.scale === 'lg' }"
           >
-            <img :src="logo.src" :alt="logo.name" class="compat-logo" width="120" height="40" />
+            <img
+              :src="logo.src"
+              :alt="logo.name"
+              class="compat-logo"
+              width="120"
+              height="40"
+              decoding="async"
+              :loading="i >= compatLogos.length ? 'lazy' : 'eager'"
+            />
           </div>
         </div>
       </div>
     </section>
 
     <!-- Trust strip -->
-    <section class="trust-strip" aria-label="Platform scale">
+    <section class="trust-strip" aria-label="Implementation metrics">
       <div class="trust-grid">
         <div v-for="stat in trustStats" :key="stat.label" class="trust-stat">
           <p class="trust-num">{{ stat.value }}</p>
@@ -148,15 +157,16 @@
           <h2
             class="font-display text-3xl font-semibold leading-[1.15] tracking-[-0.03em] text-[#F4F5F7] sm:text-4xl"
           >
-            JSON/MQTT is the silent battery killer.
+            Keep devices dumb and deterministic.
           </h2>
-          <p class="mt-5 text-base leading-relaxed text-[#8B93A7]">
-            Every curly brace, every heap alloc, every TLS cold-start that keeps the radio awake —
-            paid for in joules on the edge. Struct ships the packed C++ layout your firmware
-            already has. Fire a UDP frame. No serializer. No handshake tax.
+          <p class="landing-body mt-5">
+            For intermittent, bandwidth-constrained, battery-powered telemetry, maintaining
+            heavyweight application/session semantics on the edge can add unnecessary radio time,
+            bytes, and implementation complexity. Struct ships the packed C++ layout your firmware
+            already has.
           </p>
           <p class="mt-6 font-mono text-[11px] text-[#8B93A7]">
-            vs ArduinoJson · vs MQTT keepalives · vs TLS cold-starts
+            Cold-uplink comparison · fixed-memory packing · UDP or TCP
           </p>
         </div>
 
@@ -172,22 +182,34 @@
             <div class="mt-3 flex items-end justify-between gap-4">
               <div class="min-w-0">
                 <p class="metric-row">
-                  <span class="metric-num">{{ card.winLead }}</span>
+                  <span
+                    class="metric-num"
+                    :class="{ 'metric-num--pending': card.pending }"
+                  >{{ card.winLead }}</span>
                   <span v-if="card.winTail" class="metric-tail">{{ card.winTail }}</span>
                 </p>
-                <p class="mt-1 font-mono text-xs text-[#8B93A7]">{{ card.winNote }}</p>
-                <p v-if="card.roiNote" class="mt-2 text-xs leading-snug text-[#A8B2C4]">
+                <p class="landing-note mt-2">{{ card.winNote }}</p>
+                <p v-if="card.roiNote" class="landing-note mt-2">
                   {{ card.roiNote }}
                 </p>
               </div>
               <div class="text-right">
-                <p class="font-mono text-sm text-[#5A6275] line-through decoration-[#5A6275]/80">
+                <p
+                  class="font-mono text-sm text-[#5A6275]"
+                  :class="{ 'line-through decoration-[#5A6275]/80': !card.pending }"
+                >
                   {{ card.lose }}
                 </p>
                 <p class="mt-0.5 font-mono text-[10px] text-[#5A6275]">{{ card.loseNote }}</p>
               </div>
             </div>
           </article>
+          <p class="landing-note mt-2 text-[#8B93A7]">
+            Battery-life improvement depends on radio/modem type, signal quality, transmission
+            frequency, retries, sleep current, battery chemistry and capacity, temperature, and
+            firmware behavior. Persistent HTTPS/TLS and persistent MQTT connections may have
+            substantially lower per-message overhead than a cold connection.
+          </p>
         </div>
       </div>
     </section>
@@ -203,7 +225,7 @@
             Type three fields.
             <span class="text-[#38B6FF]">Get the struct.</span>
           </h2>
-          <p class="mt-5 text-base leading-relaxed text-[#8B93A7]">
+          <p class="landing-body mt-5">
             No account required. Define your payload, see the packed C++ layout, then start free
             to get your ingest endpoint.
           </p>
@@ -282,13 +304,15 @@
             <h2
               class="font-display text-3xl font-semibold leading-[1.12] tracking-[-0.03em] text-[#F4F5F7] sm:text-4xl"
             >
-              99% smaller per ping.
-              <span class="text-[#38B6FF]">~$2,400/mo at fleet scale.</span>
+              Up to 99% less transmitted data per cold uplink.
+              <span class="text-[#38B6FF]">Modeled ~$2,400/mo at fleet scale.</span>
             </h2>
-            <p class="mt-5 text-base leading-relaxed text-[#8B93A7]">
-              Because we save ~5,000 bytes (99%) on every sensor reading—dropping the 5&nbsp;KB TLS
-              cold-start for a ~100-byte UDP frame—a fleet of 10,000 devices uses ~2.2&nbsp;TB less
-              data, saving about <span class="text-[#E8EAEF]">$2,400 per month</span> on metered SIMs.
+            <p class="landing-body mt-5">
+              In our cold-uplink comparison, a small authenticated Struct UDP frame is ~100&nbsp;bytes
+              versus ~5.2&nbsp;KB for a cold HTTPS/TLS telemetry request. That difference is mostly
+              session and handshake overhead, not “JSON vs packed struct” in isolation. Persistent
+              HTTPS/TLS and persistent MQTT connections may have substantially lower per-message
+              overhead than a cold connection.
             </p>
             <div class="mt-7 flex flex-wrap gap-2">
               <span class="signal-chip">LTE-M</span>
@@ -296,22 +320,25 @@
               <span class="signal-chip">Satellite</span>
               <span class="signal-chip">Metered SIMs</span>
             </div>
+            <NuxtLink to="/benchmarks" class="btn-ghost mt-6 inline-flex px-5 py-2.5 text-xs">
+              View benchmark methodology
+            </NuxtLink>
           </div>
 
-          <div class="bandwidth-meter" aria-label="Transport bandwidth comparison">
+          <div class="bandwidth-meter" aria-label="Cold-uplink bandwidth comparison">
             <div class="flex items-center justify-between gap-4">
               <div>
                 <p class="font-mono text-[10px] uppercase tracking-[0.15em] text-[#8B93A7]">
-                  10k devices · 1 ping/min
+                  10k devices · 1 ping/min · cold HTTPS model
                 </p>
                 <p class="bandwidth-savings">
                   ~$2,400
                 </p>
-                <p class="mt-1 text-xs text-[#8B93A7]">saved per month · ~2.2 TB less data</p>
+                <p class="mt-1 text-xs text-[#8B93A7]">modeled monthly SIM savings · ~2.2 TB less data</p>
               </div>
               <div class="savings-ring savings-ring--99">
                 <span class="font-display text-xl font-semibold text-[#F4F5F7]">99%</span>
-                <span class="font-mono text-[8px] uppercase tracking-wider text-[#8B93A7]">smaller</span>
+                <span class="font-mono text-[8px] uppercase tracking-wider text-[#8B93A7]">less data</span>
               </div>
             </div>
 
@@ -325,18 +352,106 @@
               </div>
               <div>
                 <div class="mb-2 flex flex-wrap justify-between gap-x-3 gap-y-1 font-mono text-[10px]">
-                  <span class="text-[#8B93A7]">Authenticated UDP frame</span>
+                  <span class="text-[#8B93A7]">Authenticated Struct UDP frame</span>
                   <span class="text-[#38B6FF]">~100 bytes</span>
                 </div>
                 <div class="meter-track"><span class="meter-struct meter-struct--udp" /></div>
               </div>
             </div>
             <p class="mt-6 text-[10px] leading-relaxed text-[#5A6275]">
-              *Assumes 10,000 devices transmitting once per minute, bypassing a 5 KB TLS cold-start
-              per ping on a $1.10/GB metered cellular plan.
+              Model, not a measured bill: 10,000 devices, one cold uplink per minute, ~5,100 bytes
+              saved per ping, $1.10/GB. This does not apply to keep-alive MQTT or reused TLS sessions.
+              See
+              <NuxtLink to="/benchmarks" class="text-[#8B93A7] underline decoration-[#2A2F3A] underline-offset-2 hover:text-[#38B6FF]">
+                methodology
+              </NuxtLink>.
             </p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- Encoding comparison -->
+    <section id="compare" class="border-t border-[#2A2F3A] py-20 sm:py-24">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div class="max-w-2xl">
+            <p class="label mb-3">Comparison</p>
+            <h2
+              class="font-display text-3xl font-semibold leading-[1.12] tracking-[-0.03em] text-[#F4F5F7] sm:text-4xl"
+            >
+              Fair against the encodings you already use.
+            </h2>
+            <p class="landing-body mt-4">
+              Numeric cells without a repository measurement are marked
+              <span class="font-mono text-[#E8EAEF]">Benchmark pending</span>.
+              Protobuf, CBOR, and MessagePack remain strong choices for many workloads.
+            </p>
+          </div>
+          <NuxtLink to="/benchmarks" class="btn-ghost inline-flex shrink-0 px-5 py-2.5 text-xs">
+            View benchmark methodology
+          </NuxtLink>
+        </div>
+
+        <div class="compare-wrap" role="region" aria-label="Encoding comparison matrix" tabindex="0">
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th scope="col">Stack</th>
+                <th scope="col">Encoding format</th>
+                <th scope="col">Payload size</th>
+                <th scope="col">Connection / session</th>
+                <th scope="col">Device memory</th>
+                <th scope="col">Serialization model</th>
+                <th scope="col">Best-fit workload</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in compareRows" :key="row.stack">
+                <th scope="row">{{ row.stack }}</th>
+                <td>{{ row.encoding }}</td>
+                <td :class="{ 'compare-pending': row.payloadPending }">{{ row.payload }}</td>
+                <td>{{ row.session }}</td>
+                <td>{{ row.memory }}</td>
+                <td>{{ row.model }}</td>
+                <td>{{ row.fit }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="landing-note mt-4 text-[#8B93A7]">
+          CBOR, MessagePack, Protobuf, and warm MQTT sizes are not measured in this repository yet.
+          Advantages of those stacks are listed in the
+          <NuxtLink to="/benchmarks" class="underline decoration-[#2A2F3A] underline-offset-2 hover:text-[#38B6FF]">
+            methodology
+          </NuxtLink>.
+        </p>
+      </div>
+    </section>
+
+    <!-- When Struct is not the right fit -->
+    <section id="fit" class="border-t border-[#2A2F3A] py-16 sm:py-20">
+      <div class="mx-auto max-w-3xl px-6">
+        <p class="label mb-3">Scope</p>
+        <h2
+          class="font-display text-2xl font-semibold leading-[1.15] tracking-[-0.03em] text-[#F4F5F7] sm:text-3xl"
+        >
+          When Struct is not the right fit
+        </h2>
+        <ul class="fit-list mt-6">
+          <li>You need arbitrary or frequently changing dynamic payloads.</li>
+          <li>
+            You already use Protobuf or CBOR successfully over a persistent connection and
+            bandwidth is not a meaningful constraint.
+          </li>
+          <li>Your device is mains-powered and radio/data costs are insignificant.</li>
+          <li>Your workload is primarily request/response rather than intermittent telemetry.</li>
+          <li>You require a long-lived bidirectional stream for most communication.</li>
+        </ul>
+        <p class="landing-body mt-6">
+          Struct is designed primarily for intermittent, bandwidth-constrained, battery-powered
+          telemetry where keeping the edge simple and deterministic matters.
+        </p>
       </div>
     </section>
 
@@ -350,20 +465,22 @@
           >
             You're the edge. We're the middleman.
           </h2>
-          <p class="mx-auto mt-3 max-w-xl text-sm text-[#8B93A7]">
-            Keep devices dumb and deterministic. Fire a single UDP packet and go back to sleep.
-            Struct authenticates, parses, and forwards clean JSON into systems you already trust.
+          <p class="landing-body mx-auto mt-4 max-w-2xl">
+            Keep devices dumb and deterministic. The device sends the smallest deterministic packet
+            it reasonably can. Struct handles authentication, parsing, schema interpretation,
+            routing, and cloud-friendly conversion. Existing cloud systems receive usable structured
+            data.
           </p>
         </div>
 
         <div class="arch-callout mb-14">
           <p class="font-mono text-[10px] uppercase tracking-[0.14em] text-[#38B6FF]">
-            Zero-byte connection overhead.
+            Per-frame auth. No TLS handshake on the UDP path.
           </p>
-          <p class="mt-2 text-sm leading-relaxed text-[#A8B2C4]">
-            Secure, per-frame authentication over UDP means your modem wakes up, transmits the
-            payload, and goes back to sleep in milliseconds—no handshakes required. TCP remains
-            available when you need a stream; UDP is the battery path.
+          <p class="landing-body mt-2">
+            UDP carries one authenticated datagram and returns the radio to sleep. TCP remains
+            available when you need a stream; UDP is the battery path. Struct supports the
+            transport that matches the workload rather than replacing TCP or MQTT everywhere.
           </p>
         </div>
 
@@ -375,8 +492,9 @@
             <div class="arch-glyph">01</div>
             <h3 class="arch-title">Dumb Edge Device</h3>
             <p class="arch-body">
-              ESP32 packs a fixed struct. No ArduinoJson. Fires a
-              <span class="font-mono text-[#38B6FF]">schema-sized UDP datagram</span> and sleeps.
+              Pack a fixed C struct and send the smallest deterministic frame the schema allows.
+              <span class="font-mono text-[#38B6FF]">UDP for intermittent uplinks</span>; TCP when
+              you need a stream.
             </p>
           </div>
           <div class="arch-gap" aria-hidden="true">
@@ -387,8 +505,8 @@
             <div class="arch-glyph text-[#38B6FF]">02</div>
             <h3 class="arch-title">Struct Gateway</h3>
             <p class="arch-body">
-              Authenticates, optionally ChaCha20-descrambles, parses with your schema, routes
-              securely.
+              Authenticates each frame, optionally decrypts ChaCha20-Poly1305, interprets the
+              schema version, and converts to structured JSON for routing.
             </p>
           </div>
           <div class="arch-gap" aria-hidden="true">
@@ -399,9 +517,9 @@
             <div class="arch-glyph">03</div>
             <h3 class="arch-title">Enterprise Cloud</h3>
             <p class="arch-body">
-              Clean JSON to
-              <span class="text-[#E8EAEF]">AWS IoT</span>,
-              <span class="text-[#E8EAEF]">Datadog</span>, or your webhooks.
+              HTTPS webhooks deliver parsed JSON to systems you already run —
+              <span class="text-[#E8EAEF]">custom backends</span>,
+              <span class="text-[#E8EAEF]">AWS IoT HTTP</span>, or similar ingest URLs.
             </p>
           </div>
         </div>
@@ -412,7 +530,7 @@
             <div class="arch-glyph">01 · Edge</div>
             <h3 class="arch-title">Dumb Edge Device</h3>
             <p class="arch-body">
-              Fires a <span class="font-mono text-[#38B6FF]">schema-sized UDP datagram</span> and sleeps.
+              Sends the smallest deterministic packet it reasonably can, then sleeps.
             </p>
           </div>
           <div class="arch-gap-m" aria-hidden="true">
@@ -421,7 +539,7 @@
           <div class="arch-node arch-node--accent">
             <div class="arch-glyph text-[#38B6FF]">02 · Gateway</div>
             <h3 class="arch-title">Struct Gateway</h3>
-            <p class="arch-body">Auth · parse · route.</p>
+            <p class="arch-body">Authenticate · parse · convert · route.</p>
           </div>
           <div class="arch-gap-m" aria-hidden="true">
             <span class="arch-gap-line-m" />
@@ -429,7 +547,7 @@
           <div class="arch-node">
             <div class="arch-glyph">03 · Cloud</div>
             <h3 class="arch-title">Enterprise Cloud</h3>
-            <p class="arch-body">AWS IoT · Datadog · webhooks.</p>
+            <p class="arch-body">HTTPS webhooks to your existing systems.</p>
           </div>
         </div>
       </div>
@@ -443,14 +561,13 @@
           <h2
             class="font-display text-3xl font-semibold leading-[1.12] tracking-[-0.03em] text-[#F4F5F7] sm:text-4xl"
           >
-            Zero-friction troubleshooting.
+            Binary shouldn't mean blind.
           </h2>
-          <p class="mt-5 text-base leading-relaxed text-[#8B93A7]">
-            Raw TCP should not mean debugging blind. Build a test frame from your real schema and
-            inspect the exact wire bytes beside the parsed JSON—without powering a device or
-            sending traffic.
+          <p class="landing-body mt-5">
+            Build a test frame from your real schema and inspect the exact wire bytes beside the
+            decoded JSON—without powering a device or sending traffic.
           </p>
-          <ul class="mt-7 space-y-3 text-sm text-[#A8B2C4]">
+          <ul class="landing-note mt-7 space-y-3">
             <li class="feature-line">
               <span class="feature-mark">01</span>
               Generate little-endian frames from typed values
@@ -533,7 +650,7 @@
               Fleet security that does not depend on trust.
             </h2>
           </div>
-          <p class="max-w-md text-sm leading-relaxed text-[#8B93A7]">
+          <p class="landing-body max-w-md">
             Protect data in motion, reject replayed packets, isolate every organization, and keep a
             durable record of infrastructure changes.
           </p>
@@ -541,9 +658,10 @@
 
         <div class="mt-6 flex items-start gap-3 rounded-lg border border-[#38B6FF]/20 bg-[#38B6FF]/5 p-4">
           <span class="mt-0.5 font-mono text-xs text-[#38B6FF]">✓</span>
-          <p class="text-sm leading-relaxed text-[#A8B2C4]">
-            <strong class="font-semibold text-[#E8EAEF]">Zero Plaintext Secrets:</strong>
-            Device API keys never cross the wire. All payloads are authenticated via HMAC-SHA256.
+          <p class="landing-note">
+            <strong class="font-semibold text-[#E8EAEF]">API secrets stay off the wire:</strong>
+            Devices authenticate with HMAC-SHA256 over the frame body. The API secret is not
+            transmitted; only a public key_id is sent.
           </p>
         </div>
 
@@ -553,8 +671,8 @@
             <p class="security-kicker">Payload protection</p>
             <h3 class="security-title">ChaCha20-Poly1305 encryption</h3>
             <p class="security-copy">
-              Authenticated encryption protects telemetry confidentiality and integrity without
-              burdening constrained MCUs. Timestamp checks and nonce tracking reject stale or
+              Optional on Pro and Scale. Authenticated encryption protects telemetry confidentiality
+              and integrity on constrained MCUs. Timestamp checks and nonce tracking reject stale or
               duplicated encrypted uplinks.
             </p>
             <div class="crypto-strip font-mono">
@@ -579,8 +697,8 @@
             <p class="security-kicker">Accountability</p>
             <h3 class="security-title">Immutable audit logs</h3>
             <p class="security-copy">
-              Keep a permanent, diff-based history of exactly who changed a device, schema, or
-              routing destination, and when.
+              Scale plan: append-only, diff-based history of who changed a device, schema, or
+              routing destination, and when. Database triggers reject updates and deletes.
             </p>
           </article>
 
@@ -589,8 +707,8 @@
             <p class="security-kicker">Controlled operations</p>
             <h3 class="security-title">Typed command downlinks</h3>
             <p class="security-copy">
-              Queue interval changes, reboots, or custom byte commands through authenticated device
-              records instead of maintaining a second control plane.
+              Pro and Scale: queue interval changes, reboots, or custom byte commands through
+              authenticated device records instead of a second control plane.
             </p>
           </article>
         </div>
@@ -607,8 +725,9 @@
           >
             Start free. Scale when your fleet does.
           </h2>
-          <p class="mx-auto mt-3 max-w-xl text-sm text-[#8B93A7]">
+          <p class="landing-body mx-auto mt-4 max-w-xl">
             Every plan includes the binary telemetry gateway, dashboard, and live debugger.
+            Upgrade when the included-device math is cheaper than paying per device.
           </p>
         </div>
 
@@ -642,16 +761,22 @@
                 {{ plan.interval }}
               </span>
             </div>
-            <p class="mt-3 min-h-10 text-sm leading-relaxed text-[#8B93A7]">
+            <p class="landing-note mt-3 min-h-10">
               {{ plan.description }}
             </p>
             <p class="mt-5 border-t border-[#2A2F3A] pt-5 font-mono text-xs text-[#E8EAEF]">
               {{ plan.devices }}
             </p>
+            <p v-if="plan.bestFor" class="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#8B93A7]">
+              {{ plan.bestFor }}
+            </p>
             <p v-if="plan.deviceRate" class="mt-2 font-mono text-xs text-[#38B6FF]">
               {{ plan.deviceRate }}
             </p>
-            <ul class="mt-5 flex-1 space-y-2.5 text-sm text-[#8B93A7]">
+            <p v-if="plan.crossover" class="mt-2 text-[11px] leading-snug text-[#5A6275]">
+              {{ plan.crossover }}
+            </p>
+            <ul class="landing-note mt-5 flex-1 space-y-2.5">
               <li v-for="feature in plan.features" :key="feature" class="flex gap-2.5">
                 <span class="text-[#38B6FF]">✓</span>
                 <span>{{ feature }}</span>
@@ -676,9 +801,9 @@
         <h2 class="font-display text-3xl font-semibold tracking-[-0.03em] text-[#F4F5F7] sm:text-4xl">
           Ship your first packed uplink today.
         </h2>
-        <p class="mt-4 text-sm text-[#8B93A7]">
-          Create a free device, drop in the ESP32 header Struct generates, and watch live telemetry
-          land — with destinations, fleet tags, ChaCha20, and downlinks included.
+        <p class="landing-body mt-4">
+          Create a free device, drop in the generated C++ header, and watch live telemetry land.
+          Destinations and fleet tags are included; ChaCha20 and downlinks start on Pro.
         </p>
         <NuxtLink to="/signup" class="btn-primary mt-8 inline-flex px-8 py-3.5">
           Start free — get your API key
@@ -731,6 +856,7 @@
                   rel="noopener noreferrer"
                 >Documentation</a>
               </li>
+              <li><NuxtLink to="/benchmarks">Benchmark methodology</NuxtLink></li>
               <li>
                 <a
                   href="https://github.com/CEMAMI09/Struct#readme"
@@ -787,9 +913,9 @@ const user = useSupabaseUser()
 const { cppPreview, schemaByteLength } = useCppHeader()
 
 useSeoMeta({
-  title: 'Struct — Save More Battery and Bandwidth on IoT',
+  title: 'Struct — Deterministic binary telemetry for the edge',
   description:
-    'Replace verbose JSON with secure packed structs. Cut cellular payload, debug raw TCP visually, and protect fleets with authenticated encryption.',
+    'Keep devices dumb and deterministic. Send packed C structs over UDP or TCP; Struct authenticates, parses, and converts to structured JSON for your cloud.',
 })
 
 const menuOpen = ref(false)
@@ -857,9 +983,9 @@ const compatLogos = [
 ]
 
 const trustStats = [
-  { value: '500+', label: 'Hardware Engineers' },
-  { value: '50,000+', label: 'Active Edge Devices' },
-  { value: '11+ TB', label: 'Cellular Data Saved Monthly' },
+  { value: '~100 B', label: 'Authenticated example uplink' },
+  { value: '0', label: 'Heap allocs in packing path' },
+  { value: '5', label: 'Packed field types' },
 ]
 
 const mathCards: {
@@ -870,32 +996,104 @@ const mathCards: {
   lose: string
   loseNote: string
   roiNote?: string
+  pending?: boolean
 }[] = [
   {
-    label: 'Network Payload',
+    label: 'Cold-uplink data',
     winLead: '99%',
-    winTail: 'smaller',
+    winTail: 'less data',
     winNote:
-      'Drop the 5KB TLS handshake. Send 100-byte UDP frames instead of 5,200-byte HTTPS POST requests.',
-    lose: '5.2 KB',
-    loseNote: 'HTTPS + TLS',
+      '99% less transmitted data in our cold-uplink benchmark: ~100 B authenticated UDP vs ~5.2 KB cold HTTPS/TLS.',
+    lose: '~5.2 KB',
+    loseNote: 'cold HTTPS example',
   },
   {
-    label: 'CPU Awake Time',
-    winLead: '10×',
-    winTail: 'faster',
-    winNote: 'less work before the radio sleeps',
-    lose: 'Slow',
-    loseNote: 'JSON / MQTT',
-    roiNote: 'Extend field battery life from 6 months to 3 years.',
+    label: 'Radio awake time',
+    winLead: 'UDP',
+    winTail: 'one datagram',
+    winNote:
+      'No TLS or TCP handshake on the battery path. Radio-on time is not yet measured as a multiplier.',
+    lose: 'Cold TLS',
+    loseNote: 'handshake + request',
+    roiNote:
+      'Shorter uplinks can materially reduce radio energy use on battery-powered devices.',
   },
   {
-    label: 'Crash Risk',
-    winLead: 'Zero',
+    label: 'Heap allocations',
+    winLead: '0',
     winTail: '',
-    winNote: 'fixed-memory serialization',
-    lose: 'High',
-    loseNote: 'heap fragmentation',
+    winNote:
+      'Fixed-memory serialization with no dynamic allocation in the Struct packing path.',
+    lose: 'Varies',
+    loseNote: 'on-device JSON parsers',
+  },
+]
+
+/*
+ * TODO(benchmarks): replace payloadPending cells with measured encodings of the
+ * shared sample schema (temp float32, humidity float32, is_active uint8) for
+ * CBOR, MessagePack, Protobuf, JSON+MQTT, and JSON+HTTPS. Do not invent sizes.
+ */
+const compareRows = [
+  {
+    stack: 'JSON + HTTPS',
+    encoding: 'JSON text',
+    payload: '~5.2 KB cold uplink (TLS+HTTP); JSON body is much smaller',
+    payloadPending: false,
+    session: 'TLS + HTTP per cold request; reused sessions are much cheaper',
+    memory: 'Typically a JSON parser/buffer on device',
+    model: 'Self-describing text',
+    fit: 'Request/response and internet APIs',
+  },
+  {
+    stack: 'JSON + MQTT/TLS',
+    encoding: 'JSON text',
+    payload: 'Benchmark pending',
+    payloadPending: true,
+    session: 'Persistent MQTT session; per-message overhead drops after connect',
+    memory: 'MQTT client + JSON parser',
+    model: 'Self-describing text over a session',
+    fit: 'Connected devices that stay online',
+  },
+  {
+    stack: 'CBOR + MQTT',
+    encoding: 'CBOR',
+    payload: 'Benchmark pending',
+    payloadPending: true,
+    session: 'Persistent MQTT; compact binary once connected',
+    memory: 'Often a small static or streaming encoder',
+    model: 'Self-describing binary — no out-of-band schema required',
+    fit: 'Constrained devices that still need flexible payloads',
+  },
+  {
+    stack: 'MessagePack',
+    encoding: 'MessagePack',
+    payload: 'Benchmark pending',
+    payloadPending: true,
+    session: 'Transport-dependent',
+    memory: 'Often a small encoder/decoder',
+    model: 'Self-describing binary, JSON-like types',
+    fit: 'Compact interchange when a schema registry is unavailable',
+  },
+  {
+    stack: 'Protobuf',
+    encoding: 'Protocol Buffers',
+    payload: 'Benchmark pending',
+    payloadPending: true,
+    session: 'Transport-dependent; schema on both ends',
+    memory: 'Generated code; typically no JSON parser',
+    model: 'Schema-driven TLV — strong evolution and multi-language codegen',
+    fit: 'Evolving, nested, polyglot service payloads',
+  },
+  {
+    stack: 'Struct',
+    encoding: 'Packed C struct + Protocol v2',
+    payload: '75 B frame (9 B payload + 66 B v2); ~100 B rounded example',
+    payloadPending: false,
+    session: 'UDP: no app session. TCP stream available when needed',
+    memory: '0 heap allocs in the generated packing path',
+    model: 'Fixed little-endian layout; schema lives in the gateway',
+    fit: 'Intermittent, battery-powered telemetry',
   },
 ]
 
@@ -947,7 +1145,9 @@ const pricingPlans = [
     interval: 'forever',
     description: 'Build, connect, and validate your first edge fleet.',
     devices: 'Up to 5 devices',
+    bestFor: 'Best for 1–5 devices',
     deviceRate: '',
+    crossover: '',
     features: ['Standard dashboard', 'Basic webhooks', '24-hour telemetry retention'],
     cta: 'Start free',
     to: '/signup',
@@ -959,7 +1159,9 @@ const pricingPlans = [
     interval: 'per device / month',
     description: 'Start small and scale your fleet one device at a time.',
     devices: 'Minimum 5 devices',
+    bestFor: 'Best for 5–49 devices',
     deviceRate: '',
+    crossover: 'Equals Pro at 49 devices ($49). Pro is cheaper from 50.',
     features: ['Everything in Free', 'Automatic device scaling', '7-day telemetry retention'],
     cta: 'Choose Flexible',
     to: '/signup',
@@ -971,7 +1173,9 @@ const pricingPlans = [
     interval: '/ month',
     description: 'Secure operations and bulk pricing for growing fleets.',
     devices: 'Includes 150 devices',
+    bestFor: 'Best for 50–549 devices',
     deviceRate: '$0.50 per extra device / month',
+    crossover: 'Cheaper than Flexible from 50 devices. Equals Scale at 550 ($249).',
     features: ['ChaCha20 encryption', 'Device downlinks', '30-day telemetry retention'],
     cta: 'Choose Pro',
     to: '/signup',
@@ -983,7 +1187,9 @@ const pricingPlans = [
     interval: '/ month',
     description: 'Governance and advanced routing for large fleets.',
     devices: 'Includes 1,000 devices',
+    bestFor: 'Best for 550+ devices',
     deviceRate: '$0.20 per extra device / month',
+    crossover: 'Same $249 as Pro at 550 devices, with 1,000 included. Cheaper above 550.',
     features: ['Team RBAC', 'Immutable audit logs', 'Webhook logical routing'],
     cta: 'Buy Now',
     to: '/signup',
@@ -995,7 +1201,9 @@ const pricingPlans = [
     interval: '',
     description: 'Custom infrastructure and commercial terms for demanding fleets.',
     devices: 'Custom device allowance',
+    bestFor: '',
     deviceRate: '',
+    crossover: '',
     features: ['SAML SSO', 'Dedicated ingestion ports', 'Custom SLAs'],
     cta: 'Contact sales',
     to: 'mailto:sales@struct.dev?subject=Struct Enterprise',
@@ -1020,12 +1228,30 @@ const pricingGroups = [
 <style scoped>
 .landing {
   font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.65;
   overflow-x: clip;
   width: 100%;
 }
 
 .font-display {
   font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+}
+
+.landing-body {
+  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 400;
+  line-height: 1.7;
+  color: #b4bcc9;
+}
+
+.landing-note {
+  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.65;
+  color: #b4bcc9;
 }
 
 .sr-only {
@@ -1249,7 +1475,6 @@ const pricingGroups = [
 
 .hero-copy {
   text-align: left;
-  animation: rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @media (min-width: 1024px) {
@@ -1312,16 +1537,12 @@ const pricingGroups = [
 
 .hero-sub {
   margin: 1.1rem 0 0;
-  max-width: 28rem;
-  font-size: 0.9875rem;
-  line-height: 1.65;
-  color: #8b93a7;
-}
-
-@media (min-width: 640px) {
-  .hero-sub {
-    font-size: 1.0625rem;
-  }
+  max-width: 32rem;
+  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 400;
+  line-height: 1.7;
+  color: #b4bcc9;
 }
 
 .hero-ctas {
@@ -1368,7 +1589,6 @@ const pricingGroups = [
   height: auto;
   max-height: none;
   margin-inline: auto;
-  animation: hero-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @media (min-width: 1024px) {
@@ -1383,50 +1603,10 @@ const pricingGroups = [
     margin: 0;
     transform: translate(2.75rem, -50%) scale(0.95);
     transform-origin: left center;
-    animation-name: hero-in-lg;
-  }
-}
-
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes hero-in {
-  from {
-    opacity: 0;
-    transform: translateY(16px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes hero-in-lg {
-  from {
-    opacity: 0;
-    transform: translate(2.75rem, calc(-50% + 20px)) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translate(2.75rem, -50%) scale(0.95);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Keep entrance/scroll-jarring motion off; soften word swap (no slide). */
-  .hero-shot,
-  .hero-copy {
-    animation: none;
-  }
-
   .hero-word-enter-active,
   .hero-word-leave-active {
     transition: opacity 0.35s ease;
@@ -1758,6 +1938,11 @@ const pricingGroups = [
   color: #a8b2c4;
 }
 
+.metric-num--pending {
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  color: #8b93a7;
+}
+
 /* Instant Code sandbox */
 .sandbox-window {
   overflow: hidden;
@@ -1890,7 +2075,11 @@ const pricingGroups = [
 }
 
 .arch-body {
-  @apply mt-2 text-sm leading-relaxed text-[#8B93A7];
+  margin-top: 0.5rem;
+  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: #b4bcc9;
 }
 
 .arch-gap {
@@ -2035,6 +2224,99 @@ const pricingGroups = [
 .meter-struct--udp {
   width: 2%;
   min-width: 6px;
+}
+
+/* Encoding comparison */
+.compare-wrap {
+  overflow-x: auto;
+  border: 1px solid #2a2f3a;
+  border-radius: 14px;
+  background: #15181e;
+  -webkit-overflow-scrolling: touch;
+}
+
+.compare-table {
+  width: 100%;
+  min-width: 58rem;
+  border-collapse: collapse;
+  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.compare-table th,
+.compare-table td {
+  padding: 0.85rem 0.9rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #2a2f3a;
+}
+
+.compare-table thead th {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8b93a7;
+  background: #111319;
+  white-space: nowrap;
+}
+
+.compare-table tbody th {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: #e8eaef;
+  white-space: nowrap;
+}
+
+.compare-table td {
+  color: #b4bcc9;
+}
+
+.compare-table tbody tr:last-child th,
+.compare-table tbody tr:last-child td {
+  border-bottom: 0;
+  background: rgba(56, 182, 255, 0.04);
+}
+
+.compare-table tbody tr:last-child th {
+  color: #38b6ff;
+}
+
+.compare-pending {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: #a8b2c4;
+}
+
+.fit-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fit-list li {
+  position: relative;
+  padding: 0.7rem 0 0.7rem 1.15rem;
+  border-bottom: 1px solid #2a2f3a;
+  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: #b4bcc9;
+}
+
+.fit-list li::before {
+  content: '–';
+  position: absolute;
+  left: 0;
+  color: #5a6275;
+}
+
+.fit-list li:last-child {
+  border-bottom: 0;
 }
 
 /* Debugger */
@@ -2341,9 +2623,10 @@ const pricingGroups = [
 .security-copy {
   margin-top: 0.75rem;
   max-width: 48rem;
-  font-size: 0.85rem;
+  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+  font-size: 1rem;
   line-height: 1.65;
-  color: #8b93a7;
+  color: #b4bcc9;
 }
 
 .crypto-strip {
@@ -2503,9 +2786,9 @@ const pricingGroups = [
 
 .footer-tagline {
   margin: 0;
-  font-size: 0.8125rem;
-  line-height: 1.5;
-  color: #8b93a7;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: #b4bcc9;
 }
 
 .footer-status {
@@ -2569,8 +2852,8 @@ const pricingGroups = [
 }
 
 .footer-links a {
-  font-size: 0.8125rem;
-  color: #8b93a7;
+  font-size: 0.9375rem;
+  color: #b4bcc9;
   transition: color 0.15s ease;
 }
 

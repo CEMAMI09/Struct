@@ -166,7 +166,7 @@ let raf = 0
 let resizeObs: ResizeObserver | null = null
 let glCtx: WebGLRenderingContext | null = null
 
-onMounted(() => {
+function startWebGL() {
   const canvas = canvasEl.value
   if (!canvas) return
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -231,6 +231,15 @@ onMounted(() => {
     raf = requestAnimationFrame(tick)
   }
   raf = requestAnimationFrame(tick)
+}
+
+onMounted(() => {
+  const idle = window.requestIdleCallback
+  if (typeof idle === 'function') {
+    idle(() => startWebGL(), { timeout: 200 })
+  } else {
+    setTimeout(startWebGL, 0)
+  }
 })
 
 onBeforeUnmount(() => {
@@ -263,6 +272,12 @@ onBeforeUnmount(() => {
   width: min(950px, 90vw);
   height: min(600px, 70vh);
   opacity: 0.3;
+  background: radial-gradient(
+    ellipse 50% 50% at center,
+    rgba(56, 182, 255, 0.35),
+    rgba(16, 40, 72, 0.2) 45%,
+    transparent 70%
+  );
   mask: radial-gradient(ellipse 50% 50% at center, black 0%, black 60%, transparent 100%);
   -webkit-mask: radial-gradient(
     ellipse 50% 50% at center,

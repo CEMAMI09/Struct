@@ -151,7 +151,22 @@ const sourceEls = ref<(HTMLElement | null)[]>(Array(sources.length).fill(null))
 const destEls = ref<(HTMLElement | null)[]>(Array(destinations.length).fill(null))
 
 const vb = reactive({ w: 1200, h: 560 })
-const paths = ref<string[]>([])
+
+function staticDesktopPaths(): string[] {
+  const leftX = 216
+  const rightX = 978
+  const hubLx = 498
+  const hubRx = 702
+  const hubY = 280
+  const leftYs = [48, 164, 280, 396, 512]
+  const rightYs = [70, 210, 350, 490]
+  return [
+    ...leftYs.map((y) => smoothFunnel(leftX, y, hubLx, hubY)),
+    ...rightYs.map((y) => smoothFunnel(hubRx, hubY, rightX, y)),
+  ]
+}
+
+const paths = ref<string[]>(staticDesktopPaths())
 
 function asEl(el: Element | ComponentPublicInstance | null): HTMLElement | null {
   if (!el) return null
@@ -191,11 +206,8 @@ function measure() {
   const hub = hubEl.value
   if (!root || !hub) return
 
-  // Stacked mobile layout hides the SVG — skip path math.
-  if (!isDesktopLayout()) {
-    if (paths.value.length) paths.value = []
-    return
-  }
+  // Stacked mobile layout hides the SVG — keep seeded paths for the next desktop paint.
+  if (!isDesktopLayout()) return
 
   const rr = root.getBoundingClientRect()
   const nextW = Math.max(1, Math.round(rr.width))
@@ -216,6 +228,7 @@ function measure() {
 
   const sourceNodes = sourceEls.value.filter(Boolean) as HTMLElement[]
   const destNodes = destEls.value.filter(Boolean) as HTMLElement[]
+  if (sourceNodes.length !== sources.length || destNodes.length !== destinations.length) return
 
   const next: string[] = []
 
@@ -267,16 +280,9 @@ function onWindowResize() {
 }
 
 onMounted(() => {
-  nextTick(() => {
-    measure()
-    // Second pass after layout/fonts settle, then freeze until window resize
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        measure()
-      })
-    })
-    window.addEventListener('resize', onWindowResize, { passive: true })
-  })
+  measure()
+  requestAnimationFrame(() => measure())
+  window.addEventListener('resize', onWindowResize, { passive: true })
 })
 
 onBeforeUnmount(() => {

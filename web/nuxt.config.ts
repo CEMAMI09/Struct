@@ -26,7 +26,7 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/login',
       callback: '/confirm',
-      exclude: ['/', '/login', '/signup', '/confirm'],
+      exclude: ['/', '/login', '/signup', '/confirm', '/benchmarks'],
     },
   },
 
@@ -43,6 +43,8 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
+    '/': { prerender: true },
+    '/benchmarks': { prerender: true },
     '/confirm': { ssr: false },
     '/api/stripe/webhook': {
       bodyParser: false,
@@ -51,7 +53,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'Struct — Ultra-Lightweight IoT Gateway',
+      title: 'Struct — Deterministic binary telemetry for the edge',
       meta: [
         {
           name: 'viewport',
@@ -60,15 +62,20 @@ export default defineNuxtConfig({
         {
           name: 'description',
           content:
-            'Extend edge battery life by 10×. Send raw binary over TCP; we handle secure routing, parsing, and cloud integration.',
+            'Keep devices dumb and deterministic. Send packed C structs over UDP or TCP; Struct authenticates, parses, and converts to structured JSON for your cloud.',
         },
       ],
       link: [
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {
+          rel: 'preload',
+          as: 'style',
+          href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap',
+        },
+        {
           rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap',
+          href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap',
         },
       ],
     },
