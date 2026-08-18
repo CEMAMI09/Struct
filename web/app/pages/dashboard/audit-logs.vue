@@ -2,9 +2,8 @@
   <div class="mx-auto max-w-5xl">
     <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h2 class="text-lg font-semibold text-[#E8EAEF]">Audit Log</h2>
         <p class="text-sm text-[#8B93A7]">
-          Immutable database-level history for devices, schemas, and destinations.
+          Immutable history of device, schema, and destination changes.
         </p>
       </div>
       <button

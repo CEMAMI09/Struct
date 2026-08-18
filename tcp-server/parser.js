@@ -2,8 +2,9 @@
  * Schema-driven little-endian binary payload parser.
  * Mirrors packed ESP32 / Arduino structs (`#pragma pack(push, 1)`).
  *
- * Supported types: float32, int32, uint8, boolean, flags
+ * Supported types: float32, int32, uint8, boolean, flags, char (fixed-length)
  * flags: one uint8 packed with nested { name, bit } entries (bits 0–7).
+ * char: fixed byte array `{ type: "char", length: N }` — printable ASCII or hex.
  */
 
 const TYPE_SIZES = {
@@ -20,11 +21,22 @@ function normalizeType(type) {
     .toLowerCase()
 }
 
+function validateCharField(field) {
+  const len = Number(field.length)
+  if (!Number.isInteger(len) || len < 1 || len > 64) {
+    throw new Error(`char field "${field.name}" length must be 1..64`)
+  }
+  return len
+}
+
 function fieldByteLength(field) {
   const t = normalizeType(field.type)
   if (t === 'flags') {
     validateFlagsField(field)
     return 1
+  }
+  if (t === 'char') {
+    return validateCharField(field)
   }
   const size = TYPE_SIZES[t]
   if (!size) {
@@ -53,6 +65,37 @@ function validateFlagsField(field) {
   }
 }
 
+function decodeCharArray(buf, offset, length) {
+  const slice = buf.subarray(offset, offset + length)
+  let printable = true
+  for (let i = 0; i < slice.length; i++) {
+    const b = slice[i]
+    if (b === 0) break
+    if (b < 0x20 || b > 0x7e) {
+      printable = false
+      break
+    }
+  }
+  if (printable) {
+    let end = slice.length
+    while (end > 0 && slice[end - 1] === 0) end -= 1
+    return slice.subarray(0, end).toString('ascii')
+  }
+  return Buffer.from(slice).toString('hex')
+}
+
+function encodeCharArray(value, length) {
+  const out = Buffer.alloc(length)
+  if (typeof value !== 'string' || !value) return out
+  const raw = value.trim()
+  if (/^[0-9a-fA-F]+$/.test(raw) && raw.length === length * 2) {
+    Buffer.from(raw, 'hex').copy(out, 0, 0, length)
+    return out
+  }
+  Buffer.from(raw, 'utf8').copy(out, 0, 0, length)
+  return out
+}
+
 function schemaByteLength(schemaDefinition) {
   let total = 0
   for (const field of schemaDefinition) {
@@ -64,7 +107,7 @@ function schemaByteLength(schemaDefinition) {
 /**
  * @param {Buffer} buf - payload only
  * @param {Array<object>} schemaDefinition
- * @returns {Record<string, number | boolean | Record<string, boolean>>}
+ * @returns {Record<string, number | boolean | string | Record<string, boolean>>}
  */
 function parsePayload(buf, schemaDefinition) {
   const out = {}
@@ -102,6 +145,9 @@ function parsePayload(buf, schemaDefinition) {
         out[field.name] = flags
         break
       }
+      case 'char':
+        out[field.name] = decodeCharArray(buf, offset, size)
+        break
       default:
         throw new Error(`Unhandled type "${t}"`)
     }
@@ -149,6 +195,9 @@ function encodePayload(values, schemaDefinition) {
         buf.writeUInt8(byte & 0xff, offset)
         break
       }
+      case 'char':
+        encodeCharArray(v, size).copy(buf, offset)
+        break
       default:
         throw new Error(`Unhandled type "${t}"`)
     }
@@ -167,4 +216,6 @@ module.exports = {
   normalizeType,
   fieldByteLength,
   validateFlagsField,
+  decodeCharArray,
+  encodeCharArray,
 }

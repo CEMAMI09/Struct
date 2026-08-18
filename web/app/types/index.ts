@@ -1,5 +1,5 @@
 export type ScalarFieldType = 'float32' | 'int32' | 'uint8' | 'boolean'
-export type FieldType = ScalarFieldType | 'flags'
+export type FieldType = ScalarFieldType | 'flags' | 'char'
 
 export interface FlagBit {
   name: string
@@ -40,10 +40,38 @@ export interface FlagsSchemaField {
   bits: FlagBit[]
 }
 
-export type SchemaField = ScalarSchemaField | FlagsSchemaField
+/** Packed C `char name[length]` / byte array (e.g. device_id[6]). */
+export interface CharArraySchemaField {
+  name: string
+  type: 'char'
+  /** Number of bytes in the array (1–64). */
+  length: number
+}
+
+export type SchemaField = ScalarSchemaField | FlagsSchemaField | CharArraySchemaField
 
 /** Fleet tags: Location → Chicago_Factory, Version → v1.0.4, etc. */
 export type DeviceTags = Record<string, string>
+
+export interface DeviceProfile {
+  id: string
+  organization_id: string
+  user_id: string
+  name: string
+  device_model: string
+  firmware_version: string
+  schema_definition: SchemaField[]
+  identity_field: string
+  fleet_key_id: string
+  fleet_secret_preview: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DeviceProfileCredentials {
+  fleetKeyId: string
+  fleetSecret: string
+}
 
 export interface Device {
   id: string
@@ -60,6 +88,8 @@ export interface Device {
   tags: DeviceTags
   encryption_enabled: boolean
   encryption_key: string | null
+  profile_id: string | null
+  hardware_id: string | null
 }
 
 export interface DeviceCredentials {
@@ -70,6 +100,13 @@ export interface DeviceCredentials {
 export interface BulkDeviceInput {
   name: string
   mac_address: string
+  tags: DeviceTags
+}
+
+export interface ProfileBulkDeviceInput {
+  name: string
+  hardware_id: string
+  mac_address?: string | null
   tags: DeviceTags
 }
 
@@ -108,7 +145,7 @@ export interface SchemaVersion {
   created_at: string
 }
 
-export type TelemetryValue = number | boolean | Record<string, boolean>
+export type TelemetryValue = number | boolean | string | Record<string, boolean>
 
 export interface TelemetryRow {
   id: string
@@ -175,9 +212,9 @@ export interface PendingCommand {
   acknowledged_at: string | null
 }
 
-export const FIELD_TYPES: FieldType[] = ['float32', 'int32', 'uint8', 'boolean', 'flags']
+export const FIELD_TYPES: FieldType[] = ['float32', 'int32', 'uint8', 'boolean', 'flags', 'char']
 
-export const TYPE_SIZES: Record<FieldType, number> = {
+export const TYPE_SIZES: Record<Exclude<FieldType, 'char'>, number> = {
   float32: 4,
   int32: 4,
   uint8: 1,
@@ -187,11 +224,22 @@ export const TYPE_SIZES: Record<FieldType, number> = {
 
 export function fieldByteLength(field: SchemaField): number {
   if (field.type === 'flags') return 1
+  if (field.type === 'char') {
+    const len = Number(field.length)
+    if (!Number.isInteger(len) || len < 1 || len > 64) {
+      throw new Error(`char field "${field.name}" length must be 1..64`)
+    }
+    return len
+  }
   return TYPE_SIZES[field.type]
 }
 
 export function isFlagsField(field: SchemaField): field is FlagsSchemaField {
   return field.type === 'flags'
+}
+
+export function isCharField(field: SchemaField): field is CharArraySchemaField {
+  return field.type === 'char'
 }
 
 export function isDeviceOnline(lastSeen: string | null, windowMs = 30_000): boolean {

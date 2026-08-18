@@ -102,9 +102,10 @@ export function useBilling() {
         method: 'POST',
         body: { orgId },
       })
-      await fetchMemberships()
+      // Refresh membership silently — caller/layout should not await a second usage trip.
+      void fetchMemberships()
       const { fetchUsageStats } = useOrganization()
-      await fetchUsageStats()
+      void fetchUsageStats()
       return result
     } catch (e: any) {
       // Non-fatal on page load — keep showing last known org state.

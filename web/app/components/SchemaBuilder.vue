@@ -113,7 +113,7 @@
             v-for="v in versionHistory"
             :key="v.version"
             class="rounded border border-[#2A2F3A] px-2 py-0.5 font-mono text-[10px]"
-            :class="v.version === publishedVersion ? 'border-[#38B6FF]/60 text-[#38B6FF]' : 'text-[#8B93A7]'"
+            :class="v.version === publishedVersion ? 'border-[#3a4050] text-[#E8EAEF]' : 'text-[#8B93A7]'"
             :title="`${v.schema_definition.length} fields`"
           >
             v{{ v.version }}{{ v.version === publishedVersion ? ' · current' : '' }}
@@ -163,9 +163,32 @@
               </button>
             </div>
 
+            <div
+              v-if="field.type === 'char'"
+              class="mt-3 grid grid-cols-[1fr_auto] items-center gap-2 border-t border-[#2A2F3A] pt-3"
+            >
+              <p class="text-xs text-[#8B93A7]">
+                char[{{ charLength(field) }}] · fixed byte array
+              </p>
+              <input
+                :value="charLength(field)"
+                type="number"
+                min="1"
+                max="64"
+                class="input mono w-24 text-xs"
+                :disabled="!canWrite"
+                @input="
+                  setCharLength(
+                    idx,
+                    Number(($event.target as HTMLInputElement).value),
+                  )
+                "
+              />
+            </div>
+
             <div v-if="field.type === 'flags'" class="mt-3 space-y-2 border-t border-[#2A2F3A] pt-3">
               <div class="flex items-center justify-between gap-2">
-                <p class="text-[10px] uppercase tracking-wider text-[#8B93A7]">
+                <p class="text-xs text-[#8B93A7]">
                   Packed flags · 1 byte · bits 0–7
                 </p>
                 <button
@@ -234,7 +257,7 @@
             Download .h
           </button>
         </div>
-        <pre class="mono overflow-x-auto rounded-lg bg-[#0F1115] p-3 text-xs leading-relaxed text-[#38B6FF]">{{ cppPreviewText }}</pre>
+        <pre class="mono overflow-x-auto rounded-lg bg-[#0c0d10] p-3 text-xs leading-relaxed text-[#c5cad3]">{{ cppPreviewText }}</pre>
         <p class="mt-2 text-[10px] leading-relaxed text-[#8B93A7]">
           Changing a field type (e.g. int32 → float32) publishes a new schema version.
           Old devices keep sending their version byte; the gateway routes each packet to
@@ -323,6 +346,10 @@ function normalizeFields(def: unknown): SchemaField[] {
         : []
       return { name: String(raw.name || ''), type: 'flags' as const, bits }
     }
+    if (raw?.type === 'char') {
+      const length = Math.max(1, Math.min(64, Number(raw.length) || 1))
+      return { name: String(raw.name || ''), type: 'char' as const, length }
+    }
     return { name: String(raw?.name || ''), type: raw?.type || 'float32' }
   })
 }
@@ -395,6 +422,12 @@ function cleanedFields(): SchemaField[] {
           .map((b) => ({ name: String(b.name || '').trim(), bit: Number(b.bit) | 0 }))
           .filter((b) => b.name),
       })
+    } else if (f.type === 'char') {
+      out.push({
+        name,
+        type: 'char',
+        length: Math.max(1, Math.min(64, Number(f.length) || 1)),
+      })
     } else {
       out.push({ name, type: f.type })
     }
@@ -444,8 +477,28 @@ function onTypeChange(idx: number, next: string) {
         ? current.bits
         : [{ name: 'flag_0', bit: 0 }],
     }
+  } else if (type === 'char') {
+    fields.value[idx] = {
+      name: current.name,
+      type: 'char',
+      length: current.type === 'char' ? current.length : 6,
+    }
   } else {
     fields.value[idx] = { name: current.name, type }
+  }
+}
+
+function charLength(field: SchemaField) {
+  if (field.type !== 'char') return 1
+  return Math.max(1, Math.min(64, Number(field.length) || 1))
+}
+
+function setCharLength(idx: number, length: number) {
+  const field = fields.value[idx]
+  if (!field || field.type !== 'char') return
+  fields.value[idx] = {
+    ...field,
+    length: Math.max(1, Math.min(64, Math.floor(Number(length) || 1))),
   }
 }
 

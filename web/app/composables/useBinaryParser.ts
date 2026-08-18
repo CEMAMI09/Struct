@@ -1,5 +1,5 @@
 import type { SchemaField, TelemetryValue } from '~/types'
-import { TYPE_SIZES } from '~/types'
+import { fieldByteLength, TYPE_SIZES } from '~/types'
 
 function normalizeType(type: string) {
   return type.trim().toLowerCase()
@@ -23,10 +23,47 @@ function validateFlags(field: SchemaField) {
   }
 }
 
+function decodeCharArray(bytes: Uint8Array): string {
+  let printable = true
+  for (const b of bytes) {
+    if (b === 0) break
+    if (b < 0x20 || b > 0x7e) {
+      printable = false
+      break
+    }
+  }
+  if (printable) {
+    let end = bytes.length
+    while (end > 0 && bytes[end - 1] === 0) end -= 1
+    return new TextDecoder('ascii').decode(bytes.subarray(0, end))
+  }
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+function encodeCharArray(value: unknown, length: number): Uint8Array {
+  const out = new Uint8Array(length)
+  if (typeof value !== 'string' || !value) return out
+  const raw = value.trim()
+  if (/^[0-9a-fA-F]+$/.test(raw) && raw.length === length * 2) {
+    for (let i = 0; i < length; i++) {
+      out[i] = Number.parseInt(raw.slice(i * 2, i * 2 + 2), 16)
+    }
+    return out
+  }
+  const encoded = new TextEncoder().encode(raw)
+  out.set(encoded.subarray(0, length))
+  return out
+}
+
 function fieldSize(field: SchemaField) {
   if (field.type === 'flags') {
     validateFlags(field)
     return 1
+  }
+  if (field.type === 'char') {
+    return fieldByteLength(field)
   }
   const size = TYPE_SIZES[normalizeType(field.type) as keyof typeof TYPE_SIZES]
   if (!size) throw new Error(`Unsupported type: ${field.type}`)
@@ -67,12 +104,17 @@ export function useBinaryParser() {
           out[field.name] = view.getUint8(offset) !== 0
           break
         case 'flags': {
+          if (field.type !== 'flags') break
           const byte = view.getUint8(offset)
           const flags: Record<string, boolean> = {}
           for (const bit of field.bits) {
             flags[bit.name] = ((byte >> Number(bit.bit)) & 1) === 1
           }
           out[field.name] = flags
+          break
+        }
+        case 'char': {
+          out[field.name] = decodeCharArray(buf.subarray(offset, offset + size))
           break
         }
         default:
@@ -91,6 +133,7 @@ export function useBinaryParser() {
     const len = schemaByteLength(schema)
     const buf = new ArrayBuffer(len)
     const view = new DataView(buf)
+    const bytes = new Uint8Array(buf)
     let offset = 0
 
     for (const field of schema) {
@@ -111,7 +154,11 @@ export function useBinaryParser() {
         case 'boolean':
           view.setUint8(offset, v ? 1 : 0)
           break
+        case 'char':
+          bytes.set(encodeCharArray(v, size), offset)
+          break
         case 'flags': {
+          if (field.type !== 'flags') break
           let byte = 0
           const source =
             v && typeof v === 'object' && !Array.isArray(v)

@@ -1,8 +1,7 @@
 <template>
   <div class="mx-auto max-w-5xl">
     <div class="mb-6">
-      <h2 class="text-lg font-semibold text-[#E8EAEF]">Settings</h2>
-      <p class="text-sm text-[#8B93A7]">Manage billing, credentials, routing, and your account.</p>
+      <p class="text-sm text-[#8B93A7]">Billing, credentials, routing, and account preferences.</p>
     </div>
 
     <div class="mb-6 overflow-x-auto border-b border-[#2A2F3A]">
@@ -14,7 +13,7 @@
           class="border-b-2 px-4 py-3 text-sm transition"
           :class="
             activeTab === item.id
-              ? 'border-[#38B6FF] text-[#E8EAEF]'
+              ? 'border-[#E8EAEF] text-[#E8EAEF]'
               : 'border-transparent text-[#8B93A7] hover:text-[#E8EAEF]'
           "
           @click="activeTab = item.id"

@@ -32,26 +32,26 @@
       <section class="card min-h-0 overflow-auto p-4 lg:col-span-5 lg:row-span-1">
         <div class="mb-3 flex items-center justify-between gap-2">
           <h2 class="text-sm font-semibold text-[#E8EAEF]">Latest packet</h2>
-          <span class="shrink-0 font-mono text-[10px] text-[#8B93A7]">
+          <span class="shrink-0 text-xs text-[#8B93A7]">
             {{ latest?.timestamp ? formatTime(latest.timestamp) : '—' }}
           </span>
         </div>
         <pre
-          class="mono whitespace-pre-wrap break-all rounded-lg bg-[#0F1115] p-3 text-xs leading-6 text-[#38B6FF]"
+          class="mono whitespace-pre-wrap break-all rounded-lg bg-[#0c0d10] p-3 text-xs leading-6 text-[#c5cad3]"
         >{{ latestJson }}</pre>
       </section>
 
       <section class="card grid grid-cols-2 gap-4 p-4 lg:col-span-3 lg:row-span-1">
         <div>
-          <p class="text-[10px] uppercase tracking-wider text-[#8B93A7]">Online</p>
-          <p class="mt-1 text-2xl font-semibold text-[#38B6FF]">{{ onlineCount }}</p>
+          <p class="text-xs text-[#8B93A7]">Online</p>
+          <p class="mt-1 text-2xl font-semibold tracking-tight text-[#E8EAEF]">{{ onlineCount }}</p>
         </div>
         <div>
-          <p class="text-[10px] uppercase tracking-wider text-[#8B93A7]">Packets</p>
-          <p class="mt-1 text-2xl font-semibold text-[#E8EAEF]">{{ rows.length }}</p>
+          <p class="text-xs text-[#8B93A7]">Packets</p>
+          <p class="mt-1 text-2xl font-semibold tracking-tight text-[#E8EAEF]">{{ rows.length }}</p>
         </div>
-        <div class="col-span-2 border-t border-[#2A2F3A] pt-3">
-          <p class="text-[10px] uppercase tracking-wider text-[#8B93A7]">Selected</p>
+        <div class="col-span-2 border-t border-[#252830] pt-3">
+          <p class="text-xs text-[#8B93A7]">Selected</p>
           <p class="mt-1 truncate text-sm text-[#E8EAEF]">
             {{ selectedDevice?.name || 'None' }}
           </p>

@@ -9,6 +9,11 @@ const { deliverPendingDownlinks } = require('./downlinks')
 const { stripAndValidateTimestamp } = require('./replay')
 const { decryptSecret, verifyFrameMac } = require('./auth')
 const {
+  lookupProfileByFleetKeyId,
+  getProfileSecret,
+  resolveDeviceFromFleetPayload,
+} = require('./zeroTouch')
+const {
   V2_HEADER_LEN,
   TIMESTAMP_LEN,
   parseV2Header,
@@ -240,6 +245,74 @@ async function ingestTelemetryFrame(ctx, device, body) {
 }
 
 /**
+ * Fleet / zero-touch path: Master Fleet Key → profile schema → extract device_id → register.
+ */
+async function ingestFleetTelemetryFrame(ctx, profile, body) {
+  const { supabase, transport, onTelemetryDeliver } = ctx
+  const schemaVersion = body.readUInt8(1 + 16)
+  const timestampSec = body.readUInt32LE(1 + 16 + 1)
+  const nonce = body.subarray(1 + 16 + 1 + TIMESTAMP_LEN, V2_HEADER_LEN)
+  const encryptedOrPlain = body.subarray(V2_HEADER_LEN)
+
+  const schemaDef = Array.isArray(profile.schema_definition)
+    ? profile.schema_definition
+    : []
+  if (!schemaDef.length) {
+    throw new Error(`Profile "${profile.name}" has an empty schema`)
+  }
+
+  const expectedStruct = schemaByteLength(schemaDef)
+  if (encryptedOrPlain.length < expectedStruct) {
+    throw new Error(
+      `Fleet payload underrun for "${profile.name}" v${schemaVersion}: got ${encryptedOrPlain.length} bytes, schema needs ${expectedStruct}`,
+    )
+  }
+
+  const structBuf = encryptedOrPlain.subarray(0, expectedStruct)
+  const resolved = await resolveDeviceFromFleetPayload(supabase, profile, structBuf)
+  const device = resolved.device
+
+  await reserveNonce(supabase, device.id, nonce, timestampSec)
+
+  const { error: insertErr } = await supabase.from('telemetry').insert({
+    device_id: device.id,
+    parsed_json: resolved.parsed,
+  })
+
+  if (insertErr) {
+    throw new Error(`Telemetry insert failed: ${insertErr.message}`)
+  }
+
+  await supabase
+    .from('devices')
+    .update({ last_seen: new Date().toISOString() })
+    .eq('id', device.id)
+
+  dispatchWebhooks(supabase, device, resolved.parsed).catch((err) => {
+    console.warn(`[struct] webhook fan-out error: ${err.message}`)
+  })
+
+  if (typeof onTelemetryDeliver === 'function') {
+    try {
+      await onTelemetryDeliver(device.id, device)
+    } catch (err) {
+      console.warn(`[struct] downlink error (${transport}): ${err.message}`)
+    }
+  }
+
+  return {
+    device,
+    parsed: resolved.parsed,
+    schemaVersion,
+    expected: expectedStruct,
+    received: structBuf.length,
+    zeroTouchCreated: resolved.created,
+    hardwareId: resolved.hardwareId,
+    profileId: profile.id,
+  }
+}
+
+/**
  * Process one complete Protocol v2 frame.
  * @param {Buffer} buf
  * @param {TransportContext} ctx
@@ -259,21 +332,37 @@ async function processFrame(buf, ctx) {
 
   const { body, mac } = splitAuthenticatedFrame(buf)
   const device = await lookupDeviceByKeyId(ctx.supabase, header.keyId)
-  if (!device) {
+
+  if (device) {
+    const secret = getDeviceSecret(device)
+    if (!verifyFrameMac(secret, body, mac)) {
+      throw new Error(`Invalid frame authentication for device "${device.name}"`)
+    }
+
+    if (header.schemaVersion === 0) {
+      await handleAckFrame(ctx.supabase, device, body)
+      return { kind: 'ack', device }
+    }
+
+    const result = await ingestTelemetryFrame(ctx, device, body)
+    return { kind: 'telemetry', ...result }
+  }
+
+  const profile = await lookupProfileByFleetKeyId(ctx.supabase, header.keyId)
+  if (!profile) {
     throw new Error(`Unrecognized key_id: ${JSON.stringify(header.keyId)}`)
   }
 
-  const secret = getDeviceSecret(device)
-  if (!verifyFrameMac(secret, body, mac)) {
-    throw new Error(`Invalid frame authentication for device "${device.name}"`)
+  const fleetSecret = getProfileSecret(profile, secretCache)
+  if (!verifyFrameMac(fleetSecret, body, mac)) {
+    throw new Error(`Invalid frame authentication for fleet profile "${profile.name}"`)
   }
 
   if (header.schemaVersion === 0) {
-    await handleAckFrame(ctx.supabase, device, body)
-    return { kind: 'ack', device }
+    throw new Error('ACK frames require a per-device key_id (not Master Fleet Key)')
   }
 
-  const result = await ingestTelemetryFrame(ctx, device, body)
+  const result = await ingestFleetTelemetryFrame(ctx, profile, body)
   return { kind: 'telemetry', ...result }
 }
 
@@ -285,10 +374,20 @@ async function expectedFrameLength(supabase, header) {
     return require('./protocol').V2_ACK_LEN + require('./protocol').HMAC_LEN
   }
   const device = await lookupDeviceByKeyId(supabase, header.keyId)
-  if (!device) return null
-  const schemaDef = await resolveSchemaDefinition(supabase, device, header.schemaVersion)
-  if (!schemaDef) return null
-  return V2_HEADER_LEN + payloadRegionLength(device, schemaDef) + require('./protocol').HMAC_LEN
+  if (device) {
+    const schemaDef = await resolveSchemaDefinition(supabase, device, header.schemaVersion)
+    if (!schemaDef) return null
+    return V2_HEADER_LEN + payloadRegionLength(device, schemaDef) + require('./protocol').HMAC_LEN
+  }
+
+  const profile = await lookupProfileByFleetKeyId(supabase, header.keyId)
+  if (!profile) return null
+  const schemaDef = Array.isArray(profile.schema_definition)
+    ? profile.schema_definition
+    : null
+  if (!schemaDef || !schemaDef.length) return null
+  const structLen = schemaByteLength(schemaDef)
+  return V2_HEADER_LEN + structLen + require('./protocol').HMAC_LEN
 }
 
 module.exports = {

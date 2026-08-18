@@ -2,11 +2,10 @@
   <div class="mx-auto max-w-4xl">
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div class="min-w-0">
-        <h2 class="text-lg font-semibold text-[#E8EAEF]">Fleet</h2>
         <p class="text-sm text-[#8B93A7]">
-          Tag devices like industrial assets. Filter 400 sensors down to the 12 that matter.
+          Search and tag devices, then filter the fleet down to the ones that matter.
         </p>
-        <p class="mt-1 font-mono text-[10px] text-[#8B93A7]">
+        <p class="mt-1 text-xs text-[#8B93A7]">
           {{ devices.length }} / {{ deviceLimit }} devices on this plan
         </p>
       </div>
@@ -78,14 +77,14 @@
       <div
         v-for="device in filtered"
         :key="device.id"
-        class="device-card rounded-xl bg-[#1A1D24] p-4"
+        class="card p-4"
       >
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div class="flex items-start gap-3">
             <StatusDot :online="isDeviceOnline(device.last_seen)" class="mt-1.5" />
             <div>
               <p class="font-medium text-[#E8EAEF]">{{ device.name }}</p>
-              <p class="mt-1 break-all font-mono text-xs text-[#38B6FF]">{{ device.api_key }}</p>
+              <p class="mt-1 break-all font-mono text-xs text-[#9aa3b2]">{{ device.api_key }}</p>
               <p
                 v-if="device.mac_address"
                 class="mt-1 font-mono text-[10px] text-[#8B93A7]"
@@ -377,10 +376,3 @@ async function onSendCommand(deviceId: string) {
   }
 }
 </script>
-
-<style scoped>
-/* Inset stroke avoids parent overflow-auto clipping outer borders */
-.device-card {
-  box-shadow: inset 0 0 0 1px #2a2f3a;
-}
-</style>

@@ -1,5 +1,5 @@
 import type { SchemaField } from '~/types'
-import { TYPE_SIZES } from '~/types'
+import { fieldByteLength } from '~/types'
 
 const CPP_TYPE: Record<string, string> = {
   float32: 'float',
@@ -10,7 +10,13 @@ const CPP_TYPE: Record<string, string> = {
 }
 
 function schemaByteLength(fields: SchemaField[]) {
-  return fields.reduce((sum, f) => sum + (TYPE_SIZES[f.type] || 0), 0)
+  return fields.reduce((sum, f) => {
+    try {
+      return sum + fieldByteLength(f)
+    } catch {
+      return sum
+    }
+  }, 0)
 }
 
 function sanitizeIdent(name: string, fallback: string) {
@@ -33,6 +39,10 @@ function fieldStructLine(f: SchemaField): string {
   if (f.type === 'flags') {
     return `  uint8_t ${name}; // packed flags (see masks below)`
   }
+  if (f.type === 'char') {
+    const len = Math.max(1, Math.min(64, Number(f.length) || 1))
+    return `  char ${name}[${len}]; // ${len}-byte identity / opaque`
+  }
   const ctype = CPP_TYPE[f.type] || 'uint8_t'
   const note = f.type === 'boolean' ? ' // boolean 0/1' : ` // ${f.type}`
   return `  ${ctype} ${name};${note}`
@@ -41,6 +51,10 @@ function fieldStructLine(f: SchemaField): string {
 function fieldPreviewLine(f: SchemaField): string {
   if (f.type === 'flags') {
     return `  uint8_t ${f.name || 'unnamed'}; // flags`
+  }
+  if (f.type === 'char') {
+    const len = Math.max(1, Math.min(64, Number(f.length) || 1))
+    return `  char ${f.name || 'unnamed'}[${len}];`
   }
   return `  ${CPP_TYPE[f.type] || 'uint8_t'} ${f.name || 'unnamed'};`
 }

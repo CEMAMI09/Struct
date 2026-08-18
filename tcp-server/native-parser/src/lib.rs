@@ -19,6 +19,8 @@ struct SchemaField {
   field_type: String,
   #[serde(default)]
   bits: Option<Vec<FlagBit>>,
+  #[serde(default)]
+  length: Option<u32>,
 }
 
 fn parse_schema(schema_json: &str) -> Result<Vec<SchemaField>> {
@@ -72,8 +74,65 @@ fn field_size(field: &SchemaField) -> Result<usize> {
       validate_flags(field)?;
       Ok(1)
     }
+    "char" => {
+      let len = field.length.ok_or_else(|| {
+        Error::from_reason(format!(
+          "char field \"{}\" requires length",
+          field.name
+        ))
+      })? as usize;
+      if !(1..=64).contains(&len) {
+        return Err(Error::from_reason(format!(
+          "char field \"{}\" length must be 1..64",
+          field.name
+        )));
+      }
+      Ok(len)
+    }
     other => Err(Error::from_reason(format!("Unsupported schema type: {other}"))),
   }
+}
+
+fn decode_char_array(bytes: &[u8]) -> String {
+  let mut printable = true;
+  for &b in bytes {
+    if b == 0 {
+      break;
+    }
+    if !(0x20..=0x7e).contains(&b) {
+      printable = false;
+      break;
+    }
+  }
+  if printable {
+    let end = bytes
+      .iter()
+      .rposition(|&b| b != 0)
+      .map(|i| i + 1)
+      .unwrap_or(0);
+    String::from_utf8_lossy(&bytes[..end]).into_owned()
+  } else {
+    bytes.iter().map(|b| format!("{b:02x}")).collect()
+  }
+}
+
+fn encode_char_array(value: Option<&Value>, length: usize) -> Vec<u8> {
+  let mut out = vec![0u8; length];
+  let Some(Value::String(raw)) = value else {
+    return out;
+  };
+  let trimmed = raw.trim();
+  if trimmed.len() == length * 2 && trimmed.chars().all(|c| c.is_ascii_hexdigit()) {
+    for i in 0..length {
+      let byte = u8::from_str_radix(&trimmed[i * 2..i * 2 + 2], 16).unwrap_or(0);
+      out[i] = byte;
+    }
+    return out;
+  }
+  let encoded = trimmed.as_bytes();
+  let copy_len = encoded.len().min(length);
+  out[..copy_len].copy_from_slice(&encoded[..copy_len]);
+  out
 }
 
 fn schema_len(schema: &[SchemaField]) -> Result<usize> {
@@ -151,6 +210,12 @@ pub fn parse_payload(payload: Buffer, schema_json: String) -> Result<Value> {
         }
         out.insert(field.name.clone(), Value::Object(flags));
       }
+      "char" => {
+        out.insert(
+          field.name.clone(),
+          json!(decode_char_array(&buf[offset..offset + size])),
+        );
+      }
       other => {
         return Err(Error::from_reason(format!("Unhandled type \"{other}\"")));
       }
@@ -210,6 +275,10 @@ pub fn encode_payload(values_json: String, schema_json: String) -> Result<Buffer
           }
         }
         buf[offset] = byte;
+      }
+      "char" => {
+        let encoded = encode_char_array(v, size);
+        buf[offset..offset + size].copy_from_slice(&encoded);
       }
       other => {
         return Err(Error::from_reason(format!("Unhandled type \"{other}\"")));

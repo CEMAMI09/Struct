@@ -2,7 +2,6 @@
   <div class="mx-auto max-w-3xl">
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div class="min-w-0">
-        <h2 class="text-lg font-semibold text-[#E8EAEF]">Destinations</h2>
         <p class="text-sm text-[#8B93A7]">
           Route parsed packets to your own systems, optionally using a payload rule.
         </p>

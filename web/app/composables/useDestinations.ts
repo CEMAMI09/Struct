@@ -1,5 +1,9 @@
 import type { Destination, RoutingRule, WebhookEventType } from '~/types'
 
+import type { Destination, RoutingRule, WebhookEventType } from '~/types'
+
+let destinationsInflight: Promise<void> | null = null
+
 export function useDestinations() {
   const supabase = useSupabaseClient()
   const user = useSupabaseUser()
@@ -8,34 +12,58 @@ export function useDestinations() {
   const destinations = useState<Destination[]>('destinations', () => [])
   const loading = useState('destinations-loading', () => false)
   const error = useState<string | null>('destinations-error', () => null)
+  const loadedForOrg = useState<string | null>('destinations-loaded-org', () => null)
 
-  async function fetchDestinations() {
-    const { data: authData } = await supabase.auth.getUser()
-    if (!authData.user && !user.value) return
+  async function hasAuth(): Promise<boolean> {
+    if (user.value) return true
+    const { data } = await supabase.auth.getSession()
+    return !!data.session?.user
+  }
 
-    loading.value = true
-    error.value = null
-    try {
-      await ensureOrganization()
-      const orgId = currentOrgId.value
-      if (!orgId) {
-        destinations.value = []
-        return
-      }
+  async function fetchDestinations(opts?: { force?: boolean }) {
+    if (!(await hasAuth())) return
 
-      const { data, error: err } = await supabase
-        .from('destinations')
-        .select('*')
-        .eq('organization_id', orgId)
-        .order('created_at', { ascending: false })
-
-      if (err) throw err
-      destinations.value = (data || []) as Destination[]
-    } catch (e: any) {
-      error.value = e.message || 'Failed to load destinations'
-    } finally {
-      loading.value = false
+    if (destinationsInflight && !opts?.force) {
+      return destinationsInflight
     }
+
+    const run = async () => {
+      const cacheHit = !!loadedForOrg.value && loadedForOrg.value === currentOrgId.value
+      if (!cacheHit) loading.value = true
+      error.value = null
+      try {
+        await ensureOrganization()
+        const orgId = currentOrgId.value
+        if (!orgId) {
+          destinations.value = []
+          loadedForOrg.value = null
+          return
+        }
+
+        const { data, error: err } = await supabase
+          .from('destinations')
+          .select('*')
+          .eq('organization_id', orgId)
+          .order('created_at', { ascending: false })
+
+        if (err) throw err
+        destinations.value = (data || []) as Destination[]
+        loadedForOrg.value = orgId
+      } catch (e: any) {
+        error.value = e.message || 'Failed to load destinations'
+      } finally {
+        loading.value = false
+      }
+    }
+
+    destinationsInflight = run().finally(() => {
+      destinationsInflight = null
+    })
+    return destinationsInflight
+  }
+
+  function invalidateDestinationCache() {
+    loadedForOrg.value = null
   }
 
   async function createDestination(input: {
@@ -143,6 +171,7 @@ export function useDestinations() {
     loading,
     error,
     fetchDestinations,
+    invalidateDestinationCache,
     createDestination,
     updateDestinationEvents,
     toggleDestination,

@@ -35,10 +35,10 @@
           <span class="shrink-0 font-mono text-[10px] text-[#8B93A7]">{{ totalBytes }} B frame</span>
         </div>
         <div class="flex-1 overflow-auto p-4">
-          <p class="mb-2 text-[10px] uppercase tracking-wider text-[#8B93A7]">
+          <p class="mb-2 text-xs text-[#8B93A7]">
             Protocol v2: header + timestamp + nonce + payload + HMAC
           </p>
-          <pre class="mono whitespace-pre-wrap break-all text-xs leading-6 text-[#38B6FF]">{{ hexOutput || '— click Simulate —' }}</pre>
+          <pre class="mono whitespace-pre-wrap break-all text-xs leading-6 text-[#c5cad3]">{{ hexOutput || '— click Simulate —' }}</pre>
         </div>
       </div>
 

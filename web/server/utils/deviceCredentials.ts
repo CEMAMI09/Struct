@@ -37,6 +37,24 @@ export function encryptApiSecret(secret: string) {
   return `v1:${iv.toString('hex')}:${ciphertext.toString('hex')}:${tag.toString('hex')}`
 }
 
+/** Decrypt a fleet / device API secret stored as v1:iv:ct:tag hex blob. */
+export function decryptApiSecret(blob: string) {
+  if (!blob || typeof blob !== 'string') {
+    throw new Error('Missing encrypted API secret')
+  }
+  const parts = blob.split(':')
+  if (parts.length !== 4 || parts[0] !== 'v1') {
+    throw new Error('Unsupported API secret ciphertext format')
+  }
+  const key = credentialKey()
+  const iv = Buffer.from(parts[1]!, 'hex')
+  const ciphertext = Buffer.from(parts[2]!, 'hex')
+  const tag = Buffer.from(parts[3]!, 'hex')
+  const decipher = crypto.createDecipheriv(ALGO, key, iv)
+  decipher.setAuthTag(tag)
+  return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8')
+}
+
 export function secretPreview(secret: string) {
   return secret.length > 4 ? secret.slice(-4) : secret
 }

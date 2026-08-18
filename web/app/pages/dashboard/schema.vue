@@ -1,13 +1,16 @@
 <template>
   <div class="mx-auto flex min-h-0 w-full max-w-3xl flex-col lg:min-h-[calc(100vh-8rem)]">
     <p v-if="error" class="mb-3 text-sm text-red-400">{{ error }}</p>
-    <p v-else-if="loading" class="mb-3 text-sm text-[#8B93A7]">Loading devices…</p>
-    <p v-else-if="!devices.length" class="mb-3 text-sm text-[#8B93A7]">
+    <p v-else-if="loading && !devices.length" class="mb-3 text-sm text-[#8B93A7]">
+      Loading devices…
+    </p>
+    <p v-else-if="!loading && !devices.length" class="mb-3 text-sm text-[#8B93A7]">
       No devices yet —
       <NuxtLink to="/dashboard/devices" class="text-[#38B6FF] hover:underline">create one</NuxtLink>
       first.
     </p>
     <SchemaBuilder
+      v-if="devices.length || !loading"
       class="min-h-0 flex-1"
       :devices="devices"
       :schemas="schemas"

@@ -5,10 +5,10 @@
       <div class="flex min-w-0 items-center gap-2">
         <span
           v-if="live"
-          class="flex shrink-0 items-center gap-1.5 font-mono text-[10px] text-[#38B6FF]"
+          class="flex shrink-0 items-center gap-1.5 text-xs text-[#8B93A7]"
         >
-          <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-[#38B6FF]" />
-          LIVE
+          <span class="h-1.5 w-1.5 rounded-full bg-[#3d9a6a]" />
+          Live
         </span>
         <select
           v-if="numericFields.length > 1"
@@ -120,20 +120,20 @@ const chartOption = computed(() => {
     grid: { left: 40, right: 16, top: 24, bottom: 28 },
     tooltip: {
       trigger: 'axis',
-      backgroundColor: '#1A1D24',
-      borderColor: '#2A2F3A',
-      textStyle: { color: '#E8EAEF', fontFamily: 'JetBrains Mono, monospace', fontSize: 11 },
+      backgroundColor: '#14161c',
+      borderColor: '#252830',
+      textStyle: { color: '#E8EAEF', fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11 },
     },
     xAxis: {
       type: 'category',
       data: times,
-      axisLine: { lineStyle: { color: '#2A2F3A' } },
-      axisLabel: { color: '#8B93A7', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' },
+      axisLine: { lineStyle: { color: '#252830' } },
+      axisLabel: { color: '#8B93A7', fontSize: 10, fontFamily: 'Geist, ui-sans-serif, sans-serif' },
     },
     yAxis: {
       type: 'value',
-      splitLine: { lineStyle: { color: '#2A2F3A', type: 'dashed' } },
-      axisLabel: { color: '#8B93A7', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' },
+      splitLine: { lineStyle: { color: '#252830', type: 'dashed' } },
+      axisLabel: { color: '#8B93A7', fontSize: 10, fontFamily: 'Geist, ui-sans-serif, sans-serif' },
     },
     series: [
       {

@@ -29,6 +29,8 @@ function normalizeDevice(row: any): Device {
     tags: (row.tags && typeof row.tags === 'object' ? row.tags : {}) as DeviceTags,
     encryption_enabled: !!row.encryption_enabled,
     encryption_key: row.encryption_key ?? null,
+    profile_id: row.profile_id ?? null,
+    hardware_id: row.hardware_id ?? null,
   }
 }
 
@@ -47,6 +49,8 @@ function definitionsEqual(a: SchemaField[], b: SchemaField[]) {
   return JSON.stringify(a) === JSON.stringify(b)
 }
 
+let devicesInflight: Promise<void> | null = null
+
 export function useDevices() {
   const supabase = useSupabaseClient()
   const user = useSupabaseUser()
@@ -57,77 +61,95 @@ export function useDevices() {
   const schemaVersions = useState<Record<string, SchemaVersion[]>>('schema-versions', () => ({}))
   const loading = useState('devices-loading', () => false)
   const error = useState<string | null>('devices-error', () => null)
+  /** Org id for which devices/schemas were last successfully loaded (incl. empty). */
+  const loadedForOrg = useState<string | null>('devices-loaded-org', () => null)
 
-  async function fetchSchemaVersions(deviceIds: string[]) {
-    if (!deviceIds.length) {
-      schemaVersions.value = {}
-      return
-    }
-    const { data, error: err } = await supabase
-      .from('schema_versions')
-      .select('*')
-      .in('device_id', deviceIds)
-      .order('version', { ascending: true })
-
-    if (err) throw err
-    const map: Record<string, SchemaVersion[]> = {}
-    for (const row of data || []) {
-      const v = row as SchemaVersion
-      if (!map[v.device_id]) map[v.device_id] = []
-      map[v.device_id]!.push(v)
-    }
-    schemaVersions.value = map
+  async function hasAuth(): Promise<boolean> {
+    if (user.value) return true
+    const { data } = await supabase.auth.getSession()
+    return !!data.session?.user
   }
 
-  async function fetchDevices() {
-    const { data: authData } = await supabase.auth.getUser()
-    if (!authData.user && !user.value) return
+  async function fetchDevices(opts?: { force?: boolean }) {
+    if (!(await hasAuth())) return
 
-    loading.value = true
-    error.value = null
-    try {
-      await ensureOrganization()
-      const orgId = currentOrgId.value
-      if (!orgId) {
-        devices.value = []
-        schemas.value = {}
-        schemaVersions.value = {}
-        return
-      }
-
-      const { data, error: err } = await supabase
-        .from('devices')
-        .select('*')
-        .eq('organization_id', orgId)
-        .order('created_at', { ascending: false })
-
-      if (err) throw err
-      devices.value = (data || []).map(normalizeDevice)
-
-      const ids = devices.value.map((d) => d.id)
-      if (ids.length) {
-        const { data: schemaRows, error: sErr } = await supabase
-          .from('schemas')
-          .select('*')
-          .in('device_id', ids)
-
-        if (sErr) throw sErr
-        const map: Record<string, DeviceSchema> = {}
-        for (const row of schemaRows || []) {
-          const schema = normalizeSchema(row)
-          map[schema.device_id] = schema
-        }
-        schemas.value = map
-        await fetchSchemaVersions(ids)
-      } else {
-        schemas.value = {}
-        schemaVersions.value = {}
-      }
-    } catch (e: any) {
-      error.value = e.message || 'Failed to load devices'
-    } finally {
-      loading.value = false
+    if (devicesInflight && !opts?.force) {
+      return devicesInflight
     }
+
+    const run = async () => {
+      const cacheHit = !!loadedForOrg.value && loadedForOrg.value === currentOrgId.value
+      // SWR: only show spinner on cold load / org switch
+      if (!cacheHit) loading.value = true
+      error.value = null
+      try {
+        await ensureOrganization()
+        const orgId = currentOrgId.value
+        if (!orgId) {
+          devices.value = []
+          schemas.value = {}
+          schemaVersions.value = {}
+          loadedForOrg.value = null
+          return
+        }
+
+        const { data, error: err } = await supabase
+          .from('devices')
+          .select('*')
+          .eq('organization_id', orgId)
+          .order('created_at', { ascending: false })
+
+        if (err) throw err
+        devices.value = (data || []).map(normalizeDevice)
+
+        const ids = devices.value.map((d) => d.id)
+        if (ids.length) {
+          const [schemaResult, versionsResult] = await Promise.all([
+            supabase.from('schemas').select('*').in('device_id', ids),
+            supabase
+              .from('schema_versions')
+              .select('*')
+              .in('device_id', ids)
+              .order('version', { ascending: true }),
+          ])
+
+          if (schemaResult.error) throw schemaResult.error
+          if (versionsResult.error) throw versionsResult.error
+
+          const map: Record<string, DeviceSchema> = {}
+          for (const row of schemaResult.data || []) {
+            const schema = normalizeSchema(row)
+            map[schema.device_id] = schema
+          }
+          schemas.value = map
+
+          const versionMap: Record<string, SchemaVersion[]> = {}
+          for (const row of versionsResult.data || []) {
+            const v = row as SchemaVersion
+            if (!versionMap[v.device_id]) versionMap[v.device_id] = []
+            versionMap[v.device_id]!.push(v)
+          }
+          schemaVersions.value = versionMap
+        } else {
+          schemas.value = {}
+          schemaVersions.value = {}
+        }
+        loadedForOrg.value = orgId
+      } catch (e: any) {
+        error.value = e.message || 'Failed to load devices'
+      } finally {
+        loading.value = false
+      }
+    }
+
+    devicesInflight = run().finally(() => {
+      devicesInflight = null
+    })
+    return devicesInflight
+  }
+
+  function invalidateDeviceCache() {
+    loadedForOrg.value = null
   }
 
   async function createDevice(name: string) {
@@ -473,6 +495,7 @@ export function useDevices() {
     loading,
     error,
     fetchDevices,
+    invalidateDeviceCache,
     createDevice,
     previewBulkUpload,
     confirmBulkUpload,

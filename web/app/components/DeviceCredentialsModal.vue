@@ -4,7 +4,7 @@
     @click.self="onDismiss"
   >
     <div
-      class="relative w-full max-w-lg rounded-xl border border-[#2A2F3A] bg-[#1A1D24] p-5 shadow-xl"
+      class="relative w-full max-w-lg rounded-xl border border-[#252830] bg-[#14161c] p-5 shadow-xl"
       role="dialog"
       aria-modal="true"
       aria-labelledby="device-creds-title"
@@ -24,7 +24,7 @@
           <p class="label">Key ID</p>
           <div class="flex gap-2">
             <input
-              class="input flex-1 font-mono text-xs text-[#38B6FF]"
+              class="input flex-1 font-mono text-xs"
               type="text"
               readonly
               :value="credentials.keyId"
@@ -40,7 +40,7 @@
           <p class="label">API Secret</p>
           <div class="flex gap-2">
             <input
-              class="input flex-1 font-mono text-xs text-[#38B6FF]"
+              class="input flex-1 font-mono text-xs"
               type="text"
               readonly
               :value="credentials.apiSecret"

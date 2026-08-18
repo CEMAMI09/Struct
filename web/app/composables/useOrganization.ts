@@ -14,6 +14,10 @@ export interface OrgMemberRow {
 
 const STORAGE_KEY = 'struct.currentOrgId'
 
+/** In-flight dedupe for ensureOrganization across concurrent callers. */
+let ensureInflight: Promise<Organization | null> | null = null
+let membershipsInflight: Promise<void> | null = null
+
 export function useOrganization() {
   const supabase = useSupabaseClient()
   const user = useSupabaseUser()
@@ -53,6 +57,13 @@ export function useOrganization() {
       throw new Error('No organization selected — refresh or sign in again')
     }
     return currentOrgId.value
+  }
+
+  /** Prefer hydrated user, then local session — avoids Auth network round-trips on every page. */
+  async function resolveUserId(): Promise<string | null> {
+    if (user.value?.id) return user.value.id
+    const { data } = await supabase.auth.getSession()
+    return data.session?.user?.id ?? null
   }
 
   function isEmptyFreePersonal(org: Organization) {
@@ -124,94 +135,124 @@ export function useOrganization() {
     )[0]!.organization_id
   }
 
-  async function fetchMemberships() {
-    const { data: authData } = await supabase.auth.getUser()
-    const uid = authData.user?.id || user.value?.id
-    if (!uid) {
-      memberships.value = []
-      currentOrgId.value = null
-      ready.value = false
-      return
+  async function fetchMemberships(opts?: { force?: boolean }) {
+    if (membershipsInflight && !opts?.force) {
+      return membershipsInflight
     }
 
-    loading.value = true
-    error.value = null
-    try {
-      // Only this user's memberships — RLS also returns teammates' rows for orgs you share.
-      const { data, error: err } = await supabase
-        .from('organization_members')
-        .select('*, organization:organizations(*)')
-        .eq('user_id', uid)
-        .order('created_at', { ascending: true })
-
-      if (err) throw err
-
-      const rows = (data || []).map((row: any) => ({
-        id: row.id,
-        organization_id: row.organization_id,
-        user_id: row.user_id,
-        role: row.role as OrgRole,
-        created_at: row.created_at,
-        organization: row.organization as Organization,
-      })) as OrgMembership[]
-
-      memberships.value = rows.filter((m) => m.organization)
-
-      let preferred: string | null = null
-      if (import.meta.client) {
-        preferred = localStorage.getItem(STORAGE_KEY)
+    const run = async () => {
+      const uid = await resolveUserId()
+      if (!uid) {
+        memberships.value = []
+        currentOrgId.value = null
+        ready.value = false
+        return
       }
 
-      currentOrgId.value = pickDefaultOrgId(
-        memberships.value,
-        preferred,
-        currentOrgId.value,
-      )
+      const showSpinner = !memberships.value.length
+      if (showSpinner) loading.value = true
+      error.value = null
+      try {
+        // Only this user's memberships — RLS also returns teammates' rows for orgs you share.
+        const { data, error: err } = await supabase
+          .from('organization_members')
+          .select('*, organization:organizations(*)')
+          .eq('user_id', uid)
+          .order('created_at', { ascending: true })
 
-      if (currentOrgId.value && import.meta.client) {
-        localStorage.setItem(STORAGE_KEY, currentOrgId.value)
+        if (err) throw err
+
+        const rows = (data || []).map((row: any) => ({
+          id: row.id,
+          organization_id: row.organization_id,
+          user_id: row.user_id,
+          role: row.role as OrgRole,
+          created_at: row.created_at,
+          organization: row.organization as Organization,
+        })) as OrgMembership[]
+
+        memberships.value = rows.filter((m) => m.organization)
+
+        let preferred: string | null = null
+        if (import.meta.client) {
+          preferred = localStorage.getItem(STORAGE_KEY)
+        }
+
+        currentOrgId.value = pickDefaultOrgId(
+          memberships.value,
+          preferred,
+          currentOrgId.value,
+        )
+
+        if (currentOrgId.value && import.meta.client) {
+          localStorage.setItem(STORAGE_KEY, currentOrgId.value)
+        }
+      } catch (e: any) {
+        error.value = e.message || 'Failed to load organizations'
+        // Keep any previously loaded memberships — never wipe on transient failures.
+      } finally {
+        loading.value = false
+        ready.value = true
       }
-    } catch (e: any) {
-      error.value = e.message || 'Failed to load organizations'
-      // Keep any previously loaded memberships — never wipe on transient failures.
-      // Clearing here caused ensureOrganization() to create a brand-new empty Personal org.
-    } finally {
-      loading.value = false
-      ready.value = true
     }
+
+    membershipsInflight = run().finally(() => {
+      membershipsInflight = null
+    })
+    return membershipsInflight
   }
 
   /**
    * Ensure the user has at least one org (Personal) and a current selection.
-   * Safe to call on every dashboard mount / after signup.
+   * Concurrent callers share one in-flight promise; ready orgs skip the network.
    */
-  async function ensureOrganization() {
-    await fetchMemberships()
-
-    // Never invent a workspace when we failed to load the real ones.
-    if (error.value) {
-      throw new Error(error.value)
-    }
-
-    if (memberships.value.length > 0 && currentOrgId.value) {
+  async function ensureOrganization(opts?: { force?: boolean }) {
+    if (
+      !opts?.force &&
+      ready.value &&
+      currentOrgId.value &&
+      memberships.value.length > 0 &&
+      !error.value
+    ) {
       return currentOrganization.value
     }
 
-    const { data: authData, error: authErr } = await supabase.auth.getUser()
-    if (authErr || !authData.user) {
-      throw new Error('Not authenticated — sign out and sign in again')
+    if (ensureInflight && !opts?.force) {
+      return ensureInflight
     }
 
-    const { error: orgErr } = await supabase.rpc('create_organization', {
-      p_name: 'Personal',
+    const run = async (): Promise<Organization | null> => {
+      await fetchMemberships(opts)
+
+      if (error.value) {
+        throw new Error(error.value)
+      }
+
+      if (memberships.value.length > 0 && currentOrgId.value) {
+        return currentOrganization.value
+      }
+
+      const uid = await resolveUserId()
+      if (!uid) {
+        throw new Error('Not authenticated — sign out and sign in again')
+      }
+
+      const { error: orgErr } = await supabase.rpc('create_organization', {
+        p_name: 'Personal',
+      })
+      if (orgErr) throw orgErr
+
+      await fetchMemberships({ force: true })
+      if (error.value) {
+        throw new Error(error.value)
+      }
+      return currentOrganization.value
+    }
+
+    ensureInflight = run().finally(() => {
+      ensureInflight = null
     })
-    if (orgErr) throw orgErr
-
-    await fetchMemberships()
-    if (error.value) {
-      throw new Error(error.value)
-    }
-    return currentOrganization.value
+    return ensureInflight
   }
 
   function clearOrganizationState() {
@@ -285,7 +326,6 @@ export function useOrganization() {
   }
 
   async function removeMember(memberId: string) {
-    // Removing others is owner-only in the UI; RPC still enforces leave-self + last-owner rules.
     if (!isOwner.value) {
       throw new Error('Only owners can remove other members')
     }
@@ -295,7 +335,6 @@ export function useOrganization() {
     if (err) throw err
   }
 
-  /** Leave the current workspace (any role). */
   async function leaveOrganization() {
     const membership = currentMembership.value
     if (!membership) throw new Error('No organization selected')
@@ -309,9 +348,9 @@ export function useOrganization() {
       localStorage.removeItem(STORAGE_KEY)
     }
     currentOrgId.value = null
-    await fetchMemberships()
+    await fetchMemberships({ force: true })
     if (!memberships.value.length) {
-      await ensureOrganization()
+      await ensureOrganization({ force: true })
     }
   }
 
@@ -324,7 +363,7 @@ export function useOrganization() {
     })
     if (orgErr) throw orgErr
 
-    await fetchMemberships()
+    await fetchMemberships({ force: true })
     if (org?.id) setCurrentOrg(org.id)
     return org as Organization
   }
@@ -345,13 +384,12 @@ export function useOrganization() {
       currentOrgId.value = null
     }
 
-    await fetchMemberships()
+    await fetchMemberships({ force: true })
     if (!memberships.value.length) {
-      await ensureOrganization()
+      await ensureOrganization({ force: true })
     }
   }
 
-  /** True when the header should show org name + role (hide for default Personal). */
   const showOrgBadge = computed(() => {
     const org = currentOrganization.value
     if (!org) return false

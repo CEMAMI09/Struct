@@ -1,7 +1,7 @@
 <template>
-  <div class="card p-6">
-    <h1 class="mb-1 text-xl font-semibold text-[#E8EAEF]">Sign in</h1>
-    <p class="mb-6 text-sm text-[#8B93A7]">Access your Struct dashboard</p>
+  <div class="card p-7">
+    <h1 class="mb-1 text-xl font-semibold tracking-tight text-[#E8EAEF]">Sign in</h1>
+    <p class="mb-6 text-sm text-[#8B93A7]">Use your Struct account to open the dashboard.</p>
 
     <form class="space-y-4" method="post" @submit.prevent="onSubmit">
       <div>

@@ -2,7 +2,7 @@
   <div class="flex h-full min-h-0 flex-col">
     <div class="mb-3 flex shrink-0 items-center justify-between">
       <h2 class="text-sm font-semibold text-[#E8EAEF]">Devices</h2>
-      <span class="font-mono text-[10px] text-[#8B93A7]">{{ devices.length }} registered</span>
+      <span class="text-xs text-[#8B93A7]">{{ devices.length }} registered</span>
     </div>
 
     <div v-if="!devices.length" class="flex flex-1 flex-col items-center justify-center text-center">
@@ -42,12 +42,11 @@ defineEmits<{ select: [id: string] }>()
 
 <style scoped>
 .device-row--idle:hover {
-  background: rgba(15, 17, 21, 0.8);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .device-row--selected {
-  background: rgba(56, 182, 255, 0.1);
-  /* Inset stroke — Tailwind ring is outer box-shadow and gets clipped by overflow */
-  box-shadow: inset 0 0 0 1px rgba(56, 182, 255, 0.55);
+  background: #181b22;
+  box-shadow: inset 0 0 0 1px #2a2f38;
 }
 </style>

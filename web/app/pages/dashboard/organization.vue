@@ -1,9 +1,8 @@
 <template>
   <div class="mx-auto max-w-3xl">
     <div class="mb-6">
-      <h2 class="text-lg font-semibold text-[#E8EAEF]">Organization</h2>
       <p class="text-sm text-[#8B93A7]">
-        Manage your team workspace, roles, and who can edit devices and schemas.
+        Manage the workspace, roles, and who can edit devices and schemas.
       </p>
     </div>
 
@@ -36,7 +35,7 @@
       <div class="mt-4 flex flex-wrap gap-3 text-xs text-[#8B93A7]">
         <span>
           Your role:
-          <span class="font-mono uppercase text-[#38B6FF]">{{ role }}</span>
+          <span class="font-medium capitalize text-[#E8EAEF]">{{ role }}</span>
         </span>
       </div>
     </section>
@@ -62,8 +61,8 @@
             class="flex min-w-0 flex-1 items-center justify-between rounded-lg border px-3 py-2.5 text-left text-sm transition"
             :class="
               m.organization_id === currentOrgId
-                ? 'border-[#38B6FF]/50 bg-[#38B6FF]/5 text-[#E8EAEF]'
-                : 'border-[#2A2F3A] text-[#8B93A7] hover:border-[#38B6FF]/30 hover:text-[#E8EAEF]'
+                ? 'border-[#3a4050] bg-[#181b22] text-[#E8EAEF]'
+                : 'border-[#252830] text-[#8B93A7] hover:border-[#3a4050] hover:text-[#E8EAEF]'
             "
             @click="onSwitchOrg(m.organization_id)"
           >
@@ -141,13 +140,13 @@
         devices/schemas.
       </p>
 
-      <div v-if="loadingMembers" class="py-6 text-center text-sm text-[#8B93A7]">
+      <div v-if="loadingMembers && !members.length" class="py-6 text-center text-sm text-[#8B93A7]">
         Loading members…
       </div>
       <div v-else-if="!members.length" class="py-6 text-center text-sm text-[#8B93A7]">
         Run migration 006 in Supabase if member emails fail to load, then refresh.
       </div>
-      <ul v-else class="divide-y divide-[#2A2F3A]">
+      <ul v-if="members.length" class="divide-y divide-[#2A2F3A]">
         <li
           v-for="m in members"
           :key="m.id"
@@ -170,7 +169,7 @@
             </select>
             <span
               v-else
-              class="rounded border border-[#2A2F3A] px-2 py-1 font-mono text-[10px] uppercase text-[#38B6FF]"
+              class="rounded border border-[#252830] px-2 py-1 text-[10px] capitalize text-[#9aa3b2]"
             >
               {{ m.role }}
             </span>
@@ -251,13 +250,14 @@ const pageError = ref('')
 const pageMsg = ref('')
 
 async function refreshMembers() {
-  loadingMembers.value = true
+  const showSpinner = !members.value.length
+  if (showSpinner) loadingMembers.value = true
   pageError.value = ''
   try {
     members.value = await listMembers()
   } catch (e: any) {
     pageError.value = e.message || 'Failed to load members (is migration 006 applied?)'
-    members.value = []
+    if (!members.value.length) members.value = []
   } finally {
     loadingMembers.value = false
   }

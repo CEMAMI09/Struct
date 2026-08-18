@@ -1,9 +1,9 @@
 <template>
-  <div class="flex min-h-screen min-w-0">
+  <div class="app-shell flex min-h-screen min-w-0">
     <button
       v-if="navOpen"
       type="button"
-      class="fixed inset-0 z-40 bg-black/55 backdrop-blur-[2px] md:hidden"
+      class="fixed inset-0 z-40 bg-black/50 md:hidden"
       aria-label="Close navigation"
       @click="navOpen = false"
     />
@@ -16,9 +16,7 @@
     />
 
     <main class="flex min-h-screen min-w-0 flex-1 flex-col overflow-hidden">
-      <header
-        class="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-[#2A2F3A] px-4 md:px-6"
-      >
+      <header class="app-topbar">
         <div class="flex min-w-0 items-center gap-3">
           <button
             type="button"
@@ -33,38 +31,25 @@
               <span class="block h-0.5 w-4 rounded bg-current" />
             </span>
           </button>
-          <button
-            type="button"
-            class="btn-ghost hidden shrink-0 px-2.5 py-2 md:inline-flex"
-            :aria-label="navCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-            :aria-expanded="!navCollapsed"
-            @click="toggleNavCollapsed"
-          >
-            <span class="font-mono text-xs opacity-70" aria-hidden="true">
-              {{ navCollapsed ? '»' : '«' }}
-            </span>
-          </button>
           <div class="min-w-0">
-            <p class="text-xs uppercase tracking-widest text-[#8B93A7]">{{ sectionLabel }}</p>
-            <h1 class="truncate text-base font-semibold text-[#E8EAEF]">{{ title }}</h1>
+            <h1 class="truncate text-[0.9375rem] font-medium tracking-tight text-[#E8EAEF]">
+              {{ title }}
+            </h1>
           </div>
         </div>
         <div class="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
           <NuxtLink
             v-if="showOrgBadge && currentOrganization"
             to="/dashboard/organization"
-            class="hidden min-w-0 items-center gap-2 rounded-lg border border-[#2A2F3A] px-2.5 py-1.5 transition hover:border-[#38B6FF]/40 sm:flex"
+            class="app-org"
             title="Organization settings"
           >
-            <span class="truncate text-xs text-[#E8EAEF]">{{ currentOrganization.name }}</span>
-            <span
-              class="shrink-0 rounded border border-[#2A2F3A] px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider"
-              :class="isViewer ? 'text-[#8B93A7]' : 'text-[#38B6FF]'"
-            >
+            <span class="truncate">{{ currentOrganization.name }}</span>
+            <span class="app-org-role" :class="isViewer ? 'is-muted' : ''">
               {{ role || '—' }}
             </span>
           </NuxtLink>
-          <span class="mono hidden max-w-[10rem] truncate text-xs text-[#8B93A7] lg:inline lg:max-w-none">
+          <span class="hidden max-w-[10rem] truncate text-xs text-[#8B93A7] lg:inline lg:max-w-none">
             {{ userEmail }}
           </span>
           <button class="btn-ghost text-xs" type="button" :disabled="signingOut" @click="signOut">
@@ -81,7 +66,7 @@
         </p>
         <p
           v-if="isViewer"
-          class="mb-4 rounded-lg border border-[#2A2F3A] bg-[#1A1D24] px-3 py-2 text-xs text-[#8B93A7]"
+          class="mb-4 rounded-lg border border-[#252830] bg-[#14161c] px-3 py-2 text-xs text-[#8B93A7]"
         >
           You have <span class="text-[#E8EAEF]">viewer</span> access — you can inspect devices,
           schemas, and telemetry, but cannot create or edit.
@@ -118,35 +103,29 @@ const {
   error: orgError,
   ensureOrganization,
   clearOrganizationState,
+  fetchUsageStats,
 } = useOrganization()
 const { syncFromStripe } = useBilling()
 
 const userEmail = computed(() => user.value?.email || '')
 const signingOut = ref(false)
+let bootstrapInflight: Promise<void> | null = null
+let bootstrappedForUser: string | null = null
 
 const title = computed(() => {
   const map: Record<string, string> = {
     '/dashboard': 'Overview',
-    '/dashboard/schema': 'Schema Builder',
-    '/dashboard/debugger': 'Live Debugger',
-    '/dashboard/devices': 'Fleet',
+    '/dashboard/schema': 'Schema',
+    '/dashboard/debugger': 'Debugger',
+    '/dashboard/devices': 'Devices',
+    '/dashboard/profiles': 'Profiles',
+    '/dashboard/profiles/new': 'New profile',
     '/dashboard/destinations': 'Destinations',
     '/dashboard/organization': 'Organization',
     '/dashboard/settings': 'Settings',
-    '/dashboard/audit-logs': 'Audit Log',
+    '/dashboard/audit-logs': 'Audit log',
   }
   return map[route.path] || 'Struct'
-})
-
-const sectionLabel = computed(() => {
-  if (route.path.includes('organization')) return 'Team'
-  if (route.path.includes('settings')) return 'Account'
-  if (route.path.includes('audit-logs')) return 'Govern'
-  if (route.path.includes('schema')) return 'Define'
-  if (route.path.includes('debugger')) return 'Inspect'
-  if (route.path.includes('devices')) return 'Fleet'
-  if (route.path.includes('destinations')) return 'Route'
-  return 'Monitor'
 })
 
 watch(
@@ -157,13 +136,31 @@ watch(
 )
 
 async function bootstrapOrg() {
-  await ensureOrganization()
-  const { syncFromStripe } = useBilling()
-  const { fetchUsageStats } = useOrganization()
-  if (canWrite.value && currentOrganization.value?.stripe_customer_id) {
-    await syncFromStripe()
+  const uid = user.value?.id || null
+  if (bootstrapInflight) return bootstrapInflight
+  if (uid && bootstrappedForUser === uid) {
+    // Already warm for this session — refresh usage quietly, never block on Stripe.
+    void fetchUsageStats()
+    return
   }
-  await fetchUsageStats()
+
+  const run = async () => {
+    await ensureOrganization()
+    bootstrappedForUser = user.value?.id || uid
+
+    // Usage for the header is cheap; don't wait for Stripe.
+    void fetchUsageStats()
+
+    // Stripe sync is billing hygiene — run in the background so pages paint immediately.
+    if (canWrite.value && currentOrganization.value?.stripe_customer_id) {
+      void syncFromStripe()
+    }
+  }
+
+  bootstrapInflight = run().finally(() => {
+    bootstrapInflight = null
+  })
+  return bootstrapInflight
 }
 
 onMounted(() => {
@@ -173,13 +170,17 @@ onMounted(() => {
   bootstrapOrg().catch(() => {})
 })
 
-watch(user, (u) => {
-  if (u) bootstrapOrg().catch(() => {})
+watch(user, (u, prev) => {
+  if (u && u.id !== prev?.id) {
+    bootstrappedForUser = null
+    bootstrapOrg().catch(() => {})
+  }
 })
 
 async function signOut() {
   if (signingOut.value) return
   signingOut.value = true
+  bootstrappedForUser = null
   clearOrganizationState()
   try {
     // Prefer local scope so a network hang can't block logout forever.
@@ -209,3 +210,61 @@ async function signOut() {
   }
 }
 </script>
+
+<style scoped>
+.app-topbar {
+  display: flex;
+  height: 3.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 1px solid #252830;
+  padding: 0 1rem;
+  background: #0c0d10;
+}
+
+@media (min-width: 768px) {
+  .app-topbar {
+    padding: 0 1.5rem;
+  }
+}
+
+.app-org {
+  display: none;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid #252830;
+  border-radius: 8px;
+  padding: 0.3rem 0.55rem 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  color: #e8eaef;
+  transition: border-color 0.15s ease;
+}
+
+@media (min-width: 640px) {
+  .app-org {
+    display: flex;
+  }
+}
+
+.app-org:hover {
+  border-color: #3a4050;
+}
+
+.app-org-role {
+  flex-shrink: 0;
+  border: 1px solid #252830;
+  border-radius: 4px;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.65rem;
+  text-transform: capitalize;
+  color: #9aa3b2;
+}
+
+.app-org-role.is-muted {
+  color: #6b7380;
+}
+</style>
+

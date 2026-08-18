@@ -1,7 +1,7 @@
 <template>
-  <div class="card p-6">
-    <h1 class="mb-1 text-xl font-semibold text-[#E8EAEF]">Create account</h1>
-    <p class="mb-6 text-sm text-[#8B93A7]">Start ingesting packed structs</p>
+  <div class="card p-7">
+    <h1 class="mb-1 text-xl font-semibold tracking-tight text-[#E8EAEF]">Create an account</h1>
+    <p class="mb-6 text-sm text-[#8B93A7]">Five free devices. No credit card required.</p>
 
     <form class="space-y-4" method="post" action="#" @submit.prevent="onSubmit">
       <div>
