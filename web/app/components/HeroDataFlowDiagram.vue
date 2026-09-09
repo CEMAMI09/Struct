@@ -3,11 +3,12 @@
     ref="rootEl"
     class="hdf"
     role="img"
-    aria-label="Struct Systems telemetry gateway: edge hardware ingests into the gateway, then routes to cloud destinations"
+    aria-label="Devices send packed frames into Struct ingest, authentication, parsing, and routing, then JSON to your backend"
   >
     <svg
       class="hdf-svg"
-      :viewBox="`0 0 ${vb.w} ${vb.h}`"
+      :class="{ 'hdf-svg--ready': lanesReady }"
+      viewBox="0 0 1280 560"
       preserveAspectRatio="none"
       aria-hidden="true"
     >
@@ -18,8 +19,8 @@
         class="hdf-path hdf-path--flow"
         fill="none"
         stroke="#38b6ff"
-        stroke-width="1.25"
-        stroke-dasharray="3.5 4"
+        stroke-width="1.85"
+        stroke-dasharray="5.5 5"
       />
     </svg>
 
@@ -55,6 +56,8 @@
               src="/struct-logo-mini.svg?v=1"
               alt=""
               class="hdf-hub-logo"
+              width="48"
+              height="48"
               draggable="false"
             />
           </div>
@@ -113,7 +116,7 @@ const destinations = [
     icon: `<svg viewBox="0 0 20 20" fill="none"><ellipse cx="10" cy="5.2" rx="5.2" ry="2" stroke="currentColor" stroke-width="1.3"/><path d="M4.8 5.2v9.6c0 1.1 2.3 2 5.2 2s5.2-.9 5.2-2V5.2" stroke="currentColor" stroke-width="1.3"/><path d="M4.8 10c0 1.1 2.3 2 5.2 2s5.2-.9 5.2-2" stroke="currentColor" stroke-width="1.3"/></svg>`,
   },
   {
-    label: 'Enterprise Cloud',
+    label: 'Cloud / Backend',
     icon: `<svg viewBox="0 0 20 20" fill="none"><path d="M6.2 13.8h8.1a3.1 3.1 0 0 0 .3-6.2 4.2 4.2 0 0 0-8.1-1.1A3.3 3.3 0 0 0 6.2 13.8Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>`,
   },
   {
@@ -140,7 +143,7 @@ const hubSlots = [
   },
   {
     pos: 'w',
-    label: 'Secure',
+    label: 'Auth',
     icon: `<svg viewBox="0 0 16 16" fill="none"><rect x="3.8" y="7" width="8.4" height="6.2" rx="1.2" stroke="currentColor" stroke-width="1.3"/><path d="M5.8 7V5.4a2.2 2.2 0 0 1 4.4 0V7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>`,
   },
 ] as const
@@ -150,13 +153,14 @@ const hubEl = ref<HTMLElement | null>(null)
 const sourceEls = ref<(HTMLElement | null)[]>(Array(sources.length).fill(null))
 const destEls = ref<(HTMLElement | null)[]>(Array(destinations.length).fill(null))
 
-const vb = reactive({ w: 1200, h: 560 })
+const VB_W = 1280
+const VB_H = 560
 
 function staticDesktopPaths(): string[] {
-  const leftX = 216
-  const rightX = 978
-  const hubLx = 498
-  const hubRx = 702
+  const leftX = 230
+  const rightX = 1043
+  const hubLx = 531
+  const hubRx = 749
   const hubY = 280
   const leftYs = [48, 164, 280, 396, 512]
   const rightYs = [70, 210, 350, 490]
@@ -167,6 +171,7 @@ function staticDesktopPaths(): string[] {
 }
 
 const paths = ref<string[]>(staticDesktopPaths())
+const lanesReady = ref(false)
 
 function asEl(el: Element | ComponentPublicInstance | null): HTMLElement | null {
   if (!el) return null
@@ -206,24 +211,31 @@ function measure() {
   const hub = hubEl.value
   if (!root || !hub) return
 
-  // Stacked mobile layout hides the SVG — keep seeded paths for the next desktop paint.
-  if (!isDesktopLayout()) return
+  // Stacked mobile layout hides the SVG.
+  if (!isDesktopLayout()) {
+    lanesReady.value = false
+    return
+  }
 
   const rr = root.getBoundingClientRect()
-  const nextW = Math.max(1, Math.round(rr.width))
-  const nextH = Math.max(1, Math.round(rr.height))
+  const nextW = rr.width
+  const nextH = rr.height
+  if (nextW < 2 || nextH < 2) return
+
+  const toVbX = (px: number) => (px / nextW) * VB_W
+  const toVbY = (py: number) => (py / nextH) * VB_H
 
   const hubR = hub.getBoundingClientRect()
   // Single shared meet point each side (inset under the ring so endpoint
   // dash caps never flash at the circle edge).
   const inset = 8
   const hubLeft = {
-    x: hubR.left - rr.left + inset,
-    y: hubR.top - rr.top + hubR.height / 2,
+    x: toVbX(hubR.left - rr.left + inset),
+    y: toVbY(hubR.top - rr.top + hubR.height / 2),
   }
   const hubRight = {
-    x: hubR.right - rr.left - inset,
-    y: hubR.top - rr.top + hubR.height / 2,
+    x: toVbX(hubR.right - rr.left - inset),
+    y: toVbY(hubR.top - rr.top + hubR.height / 2),
   }
 
   const sourceNodes = sourceEls.value.filter(Boolean) as HTMLElement[]
@@ -236,8 +248,8 @@ function measure() {
     const r = el.getBoundingClientRect()
     next.push(
       smoothFunnel(
-        r.right - rr.left,
-        r.top - rr.top + r.height / 2,
+        toVbX(r.right - rr.left),
+        toVbY(r.top - rr.top + r.height / 2),
         hubLeft.x,
         hubLeft.y,
       ),
@@ -250,23 +262,19 @@ function measure() {
       smoothFunnel(
         hubRight.x,
         hubRight.y,
-        r.left - rr.left,
-        r.top - rr.top + r.height / 2,
+        toVbX(r.left - rr.left),
+        toVbY(r.top - rr.top + r.height / 2),
       ),
     )
   }
 
-  const sameVb = vb.w === nextW && vb.h === nextH
   const samePaths =
     paths.value.length === next.length && paths.value.every((d, i) => d === next[i])
 
-  if (!sameVb) {
-    vb.w = nextW
-    vb.h = nextH
-  }
   if (!samePaths) {
     paths.value = next
   }
+  lanesReady.value = true
 }
 
 let resizeTimer: ReturnType<typeof setTimeout> | null = null
@@ -281,7 +289,10 @@ function onWindowResize() {
 
 onMounted(() => {
   measure()
-  requestAnimationFrame(() => measure())
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => measure())
+  })
+  void document.fonts?.ready.then(() => measure())
   window.addEventListener('resize', onWindowResize, { passive: true })
 })
 
@@ -299,13 +310,9 @@ onBeforeUnmount(() => {
   --hdf-border: #2a2f3a;
   --hdf-surface: #15181e;
 
-  position: relative;
-  width: 100%;
+  box-sizing: border-box;
   isolation: isolate;
   background: transparent;
-  /* Mobile-first: stacked funnel, no fixed aspect */
-  aspect-ratio: auto;
-  min-height: 0;
 }
 
 .hdf-svg {
@@ -316,6 +323,11 @@ onBeforeUnmount(() => {
   height: 100%;
   pointer-events: none;
   z-index: 0;
+  opacity: 0;
+}
+
+.hdf-svg--ready {
+  opacity: 1;
 }
 
 .hdf-path {
@@ -325,14 +337,14 @@ onBeforeUnmount(() => {
 
 .hdf-path--flow {
   opacity: 0.88;
-  /* Offset must be an integer multiple of (dash+gap)=7.5 so the loop is seamless.
+  /* Offset must be an integer multiple of (dash+gap)=10.5 so the loop is seamless.
      Absolute user-units (no pathLength) → identical dash size + px speed on every lane. */
-  animation: hdf-dash 0.85s linear infinite;
+  animation: hdf-dash 1.2s linear infinite;
 }
 
 @keyframes hdf-dash {
   to {
-    stroke-dashoffset: -7.5;
+    stroke-dashoffset: -10.5;
   }
 }
 
@@ -468,6 +480,7 @@ onBeforeUnmount(() => {
   border-radius: 50%;
   display: grid;
   place-items: center;
+  overflow: hidden;
   background: #0f1115;
   border: 1px solid rgba(232, 234, 239, 0.3);
   box-shadow: 0 0 18px rgba(56, 182, 255, 0.1);
@@ -475,7 +488,9 @@ onBeforeUnmount(() => {
 
 .hdf-hub-logo {
   width: 52%;
-  height: auto;
+  height: 52%;
+  max-width: 100%;
+  max-height: 100%;
   display: block;
   object-fit: contain;
 }
@@ -546,11 +561,30 @@ onBeforeUnmount(() => {
   }
 }
 
-/* Desktop: side-by-side with animated wire lanes */
+@media (max-width: 1023px) {
+  .hdf {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: auto;
+    min-height: 0;
+  }
+}
+
+/* Desktop: same visual as translate(2.75rem) scale(0.95), without a scale pop */
 @media (min-width: 1024px) {
   .hdf {
+    position: absolute;
+    left: 2.75rem;
+    top: 50%;
+    width: min(calc(118% * 0.95), calc(54rem * 0.95));
+    min-width: min(calc(118% * 0.95), calc(54rem * 0.95));
+    max-width: none;
+    height: auto;
+    margin: 0;
     aspect-ratio: 1280 / 560;
-    min-height: 260px;
+    min-height: calc(260px * 0.95);
+    transform: translateY(-50%);
   }
 
   .hdf-svg {

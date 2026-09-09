@@ -26,7 +26,7 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/login',
       callback: '/confirm',
-      exclude: ['/', '/login', '/signup', '/confirm', '/benchmarks'],
+      exclude: ['/', '/login', '/signup', '/confirm', '/benchmarks', '/privacy', '/terms'],
     },
   },
 
@@ -45,6 +45,8 @@ export default defineNuxtConfig({
   routeRules: {
     '/': { prerender: true },
     '/benchmarks': { prerender: true },
+    '/privacy': { prerender: true },
+    '/terms': { prerender: true },
     '/confirm': { ssr: false },
     '/api/stripe/webhook': {
       bodyParser: false,

@@ -1186,44 +1186,12 @@ onBeforeUnmount(() => {
   height: auto;
   max-height: none;
   margin-inline: auto;
-  animation: hero-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @media (min-width: 1024px) {
-  .hero-shot {
-    position: absolute;
+  .hero-visual > :deep(.hero-shot) {
     left: 0;
-    top: 50%;
-    width: min(118%, 54rem);
-    max-width: none;
-    max-height: none;
-    height: auto;
-    margin: 0;
-    transform: translate(-1.5rem, -50%) scale(0.95);
-    transform-origin: left center;
-    animation-name: hero-in-lg;
-  }
-}
-
-@keyframes hero-in {
-  from {
-    opacity: 0;
-    transform: translateY(16px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes hero-in-lg {
-  from {
-    opacity: 0;
-    transform: translate(-1.5rem, calc(-50% + 20px)) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-1.5rem, -50%) scale(0.95);
+    transform: translate(-1.5rem, -50%);
   }
 }
 
@@ -2236,8 +2204,7 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-copy,
-  .hero-shot {
+  .hero-copy {
     animation: none;
   }
 
@@ -2250,12 +2217,6 @@ onBeforeUnmount(() => {
   .hero-word-leave-to {
     opacity: 1;
     transform: none;
-  }
-
-  @media (min-width: 1024px) {
-    .hero-shot {
-      transform: translate(-1.5rem, -50%) scale(0.95);
-    }
   }
 
   .product-card:hover {

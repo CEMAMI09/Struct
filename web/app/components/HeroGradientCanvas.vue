@@ -178,6 +178,8 @@ function startWebGL() {
   })
   if (!gl) return
   glCtx = gl
+  gl.clearColor(0.06, 0.07, 0.08, 1)
+  gl.clear(gl.COLOR_BUFFER_BIT)
 
   const vs = compile(gl, gl.VERTEX_SHADER, VERT)
   const fs = compile(gl, gl.FRAGMENT_SHADER, FRAG)
@@ -217,6 +219,8 @@ function startWebGL() {
       canvas.width = w
       canvas.height = h
       glCtx.viewport(0, 0, w, h)
+      glCtx.clearColor(0.06, 0.07, 0.08, 1)
+      glCtx.clear(glCtx.COLOR_BUFFER_BIT)
     }
   }
 
@@ -228,18 +232,14 @@ function startWebGL() {
     if (!glCtx) return
     glCtx.uniform1f(uTime, (performance.now() - start) / 1000)
     glCtx.drawArrays(gl.TRIANGLES, 0, 6)
+    canvas.classList.add('hgc-canvas--ready')
     raf = requestAnimationFrame(tick)
   }
   raf = requestAnimationFrame(tick)
 }
 
 onMounted(() => {
-  const idle = window.requestIdleCallback
-  if (typeof idle === 'function') {
-    idle(() => startWebGL(), { timeout: 200 })
-  } else {
-    setTimeout(startWebGL, 0)
-  }
+  startWebGL()
 })
 
 onBeforeUnmount(() => {
@@ -291,5 +291,11 @@ onBeforeUnmount(() => {
   display: block;
   width: 100%;
   height: 100%;
+  background: #0f1214;
+  opacity: 0;
+}
+
+.hgc-canvas--ready {
+  opacity: 1;
 }
 </style>
