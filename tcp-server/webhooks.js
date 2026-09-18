@@ -1,3 +1,4 @@
+const { postWebhook } = require('./safeWebhook')
 /**
  * Fan-out parsed telemetry to user-configured webhook destinations.
  */
@@ -104,18 +105,13 @@ async function fireWebhook(dest, body) {
   try {
     const serialized = JSON.stringify(body)
     const signature = signWebhookBody(dest.signing_secret, serialized)
-    const res = await fetch(dest.url, {
-      method: 'POST',
-      headers: {
+    const res = await postWebhook(dest.url, serialized, {
         'content-type': 'application/json',
         'user-agent': 'Struct-Gateway/0.1',
         'x-struct-destination': dest.id,
         'x-struct-event': body.type,
         ...(signature ? { 'x-struct-signature': signature } : {}),
-      },
-      body: serialized,
-      signal: controller.signal,
-    })
+      }, controller.signal)
     if (!res.ok) {
       console.warn(`[struct] webhook ${dest.name} → HTTP ${res.status}`)
     } else {

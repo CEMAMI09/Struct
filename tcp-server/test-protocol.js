@@ -8,7 +8,7 @@ const {
 const { frameMac, verifyFrameMac } = require('./auth')
 
 const secret = 'a'.repeat(64)
-const keyId = 'testkeyid1234567'
+const keyId = '0123456789abcdef'
 
 const nonce = crypto.randomBytes(12)
 const payload = Buffer.from('0102030405', 'hex')

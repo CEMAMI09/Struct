@@ -2,19 +2,19 @@
   "name": "struct",
   "private": true,
   "version": "0.1.0",
-  "description": "Binary TCP struct ingestion micro-SaaS",
+  "description": "Authenticated binary telemetry gateway and device SDKs",
   "scripts": {
     "dev:web": "npm --prefix web run dev",
     "dev:tcp": "npm --prefix tcp-server run dev",
     "build:web": "npm --prefix web run build",
-    "start:tcp": "npm --prefix tcp-server run start"
-  },
-  "dependencies": {
-    "papaparse": "^5.5.4",
-    "xlsx": "^0.18.5"
+    "start:tcp": "npm --prefix tcp-server run start",
+    "test": "npm --prefix web test && npm --prefix tcp-server test && node tests/database.cjs && node tests/delivery.cjs && node tcp-server/test-delivery.js && node sdk/tests/test_vectors.cjs && node sdk/tests/test_udp.cjs",
+    "test:database": "node tests/database.cjs",
+    "test:sdk": "node sdk/tests/test_udp.cjs",
+    "test:protocol": "node sdk/tests/test_vectors.cjs",
+    "package:sdk": "python scripts/package-sdk.py"
   },
   "devDependencies": {
-    "@types/papaparse": "^5.5.2",
-    "vitest": "^4.1.10"
+    "@electric-sql/pglite": "^0.5.8"
   }
 }

@@ -1,4 +1,3 @@
-import Papa from 'papaparse'
 import {
   buildCsvTemplate,
   mapRecordsToBulkRows,
@@ -16,6 +15,8 @@ function extensionOf(file: File) {
 }
 
 async function parseCsvFile(file: File): Promise<BulkParseResult> {
+  if (import.meta.server) throw new Error('File imports run in the browser')
+  const { default: Papa } = await import('papaparse')
   const text = await file.text()
   const parsed = Papa.parse<Record<string, unknown>>(text, {
     header: true,
@@ -41,6 +42,7 @@ async function parseCsvFile(file: File): Promise<BulkParseResult> {
 }
 
 async function parseXlsxFile(file: File): Promise<BulkParseResult> {
+  if (import.meta.server) throw new Error('File imports run in the browser')
   const XLSX = await import('xlsx')
   const buffer = await file.arrayBuffer()
   const workbook = XLSX.read(buffer, { type: 'array' })
@@ -94,7 +96,8 @@ async function parseXlsxFile(file: File): Promise<BulkParseResult> {
     const cells = rows[i] || []
     const record: Record<string, unknown> = {}
     let empty = true
-    headers.forEach((header, idx) => {
+    headerCells.forEach((header, idx) => {
+      if (!header) return
       const value = String(cells[idx] ?? '').trim()
       record[header] = value
       if (value) empty = false
@@ -106,6 +109,7 @@ async function parseXlsxFile(file: File): Promise<BulkParseResult> {
 }
 
 export async function parseBulkUploadFile(file: File): Promise<BulkParseResult> {
+  if (file.size > 5 * 1024 * 1024) return { rows: [], errors: [], validDevices: [], fileErrors: ['File exceeds the 5 MB import limit.'] }
   const ext = extensionOf(file)
   if (!ext) {
     return {

@@ -13,6 +13,9 @@ alter table public.organizations
   add column if not exists stripe_item_id text,
   add column if not exists stripe_quantity integer not null default 0;
 
+-- Remove the text-tier policy dependency before changing the column type.
+-- The Scale policy is recreated below in this same migration.
+drop policy if exists "audit_logs_select_member" on public.audit_logs;
 alter table public.organizations
   alter column subscription_tier drop default;
 

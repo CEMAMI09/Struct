@@ -197,7 +197,8 @@ export function useBinaryParser() {
       false,
       ['sign'],
     )
-    const sig = await crypto.subtle.sign('HMAC', key, body)
+    // Web Crypto requires an ArrayBuffer-backed view; copy only the supplied bytes.
+    const sig = await crypto.subtle.sign('HMAC', key, new Uint8Array(body))
     return new Uint8Array(sig)
   }
 
@@ -211,6 +212,12 @@ export function useBinaryParser() {
   }) {
     const timestampSec = opts.timestampSec ?? Math.floor(Date.now() / 1000)
     const nonce = opts.nonce ?? crypto.getRandomValues(new Uint8Array(12))
+    if (!/^[0-9a-fA-F]{16}$/.test(opts.keyId)) throw new Error('Key ID must be 16 hex characters')
+    if (!/^[0-9a-fA-F]{64}$/.test(opts.secret)) throw new Error('API secret must be 64 hex characters')
+    if (!Number.isInteger(opts.schemaVersion) || opts.schemaVersion < 1 || opts.schemaVersion > 255) throw new Error('Schema version must be 1..255')
+    if (!Number.isInteger(timestampSec) || timestampSec < 0 || timestampSec > 0xffffffff) throw new Error('Invalid timestamp')
+    if (nonce.length !== 12) throw new Error('Nonce must be 12 bytes')
+    if (opts.payload.length + 66 > 1400) throw new Error('Frame exceeds 1400 bytes')
     const body = new Uint8Array(1 + 16 + 1 + 4 + 12 + opts.payload.length)
     const view = new DataView(body.buffer)
     body[0] = 2

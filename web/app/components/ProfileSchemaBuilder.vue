@@ -2,9 +2,9 @@
   <div class="space-y-4">
     <div class="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h3 class="text-sm font-semibold text-[#E8EAEF]">Packed struct layout</h3>
+        <h3 class="text-sm font-semibold text-[#E8EAEF]">Payload layout</h3>
         <p class="mt-0.5 font-mono text-[10px] text-[#8B93A7]">
-          sizeof = {{ byteLength }} bytes · identity field
+          Payload = {{ byteLength }} bytes · identity field
           <span class="text-[#38B6FF]">{{ identityField || '—' }}</span>
         </p>
       </div>
@@ -136,7 +136,7 @@
               :disabled="disabled"
               @input="
                 patchFlag(idx, bIdx, {
-                  bit: Number(($event.target as HTMLInputElement).value) | 0,
+                  bit: Number(($event.target as HTMLInputElement).value),
                 })
               "
             />
@@ -163,10 +163,13 @@
     </div>
 
     <div class="card shrink-0 p-4">
-      <p class="label mb-2">C++ preview</p>
+      <label class="label mb-2" for="profile-code-language">Encoder preview</label>
+      <select id="profile-code-language" v-model="codeLanguage" class="input mb-3">
+        <option v-for="language in CODE_LANGUAGES" :key="language">{{ language }}</option>
+      </select>
       <pre
         class="mono overflow-x-auto rounded-lg bg-[#0F1115] p-3 text-xs leading-relaxed text-[#38B6FF]"
-      >{{ cppPreviewText }}</pre>
+      >{{ codePreviewText }}</pre>
     </div>
   </div>
 </template>
@@ -174,6 +177,7 @@
 <script setup lang="ts">
 import type { FieldType, SchemaField } from '~/types'
 import { FIELD_TYPES, fieldByteLength } from '~/types'
+import { CODE_LANGUAGES, generateSchemaCode, type CodeLanguage } from '#shared/schemaCodegen'
 
 const props = defineProps<{
   modelValue: SchemaField[]
@@ -187,7 +191,7 @@ const emit = defineEmits<{
   'update:identityField': [string]
 }>()
 
-const { cppPreview } = useCppHeader()
+const codeLanguage = ref<CodeLanguage>('C')
 
 const byteLength = computed(() => {
   try {
@@ -197,9 +201,10 @@ const byteLength = computed(() => {
   }
 })
 
-const cppPreviewText = computed(() =>
-  cppPreview(props.modelValue, 1, byteLength.value),
-)
+const codePreviewText = computed(() => {
+  try { return generateSchemaCode(props.modelValue, 1, codeLanguage.value).source }
+  catch (error) { return error instanceof Error ? error.message : 'Complete the schema to preview its encoder.' }
+})
 
 function clampLength(n: number) {
   if (!Number.isFinite(n)) return 1

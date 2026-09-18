@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.16)
+project(struct_sdk C)
+add_library(struct_sdk STATIC src/struct_sdk.c src/struct_commands.c src/struct_queue.c)
+target_include_directories(struct_sdk PUBLIC src)
+target_compile_features(struct_sdk PUBLIC c_std_99)

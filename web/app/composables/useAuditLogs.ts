@@ -1,8 +1,11 @@
 import type { AuditLog } from '~/types'
 
-let auditInflight: Promise<void> | null = null
+const auditInflightByApp = new WeakMap<object, { promise: Promise<void> | null }>()
 
 export function useAuditLogs() {
+  const app = useNuxtApp()
+  if (!auditInflightByApp.has(app)) auditInflightByApp.set(app, { promise: null })
+  const inflight = auditInflightByApp.get(app)!
   const supabase = useSupabaseClient()
   const { currentOrgId, ensureOrganization, isEnterprise } = useOrganization()
 
@@ -12,8 +15,8 @@ export function useAuditLogs() {
   const loadedForOrg = useState<string | null>('audit-logs-loaded-org', () => null)
 
   async function fetchAuditLogs(opts?: { force?: boolean }) {
-    if (auditInflight && !opts?.force) {
-      return auditInflight
+    if (inflight.promise && !opts?.force) {
+      return inflight.promise
     }
 
     const run = async () => {
@@ -53,10 +56,11 @@ export function useAuditLogs() {
       }
     }
 
-    auditInflight = run().finally(() => {
-      auditInflight = null
+    const promise = run().finally(() => {
+      if (inflight.promise === promise) inflight.promise = null
     })
-    return auditInflight
+    inflight.promise = promise
+    return inflight.promise
   }
 
   return {

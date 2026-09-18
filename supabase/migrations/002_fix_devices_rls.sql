@@ -18,6 +18,10 @@ alter table public.devices
   alter column user_id set default auth.uid();
 
 -- Recreate clearer, role-scoped policies
+drop policy if exists "devices_select_own" on public.devices;
+drop policy if exists "devices_insert_own" on public.devices;
+drop policy if exists "devices_update_own" on public.devices;
+drop policy if exists "devices_delete_own" on public.devices;
 drop policy if exists "Users manage own devices" on public.devices;
 
 create policy "devices_select_own"
@@ -42,6 +46,10 @@ create policy "devices_delete_own"
   using (auth.uid() = user_id);
 
 -- schemas
+drop policy if exists "schemas_select_own" on public.schemas;
+drop policy if exists "schemas_insert_own" on public.schemas;
+drop policy if exists "schemas_update_own" on public.schemas;
+drop policy if exists "schemas_delete_own" on public.schemas;
 drop policy if exists "Users manage schemas of own devices" on public.schemas;
 
 create policy "schemas_select_own"

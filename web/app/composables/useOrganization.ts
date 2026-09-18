@@ -15,10 +15,12 @@ export interface OrgMemberRow {
 const STORAGE_KEY = 'struct.currentOrgId'
 
 /** In-flight dedupe for ensureOrganization across concurrent callers. */
-let ensureInflight: Promise<Organization | null> | null = null
-let membershipsInflight: Promise<void> | null = null
+const organizationInflightByApp = new WeakMap<object, { ensure: Promise<Organization | null> | null; memberships: Promise<void> | null }>()
 
 export function useOrganization() {
+  const app = useNuxtApp()
+  if (!organizationInflightByApp.has(app)) organizationInflightByApp.set(app, { ensure: null, memberships: null })
+  const inflight = organizationInflightByApp.get(app)!
   const supabase = useSupabaseClient()
   const user = useSupabaseUser()
 
@@ -136,8 +138,8 @@ export function useOrganization() {
   }
 
   async function fetchMemberships(opts?: { force?: boolean }) {
-    if (membershipsInflight && !opts?.force) {
-      return membershipsInflight
+    if (inflight.memberships && !opts?.force) {
+      return inflight.memberships
     }
 
     const run = async () => {
@@ -196,10 +198,10 @@ export function useOrganization() {
       }
     }
 
-    membershipsInflight = run().finally(() => {
-      membershipsInflight = null
+    inflight.memberships = run().finally(() => {
+      inflight.memberships = null
     })
-    return membershipsInflight
+    return inflight.memberships
   }
 
   /**
@@ -217,8 +219,8 @@ export function useOrganization() {
       return currentOrganization.value
     }
 
-    if (ensureInflight && !opts?.force) {
-      return ensureInflight
+    if (inflight.ensure && !opts?.force) {
+      return inflight.ensure
     }
 
     const run = async (): Promise<Organization | null> => {
@@ -249,10 +251,10 @@ export function useOrganization() {
       return currentOrganization.value
     }
 
-    ensureInflight = run().finally(() => {
-      ensureInflight = null
+    inflight.ensure = run().finally(() => {
+      inflight.ensure = null
     })
-    return ensureInflight
+    return inflight.ensure
   }
 
   function clearOrganizationState() {

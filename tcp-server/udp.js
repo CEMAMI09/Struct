@@ -24,13 +24,14 @@ const UDP_ENDPOINT_TTL_MS = Number(process.env.UDP_ENDPOINT_TTL_MS || 5 * 60_000
  * @param {{ port?: number }} [opts]
  */
 function startUdpServer(supabase, opts = {}) {
-  const port = Number(opts.port || process.env.UDP_PORT || 8081)
+  const port = Number(opts.port ?? process.env.UDP_PORT ?? 8081)
   const socket = dgram.createSocket('udp4')
 
   /** @type {Map<string, UdpEndpoint>} */
   const endpoints = new Map()
 
   function rememberEndpoint(deviceId, rinfo) {
+    if (endpoints.size >= 4096) endpoints.delete(endpoints.keys().next().value)
     endpoints.set(deviceId, {
       address: rinfo.address,
       port: rinfo.port,
@@ -97,6 +98,11 @@ function startUdpServer(supabase, opts = {}) {
         },
       })
 
+      if (result.receipt) {
+        socket.send(result.receipt, rinfo.port, rinfo.address, (err) => {
+          if (err) console.warn(`[struct] UDP receipt failed: ${err.message}`)
+        })
+      }
       if (result.device) {
         rememberEndpoint(result.device.id, rinfo)
       }

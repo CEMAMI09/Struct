@@ -1,10 +1,11 @@
 import type { Destination, RoutingRule, WebhookEventType } from '~/types'
 
-import type { Destination, RoutingRule, WebhookEventType } from '~/types'
-
-let destinationsInflight: Promise<void> | null = null
+const destinationsInflightByApp = new WeakMap<object, { promise: Promise<void> | null }>()
 
 export function useDestinations() {
+  const app = useNuxtApp()
+  if (!destinationsInflightByApp.has(app)) destinationsInflightByApp.set(app, { promise: null })
+  const inflight = destinationsInflightByApp.get(app)!
   const supabase = useSupabaseClient()
   const user = useSupabaseUser()
   const { currentOrgId, requireOrgId, requireWrite, ensureOrganization } = useOrganization()
@@ -23,8 +24,8 @@ export function useDestinations() {
   async function fetchDestinations(opts?: { force?: boolean }) {
     if (!(await hasAuth())) return
 
-    if (destinationsInflight && !opts?.force) {
-      return destinationsInflight
+    if (inflight.promise && !opts?.force) {
+      return inflight.promise
     }
 
     const run = async () => {
@@ -56,10 +57,11 @@ export function useDestinations() {
       }
     }
 
-    destinationsInflight = run().finally(() => {
-      destinationsInflight = null
+    const promise = run().finally(() => {
+      if (inflight.promise === promise) inflight.promise = null
     })
-    return destinationsInflight
+    inflight.promise = promise
+    return inflight.promise
   }
 
   function invalidateDestinationCache() {

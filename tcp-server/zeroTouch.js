@@ -52,12 +52,13 @@ async function lookupProfileByFleetKeyId(supabase, fleetKeyId) {
 function getProfileSecret(profile, secretCache) {
   const cacheKey = `profile:${profile.id}`
   const cached = secretCache.get(cacheKey)
-  if (cached) return cached
+  if (cached?.ciphertext === profile.fleet_secret_encrypted) return cached.secret
   if (!profile.fleet_secret_encrypted) {
     throw new Error(`Profile "${profile.name}" is missing fleet credentials`)
   }
   const secret = decryptSecret(profile.fleet_secret_encrypted)
-  secretCache.set(cacheKey, secret)
+  if (secretCache.size >= 4096) secretCache.delete(secretCache.keys().next().value)
+  secretCache.set(cacheKey, { ciphertext: profile.fleet_secret_encrypted, secret })
   return secret
 }
 

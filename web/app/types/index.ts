@@ -195,7 +195,7 @@ export interface AuditLog {
   created_at: string
 }
 
-export type CommandStatus = 'pending' | 'claimed' | 'sent' | 'acknowledged' | 'delivered' | 'failed'
+export type CommandStatus = 'pending' | 'claimed' | 'sent' | 'received' | 'executed' | 'rejected' | 'expired' | 'unknown' | 'acknowledged' | 'delivered' | 'failed'
 
 export interface PendingCommand {
   id: string

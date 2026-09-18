@@ -1,7 +1,7 @@
 /**
  * Downlink delivery with claim/send/ack lifecycle (Protocol v2).
  */
-const { buildDownlinkFrame } = require('./protocol')
+
 
 const GATEWAY_ID =
   process.env.TCP_GATEWAY_ID ||
@@ -21,29 +21,18 @@ async function claimPendingCommands(supabase, deviceId, limit = 8) {
   return data || []
 }
 
-function writeDownlinkFrame(socket, commandId, packedHex) {
-  const commandUuid = Buffer.alloc(16)
-  if (typeof commandId === 'string') {
-    const hex = commandId.replace(/-/g, '')
-    if (hex.length !== 32) {
-      throw new Error(`Invalid command_id: ${commandId}`)
-    }
-    Buffer.from(hex, 'hex').copy(commandUuid)
-  } else if (Buffer.isBuffer(commandId)) {
-    commandId.copy(commandUuid, 0, 0, 16)
-  } else {
-    throw new Error('command_id must be uuid string or 16-byte buffer')
-  }
-
-  const frame = buildDownlinkFrame(commandUuid, packedHex)
-  return new Promise((resolve, reject) => {
-    socket.write(frame, (err) => {
-      if (err) reject(err)
-      else resolve()
-    })
+function writeDownlinkFrame(socket, command, device) {
+  const hex = String(command.command_id).replace(/-/g, '')
+  if (!/^[0-9a-fA-F]{32}$/.test(hex) || !/^(?:[0-9a-fA-F]{2})+$/.test(command.packed_hex)) throw new Error('Invalid command bytes')
+  const inner = require('../sdk/js/commands.cjs').buildCommand({
+    keyId: device.key_id, secret: require('./auth').decryptSecret(device.api_secret_encrypted),
+    commandId: Buffer.from(hex, 'hex'), payload: Buffer.from(command.packed_hex, 'hex'),
+    issued: Math.floor(new Date(command.created_at).getTime()/1000),
+    expires: Math.floor(new Date(command.expires_at).getTime()/1000),
   })
+  const prefix = Buffer.alloc(2); prefix.writeUInt16LE(inner.length)
+  return new Promise((resolve, reject) => socket.write(Buffer.concat([prefix,inner]), err => err ? reject(err) : resolve()))
 }
-
 async function markSent(supabase, ids) {
   if (!ids.length) return
   const { error } = await supabase
@@ -54,6 +43,8 @@ async function markSent(supabase, ids) {
       lease_expires_at: new Date(Date.now() + 30_000).toISOString(),
     })
     .in('id', ids)
+    .eq('status', 'claimed')
+    .eq('claimed_by', GATEWAY_ID)
 
   if (error) {
     console.warn(`[struct] mark sent failed: ${error.message}`)
@@ -61,13 +52,15 @@ async function markSent(supabase, ids) {
 }
 
 async function deliverPendingDownlinks(supabase, socket, deviceId) {
+  const { data: device, error } = await supabase.from('devices').select('key_id,api_secret_encrypted').eq('id',deviceId).maybeSingle()
+  if (error || !device) return 0
   const pending = await claimPendingCommands(supabase, deviceId)
   if (!pending.length) return 0
 
   const sent = []
   for (const cmd of pending) {
     try {
-      await writeDownlinkFrame(socket, cmd.command_id, cmd.packed_hex)
+      await writeDownlinkFrame(socket, cmd, device)
       sent.push(cmd.id)
       console.log(
         `[struct] ↓ downlink ${cmd.command_type} (${cmd.command_id}) → device ${deviceId.slice(0, 8)}…`,
@@ -77,12 +70,15 @@ async function deliverPendingDownlinks(supabase, socket, deviceId) {
       await supabase
         .from('pending_commands')
         .update({
-          status: 'pending',
+          // A write error cannot prove that the peer received no bytes.
+          status: 'sent',
           last_error: err.message,
           next_attempt_at: new Date(Date.now() + 5_000).toISOString(),
-          lease_expires_at: null,
+          lease_expires_at: new Date(Date.now() + 5_000).toISOString(),
         })
         .eq('id', cmd.id)
+        .eq('status', 'claimed')
+        .eq('claimed_by', GATEWAY_ID)
       break
     }
   }

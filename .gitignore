@@ -12,3 +12,8 @@ tcp-server/node_modules/
 web/node_modules/
 web/.nuxt/
 web/.output/
+
+# Local SDK test artifacts
+work/
+__pycache__/
+*.pyc

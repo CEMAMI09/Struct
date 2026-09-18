@@ -1,0 +1,9 @@
+{
+  "name": "@struct/device",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Struct Node.js device SDK",
+  "main": "index.cjs",
+  "engines": { "node": ">=20" },
+  "files": ["index.cjs", "protocol.cjs"]
+}

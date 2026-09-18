@@ -48,6 +48,22 @@
       </section>
 
       <section class="method-section">
+        <h2>Encryption and delivery confirmation</h2>
+        <p>
+          For the same 9-byte sample, optional encryption adds 32 bytes, making the
+          uplink 107 bytes. Confirmed UDP adds a 69-byte signed storage receipt.
+          With minimum IPv4 and UDP headers, one successful exchange is 200 bytes
+          without encryption or 232 bytes with encryption, before link-layer
+          overhead. These are format calculations, not packet captures.
+        </p>
+        <p>
+          Lost packets or receipts can add retransmissions. Radio registration,
+          time synchronization, signal quality, and modem tail time also affect
+          energy use. Smaller payloads alone do not establish battery savings.
+        </p>
+      </section>
+
+      <section class="method-section">
         <h2>HTTPS / TLS cold-uplink example</h2>
         <p>
           The ~5.2&nbsp;KB HTTPS figure is an <strong>approximate cold TLS + HTTP POST</strong>
@@ -56,7 +72,7 @@
         </p>
         <p>
           <span class="mono">100 / 5200 ≈ 1.9%</span> remaining, which is the source of
-          “up to 99% less transmitted data per cold uplink.” That ratio does
+          “~98% less transmitted data per cold uplink” in the illustrative estimate. That ratio does
           <strong>not</strong> mean the packed struct is 99% smaller than the JSON document.
           The JSON body for this schema is on the order of tens of bytes; most of the 5.2&nbsp;KB is
           session/handshake overhead.

@@ -49,9 +49,12 @@ function definitionsEqual(a: SchemaField[], b: SchemaField[]) {
   return JSON.stringify(a) === JSON.stringify(b)
 }
 
-let devicesInflight: Promise<void> | null = null
+const devicesInflightByApp = new WeakMap<object, { promise: Promise<void> | null }>()
 
 export function useDevices() {
+  const app = useNuxtApp()
+  if (!devicesInflightByApp.has(app)) devicesInflightByApp.set(app, { promise: null })
+  const inflight = devicesInflightByApp.get(app)!
   const supabase = useSupabaseClient()
   const user = useSupabaseUser()
   const { currentOrgId, requireOrgId, requireWrite, ensureOrganization } = useOrganization()
@@ -73,8 +76,8 @@ export function useDevices() {
   async function fetchDevices(opts?: { force?: boolean }) {
     if (!(await hasAuth())) return
 
-    if (devicesInflight && !opts?.force) {
-      return devicesInflight
+    if (inflight.promise && !opts?.force) {
+      return inflight.promise
     }
 
     const run = async () => {
@@ -142,10 +145,10 @@ export function useDevices() {
       }
     }
 
-    devicesInflight = run().finally(() => {
-      devicesInflight = null
+    inflight.promise = run().finally(() => {
+      inflight.promise = null
     })
-    return devicesInflight
+    return inflight.promise
   }
 
   function invalidateDeviceCache() {
@@ -378,93 +381,20 @@ export function useDevices() {
 
   async function saveSchema(deviceId: string, definition: SchemaField[]) {
     requireWrite()
-    const existing = schemas.value[deviceId]
-    const prevDef = existing?.schema_definition || []
-    const prevVer = existing?.version || 1
-    const device = devices.value.find((d) => d.id === deviceId)
-    const organization_id = existing?.organization_id || device?.organization_id || requireOrgId()
-
-    if (existing && definitionsEqual(prevDef, definition)) {
-      return existing
-    }
-
-    const shouldBump = prevDef.length > 0
-    const nextVersion = shouldBump ? prevVer + 1 : prevVer || 1
-    if (nextVersion > 255) {
-      throw new Error('Schema version limit (255) reached — create a new device key')
-    }
-
-    if (existing) {
-      const { data, error: err } = await supabase
-        .from('schemas')
-        .update({
-          schema_definition: definition,
-          version: nextVersion,
-          organization_id,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('device_id', deviceId)
-        .select()
-        .single()
-      if (err) throw err
-
-      const { data: verRow, error: vErr } = await supabase
-        .from('schema_versions')
-        .upsert(
-          {
-            device_id: deviceId,
-            version: nextVersion,
-            schema_definition: definition,
-          },
-          { onConflict: 'device_id,version' },
-        )
-        .select()
-        .single()
-      if (vErr) throw vErr
-
-      const normalized = normalizeSchema(data)
-      schemas.value = { ...schemas.value, [deviceId]: normalized }
-
-      const list = [...(schemaVersions.value[deviceId] || [])]
-      const idx = list.findIndex((v) => v.version === nextVersion)
-      if (idx >= 0) list[idx] = verRow as SchemaVersion
-      else list.push(verRow as SchemaVersion)
-      list.sort((a, b) => a.version - b.version)
-      schemaVersions.value = { ...schemaVersions.value, [deviceId]: list }
-
-      return normalized
-    }
-
-    const { data, error: err } = await supabase
-      .from('schemas')
-      .insert({
-        device_id: deviceId,
-        organization_id,
-        schema_definition: definition,
-        version: nextVersion,
-      })
-      .select()
-      .single()
+    const expectedVersion = schemas.value[deviceId]?.version || 1
+    const { data, error: err } = await supabase.rpc('publish_device_schema', {
+      p_device_id: deviceId,
+      p_definition: definition,
+      p_expected_version: expectedVersion,
+    })
     if (err) throw err
-
-    const { data: verRow, error: vErr } = await supabase
-      .from('schema_versions')
-      .insert({
-        device_id: deviceId,
-        version: nextVersion,
-        schema_definition: definition,
-      })
-      .select()
-      .single()
-    if (vErr) throw vErr
-
-    const normalized = normalizeSchema(data)
-    schemas.value = { ...schemas.value, [deviceId]: normalized }
-    schemaVersions.value = {
-      ...schemaVersions.value,
-      [deviceId]: [verRow as SchemaVersion],
-    }
-    return normalized
+    const saved = normalizeSchema(Array.isArray(data) ? data[0] : data)
+    schemas.value = { ...schemas.value, [deviceId]: saved }
+    const { data: versions, error: versionError } = await supabase.from('schema_versions')
+      .select('*').eq('device_id', deviceId).order('version', { ascending: true })
+    if (versionError) throw versionError
+    schemaVersions.value = { ...schemaVersions.value, [deviceId]: (versions || []) as SchemaVersion[] }
+    return saved
   }
 
   function subscribePresence() {

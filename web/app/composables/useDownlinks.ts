@@ -37,7 +37,10 @@ function packDownlinkBytes(
   const type = commandType.toLowerCase()
 
   if (type === 'set_interval') {
-    const secs = Number(payload.interval_sec ?? payload.seconds ?? 0) >>> 0
+    const secs = Number(payload.interval_sec ?? payload.seconds)
+    if (!Number.isInteger(secs) || secs < 1 || secs > 0xffffffff) {
+      throw new Error('Interval must be a whole number from 1 to 4294967295 seconds')
+    }
     const out = new Uint8Array(5)
     out[0] = 0x01
     new DataView(out.buffer).setUint32(1, secs, true)
@@ -49,6 +52,7 @@ function packDownlinkBytes(
   }
 
   // custom hex
+  if (type !== 'custom') throw new Error('Unsupported command type')
   const hex = String(payload.hex || '').replace(/\s+/g, '')
   if (!/^[0-9a-fA-F]*$/.test(hex) || hex.length % 2 !== 0) {
     throw new Error('Custom command hex must be an even-length hex string')
@@ -116,7 +120,6 @@ export function useDownlinks() {
         command_type: commandType,
         payload,
         packed_hex,
-        status: 'pending',
       })
       .select()
       .single()

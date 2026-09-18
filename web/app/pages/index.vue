@@ -200,7 +200,7 @@
             <span class="text-[#38B6FF]">Get the struct.</span>
           </h2>
           <p class="landing-body mt-5">
-            Define your fields and Struct generates the packed C++ layout. No account required to
+            Define your fields and generate a C, C++, JavaScript, Python, Rust, or Arduino encoder. No account required to
             try it.
           </p>
           <NuxtLink to="/signup" class="btn-primary mt-8 inline-flex px-6 py-3 text-sm">
@@ -253,7 +253,9 @@
 
             <div class="sandbox-preview">
               <div class="flex items-center justify-between gap-3">
-                <p class="debug-label mb-0">C++ preview</p>
+                <select v-model="sandboxLanguage" aria-label="Encoder language" class="input w-auto text-xs">
+                  <option v-for="lang in CODE_LANGUAGES" :key="lang">{{ lang }}</option>
+                </select>
                 <button
                   type="button"
                   class="btn-ghost px-3 py-1 text-[10px]"
@@ -262,6 +264,7 @@
                   {{ sandboxCopied ? 'Copied' : 'Copy' }}
                 </button>
               </div>
+              <a href="/sdk/struct-sdk.zip" download class="text-xs text-[#38B6FF] underline">Download device SDK and integration guide</a>
               <pre class="sandbox-code font-mono">{{ sandboxCpp }}</pre>
             </div>
           </div>
@@ -581,17 +584,15 @@
                   <span>online</span><strong>true</strong><em>boolean</em>
                 </div>
               </div>
-              <p class="debug-label mt-6">Raw wire frame · 23 bytes</p>
+              <p class="debug-label mt-6">Raw payload · 6 bytes</p>
               <div class="hex-block font-mono">
-                <span class="hex-key">61 38 66 32</span> 63 39 65 31<br />
-                34 64 37 62 35 30 61 33<br />
-                <span class="hex-version">03</span> <span class="hex-data">00 00 91 42 2d 01</span>
+                <span class="hex-data">00 00 91 42 2d 01</span>
               </div>
             </div>
             <div class="debug-pane debug-pane--result">
               <div class="flex items-center justify-between">
                 <p class="debug-label">Parsed output</p>
-                <span class="parse-ok">VALID FRAME</span>
+                <span class="parse-ok">DECODED PAYLOAD</span>
               </div>
               <pre class="json-block font-mono"><span class="json-brace">{</span>
   <span class="json-key">"temperature"</span>: <span class="json-value">72.5</span>,
@@ -622,8 +623,7 @@
             </h2>
           </div>
           <p class="landing-body max-w-md">
-            Every uplink is authenticated with HMAC-SHA256. Encryption, replay checks, organization
-            isolation, audit logs, and downlinks depend on plan.
+            Every uplink has HMAC authentication and replay protection. Organization isolation applies on every plan. Encryption, audit logs, and downlinks depend on plan.
           </p>
         </div>
 
@@ -654,7 +654,7 @@
             <div class="security-icon">RPLY</div>
             <h3 class="security-title">Replay protection</h3>
             <p class="security-copy">
-              Timestamps and stored nonces reject stale or repeated frames.
+              Timestamps reject stale frames. Atomic nonce tracking prevents duplicate telemetry and lets exact retries receive the same storage confirmation.
             </p>
           </article>
 
@@ -775,7 +775,7 @@
           Try Struct with one device.
         </h2>
         <p class="landing-body mt-4">
-          Create a device, generate its C++ header, send a test packet, and watch the parsed
+          Create a device, download its payload encoder and the SDK, send a test packet, and watch the parsed
           telemetry appear in the dashboard.
         </p>
         <NuxtLink to="/signup" class="btn-primary mt-8 inline-flex px-8 py-3.5">
@@ -845,7 +845,8 @@ import type { ScalarFieldType, SchemaField } from '~/types'
 definePageMeta({ layout: false })
 
 const user = useSupabaseUser()
-const { cppPreview, schemaByteLength } = useCppHeader()
+import { CODE_LANGUAGES, generateSchemaCode, type CodeLanguage } from '#shared/schemaCodegen'
+const sandboxLanguage = ref<CodeLanguage>('C')
 
 useSeoMeta({
   title: 'Struct — Binary telemetry gateway for microcontrollers',
@@ -938,7 +939,7 @@ const compatLogos = [
 const trustStats = [
   { value: '~100 B', label: 'Authenticated example uplink' },
   { value: '0', label: 'Heap allocations in the packing path' },
-  { value: '5', label: 'Packed field types' },
+  { value: '6', label: 'Packed field types' },
 ]
 
 const mathCards: {
@@ -949,10 +950,10 @@ const mathCards: {
 }[] = [
   {
     label: 'Cold-uplink data',
-    winLead: 'Up to 99%',
+    winLead: '~98%',
     winTail: 'less transmitted data',
     winNote:
-      '~100 B authenticated Struct UDP frame vs ~5.2 KB cold HTTPS/TLS in this test.',
+      'Illustrative estimate: ~100 B Struct UDP uplink vs ~5.2 KB cold HTTPS/TLS. Not a measured benchmark; excludes receipts and retries.',
   },
   {
     label: 'Heap allocations',
@@ -1055,9 +1056,10 @@ const sandboxSchemaFields = computed<SchemaField[]>(() =>
   })),
 )
 
-const sandboxCpp = computed(() =>
-  cppPreview(sandboxSchemaFields.value, 1, schemaByteLength(sandboxSchemaFields.value)),
-)
+const sandboxCpp = computed(() => {
+  try { return generateSchemaCode(sandboxSchemaFields.value, 1, sandboxLanguage.value).source }
+  catch (e: any) { return e.message }
+})
 
 async function copySandboxCode() {
   try {

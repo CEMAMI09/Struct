@@ -1,3 +1,4 @@
+if (require.main === module) require('dotenv').config()
 /**
  * Struct TCP + UDP Ingestion Engine — Protocol v2 only.
  *
@@ -13,7 +14,6 @@
  * UDP: one authenticated frame per datagram (no handshake tax).
  */
 
-require('dotenv').config()
 const net = require('net')
 const { createClient } = require('@supabase/supabase-js')
 const { TYPE_SIZES, parserSource } = require('./parser-native')
@@ -32,25 +32,12 @@ const {
 } = require('./protocol')
 const {
   processFrame,
-  lookupDeviceByKeyId,
-  resolveSchemaDefinition,
-  payloadRegionLength,
+  expectedFrameLength,
+  MAX_FRAME_BYTES,
 } = require('./ingest')
 const { startUdpServer } = require('./udp')
 
-const PORT = Number(process.env.TCP_PORT || 8080)
-const SUPABASE_URL = process.env.SUPABASE_URL
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  console.error('[struct] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in env')
-  process.exit(1)
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false },
-})
-
+function createTcpServer(supabase) {
 /** @type {Map<string, import('net').Socket>} */
 const liveSockets = new Map()
 
@@ -69,9 +56,18 @@ const server = net.createServer((socket) => {
   let buffer = Buffer.alloc(0)
   let boundDeviceId = null
   let boundDevice = null
+  let boundKeyId = null
   let connectedEventSent = false
 
+  socket.setTimeout(30_000, () => socket.destroy())
   socket.on('data', async (chunk) => {
+    // EventEmitter does not await async listeners. Pause before the first await
+    // so fragmented/coalesced TCP data cannot race another frame processor.
+    socket.pause()
+    if (buffer.length + chunk.length > 65536 + MAX_FRAME_BYTES) {
+      socket.destroy()
+      return
+    }
     buffer = Buffer.concat([buffer, chunk])
 
     try {
@@ -84,30 +80,9 @@ const server = net.createServer((socket) => {
           return
         }
 
-        let frameLen = V2_ACK_LEN + HMAC_LEN
-        if (header.schemaVersion !== 0) {
-          const device = await lookupDeviceByKeyId(supabase, header.keyId)
-          if (!device) {
-            console.warn(`[struct] unknown key_id from ${remote}: ${JSON.stringify(header.keyId)}`)
-            buffer = Buffer.alloc(0)
-            socket.end()
-            return
-          }
-
-          const schemaDef = await resolveSchemaDefinition(
-            supabase,
-            device,
-            header.schemaVersion,
-          )
-          if (!schemaDef || !Array.isArray(schemaDef) || schemaDef.length === 0) {
-            console.warn(`[struct] no schema v${header.schemaVersion} for device ${device.name}`)
-            buffer = Buffer.alloc(0)
-            socket.end()
-            return
-          }
-
-          frameLen = V2_HEADER_LEN + payloadRegionLength(device, schemaDef) + HMAC_LEN
-        }
+        if (header.protocol !== 2) throw new Error('Confirmed telemetry requires UDP')
+        const frameLen = await expectedFrameLength(supabase, header)
+        if (!frameLen || frameLen > MAX_FRAME_BYTES) throw new Error('Unknown or oversized schema')
 
         if (buffer.length < frameLen) break
 
@@ -122,6 +97,7 @@ const server = net.createServer((socket) => {
           continue
         }
 
+        if (boundKeyId && header.keyId !== boundKeyId) throw new Error('One key per TCP connection')
         const result = await processFrame(frame, {
           transport: 'tcp',
           supabase,
@@ -133,7 +109,9 @@ const server = net.createServer((socket) => {
           },
         })
 
-        if (result.device) {
+        if (boundDeviceId && result.device?.id !== boundDeviceId) throw new Error('One device per TCP connection')
+        if (result.device && !socket.destroyed) {
+          boundKeyId = header.keyId
           boundDeviceId = result.device.id
           boundDevice = result.device
           if (!connectedEventSent) {
@@ -156,6 +134,9 @@ const server = net.createServer((socket) => {
     } catch (err) {
       console.error(`[struct] error from ${remote}:`, err.message)
       buffer = Buffer.alloc(0)
+      socket.destroy()
+    } finally {
+      if (!socket.destroyed) socket.resume()
     }
   })
 
@@ -207,20 +188,25 @@ server.on('error', (err) => {
   console.error('[struct] server error:', err.message)
 })
 
-server.listen(PORT, () => {
-  console.log(`[struct] TCP ingestion listening on :${PORT}`)
-  console.log(`[struct] type sizes: ${JSON.stringify(TYPE_SIZES)}`)
-  console.log(`[struct] parser backend: ${parserSource}`)
-  console.log('[struct] protocol: v2 authenticated frames only')
-  startRateLimitCleanup()
-  subscribeDownlinkRealtime()
-  startUdpServer(supabase)
-})
+return { server, liveSockets, subscribeDownlinkRealtime }
+}
 
-process.on('uncaughtException', (err) => {
-  console.error('[struct] uncaughtException (kept alive):', err.message)
-})
+function start() {
+  require('dotenv').config()
+  const url = process.env.SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
+  const supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+  const { server, subscribeDownlinkRealtime } = createTcpServer(supabase)
+  server.listen(Number(process.env.TCP_PORT || 8080), () => {
+    console.log(`[struct] TCP ingestion listening on :${server.address().port}`)
+    console.log(`[struct] parser backend: ${parserSource}`)
+    startRateLimitCleanup()
+    subscribeDownlinkRealtime()
+    startUdpServer(supabase)
+    require('./outbox').startOutbox(supabase)
+  })
+}
 
-process.on('unhandledRejection', (err) => {
-  console.error('[struct] unhandledRejection (kept alive):', err?.message || err)
-})
+module.exports = { createTcpServer }
+if (require.main === module) start()

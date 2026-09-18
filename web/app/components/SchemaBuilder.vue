@@ -2,8 +2,8 @@
   <div class="flex min-h-full flex-col gap-4">
     <div class="flex shrink-0 flex-wrap items-end gap-2 sm:gap-3">
       <div class="min-w-0 w-full flex-1 sm:min-w-[180px]">
-        <label class="label">Device</label>
-        <select v-model="selectedDeviceId" class="input" :disabled="!devices.length">
+        <label class="label" for="schema-device">Device</label>
+        <select id="schema-device" v-model="selectedDeviceId" class="input" :disabled="!devices.length">
           <option disabled value="">
             {{ devices.length ? 'Select device' : 'No devices' }}
           </option>
@@ -20,10 +20,10 @@
         type="button"
         class="btn-ghost w-full sm:w-auto"
         :disabled="!canDownload"
-        title="Download ESP32 .h with packed struct + schema version"
+        title="Save schema changes before downloading an encoder"
         @click="downloadHeader"
       >
-        Download C++ Header
+        Download {{ codeLanguage }} encoder
       </button>
     </div>
 
@@ -40,8 +40,8 @@
           <div class="min-w-0 flex-1">
             <p class="text-sm font-semibold text-[#E8EAEF]">Enable ChaCha20 Edge Encryption</p>
             <p class="mt-1 text-xs leading-relaxed text-[#8B93A7]">
-              Scramble the packed payload on-device without TLS handshake overhead. Struct
-              descrambles at the gateway before JSON routing. Encrypted frames include a
+              Encrypt the packed payload on-device with ChaCha20-Poly1305. Struct
+              authenticates and decrypts it at the gateway before JSON routing. Encrypted frames include a
               4-byte unix timestamp (replay protection).
             </p>
             <p v-if="!canUseEncryption" class="mt-2 text-xs text-amber-300">
@@ -54,6 +54,7 @@
             class="relative h-7 w-12 shrink-0 rounded-full transition"
             :class="encryptionOn ? 'bg-[#38B6FF]' : 'bg-[#2A2F3A]'"
             :aria-pressed="encryptionOn"
+            aria-label="Enable payload encryption"
             :disabled="togglingEnc || !canWrite || (!canUseEncryption && !encryptionOn)"
             @click="onToggleEncryption"
           >
@@ -83,7 +84,7 @@
           </div>
           <pre class="mono overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-[#0F1115] p-3 text-xs text-[#38B6FF]">{{ selectedDevice.encryption_key }}</pre>
           <p class="mt-2 font-mono text-[10px] text-[#8B93A7]">
-            Wire: [16B api_key][1B version][12B nonce][4B ts + struct ciphertext][16B tag]
+            Wire: [protocol][16B key_id][schema][4B ts][12B nonce][12B encryption nonce][4B ts + struct ciphertext][16B tag][32B HMAC]
           </p>
         </div>
         <p v-if="encMsg" class="mt-3 text-xs" :class="encErr ? 'text-red-400' : 'text-[#38B6FF]'">
@@ -101,7 +102,7 @@
             </p>
           </div>
           <p class="font-mono text-[10px] text-[#8B93A7]">
-            sizeof = {{ byteLength }} bytes
+            payload = {{ byteLength }} bytes
           </p>
         </div>
 
@@ -139,6 +140,7 @@
             <div class="grid grid-cols-1 items-center gap-2 sm:grid-cols-[1fr_140px_40px]">
               <input
                 v-model="field.name"
+                :aria-label="`Field ${idx + 1} name`"
                 class="input mono"
                 placeholder="field_name"
                 pattern="[A-Za-z_][A-Za-z0-9_]*"
@@ -146,6 +148,7 @@
               />
               <select
                 :value="field.type"
+                :aria-label="`Field ${idx + 1} type`"
                 class="input"
                 :disabled="!canWrite"
                 @change="onTypeChange(idx, ($event.target as HTMLSelectElement).value)"
@@ -247,16 +250,25 @@
 
       <div class="card shrink-0 p-4">
         <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <p class="label mb-0">C++ preview</p>
+          <p class="label mb-0">Encoder preview</p>
           <button
             type="button"
             class="btn-ghost py-1 text-[10px]"
             :disabled="!canDownload"
             @click="downloadHeader"
           >
-            Download .h
+            Download encoder
           </button>
         </div>
+        <div class="mb-3 flex flex-wrap items-center gap-3">
+          <label for="encoder-language" class="label mb-0">Payload encoder</label>
+          <select id="encoder-language" v-model="codeLanguage" class="input w-auto">
+            <option v-for="language in CODE_LANGUAGES" :key="language">{{ language }}</option>
+          </select>
+          <span v-if="dirty" class="text-xs text-amber-300">Preview only — save before downloading.</span>
+        </div>
+        <p class="mb-3 text-xs text-[#8B93A7]">C, C++ and Arduino encoders work with the Struct C SDK. JavaScript and Python have UDP clients; Rust exports a payload encoder. char fields use fixed raw bytes.</p>
+        <p class="mb-3 text-xs text-[#8B93A7]">Send once to minimize radio time, or opt into a signed storage receipt with a fixed retry budget. A timeout means delivery is unknown.</p>
         <pre class="mono overflow-x-auto rounded-lg bg-[#0c0d10] p-3 text-xs leading-relaxed text-[#c5cad3]">{{ cppPreviewText }}</pre>
         <p class="mt-2 text-[10px] leading-relaxed text-[#8B93A7]">
           Changing a field type (e.g. int32 → float32) publishes a new schema version.
@@ -265,7 +277,11 @@
         </p>
       </div>
 
-      <p v-if="message" class="text-xs" :class="error ? 'text-red-400' : 'text-[#38B6FF]'">
+      <div class="card flex flex-wrap gap-4 p-4 text-xs">
+        <a href="/sdk/struct-sdk.zip" download class="text-[#38B6FF] underline">Download SDK + integration guide</a>
+        <a href="/sdk/struct-arduino.zip" download class="text-[#38B6FF] underline">Arduino ZIP library (ESP32)</a>
+      </div>
+      <p v-if="message" role="status" class="text-xs" :class="error ? 'text-red-400' : 'text-[#38B6FF]'">
         {{ message }}
       </p>
     </template>
@@ -275,6 +291,7 @@
 <script setup lang="ts">
 import type { Device, DeviceSchema, FieldType, SchemaField, SchemaVersion } from '~/types'
 import { FIELD_TYPES } from '~/types'
+import { CODE_LANGUAGES, generateSchemaCode, validateSchema, type CodeLanguage } from '#shared/schemaCodegen'
 
 const props = defineProps<{
   devices: Device[]
@@ -286,7 +303,8 @@ const { saveSchema, setDeviceEncryption, rotateEncryptionKey } = useDevices()
 const { canWrite } = useOrganization()
 const { hasEntitlement } = useEntitlements()
 const canUseEncryption = computed(() => hasEntitlement('chacha20'))
-const { generateCppHeader, downloadCppHeader, headerFilename, cppPreview } = useCppHeader()
+const { downloadCppHeader } = useCppHeader()
+const codeLanguage = ref<CodeLanguage>('C')
 const selectedDeviceId = useState('schema-selected-device', () => '')
 const fields = ref<SchemaField[]>([])
 const saving = ref(false)
@@ -329,7 +347,7 @@ const versionHistory = computed(() => props.schemaVersions?.[selectedDeviceId.va
 
 const canDownload = computed(() => {
   return (
-    !!selectedDevice.value &&
+    !!selectedDevice.value && !dirty.value &&
     fields.value.some((f) => f.name.trim() && /^[A-Za-z_][A-Za-z0-9_]*$/.test(f.name.trim()))
   )
 })
@@ -341,7 +359,7 @@ function normalizeFields(def: unknown): SchemaField[] {
       const bits = Array.isArray(raw.bits)
         ? raw.bits.map((b: any) => ({
             name: String(b?.name || ''),
-            bit: Number(b?.bit) | 0,
+            bit: Number(b?.bit),
           }))
         : []
       return { name: String(raw.name || ''), type: 'flags' as const, bits }
@@ -405,9 +423,10 @@ const byteLength = computed(() => {
   }
 })
 
-const cppPreviewText = computed(() =>
-  cppPreview(fields.value, exportVersion.value, byteLength.value),
-)
+const cppPreviewText = computed(() => {
+  try { return generateSchemaCode(cleanedFields(), exportVersion.value, codeLanguage.value, encryptionOn.value).source }
+  catch (e: any) { return e.message }
+})
 
 function cleanedFields(): SchemaField[] {
   const out: SchemaField[] = []
@@ -419,7 +438,7 @@ function cleanedFields(): SchemaField[] {
         name,
         type: 'flags',
         bits: (f.bits || [])
-          .map((b) => ({ name: String(b.name || '').trim(), bit: Number(b.bit) | 0 }))
+          .map((b) => ({ name: String(b.name || '').trim(), bit: Number(b.bit) }))
           .filter((b) => b.name),
       })
     } else if (f.type === 'char') {
@@ -523,6 +542,8 @@ function removeFlagBit(fieldIdx: number, bitIdx: number) {
 async function save() {
   if (!canEdit.value) return
   const cleaned = cleanedFields()
+  try { validateSchema(fields.value, encryptionOn.value) }
+  catch (e: any) { error.value = true; message.value = e.message; return }
 
   if (cleaned.some((f) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(f.name))) {
     error.value = true
@@ -570,13 +591,11 @@ function downloadHeader() {
   }
 
   const version = exportVersion.value
-  const contents = generateCppHeader({
-    deviceName: selectedDevice.value.name,
-    version,
-    fields: cleaned,
-    encryptionEnabled: encryptionOn.value,
-  })
-  downloadCppHeader(headerFilename(selectedDevice.value.name, version), contents)
+  try {
+    const code = generateSchemaCode(cleaned, version, codeLanguage.value, encryptionOn.value)
+    downloadCppHeader(code.filename, code.source)
+  } catch (e: any) { error.value = true; message.value = e.message }
+
 }
 
 async function onToggleEncryption() {

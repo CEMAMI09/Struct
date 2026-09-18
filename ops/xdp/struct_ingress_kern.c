@@ -121,7 +121,7 @@ int struct_ingress(struct xdp_md *ctx)
     return XDP_DROP;
 
   __u8 *bytes = payload;
-  if (bytes[0] != STRUCT_PROTOCOL_V2)
+  if (bytes[0] != STRUCT_PROTOCOL_V2 && bytes[0] != 3 && bytes[0] != 4)
     return XDP_DROP;
 
   /* Schema byte exists at offset 17 (after protocol + 16B key_id); any 0..255 is allowed. */

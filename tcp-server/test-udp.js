@@ -38,6 +38,7 @@ assert.deepStrictEqual(admitUdpDatagram(Buffer.alloc(10)).ok, false)
 // Valid-looking Protocol v2 envelope (empty payload + zero hmac — hmac checked elsewhere)
 {
   const buf = Buffer.alloc(V2_HEADER_LEN + HMAC_LEN, 0)
+  buf.write("0123456789abcdef", 1)
   buf[0] = 2
   buf[17] = 1
   const result = admitUdpDatagram(buf)

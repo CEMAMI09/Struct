@@ -1,5 +1,6 @@
 <template>
   <div class="mx-auto max-w-3xl">
+    <NuxtLink to="/dashboard/deliveries" class="btn-ghost mb-4">Delivery history and retries</NuxtLink>
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div class="min-w-0">
         <p class="text-sm text-[#8B93A7]">

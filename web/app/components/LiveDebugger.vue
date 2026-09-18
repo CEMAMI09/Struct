@@ -10,13 +10,16 @@
       </div>
       <div class="min-w-0 w-full flex-1 sm:min-w-[180px]">
         <label class="label">API secret (64 hex)</label>
-        <input v-model="apiSecret" class="input font-mono text-xs" placeholder="From device create/rotate" />
+        <input v-model="apiSecret" type="password" autocomplete="off" class="input font-mono text-xs" placeholder="From device create/rotate" />
       </div>
       <button class="btn-primary w-full sm:w-auto" :disabled="!canSimulate" @click="simulate">
-        Simulate packet
+        {{ simulating ? 'Generating…' : 'Simulate packet' }}
       </button>
     </div>
 
+    <p v-if="selectedDevice?.encryption_enabled" class="text-sm text-amber-300">This device requires encrypted frames. The browser debugger currently previews plaintext only; use the Node or C SDK to test encryption.</p>
+    <p class="text-sm text-[#8B93A7]">Local packet preview only. No data is sent; this does not verify credentials against the server, delivery, storage, or webhooks.</p>
+    <p v-if="simulationError" role="alert" class="text-sm text-red-400">{{ simulationError }}</p>
     <div
       v-if="!schema.length"
       class="card flex min-h-[200px] flex-1 items-center justify-center p-6 text-sm text-[#8B93A7] sm:p-8"
@@ -69,15 +72,18 @@ const selectedDeviceId = ref('')
 const apiSecret = ref('')
 const hexOutput = ref('')
 const jsonOutput = ref('')
+const simulating = ref(false)
+let simulationGeneration = 0
 
 const selectedDevice = computed(() => props.devices.find((d) => d.id === selectedDeviceId.value))
 
 const schemaRow = computed(() => props.schemas[selectedDeviceId.value])
+const simulationError = ref('')
 const schema = computed(() => schemaRow.value?.schema_definition || ([] as SchemaField[]))
 const schemaVersion = computed(() => schemaRow.value?.version || 1)
 
 const canSimulate = computed(
-  () => !!selectedDevice.value && schema.value.length > 0 && apiSecret.value.length >= 32,
+  () => !simulating.value && !!selectedDevice.value && schema.value.length > 0 && !selectedDevice.value?.encryption_enabled && /^[0-9a-fA-F]{64}$/.test(apiSecret.value),
 )
 
 const totalBytes = computed(() => {
@@ -89,10 +95,13 @@ const totalBytes = computed(() => {
   }
 })
 
-function randomValues(fields: SchemaField[]): Record<string, number | boolean | Record<string, boolean>> {
-  const out: Record<string, number | boolean | Record<string, boolean>> = {}
+function randomValues(fields: SchemaField[]): Record<string, string | number | boolean | Record<string, boolean>> {
+  const out: Record<string, string | number | boolean | Record<string, boolean>> = {}
   for (const f of fields) {
     switch (f.type) {
+      case 'char':
+        out[f.name] = '41'.repeat(f.length)
+        break
       case 'float32':
         out[f.name] = Math.round((15 + Math.random() * 20) * 100) / 100
         break
@@ -119,26 +128,35 @@ function randomValues(fields: SchemaField[]): Record<string, number | boolean | 
 }
 
 async function simulate() {
-  if (!selectedDevice.value || !schema.value.length || !apiSecret.value) return
+  if (!canSimulate.value || !selectedDevice.value) return
+  simulationError.value = ''
+  const generation = ++simulationGeneration
+  simulating.value = true
+  const device = { ...selectedDevice.value }
+  const fields = structuredClone(toRaw(schema.value))
+  const version = schemaVersion.value
+  const secret = apiSecret.value
+  try {
 
-  const values = randomValues(schema.value)
-  const payload = encodePayload(values, schema.value)
+  const values = randomValues(fields)
+  const payload = encodePayload(values, fields)
   const { frame, timestampSec, nonce } = await buildV2TelemetryFrame({
-    keyId: selectedDevice.value.key_id || selectedDevice.value.api_key,
-    schemaVersion: schemaVersion.value,
+    keyId: device.key_id || device.api_key,
+    schemaVersion: version,
     payload,
-    secret: apiSecret.value,
+    secret,
   })
 
+  if (generation !== simulationGeneration) return
   hexOutput.value = toHex(frame)
 
-  const parsed = parsePayload(payload, schema.value)
+  const parsed = parsePayload(payload, fields)
   jsonOutput.value = JSON.stringify(
     {
       protocol: 2,
-      key_id: selectedDevice.value.key_id,
-      device: selectedDevice.value.name,
-      schema_version: schemaVersion.value,
+      key_id: device.key_id || device.api_key,
+      device: device.name,
+      schema_version: version,
       timestamp: timestampSec,
       nonce_hex: toHex(nonce, false),
       payload: parsed,
@@ -146,10 +164,22 @@ async function simulate() {
     null,
     2,
   )
+  } catch (e: any) {
+    if (generation === simulationGeneration) simulationError.value = e.message || 'Simulation failed'
+  } finally {
+    if (generation === simulationGeneration) simulating.value = false
+  }
 }
 
 watch(selectedDeviceId, () => {
+  apiSecret.value = ''
+}, { flush: 'sync' })
+
+watch([selectedDevice, schemaRow, apiSecret], () => {
+  simulationGeneration++
+  simulating.value = false
+  simulationError.value = ''
   hexOutput.value = ''
   jsonOutput.value = ''
-})
+}, { deep: true, flush: 'sync' })
 </script>

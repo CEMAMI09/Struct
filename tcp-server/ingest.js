@@ -1,11 +1,10 @@
+const { createHash } = require('crypto')
 /**
  * Transport-neutral Protocol v2 frame processor.
  * Used by both TCP and UDP listeners.
  */
 const { parsePayload, schemaByteLength } = require('./parser-native')
 const { decryptPayload, encryptedFrameLength } = require('./crypto')
-const { dispatchWebhooks } = require('./webhooks')
-const { deliverPendingDownlinks } = require('./downlinks')
 const { stripAndValidateTimestamp } = require('./replay')
 const { decryptSecret, verifyFrameMac } = require('./auth')
 const {
@@ -14,6 +13,8 @@ const {
   resolveDeviceFromFleetPayload,
 } = require('./zeroTouch')
 const {
+  PROTOCOL_CONFIRMED,
+  buildTelemetryReceipt,
   V2_HEADER_LEN,
   TIMESTAMP_LEN,
   parseV2Header,
@@ -42,9 +43,10 @@ function getDeviceSecret(device) {
     )
   }
   const cached = secretCache.get(device.id)
-  if (cached) return cached
+  if (cached?.ciphertext === device.api_secret_encrypted) return cached.secret
   const secret = decryptSecret(device.api_secret_encrypted)
-  secretCache.set(device.id, secret)
+  if (secretCache.size >= 4096) secretCache.delete(secretCache.keys().next().value)
+  secretCache.set(device.id, { ciphertext: device.api_secret_encrypted, secret })
   return secret
 }
 
@@ -110,23 +112,19 @@ function payloadRegionLength(device, schemaDef) {
   return plain
 }
 
-async function reserveNonce(supabase, deviceId, nonce, timestampSec) {
-  const frameTimestamp = new Date(timestampSec * 1000).toISOString()
-  // PostgREST expects Postgres bytea as "\x" + hex (raw Buffer/base64 fail length checks).
-  const nonceBytes = Buffer.isBuffer(nonce) ? nonce : Buffer.from(nonce)
-  const { error } = await supabase.rpc('reserve_device_nonce', {
+async function storeTelemetry(supabase, deviceId, nonce, timestampSec, body, parsed, eventId, eventDigest) {
+  const { data, error } = await supabase.rpc(eventId ? 'ingest_queued_telemetry' : 'ingest_device_telemetry', {
+    ...(eventId ? { p_event_id: `\\x${eventId.toString('hex')}`, p_event_digest: `\\x${eventDigest.toString('hex')}` } : {}),
     p_device_id: deviceId,
-    p_nonce: `\\x${nonceBytes.toString('hex')}`,
-    p_frame_timestamp: frameTimestamp,
+    p_nonce: `\\x${nonce.toString('hex')}`,
+    p_frame_timestamp: new Date(timestampSec * 1000).toISOString(),
+    p_frame_digest: `\\x${createHash('sha256').update(body).digest('hex')}`,
+    p_parsed_json: parsed,
     p_skew_seconds: REPLAY_SKEW_SEC,
   })
-
-  if (error) {
-    if (/REPLAY_DUPLICATE_NONCE|REPLAY_TIMESTAMP_SKEW/i.test(error.message)) {
-      throw new Error(error.message)
-    }
-    throw new Error(`Replay reservation failed: ${error.message}`)
-  }
+  if (error) throw new Error(`Telemetry commit failed: ${error.message}`)
+  if (typeof data !== 'boolean') throw new Error('Telemetry commit returned no status')
+  return !data
 }
 
 async function handleAckFrame(supabase, device, body) {
@@ -163,15 +161,14 @@ async function ingestTelemetryFrame(ctx, device, body) {
   const nonce = body.subarray(1 + 16 + 1 + TIMESTAMP_LEN, V2_HEADER_LEN)
   const encryptedOrPlain = body.subarray(V2_HEADER_LEN)
 
-  await reserveNonce(supabase, device.id, nonce, timestampSec)
-
   const schemaDef = await resolveSchemaDefinition(supabase, device, schemaVersion)
   if (!schemaDef || !Array.isArray(schemaDef) || schemaDef.length === 0) {
     throw new Error(`Device "${device.name}" has no schema for version ${schemaVersion}`)
   }
 
-  const expectedStruct = schemaByteLength(schemaDef)
-  const expectedPlain = plaintextLenForSchema(schemaDef, !!device.encryption_enabled)
+  const queued = body[0] === 4
+  const expectedStruct = schemaByteLength(schemaDef) + (queued ? 16 : 0)
+  const expectedPlain = plaintextLenForSchema(schemaDef, !!device.encryption_enabled) + (queued ? 16 : 0)
   let payload = encryptedOrPlain
 
   if (device.encryption_enabled) {
@@ -179,7 +176,7 @@ async function ingestTelemetryFrame(ctx, device, body) {
       throw new Error(`Device "${device.name}" has encryption enabled but no key`)
     }
     const expectedEnc = encryptedFrameLength(expectedPlain)
-    if (encryptedOrPlain.length < expectedEnc) {
+    if (encryptedOrPlain.length !== expectedEnc) {
       throw new Error(
         `Encrypted underrun for "${device.name}" v${schemaVersion}: got ${encryptedOrPlain.length}B, need ${expectedEnc}`,
       )
@@ -199,7 +196,7 @@ async function ingestTelemetryFrame(ctx, device, body) {
       REPLAY_SKEW_SEC,
     )
     payload = structBuf
-  } else if (encryptedOrPlain.length < expectedStruct) {
+  } else if (encryptedOrPlain.length !== expectedStruct) {
     throw new Error(
       `Payload underrun for "${device.name}" v${schemaVersion}: got ${encryptedOrPlain.length} bytes, schema needs ${expectedStruct}`,
     )
@@ -207,25 +204,14 @@ async function ingestTelemetryFrame(ctx, device, body) {
     payload = encryptedOrPlain.subarray(0, expectedStruct)
   }
 
+  const eventId = queued ? payload.subarray(0,16) : null
+  if (queued) payload = payload.subarray(16)
   const parsed = parsePayload(payload, schemaDef)
 
-  const { error: insertErr } = await supabase.from('telemetry').insert({
-    device_id: device.id,
-    parsed_json: parsed,
-  })
+  const eventDigest = queued ? createHash('sha256').update(Buffer.from([schemaVersion])).update(payload).digest() : null
+  const duplicate = await storeTelemetry(supabase, device.id, nonce, timestampSec, body, parsed, eventId, eventDigest)
 
-  if (insertErr) {
-    throw new Error(`Telemetry insert failed: ${insertErr.message}`)
-  }
-
-  await supabase
-    .from('devices')
-    .update({ last_seen: new Date().toISOString() })
-    .eq('id', device.id)
-
-  dispatchWebhooks(supabase, device, parsed).catch((err) => {
-    console.warn(`[struct] webhook fan-out error: ${err.message}`)
-  })
+  // The telemetry transaction enqueues webhooks via migration 022.
 
   if (typeof onTelemetryDeliver === 'function') {
     try {
@@ -239,6 +225,7 @@ async function ingestTelemetryFrame(ctx, device, body) {
     device,
     parsed,
     schemaVersion,
+    duplicate,
     expected: expectedStruct,
     received: payload.length,
   }
@@ -254,6 +241,7 @@ async function ingestFleetTelemetryFrame(ctx, profile, body) {
   const nonce = body.subarray(1 + 16 + 1 + TIMESTAMP_LEN, V2_HEADER_LEN)
   const encryptedOrPlain = body.subarray(V2_HEADER_LEN)
 
+  if (schemaVersion !== 1) throw new Error('Fleet profiles currently support schema version 1 only')
   const schemaDef = Array.isArray(profile.schema_definition)
     ? profile.schema_definition
     : []
@@ -262,7 +250,7 @@ async function ingestFleetTelemetryFrame(ctx, profile, body) {
   }
 
   const expectedStruct = schemaByteLength(schemaDef)
-  if (encryptedOrPlain.length < expectedStruct) {
+  if (encryptedOrPlain.length !== expectedStruct) {
     throw new Error(
       `Fleet payload underrun for "${profile.name}" v${schemaVersion}: got ${encryptedOrPlain.length} bytes, schema needs ${expectedStruct}`,
     )
@@ -272,25 +260,13 @@ async function ingestFleetTelemetryFrame(ctx, profile, body) {
   const resolved = await resolveDeviceFromFleetPayload(supabase, profile, structBuf)
   const device = resolved.device
 
-  await reserveNonce(supabase, device.id, nonce, timestampSec)
-
-  const { error: insertErr } = await supabase.from('telemetry').insert({
-    device_id: device.id,
-    parsed_json: resolved.parsed,
-  })
-
-  if (insertErr) {
-    throw new Error(`Telemetry insert failed: ${insertErr.message}`)
+  if (device.encryption_enabled) {
+    throw new Error('Encrypted devices require an encrypted frame with their per-device key_id')
   }
 
-  await supabase
-    .from('devices')
-    .update({ last_seen: new Date().toISOString() })
-    .eq('id', device.id)
+  const duplicate = await storeTelemetry(supabase, device.id, nonce, timestampSec, body, resolved.parsed)
 
-  dispatchWebhooks(supabase, device, resolved.parsed).catch((err) => {
-    console.warn(`[struct] webhook fan-out error: ${err.message}`)
-  })
+  // The telemetry transaction enqueues webhooks via migration 022.
 
   if (typeof onTelemetryDeliver === 'function') {
     try {
@@ -304,6 +280,7 @@ async function ingestFleetTelemetryFrame(ctx, profile, body) {
     device,
     parsed: resolved.parsed,
     schemaVersion,
+    duplicate,
     expected: expectedStruct,
     received: structBuf.length,
     zeroTouchCreated: resolved.created,
@@ -330,7 +307,16 @@ async function processFrame(buf, ctx) {
     throw new Error('Unsupported protocol version — Protocol v2 required')
   }
 
+  if (header.protocol >= PROTOCOL_CONFIRMED && (ctx.transport !== 'udp' || header.schemaVersion === 0)) {
+    throw new Error('Protocol 3 supports UDP telemetry only')
+  }
   const { body, mac } = splitAuthenticatedFrame(buf)
+  if (header.schemaVersion !== 0) {
+    const timestampSec = body.readUInt32LE(18)
+    if (Math.abs(Math.floor(Date.now() / 1000) - timestampSec) > REPLAY_SKEW_SEC) {
+      throw new Error('REPLAY_TIMESTAMP_SKEW')
+    }
+  }
   const device = await lookupDeviceByKeyId(ctx.supabase, header.keyId)
 
   if (device) {
@@ -345,9 +331,10 @@ async function processFrame(buf, ctx) {
     }
 
     const result = await ingestTelemetryFrame(ctx, device, body)
-    return { kind: 'telemetry', ...result }
+    return { kind: 'telemetry', ...result, receipt: header.protocol >= PROTOCOL_CONFIRMED ? buildTelemetryReceipt(mac, secret, result.duplicate) : null }
   }
 
+  if (header.protocol === 4) throw new Error('Queued telemetry requires a per-device key')
   const profile = await lookupProfileByFleetKeyId(ctx.supabase, header.keyId)
   if (!profile) {
     throw new Error(`Unrecognized key_id: ${JSON.stringify(header.keyId)}`)
@@ -363,7 +350,7 @@ async function processFrame(buf, ctx) {
   }
 
   const result = await ingestFleetTelemetryFrame(ctx, profile, body)
-  return { kind: 'telemetry', ...result }
+  return { kind: 'telemetry', ...result, receipt: header.protocol === PROTOCOL_CONFIRMED ? buildTelemetryReceipt(mac, fleetSecret, result.duplicate) : null }
 }
 
 /**
@@ -377,11 +364,11 @@ async function expectedFrameLength(supabase, header) {
   if (device) {
     const schemaDef = await resolveSchemaDefinition(supabase, device, header.schemaVersion)
     if (!schemaDef) return null
-    return V2_HEADER_LEN + payloadRegionLength(device, schemaDef) + require('./protocol').HMAC_LEN
+    return V2_HEADER_LEN + payloadRegionLength(device, schemaDef) + require('./protocol').HMAC_LEN + (header.protocol === 4 ? 16 : 0)
   }
 
   const profile = await lookupProfileByFleetKeyId(supabase, header.keyId)
-  if (!profile) return null
+  if (!profile || header.schemaVersion !== 1) return null
   const schemaDef = Array.isArray(profile.schema_definition)
     ? profile.schema_definition
     : null

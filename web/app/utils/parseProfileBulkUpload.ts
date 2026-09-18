@@ -1,4 +1,3 @@
-import Papa from 'papaparse'
 import {
   buildProfileCsvTemplate,
   detectCsvDelimiter,
@@ -10,6 +9,8 @@ export { buildProfileCsvTemplate }
 export type { ProfileBulkParseResult }
 
 async function parseCsvFile(file: File): Promise<ProfileBulkParseResult> {
+  if (import.meta.server) throw new Error('File imports run in the browser')
+  const { default: Papa } = await import('papaparse')
   const text = await file.text()
   const delimiter = detectCsvDelimiter(text)
   const parsed = Papa.parse<Record<string, unknown>>(text, {

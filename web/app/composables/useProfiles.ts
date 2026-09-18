@@ -22,9 +22,12 @@ function normalizeProfile(row: any): DeviceProfile {
   }
 }
 
-let profilesInflight: Promise<void> | null = null
+const profilesInflightByApp = new WeakMap<object, { promise: Promise<void> | null }>()
 
 export function useProfiles() {
+  const app = useNuxtApp()
+  if (!profilesInflightByApp.has(app)) profilesInflightByApp.set(app, { promise: null })
+  const inflight = profilesInflightByApp.get(app)!
   const supabase = useSupabaseClient()
   const user = useSupabaseUser()
   const { currentOrgId, requireOrgId, requireWrite, ensureOrganization } = useOrganization()
@@ -43,8 +46,8 @@ export function useProfiles() {
   async function fetchProfiles(opts?: { force?: boolean }) {
     if (!(await hasAuth())) return
 
-    if (profilesInflight && !opts?.force) {
-      return profilesInflight
+    if (inflight.promise && !opts?.force) {
+      return inflight.promise
     }
 
     const run = async () => {
@@ -79,10 +82,11 @@ export function useProfiles() {
       }
     }
 
-    profilesInflight = run().finally(() => {
-      profilesInflight = null
+    const promise = run().finally(() => {
+      if (inflight.promise === promise) inflight.promise = null
     })
-    return profilesInflight
+    inflight.promise = promise
+    return inflight.promise
   }
 
   function invalidateProfileCache() {
