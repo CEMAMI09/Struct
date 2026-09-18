@@ -25,7 +25,7 @@
       </button>
     </div>
 
-    <nav class="flex flex-1 flex-col gap-0.5 p-2" :class="collapsed ? 'md:px-2' : 'px-2.5'">
+    <nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2" :class="collapsed ? 'md:px-2' : 'px-2.5'">
       <NuxtLink
         v-for="link in links"
         :key="link.to"
@@ -153,7 +153,11 @@ function prefetch(path: string) {
 
 @media (min-width: 768px) {
   .app-side {
-    position: static;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100vh;
+    height: 100dvh;
     transform: none;
   }
 }

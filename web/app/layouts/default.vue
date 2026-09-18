@@ -1,5 +1,5 @@
 <template>
-  <div class="app-shell flex min-h-screen min-w-0">
+  <div class="app-shell flex h-dvh min-h-0 min-w-0 overflow-hidden">
     <button
       v-if="navOpen"
       type="button"
@@ -15,7 +15,7 @@
       @toggle-collapse="toggleNavCollapsed"
     />
 
-    <main class="flex min-h-screen min-w-0 flex-1 flex-col overflow-hidden">
+    <main class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <header class="app-topbar">
         <div class="flex min-w-0 items-center gap-3">
           <button
@@ -57,7 +57,7 @@
           </button>
         </div>
       </header>
-      <div class="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6">
+      <div class="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6">
         <p
           v-if="orgError"
           class="mb-4 rounded-lg border border-red-400/30 bg-red-400/5 px-3 py-2 text-xs text-red-300"
