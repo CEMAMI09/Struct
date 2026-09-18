@@ -1,5 +1,5 @@
 const dgram = require('node:dgram')
-const { randomBytes, randomInt, createCipheriv, createHmac } = require('node:crypto')
+const { randomBytes, randomInt, createCipheriv, createHmac, createHash } = require('node:crypto')
 const { performance } = require('node:perf_hooks')
 const { buildTelemetryFrame, verifyTelemetryReceipt } = require('./protocol.cjs')
 
@@ -52,7 +52,7 @@ class StructClient {
           if (done) return
           done = true; clearTimeout(budgetTimer); clearTimeout(retryTimer)
           try { socket.close() } catch { /* connect may not have completed */ }
-          if (error) reject(error); else resolve({ ...result, elapsedMs: Math.round(performance.now() - start) })
+          if (error) reject(error); else resolve({ ...result, packet_id: createHash('sha256').update(frame).digest('hex'), elapsedMs: Math.round(performance.now() - start) })
         }
         const transmit = () => {
           if (done) return

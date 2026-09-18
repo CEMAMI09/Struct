@@ -17,3 +17,6 @@ web/.output/
 work/
 __pycache__/
 *.pyc
+struct-local.env
+struct-diagnostic*.json
+struct-device-outcome*.json

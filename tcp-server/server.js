@@ -126,7 +126,7 @@ const server = net.createServer((socket) => {
         if (result.kind === 'telemetry') {
           console.log(
             `[struct] ✓ ${result.device.name} v${result.schemaVersion} →`,
-            JSON.stringify(result.parsed),
+            '[payload omitted]',
             `(${result.expected}B${result.device.encryption_enabled ? ', enc' : ''})`,
           )
         }

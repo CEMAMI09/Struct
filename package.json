@@ -8,8 +8,10 @@
     "dev:tcp": "npm --prefix tcp-server run dev",
     "build:web": "npm --prefix web run build",
     "start:tcp": "npm --prefix tcp-server run start",
-    "test": "npm --prefix web test && npm --prefix tcp-server test && node tests/database.cjs && node tests/delivery.cjs && node tcp-server/test-delivery.js && node sdk/tests/test_vectors.cjs && node sdk/tests/test_udp.cjs",
+    "test": "npm --prefix web test && npm --prefix tcp-server test && node tests/database.cjs && node tests/delivery.cjs && node tcp-server/test-delivery.js && node sdk/tests/test_vectors.cjs && node sdk/tests/test_udp.cjs && node tests/debugger.cjs",
     "test:database": "node tests/database.cjs",
+    "test:debugger": "node tests/debugger.cjs",
+    "debug:local": "node scripts/debug-local.cjs",
     "test:sdk": "node sdk/tests/test_udp.cjs",
     "test:protocol": "node sdk/tests/test_vectors.cjs",
     "package:sdk": "python scripts/package-sdk.py"

@@ -68,9 +68,10 @@ No changes to nonce, key interpretation or receipt meaning hidden in a patch.
 
 ## Roadmap sequence
 
-This completes the initial contract/documentation part of roadmap task 1. The
-production evidence and persistent-offline implementation remain open work.
-Next: task 2 dependable delivery, task 3 end-to-end debugger, task 4 supported SDK
+Task 1's initial contract is documented. Task 2's dependable-delivery implementation
+and task 3's real debugger are local previews; staging and hardware evidence remain
+open release gates. See DEPENDABLE-DELIVERY.md and DEBUGGER.md for coverage/limits.
+Next: task 4 supported SDK
 releases, task 5 efficiency evidence, task 6 security/identity, task 7 fleet
 management, task 8 operations, task 9 UI journeys, task 10 interoperability, and
 task 11 adoption/support. Track implementations and evidence separately from plans.

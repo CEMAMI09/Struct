@@ -9,9 +9,8 @@ const { checkIpConnection, checkPayloadRateLimit } = require('./rateLimit')
 const {
   MAX_FRAME_BYTES,
   processFrame,
-  expectedFrameLength,
 } = require('./ingest')
-const { parseV2Header, HMAC_LEN, V2_ACK_LEN } = require('./protocol')
+const { parseV2Header } = require('./protocol')
 
 const UDP_ENDPOINT_TTL_MS = Number(process.env.UDP_ENDPOINT_TTL_MS || 5 * 60_000)
 
@@ -69,18 +68,8 @@ function startUdpServer(supabase, opts = {}) {
         return
       }
 
-      // Exactly one frame per datagram — reject trailing garbage.
-      const expected =
-        header.schemaVersion === 0
-          ? V2_ACK_LEN + HMAC_LEN
-          : await expectedFrameLength(supabase, header)
-
-      if (!expected || msg.length !== expected) {
-        console.warn(
-          `[struct] UDP drop ${remote}: length ${msg.length} ≠ expected ${expected || '?'}`,
-        )
-        return
-      }
+      // The shared processor authenticates and checks exact schema length.
+      // Keep schema/length failures in the same trace as accepted packets.
 
       const rate = checkPayloadRateLimit(header.keyId)
       if (!rate.allowed) {
@@ -110,7 +99,7 @@ function startUdpServer(supabase, opts = {}) {
       if (result.kind === 'telemetry') {
         console.log(
           `[struct] ✓ UDP ${result.device.name} v${result.schemaVersion} →`,
-          JSON.stringify(result.parsed),
+          '[payload omitted]',
           `(${result.expected}B${result.device.encryption_enabled ? ', enc' : ''})`,
         )
       } else {

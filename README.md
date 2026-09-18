@@ -39,9 +39,10 @@ delivery guide for capacity, storage durability and device-identity restrictions
 - **Schema:** float32, int32, uint8, boolean, named bit flags, and fixed char arrays;
   server-validated publication with immutable version history; six encoder targets;
   full SDK and Arduino ZIP downloads; optional ChaCha20-Poly1305 keys.
-- **Debugger:** local plaintext frame construction and decoded JSON. API secrets
-  are masked and cleared on device changes. Encrypted devices direct developers
-  to the encryption-capable SDK rather than showing an incompatible test frame.
+- **Debugger:** real per-device gateway stages, encrypted packet support, SDK outcome
+  correlation, webhook status, byte accounting and sanitized diagnostic bundles.
+  Separate simulation, cloud-free gateway/fault tests and production capture.
+  Apply migration 025 and follow [debugger setup](docs/DEBUGGER.md).
 - **Destinations:** scoped HTTPS webhooks, event subscriptions, HMAC signatures,
   and Scale routing rules. Public-address DNS validation and no redirect following
   prevent requests to private/reserved network addresses.

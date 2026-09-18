@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-0 lg:h-[calc(100vh-8rem)]">
-    <LiveDebugger :devices="devices" :schemas="schemas" />
+    <PacketTraceDebugger :devices="devices" :schemas="schemas" />
   </div>
 </template>
 

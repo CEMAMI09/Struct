@@ -54,7 +54,7 @@ async function lookupDeviceByKeyId(supabase, keyId) {
   const { data: device, error } = await supabase
     .from('devices')
     .select(
-      'id, name, key_id, api_secret_encrypted, user_id, organization_id, encryption_enabled, encryption_key, schemas(version, schema_definition)',
+      'id, name, key_id, api_secret_encrypted, user_id, organization_id, debug_trace_until, encryption_enabled, encryption_key, schemas(version, schema_definition)',
     )
     .eq('key_id', keyId)
     .maybeSingle()
@@ -112,8 +112,8 @@ function payloadRegionLength(device, schemaDef) {
   return plain
 }
 
-async function storeTelemetry(supabase, deviceId, nonce, timestampSec, body, parsed, eventId, eventDigest) {
-  const { data, error } = await supabase.rpc(eventId ? 'ingest_queued_telemetry' : 'ingest_device_telemetry', {
+async function storeTelemetry(supabase, deviceId, nonce, timestampSec, body, parsed, eventId, eventDigest, trace) {
+  const { data, error } = await supabase.rpc(trace?.correlate ? 'ingest_traced_telemetry' : eventId ? 'ingest_queued_telemetry' : 'ingest_device_telemetry', {
     ...(eventId ? { p_event_id: `\\x${eventId.toString('hex')}`, p_event_digest: `\\x${eventDigest.toString('hex')}` } : {}),
     p_device_id: deviceId,
     p_nonce: `\\x${nonce.toString('hex')}`,
@@ -123,6 +123,10 @@ async function storeTelemetry(supabase, deviceId, nonce, timestampSec, body, par
     p_skew_seconds: REPLAY_SKEW_SEC,
   })
   if (error) throw new Error(`Telemetry commit failed: ${error.message}`)
+  if (trace?.correlate) {
+    if (typeof data?.inserted !== 'boolean') throw new Error('Telemetry commit returned no status')
+    trace.data.event_id=data.event_id;trace.data.replay=data.inserted?'new event':'duplicate committed event';return !data.inserted
+  }
   if (typeof data !== 'boolean') throw new Error('Telemetry commit returned no status')
   return !data
 }
@@ -161,6 +165,7 @@ async function ingestTelemetryFrame(ctx, device, body) {
   const nonce = body.subarray(1 + 16 + 1 + TIMESTAMP_LEN, V2_HEADER_LEN)
   const encryptedOrPlain = body.subarray(V2_HEADER_LEN)
 
+  ctx.trace?.begin('schema')
   const schemaDef = await resolveSchemaDefinition(supabase, device, schemaVersion)
   if (!schemaDef || !Array.isArray(schemaDef) || schemaDef.length === 0) {
     throw new Error(`Device "${device.name}" has no schema for version ${schemaVersion}`)
@@ -171,6 +176,7 @@ async function ingestTelemetryFrame(ctx, device, body) {
   const expectedPlain = plaintextLenForSchema(schemaDef, !!device.encryption_enabled) + (queued ? 16 : 0)
   let payload = encryptedOrPlain
 
+  ctx.trace?.begin(device.encryption_enabled?'decryption':'payload')
   if (device.encryption_enabled) {
     if (!device.encryption_key) {
       throw new Error(`Device "${device.name}" has encryption enabled but no key`)
@@ -206,10 +212,14 @@ async function ingestTelemetryFrame(ctx, device, body) {
 
   const eventId = queued ? payload.subarray(0,16) : null
   if (queued) payload = payload.subarray(16)
+  ctx.trace?.begin('decoding')
   const parsed = parsePayload(payload, schemaDef)
+  ctx.trace?.bytes(payload.length,!!device.encryption_enabled,queued,body[0]>=3)
 
   const eventDigest = queued ? createHash('sha256').update(Buffer.from([schemaVersion])).update(payload).digest() : null
-  const duplicate = await storeTelemetry(supabase, device.id, nonce, timestampSec, body, parsed, eventId, eventDigest)
+  ctx.trace?.begin('storage')
+  const duplicate = await storeTelemetry(supabase, device.id, nonce, timestampSec, body, parsed, eventId, eventDigest, ctx.trace)
+  if(ctx.trace){ctx.trace.data.replay=duplicate?'duplicate committed event':'new event';ctx.trace.finish()}
 
   // The telemetry transaction enqueues webhooks via migration 022.
 
@@ -294,7 +304,8 @@ async function ingestFleetTelemetryFrame(ctx, profile, body) {
  * @param {Buffer} buf
  * @param {TransportContext} ctx
  */
-async function processFrame(buf, ctx) {
+async function processFrameInner(buf, ctx) {
+  ctx.trace?.begin('receipt')
   if (!Buffer.isBuffer(buf) || buf.length < 1) {
     throw new Error('Empty frame')
   }
@@ -311,21 +322,30 @@ async function processFrame(buf, ctx) {
     throw new Error('Protocol 3 supports UDP telemetry only')
   }
   const { body, mac } = splitAuthenticatedFrame(buf)
-  if (header.schemaVersion !== 0) {
+  function checkTimestamp() {
+   ctx.trace?.begin('timestamp')
+   if (header.schemaVersion !== 0) {
     const timestampSec = body.readUInt32LE(18)
     if (Math.abs(Math.floor(Date.now() / 1000) - timestampSec) > REPLAY_SKEW_SEC) {
       throw new Error('REPLAY_TIMESTAMP_SKEW')
     }
+   }
   }
+  ctx.trace?.begin('identity')
   const device = await lookupDeviceByKeyId(ctx.supabase, header.keyId)
 
   if (device) {
+    if(ctx.trace){ctx.trace.device=device;ctx.trace.correlate=ctx.trace.data.mode==='local' || Date.parse(device.debug_trace_until)>Date.now()}
+    ctx.trace?.begin('authentication')
     const secret = getDeviceSecret(device)
     if (!verifyFrameMac(secret, body, mac)) {
       throw new Error(`Invalid frame authentication for device "${device.name}"`)
     }
 
+    ctx.trace?.finish()
+    checkTimestamp()
     if (header.schemaVersion === 0) {
+      ctx.trace?.begin('acknowledgment')
       await handleAckFrame(ctx.supabase, device, body)
       return { kind: 'ack', device }
     }
@@ -340,16 +360,20 @@ async function processFrame(buf, ctx) {
     throw new Error(`Unrecognized key_id: ${JSON.stringify(header.keyId)}`)
   }
 
+  ctx.trace?.begin('authentication')
   const fleetSecret = getProfileSecret(profile, secretCache)
   if (!verifyFrameMac(fleetSecret, body, mac)) {
     throw new Error(`Invalid frame authentication for fleet profile "${profile.name}"`)
   }
+  checkTimestamp()
 
   if (header.schemaVersion === 0) {
     throw new Error('ACK frames require a per-device key_id (not Master Fleet Key)')
   }
 
+  ctx.trace?.begin('schema')
   const result = await ingestFleetTelemetryFrame(ctx, profile, body)
+  if(ctx.trace)ctx.trace.data.scope='Fleet registration trace is partial; use a per-device key for full correlation'
   return { kind: 'telemetry', ...result, receipt: header.protocol === PROTOCOL_CONFIRMED ? buildTelemetryReceipt(mac, fleetSecret, result.duplicate) : null }
 }
 
@@ -375,6 +399,22 @@ async function expectedFrameLength(supabase, header) {
   if (!schemaDef || !schemaDef.length) return null
   const structLen = schemaByteLength(schemaDef)
   return V2_HEADER_LEN + structLen + require('./protocol').HMAC_LEN
+}
+
+async function processFrame(buf, ctx) {
+  const {Trace,persistTrace}=require('./trace')
+  const trace=ctx.trace || new Trace(ctx.transport,buf?.length||0)
+  if(Buffer.isBuffer(buf))trace.data.packet_id=createHash('sha256').update(buf).digest('hex')
+  try {
+    const result=await processFrameInner(buf,{...ctx,trace})
+    trace.complete()
+    trace.data.acknowledgment=result.receipt?'built; device receipt not observed':'not requested'
+    return {...result,trace:trace.data}
+  } catch(error) { trace.fail();throw error }
+  finally {
+    // Tracing must never gate a storage receipt. Persistence is best effort.
+    if(!ctx.trace)void persistTrace(ctx.supabase,trace)
+  }
 }
 
 module.exports = {
