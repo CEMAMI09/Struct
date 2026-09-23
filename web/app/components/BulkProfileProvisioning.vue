@@ -1,10 +1,13 @@
 <template>
   <div class="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center">
     <div
-      class="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-[#2A2F3A] bg-[#1A1D24] p-5 shadow-xl"
+      ref="dialogEl"
+      class="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-[#2A2F3A] bg-[#1A1D24] p-5 shadow-xl outline-none"
       role="dialog"
       aria-modal="true"
       aria-labelledby="profile-bulk-title"
+      tabindex="-1"
+      @keydown="onKeydown"
     >
       <div class="mb-4 flex items-start justify-between gap-3">
         <div>
@@ -184,6 +187,8 @@ const emit = defineEmits<{
   close: []
   provisioned: []
 }>()
+
+const { dialogEl, onKeydown } = useDialogFocus({ onEscape: () => emit('close') })
 
 const { previewProfileProvision, confirmProfileProvision } = useProfiles()
 

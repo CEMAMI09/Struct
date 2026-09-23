@@ -7,6 +7,9 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 
+  // Design prototype only. It is not a public page.
+  ignore: ['**/pages/test.vue'],
+
   modules: ['@nuxtjs/tailwindcss', '@nuxtjs/supabase'],
 
   css: ['~/assets/css/main.css'],
@@ -55,7 +58,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'Struct — Deterministic binary telemetry for the edge',
+      title: 'Struct — Telemetry for constrained devices',
       meta: [
         {
           name: 'viewport',
@@ -64,20 +67,7 @@ export default defineNuxtConfig({
         {
           name: 'description',
           content:
-            'Keep devices dumb and deterministic. Send packed C structs over UDP or TCP; Struct authenticates, parses, and converts to structured JSON for your cloud.',
-        },
-      ],
-      link: [
-        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
-        {
-          rel: 'preload',
-          as: 'style',
-          href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap',
-        },
-        {
-          rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap',
+            'Generate a compact encoder, send authenticated telemetry, and trace delivery to your HTTPS backend.',
         },
       ],
     },

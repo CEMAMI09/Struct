@@ -7,6 +7,8 @@ extern "C" {
 #endif
 
 #define STRUCT_MAX_FRAME 1400u
+#define STRUCT_SDK_VERSION "0.2.0"
+#define STRUCT_API_VERSION 1u
 #define STRUCT_MAX_PAYLOAD (STRUCT_MAX_FRAME - 66u)
 #define STRUCT_RECEIPT_SIZE 69u
 
@@ -17,7 +19,12 @@ typedef enum {
   STRUCT_BUSY = -4
 } struct_result;
 
-/* Callbacks return 0 on success except receive: bytes received, 0 if none,
+/* OWNERSHIP: client copies this table, key strings and payload bytes. user and
+ * its resources remain caller-owned and must outlive all calls through client.
+ * Callbacks must finish consuming buffers before returning; retaining pointers
+ * or starting DMA against them is forbidden. No callback may reenter this client.
+ * Use one owner task; no calls from ISR. Public struct fields are SDK-private.
+ * Callbacks return 0 on success except receive: bytes received, 0 if none,
  * negative on failure. send/receive MUST be nonblocking datagram operations.
  * random MUST use a cryptographically secure RNG; never rand().
  * HMAC uses the literal ASCII API secret, NOT its hex-decoded value. */
@@ -58,12 +65,16 @@ typedef struct {
 struct_delivery struct_delivery_default(int confirmed);
 struct_result struct_init(struct_client *, const struct_port *, const char *key_id, const char *api_secret);
 struct_result struct_set_encryption(struct_client *, const uint8_t *key_or_null);
+struct_result struct_set_encryption_hex(struct_client *, const char *hex_or_null);
 struct_result struct_send(struct_client *, uint8_t schema_version, const uint8_t *payload,
                           size_t payload_len, uint32_t unix_sec, uint32_t now_ms,
                           struct_delivery delivery);
 struct_result struct_poll(struct_client *, uint32_t now_ms);
 void struct_cancel(struct_client *); /* Ends waiting; delivery remains unknown. */
 void struct_clear(struct_client *);  /* Wipes credentials and buffered telemetry. */
+/* Milliseconds until the next required poll, bounded by max_poll_ms (e.g. 10).
+ * Does not replace socket readiness notification. Returns 0 when idle/due. */
+uint32_t struct_poll_delay(const struct_client *, uint32_t now_ms, uint32_t max_poll_ms);
 struct_result struct_send_event(struct_client *, const uint8_t event_id[16], uint8_t schema_version,
   const uint8_t *, size_t, uint32_t unix_sec, uint32_t now_ms, struct_delivery);
 

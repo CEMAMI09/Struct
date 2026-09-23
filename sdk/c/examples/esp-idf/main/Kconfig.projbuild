@@ -1,0 +1,14 @@
+menu "Struct telemetry example"
+config STRUCT_GATEWAY
+ string "Gateway numeric IPv4"
+ default "127.0.0.1"
+config STRUCT_KEY_ID
+ string "Device key ID"
+ default "REPLACE"
+config STRUCT_API_SECRET
+ string "Device API secret (never share sdkconfig)"
+ default "REPLACE"
+config STRUCT_ENCRYPTION_KEY
+ string "Optional device encryption key (64 hex)"
+ default ""
+endmenu

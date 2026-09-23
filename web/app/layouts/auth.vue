@@ -2,8 +2,8 @@
   <div class="app-shell auth-shell">
     <div class="auth-shell-inner">
       <div class="mb-8 text-center">
-        <NuxtLink to="/" class="inline-flex w-full justify-center">
-          <StructLogo size="lg" />
+        <NuxtLink to="/" class="inline-flex w-full justify-center" aria-label="Struct home">
+          <StructLogo lockup />
         </NuxtLink>
       </div>
       <slot />

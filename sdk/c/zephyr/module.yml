@@ -1,0 +1,4 @@
+name: struct_device
+build:
+  cmake: integrations/zephyr
+  kconfig: integrations/zephyr/Kconfig

@@ -12,6 +12,7 @@
     "test:database": "node tests/database.cjs",
     "test:debugger": "node tests/debugger.cjs",
     "debug:local": "node scripts/debug-local.cjs",
+    "mock:esp": "node scripts/esp-emulator.js",
     "test:sdk": "node sdk/tests/test_udp.cjs",
     "test:protocol": "node sdk/tests/test_vectors.cjs",
     "package:sdk": "python scripts/package-sdk.py"

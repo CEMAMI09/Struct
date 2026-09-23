@@ -1,0 +1,9 @@
+C:\Users\codye\OneDrive\Documents\Struct\sdk\rust\target\debug\deps\hmac-9a0d90de42df6806.d: C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hmac-0.12.1\src\lib.rs C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hmac-0.12.1\src\optim.rs C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hmac-0.12.1\src\simple.rs
+
+C:\Users\codye\OneDrive\Documents\Struct\sdk\rust\target\debug\deps\libhmac-9a0d90de42df6806.rlib: C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hmac-0.12.1\src\lib.rs C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hmac-0.12.1\src\optim.rs C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hmac-0.12.1\src\simple.rs
+
+C:\Users\codye\OneDrive\Documents\Struct\sdk\rust\target\debug\deps\libhmac-9a0d90de42df6806.rmeta: C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hmac-0.12.1\src\lib.rs C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hmac-0.12.1\src\optim.rs C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hmac-0.12.1\src\simple.rs
+
+C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hmac-0.12.1\src\lib.rs:
+C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hmac-0.12.1\src\optim.rs:
+C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\hmac-0.12.1\src\simple.rs:

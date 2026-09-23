@@ -2,15 +2,15 @@
   <div class="flex min-h-0 flex-col gap-4 lg:h-full">
     <div class="flex flex-wrap items-end gap-3">
       <div class="min-w-0 w-full flex-1 sm:min-w-[180px]">
-        <label class="label">Device</label>
-        <select v-model="selectedDeviceId" class="input">
+        <label class="label" for="sim-device">Device</label>
+        <select id="sim-device" v-model="selectedDeviceId" class="input">
           <option disabled value="">Select device</option>
           <option v-for="d in devices" :key="d.id" :value="d.id">{{ d.name }}</option>
         </select>
       </div>
       <div class="min-w-0 w-full flex-1 sm:min-w-[180px]">
-        <label class="label">API secret (64 hex)</label>
-        <input v-model="apiSecret" type="password" autocomplete="off" class="input font-mono text-xs" placeholder="From device create/rotate" />
+        <label class="label" for="sim-secret">API secret</label>
+        <input id="sim-secret" v-model="apiSecret" type="password" autocomplete="off" class="input font-mono text-xs" placeholder="Shown once when the device is created or rotated" />
       </div>
       <button class="btn-primary w-full sm:w-auto" :disabled="!canSimulate" @click="simulate">
         {{ simulating ? 'Generating…' : 'Simulate packet' }}

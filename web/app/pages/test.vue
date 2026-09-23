@@ -510,6 +510,7 @@
 </template>
 
 <script setup lang="ts">
+// Design prototype. Excluded from public routing in nuxt.config `ignore`.
 definePageMeta({ layout: false })
 
 const user = useSupabaseUser()

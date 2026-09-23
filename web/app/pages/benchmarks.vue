@@ -1,13 +1,6 @@
 <template>
   <div class="method">
-    <header class="method-nav">
-      <NuxtLink to="/" class="nav-logo" aria-label="Struct home">
-        <StructLogo size="md" />
-      </NuxtLink>
-      <NuxtLink to="/#compare" class="btn-ghost text-xs">Back to comparison</NuxtLink>
-    </header>
-
-    <main class="method-main">
+    <div class="method-main">
       <p class="label mb-3">Methodology</p>
       <h1 class="method-title">Benchmark methodology</h1>
       <p class="method-lede">
@@ -114,10 +107,10 @@
           <li>Decode latency on a specific microcontroller</li>
           <li>Compiler flags and MCU used for firmware timing</li>
         </ul>
-        <p class="todo">
-          TODO: add a reproducible bench that encodes the sample schema to JSON, CBOR, MessagePack,
-          and Protobuf; capture cold HTTPS vs Struct UDP with a packet analyzer; record radio-on
-          time on a named MCU/modem with published compiler settings.
+        <p>
+          These measurements are not in the repository. A reproducible bench would encode the sample
+          schema to JSON, CBOR, MessagePack, and Protobuf, capture cold HTTPS against Struct UDP, and
+          record radio-on time for a named board with published compiler settings.
         </p>
       </section>
 
@@ -145,12 +138,12 @@
           <li><strong>HTTPS / JSON</strong> — request/response, firewall traversal, human-debuggable APIs.</li>
         </ul>
       </section>
-    </main>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: false })
+definePageMeta({ layout: 'doc' })
 
 useSeoMeta({
   title: 'Benchmark methodology — Struct',
@@ -160,26 +153,10 @@ useSeoMeta({
 </script>
 
 <style scoped>
-.method {
-  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
-  min-height: 100vh;
-  background: #0f1115;
-  color: #e8eaef;
-}
-
-.method-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  border-bottom: 1px solid #2a2f3a;
-  padding: 1rem 1.5rem;
-}
-
 .method-main {
-  max-width: 46rem;
-  margin: 0 auto;
-  padding: 3rem 1.5rem 5rem;
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
 
 .method-title {

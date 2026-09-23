@@ -6,7 +6,7 @@ root = Path(__file__).resolve().parents[1]
 sdk = root / 'sdk'
 target = root / 'web/public/sdk'
 target.mkdir(parents=True, exist_ok=True)
-allowed = {'.h', '.c', '.ino', '.md', '.cjs', '.json', '.py', '.properties', '.txt'}
+allowed = {'.h', '.c', '.cpp', '.ino', '.md', '.cjs', '.json', '.py', '.properties', '.txt', '.rs', '.toml', '.lock', '.yml', '.yaml', '.ts', '.cmake'}
 def archive(path, entries):
     with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as output:
         for source, name in sorted(entries, key=lambda pair: pair[1]):
@@ -17,8 +17,8 @@ def archive(path, entries):
             if name.startswith('docs/'):
                 content = content.replace(b'../sdk/', b'../struct-sdk/')
             output.writestr(info, content)
-files = [p for p in sdk.rglob('*') if p.is_file() and p.suffix in allowed
-         and not any(part in {'node_modules', '__pycache__'} for part in p.parts)]
+files = [p for p in sdk.rglob('*') if p.is_file() and (p.suffix in allowed or p.name == 'Kconfig')
+         and not any(part in {'node_modules', '__pycache__', 'target', 'build', 'dist'} or part.endswith('.egg-info') for part in p.parts)]
 docs = [(p, 'docs/' + p.name) for p in (root / 'docs').glob('*.md')]
 archive(target / 'struct-sdk.zip', [(p, 'struct-sdk/' + p.relative_to(sdk).as_posix()) for p in files] + docs)
 arduino = [p for p in files if p.is_relative_to(sdk / 'c') and not p.is_relative_to(sdk / 'c/ports')]

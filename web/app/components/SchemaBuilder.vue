@@ -35,7 +35,7 @@
 
     <template v-else>
       <!-- ChaCha20 encryption -->
-      <div class="card shrink-0 p-4">
+      <div class="card order-3 shrink-0 p-4">
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div class="min-w-0 flex-1">
             <p class="text-sm font-semibold text-[#E8EAEF]">Enable ChaCha20 Edge Encryption</p>
@@ -92,7 +92,7 @@
         </p>
       </div>
 
-      <div class="card flex-1 overflow-auto p-4">
+      <div class="card order-1 flex-1 overflow-auto p-4">
         <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 class="text-sm font-semibold text-[#E8EAEF]">Fields</h3>
@@ -248,7 +248,7 @@
         </div>
       </div>
 
-      <div class="card shrink-0 p-4">
+      <div class="card order-2 shrink-0 p-4">
         <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
           <p class="label mb-0">Encoder preview</p>
           <button
@@ -278,6 +278,7 @@
       </div>
 
       <div class="card flex flex-wrap gap-4 p-4 text-xs">
+        <button class="btn-primary" :disabled="!canDownload || exportingProject" @click="downloadProject">{{ exportingProject ? 'Packaging…' : `Download ${codeLanguage} starter project` }}</button>
         <a href="/sdk/struct-sdk.zip" download class="text-[#38B6FF] underline">Download SDK + integration guide</a>
         <a href="/sdk/struct-arduino.zip" download class="text-[#38B6FF] underline">Arduino ZIP library (ESP32)</a>
       </div>
@@ -292,6 +293,21 @@
 import type { Device, DeviceSchema, FieldType, SchemaField, SchemaVersion } from '~/types'
 import { FIELD_TYPES } from '~/types'
 import { CODE_LANGUAGES, generateSchemaCode, validateSchema, type CodeLanguage } from '#shared/schemaCodegen'
+import {generateSchemaProject} from '#shared/schemaProject'
+const exportingProject=ref(false)
+async function downloadProject(){
+ if(!canDownload.value||exportingProject.value)return
+ exportingProject.value=true
+ try{
+  const files=generateSchemaProject(cleanedFields(),exportVersion.value,codeLanguage.value,encryptionOn.value)
+  const {zipSync,unzipSync,strToU8}=await import('fflate')
+  const response=await fetch('/sdk/struct-sdk.zip');if(!response.ok)throw new Error('SDK download unavailable')
+  const archive=unzipSync(new Uint8Array(await response.arrayBuffer()))
+  for(const [name,source] of Object.entries(files))archive[`project/${name}`]=strToU8(source)
+  const blob=new Blob([zipSync(archive)],{type:'application/zip'}),url=URL.createObjectURL(blob),link=document.createElement('a')
+  link.href=url;link.download='struct-starter.zip';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)
+ }catch(e:any){error.value=true;message.value=e.message||'Unable to export starter project'}finally{exportingProject.value=false}
+}
 
 const props = defineProps<{
   devices: Device[]

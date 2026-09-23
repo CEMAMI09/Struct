@@ -1,0 +1,3 @@
+
+[encryption]
+cryptography<51,>=43

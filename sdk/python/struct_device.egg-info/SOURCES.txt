@@ -1,0 +1,10 @@
+README.md
+pyproject.toml
+struct_commands.py
+struct_device.py
+struct_persistent.py
+struct_device.egg-info/PKG-INFO
+struct_device.egg-info/SOURCES.txt
+struct_device.egg-info/dependency_links.txt
+struct_device.egg-info/requires.txt
+struct_device.egg-info/top_level.txt

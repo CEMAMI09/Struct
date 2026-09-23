@@ -4,11 +4,15 @@
     <p v-else-if="loading && !devices.length" class="mb-3 text-sm text-[#8B93A7]">
       Loading devices…
     </p>
-    <p v-else-if="!loading && !devices.length" class="mb-3 text-sm text-[#8B93A7]">
+    <p v-else-if="!loading && !devices.length" class="mb-3 text-sm text-[#9AA3B2]">
       No devices yet —
       <NuxtLink to="/dashboard/devices" class="text-[#38B6FF] hover:underline">create one</NuxtLink>
       first.
     </p>
+    <div class="mb-3 flex flex-wrap gap-2">
+      <NuxtLink to="/dashboard/devices" class="btn-ghost text-xs">Devices</NuxtLink>
+      <NuxtLink to="/dashboard/debugger" class="btn-ghost text-xs">Diagnostics</NuxtLink>
+    </div>
     <SchemaBuilder
       v-if="devices.length || !loading"
       class="min-h-0 flex-1"
@@ -22,16 +26,26 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'auth' })
 
+const route = useRoute()
 const { devices, schemas, schemaVersions, loading, error, fetchDevices } = useDevices()
 const user = useSupabaseUser()
+const selectedDeviceId = useState('schema-selected-device', () => '')
 
-onMounted(fetchDevices)
+async function load() {
+  await fetchDevices()
+  const requested = route.query.device
+  if (typeof requested === 'string' && devices.value.some((device) => device.id === requested)) {
+    selectedDeviceId.value = requested
+  }
+}
+
+onMounted(load)
 
 // Auth can hydrate after mount on a hard reload — refetch once the user is ready
 watch(
   user,
   (u, prev) => {
-    if (u && !prev) fetchDevices()
+    if (u && !prev) load()
   },
 )
 </script>

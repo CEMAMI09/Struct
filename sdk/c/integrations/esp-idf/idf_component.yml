@@ -1,0 +1,4 @@
+version: "0.2.0"
+description: "Struct binary telemetry SDK integration candidate"
+dependencies:
+  idf: ">=5.2,<6.0"

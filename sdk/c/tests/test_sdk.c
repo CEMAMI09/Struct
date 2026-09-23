@@ -54,12 +54,16 @@ int main(void) {
   assert(struct_poll(&c, 20000) == STRUCT_UNKNOWN && sends == 2);
   sends = 0; d.max_retries = 0; d.awake_budget_ms = 500;
   assert(struct_send(&c, 1, payload, 9, 1700000000, 0, d) == STRUCT_PENDING);
+  assert(struct_poll_delay(&c,490,100)==10);
+  assert(struct_poll_delay(&c,500,100)==0);
   assert(struct_poll(&c, 500) == STRUCT_UNKNOWN && sends == 1);
 
   sends = 0; d = struct_delivery_default(0);
   assert(struct_send(&c, 1, payload, 9, 1700000000, 0, d) == STRUCT_SENT);
   assert(struct_poll(&c, 1000) == STRUCT_SENT && sends == 1 && sent[0] == 2);
   sends = 0; memset(key, 0x22, sizeof(key));
+  assert(struct_set_encryption_hex(&c,"not a key")==STRUCT_INVALID);
+  assert(struct_set_encryption_hex(&c,"2222222222222222222222222222222222222222222222222222222222222222")==STRUCT_IDLE);
   assert(struct_set_encryption(&c, key) == STRUCT_IDLE);
   assert(struct_send(&c, 1, payload, 9, 1700000000, 0, d) == STRUCT_SENT);
   assert(sent_size == 107);

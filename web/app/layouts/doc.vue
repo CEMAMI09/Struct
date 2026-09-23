@@ -1,119 +1,98 @@
 <template>
-  <div class="doc">
-    <header class="doc-nav">
-      <NuxtLink to="/" class="doc-logo" aria-label="Struct home">
-        <StructLogo size="md" />
-      </NuxtLink>
-      <NuxtLink to="/" class="btn-ghost text-xs">Back to home</NuxtLink>
-    </header>
-    <main class="doc-main">
+  <div class="site doc">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <SiteHeader />
+    <main id="main" class="doc-main">
       <slot />
     </main>
+    <SiteFooter />
   </div>
 </template>
 
 <style scoped>
-.doc {
-  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
-  min-height: 100vh;
-  background: #0f1115;
-  color: #e8eaef;
-}
-
-.doc-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  border-bottom: 1px solid #2a2f3a;
-  padding: 1rem 1.5rem;
-}
-
-.doc-logo {
-  display: inline-flex;
-  align-items: center;
-}
-
 .doc-main {
-  max-width: 46rem;
+  width: min(100%, 46rem);
   margin: 0 auto;
-  padding: 3rem 1.5rem 5rem;
+  padding: 2.5rem 1.25rem 4rem;
 }
 
-.doc-main :deep(.doc-label) {
-  margin: 0 0 0.75rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 10px;
-  letter-spacing: 0.16em;
+.doc-main :deep(.doc-label),
+.doc-main :deep(.label) {
+  margin: 0 0 0.5rem;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #8b93a7;
+  color: var(--struct-muted);
 }
 
-.doc-main :deep(.doc-title) {
+.doc-main :deep(.doc-title),
+.doc-main :deep(.method-title) {
   margin: 0;
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
   font-weight: 600;
   letter-spacing: -0.03em;
-  line-height: 1.15;
-  color: #f4f5f7;
+  line-height: 1.2;
+  color: var(--struct-text);
 }
 
 .doc-main :deep(.doc-updated) {
-  margin: 0.85rem 0 0;
+  margin: 0.75rem 0 0;
   font-size: 0.875rem;
-  color: #8b93a7;
+  color: var(--struct-muted);
 }
 
-.doc-main :deep(.doc-lede) {
-  margin-top: 1rem;
-  font-size: 1.125rem;
-  line-height: 1.7;
-  color: #b4bcc9;
+.doc-main :deep(.doc-lede),
+.doc-main :deep(.method-lede) {
+  margin-top: 0.85rem;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--struct-text-secondary);
 }
 
-.doc-main :deep(section) {
-  margin-top: 2.5rem;
-  padding-top: 2rem;
-  border-top: 1px solid #2a2f3a;
+.doc-main :deep(section),
+.doc-main :deep(.method-section) {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--struct-border);
 }
 
 .doc-main :deep(h2) {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: #f4f5f7;
+  color: var(--struct-text);
 }
 
 .doc-main :deep(p),
 .doc-main :deep(li) {
-  margin-top: 0.75rem;
-  font-size: 1.0625rem;
-  line-height: 1.7;
-  color: #b4bcc9;
+  margin-top: 0.65rem;
+  font-size: 0.975rem;
+  line-height: 1.65;
+  color: var(--struct-text-secondary);
 }
 
 .doc-main :deep(ul) {
-  margin: 0.5rem 0 0;
+  margin: 0.35rem 0 0;
   padding-left: 1.15rem;
 }
 
 .doc-main :deep(strong) {
   font-weight: 600;
-  color: #e8eaef;
+  color: var(--struct-text);
 }
 
 .doc-main :deep(a) {
-  color: #38b6ff;
-  text-decoration: underline;
+  color: var(--struct-accent);
   text-underline-offset: 0.15em;
 }
 
 .doc-main :deep(.doc-switch) {
-  margin-top: 2.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #2a2f3a;
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--struct-border);
   font-size: 0.9375rem;
-  color: #8b93a7;
+  color: var(--struct-muted);
 }
 </style>

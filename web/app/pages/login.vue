@@ -33,7 +33,7 @@
           @keydown.enter.prevent="onSubmit"
         />
       </div>
-      <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
+      <p v-if="error" class="text-sm text-red-300" role="alert">{{ error }}</p>
       <button type="submit" class="btn-primary w-full" :disabled="loading">
         {{ loading ? 'Signing in…' : 'Sign in' }}
       </button>

@@ -32,6 +32,14 @@ struct_result struct_set_encryption(struct_client *c, const uint8_t *key) {
   if (key) memcpy(c->encryption_key, key, 32);
   return STRUCT_IDLE;
 }
+struct_result struct_set_encryption_hex(struct_client *c,const char *hex){
+ uint8_t key[32];size_t i;struct_result r;
+ if(!hex)return struct_set_encryption(c,NULL);
+ if(strlen(hex)!=64)return STRUCT_INVALID;
+ for(i=0;i<64;i++){unsigned char b=(unsigned char)hex[i];int n=b>='0'&&b<='9'?b-'0':b>='a'&&b<='f'?b-'a'+10:b>='A'&&b<='F'?b-'A'+10:-1;
+  if(n<0){wipe(key,sizeof(key));return STRUCT_INVALID;}if(!(i&1))key[i/2]=(uint8_t)(n<<4);else key[i/2]|=(uint8_t)n;}
+ r=struct_set_encryption(c,key);wipe(key,sizeof(key));return r;
+}
 static struct_result prepare(struct_client *c, uint8_t version, const uint8_t *payload,
                           size_t n, uint32_t unix_sec, uint32_t now, struct_delivery d) {
   uint8_t plain[STRUCT_MAX_PAYLOAD + 4];
@@ -101,3 +109,16 @@ struct_result struct_poll(struct_client *c, uint32_t now) {
 }
 void struct_cancel(struct_client *c) { if (c && c->state == STRUCT_PENDING) c->state = STRUCT_UNKNOWN; }
 void struct_clear(struct_client *c) { if (c) wipe(c, sizeof(*c)); }
+uint32_t struct_poll_delay(const struct_client *c,uint32_t now,uint32_t cap) {
+  uint32_t elapsed,remaining,wait;
+  if(!c||c->state!=STRUCT_PENDING)return 0;
+  elapsed=now-c->started_ms;
+  if(elapsed>=c->delivery.awake_budget_ms)return 0;
+  remaining=c->delivery.awake_budget_ms-elapsed;
+  if(c->retries<c->delivery.max_retries){
+    elapsed=now-c->last_sent_ms;
+    wait=elapsed>=c->next_wait_ms?0:c->next_wait_ms-elapsed;
+    if(wait<remaining)remaining=wait;
+  }
+  return remaining<cap?remaining:cap;
+}
