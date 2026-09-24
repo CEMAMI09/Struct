@@ -128,14 +128,14 @@
                 <p class="viz-bytes"><span>00 00 B4 41</span><span>00 00 20 42</span></p>
               </div>
               <div class="need-copy">
-                <h3>{{ features[0].title }}</h3>
-                <p>{{ features[0].description }}</p>
+                <h3>{{ compactEncoding.title }}</h3>
+                <p>{{ compactEncoding.description }}</p>
               </div>
             </article>
             <article class="need-card need-card--split">
               <div class="need-copy">
-                <h3>{{ features[1].title }}</h3>
-                <p>{{ features[1].description }}</p>
+                <h3>{{ authenticatedIngestion.title }}</h3>
+                <p>{{ authenticatedIngestion.description }}</p>
               </div>
               <div class="need-panel" aria-hidden="true">
                 <p class="viz-label">Frame</p>
@@ -145,8 +145,8 @@
             </article>
             <article class="need-card need-card--split">
               <div class="need-copy">
-                <h3>{{ features[2].title }}</h3>
-                <p>{{ features[2].description }}</p>
+                <h3>{{ deliveryInspect.title }}</h3>
+                <p>{{ deliveryInspect.description }}</p>
               </div>
               <div class="need-panel" aria-hidden="true">
                 <p class="viz-row"><span>Stored</span><span class="viz-ok">Committed</span></p>
@@ -160,16 +160,39 @@
       <LandingSchemaPlayground />
 
       <section id="product" class="bg-gradient-to-b from-black to-[#3e11b5] pt-[72px] pb-20 sm:pt-24">
-        <div class="mx-auto max-w-6xl px-4">
+        <div class="mx-auto w-full max-w-[1500px] px-6 sm:px-8">
           <h2 class="text-center text-5xl font-bold tracking-tighter sm:text-6xl">Inspect the event</h2>
           <div class="mx-auto max-w-xl">
             <p class="mt-5 text-center text-xl text-white/70">
-              A stored event shows decoded fields. Webhook delivery is a separate status: pending, sending, delivered, skipped, or failed.
+              Inspect decoded telemetry, monitor delivery, and troubleshoot device events from one dashboard.
             </p>
           </div>
-        </div>
-        <div class="product-stage">
-          <img src="/macbookmockup.svg" alt="Struct dashboard on a MacBook" class="product-shot" />
+          <div class="product-row">
+            <div class="product-copy">
+              <p class="product-kicker">Event visibility</p>
+              <h3 class="mt-3 text-3xl font-semibold tracking-tighter sm:text-4xl">Know exactly what happens to your data.</h3>
+              <p class="mt-4 text-white/70">
+                From the moment your device sends an event to its final delivery, Struct gives you the visibility to understand your telemetry and troubleshoot issues.
+              </p>
+              <div class="mt-8 space-y-5">
+                <div>
+                  <h4 class="font-semibold">Decoded telemetry</h4>
+                  <p class="mt-1 text-sm leading-relaxed text-white/70">View stored events, inspect individual fields, and visualize incoming telemetry in real time.</p>
+                </div>
+                <div>
+                  <h4 class="font-semibold">Delivery tracking</h4>
+                  <p class="mt-1 text-sm leading-relaxed text-white/70">Monitor webhook attempts and see whether an event was delivered, is still pending, or requires attention.</p>
+                </div>
+                <div>
+                  <h4 class="font-semibold">Event diagnostics</h4>
+                  <p class="mt-1 text-sm leading-relaxed text-white/70">Trace individual events to understand authentication, decoding, and delivery failures.</p>
+                </div>
+              </div>
+            </div>
+            <div class="product-stage">
+              <img src="/macbookmockup.svg" alt="Struct dashboard on a MacBook" class="product-shot" />
+            </div>
+          </div>
         </div>
       </section>
 
@@ -295,6 +318,16 @@ const features = [
     visualLabel: 'Stored event and webhook status',
   },
 ]
+
+function requireFeature(index: number) {
+  const feature = features[index]
+  if (!feature) throw new Error(`Missing landing feature ${index}`)
+  return feature
+}
+
+const compactEncoding = requireFeature(0)
+const authenticatedIngestion = requireFeature(1)
+const deliveryInspect = requireFeature(2)
 
 const faqs = [
   {
@@ -571,19 +604,48 @@ onUnmounted(() => {
   right: max(1rem, calc(50% - 28rem));
 }
 
+.product-row {
+  display: grid;
+  gap: 2.5rem;
+  margin-top: 4.5rem;
+  align-items: start;
+}
+
+.product-kicker {
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #b79bff;
+}
+
 .product-stage {
   display: flex;
   justify-content: center;
-  width: min(100% - 2rem, 920px);
-  margin: 5rem auto 0;
 }
 
 .product-shot {
   display: block;
   width: 100%;
   height: auto;
-  margin-inline: auto;
-  transform: translateX(1.5rem);
+}
+
+@media (min-width: 900px) {
+  .product-row {
+    grid-template-columns: 2fr 3fr;
+    gap: 2rem;
+    align-items: center;
+  }
+
+  /* The display sits in the upper part of the mockup. Shift the copy up
+     so it centers on the screen instead of the keyboard. */
+  .product-copy {
+    transform: translateY(-14%);
+  }
+
+  .product-shot {
+    transform: translateX(1.75rem);
+  }
 }
 
 .need-grid {

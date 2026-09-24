@@ -6,6 +6,7 @@
   "scripts": {
     "dev:web": "npm --prefix web run dev",
     "dev:tcp": "npm --prefix tcp-server run dev",
+    "build": "npm --prefix web run build",
     "build:web": "npm --prefix web run build",
     "start:tcp": "npm --prefix tcp-server run start",
     "test": "npm --prefix web test && npm --prefix tcp-server test && node tests/database.cjs && node tests/delivery.cjs && node tcp-server/test-delivery.js && node sdk/tests/test_vectors.cjs && node sdk/tests/test_udp.cjs && node tests/debugger.cjs",
