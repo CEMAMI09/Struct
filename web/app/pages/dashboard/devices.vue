@@ -55,7 +55,7 @@
         aria-label="Filter devices"
       />
       <label class="flex cursor-pointer items-center gap-2 text-xs text-[#9AA3B2]" title="Last packet was within the past hour, and none in the last 30 seconds">
-        <input v-model="offlineOnly" type="checkbox" class="accent-[#38B6FF]" />
+        <input v-model="offlineOnly" type="checkbox" class="accent-[#5617fc]" />
         Quiet after a packet in the last hour
       </label>
       <span class="self-center font-mono text-[10px] text-[#8B93A7]">
@@ -97,7 +97,7 @@
               <p class="mt-1 text-[10px] text-[#8B93A7]">
                 Last seen:
                 {{ device.last_seen ? new Date(device.last_seen).toLocaleString() : 'never' }}
-                <span v-if="device.encryption_enabled" class="ml-2 text-[#38B6FF]">· ChaCha20</span>
+                <span v-if="device.encryption_enabled" class="ml-2 text-[#b79bff]">· ChaCha20</span>
               </p>
               <div v-if="Object.keys(device.tags || {}).length" class="mt-2 flex flex-wrap gap-1.5">
                 <span
@@ -216,7 +216,7 @@
               The UDP device SDK does not execute these commands. Queued does not mean the device received it.
               The downlink itself is not signed.
             </p>
-            <p v-if="cmdMsg" class="mt-2 text-xs" :class="cmdErr ? 'text-red-400' : 'text-[#38B6FF]'">
+            <p v-if="cmdMsg" class="mt-2 text-xs" :class="cmdErr ? 'text-red-400' : 'text-[#b79bff]'">
               {{ cmdMsg }}
             </p>
           </div>

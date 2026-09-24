@@ -5,7 +5,7 @@
     <NuxtLink
       v-if="error"
       to="/login"
-      class="mt-4 inline-block text-sm text-[#38B6FF] hover:underline"
+      class="mt-4 inline-block text-sm text-[#b79bff] hover:underline"
     >
       Back to sign in
     </NuxtLink>

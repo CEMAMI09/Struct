@@ -11,7 +11,7 @@
 <script setup lang="ts">
 /**
  * EMQX-style flowing liquid gradient (simplex noise + fbm),
- * recolored for Struct blues. Lightweight raw WebGL — no Three.js.
+ * recolored for Struct purple. Lightweight raw WebGL — no Three.js.
  */
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 
@@ -108,14 +108,14 @@ void main() {
   float sWarm1 = smoothstep(0.22, 0.0, length(distortedUv - warmSpot1));
   float sWarm2 = smoothstep(0.18, 0.0, length(distortedUv - warmSpot2));
 
-  // Struct dark palette — cyan / sky / deep navy (vs EMQX purple)
-  vec3 deepColor = vec3(0.06, 0.22, 0.48);
-  vec3 mainColor = vec3(0.1, 0.42, 0.72);
-  vec3 flowColor = vec3(0.16, 0.58, 0.92);
-  vec3 coolHighlight = vec3(0.22, 0.71, 1.0);
-  vec3 warmA = vec3(0.2, 0.48, 0.7);
-  vec3 warmB = vec3(0.28, 0.62, 0.82);
-  vec3 warmC = vec3(0.4, 0.8, 1.0);
+  // Struct dark palette — brand purple #5617fc
+  vec3 deepColor = vec3(0.10, 0.03, 0.35);
+  vec3 mainColor = vec3(0.337, 0.090, 0.988);
+  vec3 flowColor = vec3(0.48, 0.27, 1.0);
+  vec3 coolHighlight = vec3(0.77, 0.71, 0.99);
+  vec3 warmA = vec3(0.43, 0.24, 0.99);
+  vec3 warmB = vec3(0.55, 0.42, 1.0);
+  vec3 warmC = vec3(0.83, 0.78, 1.0);
   vec3 baseColor = vec3(0.06, 0.07, 0.08);
 
   float intensityMult = 1.75;
@@ -274,8 +274,8 @@ onBeforeUnmount(() => {
   opacity: 0.3;
   background: radial-gradient(
     ellipse 50% 50% at center,
-    rgba(56, 182, 255, 0.35),
-    rgba(16, 40, 72, 0.2) 45%,
+    rgba(86, 23, 252, 0.35),
+    rgba(36, 12, 80, 0.2) 45%,
     transparent 70%
   );
   mask: radial-gradient(ellipse 50% 50% at center, black 0%, black 60%, transparent 100%);

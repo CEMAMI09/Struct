@@ -23,17 +23,23 @@ const props = withDefaults(
   defineProps<{
     size?: 'sm' | 'md' | 'lg'
     lockup?: boolean
+    /** Full wordmark for dark backgrounds (landing header, login, signup). */
+    variant?: 'default' | 'dark'
   }>(),
-  { size: 'md', lockup: false },
+  { size: 'md', lockup: false, variant: 'default' },
 )
 
 /** Cache-bust when replacing logo assets */
-const MARK_SRC = '/struct-logo-mini.svg?v=1'
-const FULL_SRC = '/struct-logo.svg?v=8'
+const MARK_SRC = '/struct-icon.svg?v=1'
+const FULL_SRC = '/structdarkmode.svg?v=1'
+const DARK_SRC = '/structdarkmode.svg?v=1'
 
-const isMark = computed(() => props.size === 'sm')
+const isMark = computed(() => props.variant === 'default' && props.size === 'sm')
 
-const src = computed(() => (isMark.value ? MARK_SRC : FULL_SRC))
+const src = computed(() => {
+  if (props.variant === 'dark') return DARK_SRC
+  return isMark.value ? MARK_SRC : FULL_SRC
+})
 
 const sizeClass = computed(() => {
   // Dashboard uses the compact mark; landing/auth use the full logo

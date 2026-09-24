@@ -136,7 +136,7 @@
                   : maskSecret(dest.signing_secret)
               }}
             </p>
-            <p v-if="dest.routing_rule" class="mt-1 font-mono text-[10px] text-[#38B6FF]">
+            <p v-if="dest.routing_rule" class="mt-1 font-mono text-[10px] text-[#b79bff]">
               When {{ dest.routing_rule.key }} {{ dest.routing_rule.operator }}
               {{ formatRuleValue(dest.routing_rule.value) }}
             </p>
@@ -226,7 +226,7 @@
     <div class="card mt-6 p-4">
       <p class="label">Example webhook body</p>
       <p class="mb-2 text-xs text-[#9AA3B2]">Illustrative JSON. It is not a captured delivery.</p>
-      <pre class="mono overflow-x-auto rounded-lg bg-[#0F1115] p-3 text-xs leading-relaxed text-[#38B6FF]">{{ webhookExample }}</pre>
+      <pre class="mono overflow-x-auto rounded-lg bg-[#0F1115] p-3 text-xs leading-relaxed text-[#b79bff]">{{ webhookExample }}</pre>
     </div>
   </div>
 </template>

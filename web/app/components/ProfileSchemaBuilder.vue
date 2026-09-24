@@ -5,7 +5,7 @@
         <h3 class="text-sm font-semibold text-[#E8EAEF]">Payload layout</h3>
         <p class="mt-0.5 font-mono text-[10px] text-[#8B93A7]">
           Payload = {{ byteLength }} bytes · identity field
-          <span class="text-[#38B6FF]">{{ identityField || '—' }}</span>
+          <span class="text-[#b79bff]">{{ identityField || '—' }}</span>
         </p>
       </div>
       <button type="button" class="btn-primary" :disabled="disabled" @click="addField">
@@ -57,7 +57,7 @@
             <input
               type="radio"
               name="identity-field"
-              class="accent-[#38B6FF]"
+              class="accent-[#5617fc]"
               :checked="identityField === field.name"
               :disabled="disabled || !field.name.trim()"
               @change="emit('update:identityField', field.name.trim())"
@@ -168,7 +168,7 @@
         <option v-for="language in CODE_LANGUAGES" :key="language">{{ language }}</option>
       </select>
       <pre
-        class="mono overflow-x-auto rounded-lg bg-[#0F1115] p-3 text-xs leading-relaxed text-[#38B6FF]"
+        class="mono overflow-x-auto rounded-lg bg-[#0F1115] p-3 text-xs leading-relaxed text-[#b79bff]"
       >{{ codePreviewText }}</pre>
     </div>
   </div>

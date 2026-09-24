@@ -21,7 +21,12 @@
     </div>
 
     <ClientOnly>
-      <VChart v-if="hasData" class="min-h-0 flex-1" :option="chartOption" autoresize />
+      <VChart
+        v-if="hasData"
+        ref="chartEl"
+        class="min-h-0 flex-1"
+        :option="chartOption"
+      />
       <template #fallback>
         <div class="flex flex-1 items-center justify-center text-sm text-[#8B93A7]">
           Loading chart…
@@ -61,6 +66,20 @@ const props = defineProps<{
 }>()
 
 const selectedField = ref<string | null>(null)
+const chartEl = ref<{ $el?: HTMLElement, resize: (opts?: { animation?: { duration?: number } }) => void } | null>(null)
+let resizeObserver: ResizeObserver | undefined
+
+watch(chartEl, (chart) => {
+  resizeObserver?.disconnect()
+  const node = chart?.$el
+  if (!node || typeof ResizeObserver === 'undefined') return
+  resizeObserver = new ResizeObserver(() => {
+    chart.resize({ animation: { duration: 0 } })
+  })
+  resizeObserver.observe(node)
+})
+
+onUnmounted(() => resizeObserver?.disconnect())
 
 const numericFields = computed(() => {
   const keys = new Set<string>()
@@ -111,6 +130,7 @@ const chartOption = computed(() => {
 
   return {
     backgroundColor: 'transparent',
+    animationDurationUpdate: 400,
     grid: { left: 40, right: 16, top: 24, bottom: 28 },
     tooltip: {
       trigger: 'axis',
@@ -134,12 +154,12 @@ const chartOption = computed(() => {
       type: 'category',
       data: times,
       axisLine: { lineStyle: { color: '#252830' } },
-      axisLabel: { color: '#8B93A7', fontSize: 10, fontFamily: 'Geist, ui-sans-serif, sans-serif' },
+      axisLabel: { color: '#8B93A7', fontSize: 10, fontFamily: 'Figtree, ui-sans-serif, sans-serif' },
     },
     yAxis: {
       type: 'value',
       splitLine: { lineStyle: { color: '#252830', type: 'dashed' } },
-      axisLabel: { color: '#8B93A7', fontSize: 10, fontFamily: 'Geist, ui-sans-serif, sans-serif' },
+      axisLabel: { color: '#8B93A7', fontSize: 10, fontFamily: 'Figtree, ui-sans-serif, sans-serif' },
     },
     series: [
       {
@@ -150,8 +170,8 @@ const chartOption = computed(() => {
         showSymbol: true,
         symbolSize: 6,
         data: values,
-        lineStyle: { color: '#38B6FF', width: 2 },
-        itemStyle: { color: '#38B6FF' },
+        lineStyle: { color: '#b79bff', width: 2 },
+        itemStyle: { color: '#b79bff' },
       },
     ],
   }

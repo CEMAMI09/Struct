@@ -52,7 +52,7 @@
           <button
             type="button"
             class="relative h-7 w-12 shrink-0 rounded-full transition"
-            :class="encryptionOn ? 'bg-[#38B6FF]' : 'bg-[#2A2F3A]'"
+            :class="encryptionOn ? 'bg-[#5617fc]' : 'bg-[#2A2F3A]'"
             :aria-pressed="encryptionOn"
             aria-label="Enable payload encryption"
             :disabled="togglingEnc || !canWrite || (!canUseEncryption && !encryptionOn)"
@@ -82,12 +82,12 @@
               </button>
             </div>
           </div>
-          <pre class="mono overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-[#0F1115] p-3 text-xs text-[#38B6FF]">{{ selectedDevice.encryption_key }}</pre>
+          <pre class="mono overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-[#0F1115] p-3 text-xs text-[#b79bff]">{{ selectedDevice.encryption_key }}</pre>
           <p class="mt-2 font-mono text-[10px] text-[#8B93A7]">
             Wire: [protocol][16B key_id][schema][4B ts][12B nonce][12B encryption nonce][4B ts + struct ciphertext][16B tag][32B HMAC]
           </p>
         </div>
-        <p v-if="encMsg" class="mt-3 text-xs" :class="encErr ? 'text-red-400' : 'text-[#38B6FF]'">
+        <p v-if="encMsg" class="mt-3 text-xs" :class="encErr ? 'text-red-400' : 'text-[#b79bff]'">
           {{ encMsg }}
         </p>
       </div>
@@ -98,7 +98,7 @@
             <h3 class="text-sm font-semibold text-[#E8EAEF]">Fields</h3>
             <p class="mt-0.5 font-mono text-[10px] text-[#8B93A7]">
               schema version {{ displayVersion }}
-              <span v-if="willBumpOnSave" class="text-[#38B6FF]"> → {{ displayVersion + 1 }} on save</span>
+              <span v-if="willBumpOnSave" class="text-[#b79bff]"> → {{ displayVersion + 1 }} on save</span>
             </p>
           </div>
           <p class="font-mono text-[10px] text-[#8B93A7]">
@@ -279,10 +279,10 @@
 
       <div class="card flex flex-wrap gap-4 p-4 text-xs">
         <button class="btn-primary" :disabled="!canDownload || exportingProject" @click="downloadProject">{{ exportingProject ? 'Packaging…' : `Download ${codeLanguage} starter project` }}</button>
-        <a href="/sdk/struct-sdk.zip" download class="text-[#38B6FF] underline">Download SDK + integration guide</a>
-        <a href="/sdk/struct-arduino.zip" download class="text-[#38B6FF] underline">Arduino ZIP library (ESP32)</a>
+        <a href="/sdk/struct-sdk.zip" download class="text-[#b79bff] underline">Download SDK + integration guide</a>
+        <a href="/sdk/struct-arduino.zip" download class="text-[#b79bff] underline">Arduino ZIP library (ESP32)</a>
       </div>
-      <p v-if="message" role="status" class="text-xs" :class="error ? 'text-red-400' : 'text-[#38B6FF]'">
+      <p v-if="message" role="status" class="text-xs" :class="error ? 'text-red-400' : 'text-[#b79bff]'">
         {{ message }}
       </p>
     </template>

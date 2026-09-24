@@ -34,7 +34,7 @@
         />
       </div>
       <p v-if="error" class="text-sm text-red-300" role="alert">{{ error }}</p>
-      <p v-if="info" class="text-sm text-[#38B6FF]">{{ info }}</p>
+      <p v-if="info" class="text-sm text-[#b79bff]">{{ info }}</p>
       <button type="submit" class="btn-primary w-full" :disabled="loading">
         {{ loading ? 'Creating…' : 'Sign up' }}
       </button>
@@ -44,13 +44,13 @@
 
     <p class="mt-6 text-center text-sm text-[#8B93A7]">
       By creating an account you agree to the
-      <NuxtLink to="/terms" class="text-[#38B6FF] hover:underline">Terms of Use</NuxtLink>
+      <NuxtLink to="/terms" class="text-[#b79bff] hover:underline">Terms of Use</NuxtLink>
       and
-      <NuxtLink to="/privacy" class="text-[#38B6FF] hover:underline">Privacy Policy</NuxtLink>.
+      <NuxtLink to="/privacy" class="text-[#b79bff] hover:underline">Privacy Policy</NuxtLink>.
     </p>
     <p class="mt-3 text-center text-sm text-[#8B93A7]">
       Already have an account?
-      <NuxtLink to="/login" class="text-[#38B6FF] hover:underline">Sign in</NuxtLink>
+      <NuxtLink to="/login" class="text-[#b79bff] hover:underline">Sign in</NuxtLink>
     </p>
   </div>
 </template>

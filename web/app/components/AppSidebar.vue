@@ -3,17 +3,14 @@
     class="app-side"
     :class="[
       open ? 'translate-x-0' : '-translate-x-full',
-      collapsed ? 'w-60 md:w-[4.5rem]' : 'w-60',
+      collapsed ? 'is-collapsed w-60 md:w-[4.5rem]' : 'w-60',
     ]"
   >
-    <div class="app-side-brand" :class="collapsed ? 'md:justify-center md:px-2' : ''">
-      <NuxtLink
-        to="/dashboard"
-        class="flex min-w-0 items-center"
-        :class="collapsed ? 'md:justify-center' : ''"
-        @click="emit('close')"
-      >
-        <StructLogo size="sm" />
+    <div class="app-side-brand">
+      <NuxtLink to="/dashboard" class="brand-link" aria-label="Struct" @click="emit('close')">
+        <span class="brand-swap">
+          <img class="brand-full" src="/structdarkmode.svg" alt="" />
+        </span>
       </NuxtLink>
       <button
         type="button"
@@ -178,7 +175,7 @@ function prefetch(path: string) {
   flex-direction: column;
   border-right: 1px solid #252830;
   background: #0c0d10;
-  transition: width 0.2s ease, transform 0.2s ease;
+  transition: width 0.28s ease, transform 0.28s ease;
 }
 
 @media (min-width: 768px) {
@@ -200,9 +197,35 @@ function prefetch(path: string) {
   padding: 0 0.85rem;
 }
 
-.app-side-brand :deep(.struct-logo) {
-  height: 1.75rem;
-  margin-inline: 0;
+.brand-link {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.brand-swap {
+  --brand-h: 2.25rem;
+  --brand-aspect: 3.21778;
+  /* Right edge of the icon inside the wordmark viewBox. */
+  --brand-icon-end: 0.30805;
+  height: var(--brand-h);
+  width: calc(var(--brand-h) * var(--brand-aspect));
+  overflow: hidden;
+  flex: none;
+  transition: width 0.28s ease;
+}
+
+.brand-full {
+  display: block;
+  height: var(--brand-h);
+  width: calc(var(--brand-h) * var(--brand-aspect));
+  max-width: none;
+}
+
+@media (min-width: 768px) {
+  .app-side.is-collapsed .brand-swap {
+    width: calc(var(--brand-h) * var(--brand-aspect) * var(--brand-icon-end));
+  }
 }
 
 .app-nav {
@@ -246,8 +269,8 @@ function prefetch(path: string) {
 }
 
 .app-nav-link.is-active {
-  background: #181b22;
-  color: #f2f4f7;
+  background: rgba(86, 23, 252, 0.16);
+  color: #f4f1ff;
 }
 
 .app-nav-icon {

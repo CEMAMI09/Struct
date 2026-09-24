@@ -6,7 +6,7 @@
     </p>
     <p v-else-if="!loading && !devices.length" class="mb-3 text-sm text-[#9AA3B2]">
       No devices yet —
-      <NuxtLink to="/dashboard/devices" class="text-[#38B6FF] hover:underline">create one</NuxtLink>
+      <NuxtLink to="/dashboard/devices" class="text-[#b79bff] hover:underline">create one</NuxtLink>
       first.
     </p>
     <div class="mb-3 flex flex-wrap gap-2">

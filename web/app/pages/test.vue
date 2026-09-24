@@ -270,7 +270,7 @@
           <p class="eyebrow">Fleet economics</p>
           <h2 class="section-title">
             99% smaller per ping.
-            <span class="text-[#38B6FF]">~$2,400/mo at fleet scale.</span>
+            <span class="text-[#b79bff]">~$2,400/mo at fleet scale.</span>
           </h2>
           <p class="section-body mt-5">
             Drop the TLS cold-start. Send a schema-sized UDP frame. Keep radios asleep longer and
@@ -284,7 +284,7 @@
           <p class="font-mono text-[10px] uppercase tracking-[0.15em] text-[#8B93A7]">
             10k devices · 1 ping/min
           </p>
-          <p class="mt-2 text-4xl font-semibold tracking-[-0.04em] text-[#38B6FF]">~$2,400</p>
+          <p class="mt-2 text-4xl font-semibold tracking-[-0.04em] text-[#b79bff]">~$2,400</p>
           <p class="mt-1 text-xs text-[#8B93A7]">saved per month · ~2.2 TB less data</p>
           <p class="mt-6 text-[10px] leading-relaxed text-[#5A6275]">
             Assumes bypassing a 5&nbsp;KB TLS cold-start per ping on a $1.10/GB metered cellular plan.
@@ -852,7 +852,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   padding: 0.65rem 1rem;
-  background: linear-gradient(90deg, #0a4a6e 0%, #1a6fa0 45%, #38b6ff 100%);
+  background: linear-gradient(90deg, #2a0d6e 0%, #5617fc 45%, #b79bff 100%);
   font-size: 0.8125rem;
   font-weight: 500;
   color: #fff;
@@ -915,7 +915,7 @@ onBeforeUnmount(() => {
 }
 
 .nav-links a:hover {
-  color: #38b6ff;
+  color: #b79bff;
 }
 
 .nav-actions {
@@ -937,7 +937,7 @@ onBeforeUnmount(() => {
 }
 
 .nav-signin:hover {
-  color: #38b6ff;
+  color: #b79bff;
 }
 
 .nav-menu-btn {
@@ -1028,8 +1028,8 @@ onBeforeUnmount(() => {
 }
 
 .mobile-menu a:hover {
-  background: rgba(56, 182, 255, 0.08);
-  color: #38b6ff;
+  background: rgba(86, 23, 252, 0.08);
+  color: #b79bff;
 }
 
 /* Hero — left copy + diagram */
@@ -1116,7 +1116,7 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   display: block;
-  color: #38b6ff;
+  color: #b79bff;
 }
 
 .hero-word-enter-active,
@@ -1228,7 +1228,7 @@ onBeforeUnmount(() => {
   font-size: clamp(1.5rem, 3vw, 2.15rem);
   font-weight: 700;
   letter-spacing: -0.04em;
-  color: #38b6ff;
+  color: #b79bff;
 }
 
 .stat-label {
@@ -1245,7 +1245,7 @@ onBeforeUnmount(() => {
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #38b6ff;
+  color: #b79bff;
 }
 
 .section-title {
@@ -1290,7 +1290,7 @@ onBeforeUnmount(() => {
 .text-link {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #38b6ff;
+  color: #b79bff;
   transition: opacity 0.15s ease;
 }
 
@@ -1333,7 +1333,7 @@ onBeforeUnmount(() => {
   border-radius: 1rem;
   padding: 1.75rem;
   background:
-    radial-gradient(circle at 90% 10%, rgba(56, 182, 255, 0.12), transparent 40%),
+    radial-gradient(circle at 90% 10%, rgba(86, 23, 252, 0.12), transparent 40%),
     #1a1d24;
 }
 
@@ -1348,7 +1348,7 @@ onBeforeUnmount(() => {
   font-size: 3rem;
   font-weight: 700;
   letter-spacing: -0.04em;
-  color: #38b6ff;
+  color: #b79bff;
 }
 
 .story-metric-label {
@@ -1380,8 +1380,8 @@ onBeforeUnmount(() => {
 }
 
 .story-bar--accent i {
-  background: #38b6ff;
-  box-shadow: 0 0 14px rgba(56, 182, 255, 0.45);
+  background: #5617fc;
+  box-shadow: 0 0 14px rgba(86, 23, 252, 0.45);
   min-width: 8px;
 }
 
@@ -1395,7 +1395,7 @@ onBeforeUnmount(() => {
 }
 
 .story-bar--accent em {
-  color: #38b6ff;
+  color: #b79bff;
 }
 
 /* Platform */
@@ -1426,8 +1426,8 @@ onBeforeUnmount(() => {
   width: 10px;
   height: 10px;
   border-radius: 999px;
-  background: #38b6ff;
-  box-shadow: 0 0 0 4px rgba(56, 182, 255, 0.15);
+  background: #5617fc;
+  box-shadow: 0 0 0 4px rgba(86, 23, 252, 0.15);
 }
 
 .flow-label {
@@ -1453,7 +1453,7 @@ onBeforeUnmount(() => {
     left: calc(50% + 12px);
     width: calc(100% - 8px);
     height: 1px;
-    background: linear-gradient(90deg, #38b6ff, #2a2f3a);
+    background: linear-gradient(90deg, #5617fc, #2a2f3a);
   }
 }
 
@@ -1529,21 +1529,21 @@ onBeforeUnmount(() => {
 }
 
 .product-card:hover {
-  border-color: rgba(56, 182, 255, 0.45);
+  border-color: rgba(86, 23, 252, 0.45);
   transform: translateY(-2px);
 }
 
 .product-badge {
   align-self: flex-start;
   margin-bottom: 1rem;
-  border: 1px solid rgba(56, 182, 255, 0.3);
+  border: 1px solid rgba(86, 23, 252, 0.3);
   border-radius: 999px;
   padding: 0.2rem 0.55rem;
   font-family: 'Geist Mono', ui-monospace, monospace;
   font-size: 0.625rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #38b6ff;
+  color: #b79bff;
 }
 
 .product-card h3 {
@@ -1578,7 +1578,7 @@ onBeforeUnmount(() => {
 
 .product-card li::before {
   content: '✓ ';
-  color: #38b6ff;
+  color: #b79bff;
 }
 
 /* Use cases */
@@ -1616,9 +1616,9 @@ onBeforeUnmount(() => {
 }
 
 .use-tab.active {
-  border-color: rgba(56, 182, 255, 0.5);
-  background: rgba(56, 182, 255, 0.1);
-  color: #38b6ff;
+  border-color: rgba(86, 23, 252, 0.5);
+  background: rgba(86, 23, 252, 0.1);
+  color: #b79bff;
 }
 
 .use-panel {
@@ -1671,7 +1671,7 @@ onBeforeUnmount(() => {
   font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: #38b6ff;
+  color: #b79bff;
 }
 
 .use-stat span {
@@ -1721,7 +1721,7 @@ onBeforeUnmount(() => {
   border-radius: 1.25rem;
   padding: clamp(1.5rem, 4vw, 3rem);
   background:
-    radial-gradient(circle at 85% 15%, rgba(56, 182, 255, 0.1), transparent 32%),
+    radial-gradient(circle at 85% 15%, rgba(86, 23, 252, 0.1), transparent 32%),
     #15181e;
 }
 
@@ -1744,7 +1744,7 @@ onBeforeUnmount(() => {
 }
 
 .bandwidth-card {
-  border: 1px solid rgba(56, 182, 255, 0.22);
+  border: 1px solid rgba(86, 23, 252, 0.22);
   border-radius: 1rem;
   padding: 1.5rem;
   background: rgba(15, 17, 21, 0.85);
@@ -1786,7 +1786,7 @@ onBeforeUnmount(() => {
 }
 
 .story-tab.active .story-tab-dot {
-  background: #38b6ff;
+  background: #5617fc;
   transform: scale(1.25);
 }
 
@@ -1806,7 +1806,7 @@ onBeforeUnmount(() => {
   font-size: 0.65rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #38b6ff;
+  color: #b79bff;
 }
 
 .story-title {
@@ -1836,7 +1836,7 @@ onBeforeUnmount(() => {
   display: block;
   font-size: 1.25rem;
   font-weight: 700;
-  color: #38b6ff;
+  color: #b79bff;
 }
 
 .story-metrics span {
@@ -1886,7 +1886,7 @@ onBeforeUnmount(() => {
 }
 
 .resource-card:hover {
-  border-color: rgba(56, 182, 255, 0.4);
+  border-color: rgba(86, 23, 252, 0.4);
 }
 
 .resource-card h3 {
@@ -1942,9 +1942,9 @@ onBeforeUnmount(() => {
 }
 
 .pricing-card.featured {
-  border-color: rgba(56, 182, 255, 0.55);
-  background: linear-gradient(165deg, rgba(56, 182, 255, 0.09), #1a1d24 48%);
-  box-shadow: 0 28px 55px -32px rgba(56, 182, 255, 0.5);
+  border-color: rgba(86, 23, 252, 0.55);
+  background: linear-gradient(165deg, rgba(86, 23, 252, 0.09), #1a1d24 48%);
+  box-shadow: 0 28px 55px -32px rgba(86, 23, 252, 0.5);
 }
 
 .pricing-badge {
@@ -1952,7 +1952,7 @@ onBeforeUnmount(() => {
   top: 0;
   right: 1rem;
   transform: translateY(-50%);
-  border: 1px solid rgba(56, 182, 255, 0.5);
+  border: 1px solid rgba(86, 23, 252, 0.5);
   border-radius: 999px;
   background: #101b24;
   padding: 0.25rem 0.55rem;
@@ -1960,7 +1960,7 @@ onBeforeUnmount(() => {
   font-size: 0.5625rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #38b6ff;
+  color: #b79bff;
 }
 
 .pricing-name {
@@ -2014,7 +2014,7 @@ onBeforeUnmount(() => {
   border-top: 1px solid #2a2f3a;
   text-align: center;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(56, 182, 255, 0.1), transparent 55%),
+    radial-gradient(ellipse at 50% 0%, rgba(86, 23, 252, 0.1), transparent 55%),
     #0f1115;
 }
 
@@ -2059,7 +2059,7 @@ onBeforeUnmount(() => {
 .faq-item summary::after {
   content: '+';
   float: right;
-  color: #38b6ff;
+  color: #b79bff;
   font-weight: 500;
 }
 
@@ -2127,7 +2127,7 @@ onBeforeUnmount(() => {
 }
 
 .footer-status:hover {
-  color: #38b6ff;
+  color: #b79bff;
 }
 
 .footer-status-dot {
@@ -2162,7 +2162,7 @@ onBeforeUnmount(() => {
 }
 
 .footer a:hover {
-  color: #38b6ff;
+  color: #b79bff;
 }
 
 .footer-bottom {

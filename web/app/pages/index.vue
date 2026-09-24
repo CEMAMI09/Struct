@@ -1,54 +1,78 @@
 <template>
   <div class="template-landing bg-black text-white">
-    <header class="bg-black">
-      <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+    <header class="landing-top">
+      <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
         <NuxtLink to="/" class="header-logo" aria-label="Struct home">
-          <StructLogo size="md" />
+          <StructLogo variant="dark" />
         </NuxtLink>
-
-        <button
-          type="button"
-          class="inline-flex size-10 items-center justify-center rounded-lg border border-white/30 sm:hidden"
-          :aria-expanded="menuOpen"
-          aria-controls="landing-menu"
-          @click="menuOpen = !menuOpen"
-        >
-          <span class="sr-only">{{ menuOpen ? 'Close menu' : 'Open menu' }}</span>
-          <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-            <path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round" />
-          </svg>
-        </button>
-
-        <nav class="hidden items-center gap-6 sm:flex" aria-label="Primary">
-          <a v-for="link in navLinks" :key="link.href" :href="link.href" class="text-white/60 transition hover:text-white">
-            {{ link.label }}
-          </a>
-          <NuxtLink :to="user ? '/dashboard' : '/signup'" class="rounded-lg bg-white px-4 py-2 font-medium text-black">
-            {{ user ? 'Open dashboard' : 'Get started' }}
+        <nav class="flex items-center gap-3 sm:gap-5" aria-label="Account">
+          <NuxtLink v-if="!user" to="/login" class="text-sm text-white/70 transition hover:text-white">
+            Sign in
+          </NuxtLink>
+          <NuxtLink :to="user ? '/dashboard' : '/signup'" class="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black">
+            {{ user ? 'Open dashboard' : 'Sign up' }}
           </NuxtLink>
         </nav>
       </div>
-      <div v-if="menuOpen" id="landing-menu" class="border-t border-white/10 px-4 py-3 sm:hidden">
-        <a
-          v-for="link in navLinks"
-          :key="link.href"
-          :href="link.href"
-          class="block py-2 text-white/80"
-          @click="menuOpen = false"
-        >
-          {{ link.label }}
-        </a>
-        <NuxtLink :to="user ? '/dashboard' : '/signup'" class="mt-2 inline-flex rounded-lg bg-white px-4 py-2 font-medium text-black" @click="menuOpen = false">
-          {{ user ? 'Open dashboard' : 'Get started' }}
-        </NuxtLink>
-      </div>
     </header>
 
+    <Teleport to="body">
+      <header
+        class="landing-float"
+        :class="{ 'is-on': isHeaderSticky }"
+        :inert="!isHeaderSticky"
+      >
+        <div class="landing-float-bar">
+          <a href="#home" class="float-brand" aria-label="Struct home" @click.prevent="scrollToSection('home')">
+            <img src="/struct-icon.svg" alt="" width="40" height="40" />
+          </a>
+          <nav class="float-links" aria-label="Sections">
+            <a
+              v-for="link in sectionLinks"
+              :key="link.id"
+              :href="link.id === 'home' ? '#home' : `#${link.id}`"
+              @click.prevent="scrollToSection(link.id)"
+            >
+              {{ link.label }}
+            </a>
+          </nav>
+          <button
+            type="button"
+            class="float-toggle"
+            :aria-expanded="floatMenuOpen"
+            aria-controls="float-menu"
+            @click="floatMenuOpen = !floatMenuOpen"
+          >
+            <span class="sr-only">{{ floatMenuOpen ? 'Close sections' : 'Open sections' }}</span>
+            <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+              <path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round" />
+            </svg>
+          </button>
+          <div class="float-actions">
+            <NuxtLink v-if="!user" to="/login" class="float-signin">Sign in</NuxtLink>
+            <NuxtLink :to="user ? '/dashboard' : '/signup'" class="float-signup">
+              {{ user ? 'Dashboard' : 'Sign up' }}
+            </NuxtLink>
+          </div>
+        </div>
+        <nav v-if="floatMenuOpen" id="float-menu" class="float-sheet" aria-label="Sections">
+          <a
+            v-for="link in sectionLinks"
+            :key="link.id"
+            :href="link.id === 'home' ? '#home' : `#${link.id}`"
+            @click.prevent="scrollToSection(link.id)"
+          >
+            {{ link.label }}
+          </a>
+        </nav>
+      </header>
+    </Teleport>
+
     <main>
-      <section class="relative overflow-clip bg-[linear-gradient(to_bottom,#000,#200d42_34%,#4f21a1_65%,#a46edb_82%)] pb-[72px] pt-36 sm:pb-24 sm:pt-52">
+      <section class="relative overflow-clip bg-[linear-gradient(to_bottom,#000,#1a0858_34%,#5617fc_65%,#c4b5fd_82%)] pb-[72px] pt-36 sm:pb-24 sm:pt-52">
         <img src="/landing/cursor.png" alt="" width="200" height="200" class="hero-art hero-art-left" />
         <img src="/landing/message.png" alt="" width="200" height="200" class="hero-art hero-art-right" />
-        <div class="absolute left-1/2 top-[calc(100%-96px)] h-[375px] w-[750px] -translate-x-1/2 rounded-[100%] border border-[#b48cde] bg-[radial-gradient(closest-side,#000_82%,#9560eb)] sm:top-[calc(100%-120px)] sm:h-[768px] sm:w-[1536px] lg:h-[1200px] lg:w-[2400px]" />
+        <div class="absolute left-1/2 top-[calc(100%-96px)] h-[375px] w-[750px] -translate-x-1/2 rounded-[100%] border border-[#b79bff] bg-[radial-gradient(closest-side,#000_82%,#5617fc)] sm:top-[calc(100%-120px)] sm:h-[768px] sm:w-[1536px] lg:h-[1200px] lg:w-[2400px]" />
         <div class="relative mx-auto max-w-6xl px-4">
           <div class="flex justify-center">
             <h1 class="mt-8 text-center text-6xl font-bold tracking-tighter md:text-7xl xl:text-8xl">
@@ -88,33 +112,54 @@
       </section>
 
       <section id="features" class="bg-black py-[72px] sm:py-24">
-        <div class="mx-auto max-w-6xl px-4">
+        <div class="mx-auto w-full max-w-[1600px] px-6 sm:px-8">
           <h2 class="text-center text-5xl font-bold tracking-tighter sm:text-6xl">Everything you need</h2>
           <div class="mx-auto max-w-xl">
             <p class="mt-5 text-center text-xl text-white/70">
               Define a packed schema, authenticate each frame, store the event, and inspect webhook delivery separately.
             </p>
           </div>
-          <div class="mt-16 flex flex-col gap-4 sm:flex-row">
-            <article
-              v-for="feature in features"
-              :key="feature.title"
-              class="feature-card relative rounded-xl border border-white/30 px-5 py-10 text-center sm:flex-1"
-              @mousemove="onFeatureMove"
-            >
-              <div class="inline-flex size-14 items-center justify-center rounded-lg bg-white text-black">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                  <path d="M17.7672 3.11412C17.7538 2.88477 17.6566 2.66832 17.4942 2.50586C17.3317 2.34341 17.1153 2.24627 16.8859 2.23287C13.7922 2.05084 11.0586 2.41568 8.76093 3.31647C6.56249 4.17818 4.86796 5.51412 3.85858 7.17975C2.48202 9.45397 2.4789 12.2149 3.82343 14.8508L2.46171 16.2126C2.3745 16.2998 2.30533 16.4033 2.25813 16.5172C2.21094 16.6312 2.18665 16.7533 2.18665 16.8766C2.18665 16.9999 2.21094 17.1221 2.25813 17.236C2.30533 17.3499 2.3745 17.4535 2.46171 17.5407C2.63783 17.7168 2.8767 17.8157 3.12577 17.8157C3.2491 17.8157 3.37122 17.7915 3.48516 17.7443C3.5991 17.6971 3.70263 17.6279 3.78983 17.5407L5.15155 16.179C6.45937 16.8462 7.79843 17.1829 9.09296 17.1829C10.4082 17.187 11.699 16.8274 12.8226 16.1438C14.4883 15.1344 15.8242 13.4391 16.6859 11.2415C17.5844 8.94225 17.9492 6.20787 17.7672 3.11412ZM11.8484 14.5376C10.2789 15.4883 8.43749 15.5602 6.5578 14.7657L13.1625 8.161C13.2497 8.07379 13.3189 7.97026 13.3661 7.85632C13.4133 7.74238 13.4376 7.62026 13.4376 7.49693C13.4376 7.37361 13.4133 7.25149 13.3661 7.13755C13.3189 7.02361 13.2497 6.92008 13.1625 6.83287C13.0753 6.74567 12.9718 6.67649 12.8578 6.62929C12.7439 6.5821 12.6218 6.55781 12.4984 6.55781C12.3751 6.55781 12.253 6.5821 12.139 6.62929C12.0251 6.67649 11.9216 6.74567 11.8344 6.83287L5.23437 13.4422C4.44218 11.5672 4.51405 9.72115 5.46874 8.15162C7.10233 5.45396 10.9797 3.95475 15.9375 4.06959C16.0453 9.02584 14.5461 12.904 11.8484 14.5376Z" fill="currentColor" />
-                </svg>
+          <div class="need-grid mt-16">
+            <article class="need-card need-card--tall">
+              <div class="need-stage" aria-hidden="true">
+                <p class="viz-label">JSON</p>
+                <p class="viz-muted">{"temp":22.5,"humidity":40}</p>
+                <p class="viz-label mt-6">Packed fields</p>
+                <p class="viz-bytes"><span>00 00 B4 41</span><span>00 00 20 42</span></p>
               </div>
-              <h3 class="mt-6 font-bold">{{ feature.title }}</h3>
-              <p class="mt-2 text-white/70">{{ feature.description }}</p>
+              <div class="need-copy">
+                <h3>{{ features[0].title }}</h3>
+                <p>{{ features[0].description }}</p>
+              </div>
+            </article>
+            <article class="need-card need-card--split">
+              <div class="need-copy">
+                <h3>{{ features[1].title }}</h3>
+                <p>{{ features[1].description }}</p>
+              </div>
+              <div class="need-panel" aria-hidden="true">
+                <p class="viz-label">Frame</p>
+                <p class="viz-bytes"><span>key</span><span>schema</span><span>payload</span><span>HMAC</span></p>
+                <p class="viz-ok">Verified before decode</p>
+              </div>
+            </article>
+            <article class="need-card need-card--split">
+              <div class="need-copy">
+                <h3>{{ features[2].title }}</h3>
+                <p>{{ features[2].description }}</p>
+              </div>
+              <div class="need-panel" aria-hidden="true">
+                <p class="viz-row"><span>Stored</span><span class="viz-ok">Committed</span></p>
+                <p class="viz-row"><span>Webhook</span><span>Pending</span></p>
+              </div>
             </article>
           </div>
         </div>
       </section>
 
-      <section id="product" class="bg-gradient-to-b from-black to-[#5d2cab] py-[72px] sm:py-24">
+      <LandingSchemaPlayground />
+
+      <section id="product" class="bg-gradient-to-b from-black to-[#3e11b5] pt-[72px] pb-20 sm:pt-24">
         <div class="mx-auto max-w-6xl px-4">
           <h2 class="text-center text-5xl font-bold tracking-tighter sm:text-6xl">Inspect the event</h2>
           <div class="mx-auto max-w-xl">
@@ -124,11 +169,11 @@
           </div>
         </div>
         <div class="product-stage">
-          <img src="/landing/app-screen.png" alt="Product preview" class="product-shot" />
+          <img src="/macbookmockup.svg" alt="Struct dashboard on a MacBook" class="product-shot" />
         </div>
       </section>
 
-      <section id="faq" class="bg-gradient-to-b from-[#5d2cab] to-black py-[72px] sm:py-24">
+      <section id="faq" class="bg-gradient-to-b from-[#3e11b5] to-black py-[72px] sm:py-24">
         <div class="mx-auto max-w-6xl px-4">
           <h2 class="mx-auto max-w-[648px] text-center text-5xl font-bold tracking-tighter sm:text-6xl">
             Frequently asked questions
@@ -145,7 +190,10 @@
                 <svg v-if="openFaq === index" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12" /></svg>
                 <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
               </button>
-              <p v-if="openFaq === index" class="mt-4 text-white/70">{{ item.answer }}</p>
+              <p v-if="openFaq === index" class="mt-4 text-white/70">
+                {{ item.answer }}
+                <NuxtLink v-if="item.href" :to="item.href" class="ml-1 underline hover:text-white">{{ item.linkLabel }}</NuxtLink>
+              </p>
             </div>
           </div>
         </div>
@@ -159,19 +207,11 @@
           <p class="mt-5 text-lg text-white/70">
             Create a device, generate its encoder, and watch the stored telemetry in the dashboard.
           </p>
-          <form class="mx-auto mt-10 flex max-w-sm flex-col gap-2.5 sm:flex-row" @submit.prevent="goSignup">
-            <label class="sr-only" for="cta-email">Email</label>
-            <input
-              id="cta-email"
-              v-model="email"
-              type="email"
-              placeholder="your@email.com"
-              class="h-12 rounded-lg bg-white/20 px-5 font-medium text-white placeholder:text-[#9ca3af] sm:flex-1"
-            />
-            <button type="submit" class="h-12 rounded-lg bg-white px-5 font-medium text-black">
-              Get access
-            </button>
-          </form>
+          <div class="mt-10 flex justify-center">
+            <NuxtLink :to="user ? '/dashboard' : '/signup'" class="rounded-lg bg-white px-5 py-3 font-medium text-black">
+              Get started
+            </NuxtLink>
+          </div>
         </div>
       </section>
     </main>
@@ -196,23 +236,25 @@
 definePageMeta({ layout: false })
 
 const user = useSupabaseUser()
-const menuOpen = ref(false)
 const openFaq = ref(-1)
-const email = ref('')
 const year = new Date().getFullYear()
+const isHeaderSticky = ref(false)
+const floatMenuOpen = ref(false)
+const STICKY_THRESHOLD = 140
+let scrollAnim = 0
+
+const sectionLinks = [
+  { id: 'home', label: 'Home' },
+  { id: 'features', label: 'Features' },
+  { id: 'schema', label: 'Schema' },
+  { id: 'product', label: 'Product' },
+  { id: 'faq', label: 'Questions' },
+]
 
 useSeoMeta({
   title: 'Struct — Telemetry for constrained devices',
   description: 'Generate a compact encoder, send authenticated telemetry, and trace delivery to your HTTPS backend.',
 })
-
-const navLinks = [
-  { href: '/#features', label: 'Features' },
-  { href: '/#product', label: 'Product' },
-  { href: '/benchmarks', label: 'Benchmarks' },
-  { href: '/#faq', label: 'Questions' },
-  { href: '/login', label: 'Sign in' },
-]
 
 const compatLogos = [
   { src: '/aws.svg', name: 'AWS', scale: 'lg' },
@@ -232,34 +274,44 @@ const tickerLogos = [...compatLogos, ...compatLogos]
 
 const features = [
   {
-    mark: '01',
-    title: 'Compact encoding',
-    description: 'Packed little-endian fields. Generate a C, C++, JavaScript, Python, Rust, or Arduino encoder from the schema.',
+    kicker: 'Compact encoding',
+    title: 'Less overhead. More useful data.',
+    description: 'Define packed schemas and generate encoders for supported languages and platforms. Transmit compact binary fields without repeating JSON field names in every payload.',
+    visual: 'encoding',
+    visualLabel: 'JSON field names compared with packed bytes',
   },
   {
-    mark: '02',
-    title: 'Authenticated ingestion',
-    description: 'Every frame carries HMAC-SHA256. The key ID is public. The API secret stays on the device.',
+    kicker: 'Authenticated ingestion',
+    title: 'Authenticate telemetry before accepting it.',
+    description: 'Struct verifies authenticated device frames before decoding and storing telemetry, using established cryptographic primitives and versioned schemas.',
+    visual: 'auth',
+    visualLabel: 'Authenticated frame parts',
   },
   {
-    mark: '03',
-    title: 'Delivery you can inspect',
-    description: 'A storage receipt means Struct stored the event. Webhook delivery to your HTTPS URL is a separate job.',
+    kicker: 'Delivery you can inspect',
+    title: 'Know what happened to your event.',
+    description: 'See when Struct stores an event, inspect its decoded fields, and track webhook delivery to your HTTPS backend as a separate operation.',
+    visual: 'delivery',
+    visualLabel: 'Stored event and webhook status',
   },
 ]
 
 const faqs = [
   {
     question: 'How does pricing work?',
-    answer: 'Free includes up to five devices and one day of retention. Flexible is $1 per device each month. Pro is $49 per month with 150 included devices, encryption, and TCP downlinks. Scale is $249 per month with 1,000 included devices, teams, routing, and audit history.',
+    answer: 'Free includes five devices and one day of retention. Flexible is $1 per device each month. Pro is $49 per month. Scale is $249 per month.',
+    href: '/signup',
+    linkLabel: 'Create an account',
   },
   {
     question: 'Does a stored event mean my backend received it?',
-    answer: 'No. Confirmed UDP can return a signed storage receipt after the database commit. Webhook jobs are separate and can be pending, sending, delivered, skipped, or failed.',
+    answer: 'No. A stored event means Struct committed it. Webhook delivery is separate and can be pending, sending, delivered, skipped, or failed.',
+    href: '/benchmarks',
+    linkLabel: 'Read the methodology',
   },
   {
     question: 'Can I change my plan later?',
-    answer: 'Yes. Paid plans are managed through Stripe from the billing settings after you sign in.',
+    answer: 'Yes. Paid plans are managed through Stripe in billing settings after you sign in.',
   },
   {
     question: 'When is Struct the wrong fit?',
@@ -267,34 +319,237 @@ const faqs = [
   },
 ]
 
-function onFeatureMove(event: MouseEvent) {
-  const card = event.currentTarget as HTMLElement
-  const rect = card.getBoundingClientRect()
-  card.style.setProperty('--x', `${event.clientX - rect.left}px`)
-  card.style.setProperty('--y', `${event.clientY - rect.top}px`)
+function updateStickyHeader() {
+  const sticky = window.scrollY > STICKY_THRESHOLD
+  isHeaderSticky.value = sticky
+  if (!sticky) floatMenuOpen.value = false
 }
 
-function goSignup() {
-  if (user.value) {
-    navigateTo('/dashboard')
+function easeInOut(t: number) {
+  return t < 0.5 ? 2 * t * t : 1 - ((-2 * t + 2) ** 2) / 2
+}
+
+function cancelScrollAnim() {
+  cancelAnimationFrame(scrollAnim)
+  scrollAnim = 0
+  window.removeEventListener('wheel', cancelScrollAnim)
+  window.removeEventListener('touchstart', cancelScrollAnim)
+}
+
+function animateScroll(targetY: number) {
+  cancelScrollAnim()
+  const startY = window.scrollY
+  const distance = targetY - startY
+  const duration = 700
+  const start = performance.now()
+  window.addEventListener('wheel', cancelScrollAnim, { passive: true })
+  window.addEventListener('touchstart', cancelScrollAnim, { passive: true })
+
+  const step = (now: number) => {
+    const t = Math.min(1, (now - start) / duration)
+    window.scrollTo(0, startY + distance * easeInOut(t))
+    if (t < 1) {
+      scrollAnim = requestAnimationFrame(step)
+      return
+    }
+    cancelScrollAnim()
+  }
+  scrollAnim = requestAnimationFrame(step)
+}
+
+function scrollToSection(id: string) {
+  floatMenuOpen.value = false
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (id === 'home') {
+    if (reduce) window.scrollTo(0, 0)
+    else animateScroll(0)
+    history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
     return
   }
-  const query = email.value.trim() ? { email: email.value.trim() } : undefined
-  navigateTo({ path: '/signup', query })
+  const el = document.getElementById(id)
+  if (!el) return
+  if (reduce) {
+    el.scrollIntoView()
+  } else {
+    const top = el.getBoundingClientRect().top + window.scrollY - 88
+    animateScroll(Math.max(0, top))
+  }
+  history.replaceState(null, '', `#${id}`)
 }
+
+onMounted(() => {
+  updateStickyHeader()
+  window.addEventListener('scroll', updateStickyHeader, { passive: true })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', updateStickyHeader)
+  cancelScrollAnim()
+})
+
 </script>
 
 <style scoped>
 .template-landing {
   overflow-x: clip;
-  font-family: Geist, ui-sans-serif, system-ui, sans-serif;
+  font-family: Figtree, ui-sans-serif, system-ui, sans-serif;
+}
+
+.landing-top {
+  position: relative;
+  z-index: 40;
+  width: 100%;
+  background: transparent;
 }
 
 .header-logo :deep(.struct-logo) {
   position: relative;
-  height: 2.75rem;
+  height: 3.5rem;
   width: auto;
   margin: 0;
+}
+
+.landing-float {
+  position: fixed;
+  top: 0.75rem;
+  left: 1rem;
+  right: 1rem;
+  z-index: 50;
+  max-width: 900px;
+  margin-inline: auto;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 28px;
+  background: rgba(11, 14, 20, 0.85);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font-family: Figtree, ui-sans-serif, system-ui, sans-serif;
+  backdrop-filter: blur(12px);
+  opacity: 0;
+  transform: translateY(-12px);
+  pointer-events: none;
+  transition:
+    opacity 300ms ease-out,
+    transform 300ms ease-out;
+}
+
+.landing-float.is-on {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.landing-float-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.5rem;
+  padding: 0.45rem 1.15rem;
+}
+
+.float-brand {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+.float-brand img {
+  display: block;
+  height: 2.5rem;
+  width: auto;
+}
+
+.float-links {
+  display: none;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+}
+
+.float-links a,
+.float-sheet a {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+  transition: color 150ms ease;
+}
+
+.float-links a:hover,
+.float-sheet a:hover {
+  color: #fff;
+}
+
+.float-toggle {
+  display: inline-flex;
+  margin-left: auto;
+  height: 2.25rem;
+  width: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  color: #fff;
+}
+
+.float-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.float-signin {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+  transition: color 150ms ease;
+}
+
+.float-signin:hover {
+  color: #fff;
+}
+
+.float-signup {
+  border-radius: 999px;
+  background: #fff;
+  padding: 0.45rem 0.9rem;
+  color: #000;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.float-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.15rem 0.65rem 0.75rem;
+}
+
+.float-sheet a {
+  border-radius: 0.6rem;
+  padding: 0.55rem 0.35rem;
+}
+
+@media (min-width: 768px) {
+  .float-links {
+    display: flex;
+  }
+
+  .float-toggle,
+  .float-sheet {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-float {
+    transition: none;
+  }
+}
+
+#features,
+#schema,
+#product,
+#faq {
+  scroll-margin-top: 5.5rem;
 }
 
 .hero-art {
@@ -317,36 +572,142 @@ function goSignup() {
 }
 
 .product-stage {
-  width: min(100% - 2rem, 1000px);
-  margin: 3rem auto 0;
-  perspective: 800px;
+  display: flex;
+  justify-content: center;
+  width: min(100% - 2rem, 920px);
+  margin: 5rem auto 0;
 }
 
 .product-shot {
   display: block;
   width: 100%;
   height: auto;
-  transform: rotateX(14deg);
-  transform-origin: center top;
+  margin-inline: auto;
+  transform: translateX(1.5rem);
 }
 
-.cta-art {
-  position: absolute;
-  z-index: 1;
-  display: none;
-  width: 180px;
-  height: auto;
-  pointer-events: none;
+.need-grid {
+  display: grid;
+  gap: 0.75rem;
 }
 
-.cta-art-left {
-  top: 1.5rem;
-  left: 2vw;
+.need-card {
+  display: flex;
+  min-height: 16rem;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.85rem;
+  background: #050505;
 }
 
-.cta-art-right {
-  top: 3rem;
-  right: 2vw;
+.need-card--tall .need-stage {
+  flex: 1;
+  padding: 1.75rem 1.75rem 0;
+}
+
+.need-copy {
+  padding: 1.35rem 1.5rem 1.5rem;
+}
+
+.need-copy h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.need-copy p {
+  margin-top: 0.4rem;
+  max-width: 28rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.need-panel {
+  margin: 0 1rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.7rem;
+  background: #111;
+  padding: 1rem;
+}
+
+@media (min-width: 900px) {
+  .need-grid {
+    grid-template-columns: 0.92fr 1.08fr;
+    grid-template-rows: 1fr 1fr;
+    min-height: 38rem;
+  }
+
+  .need-card--tall {
+    grid-row: 1 / span 2;
+    min-height: 0;
+  }
+
+  .need-card--split {
+    display: grid;
+    grid-template-columns: 1fr 0.95fr;
+    min-height: 0;
+    align-items: stretch;
+  }
+
+  .need-card--split .need-copy {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .need-card--split .need-panel {
+    margin: 1rem 1rem 1rem 0;
+    align-self: center;
+  }
+}
+
+.viz-label,
+.viz-muted,
+.viz-ok,
+.viz-row,
+.viz-bytes {
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 0.8125rem;
+}
+
+.viz-label {
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.6875rem;
+}
+
+.viz-muted {
+  margin-top: 0.4rem;
+  color: rgba(255, 255, 255, 0.7);
+  overflow-wrap: anywhere;
+}
+
+.viz-ok {
+  margin-top: 1rem;
+  color: #b79bff;
+}
+
+.viz-bytes,
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.viz-bytes span,
+.viz-row {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.4rem;
+  padding: 0.35rem 0.55rem;
+}
+
+.viz-row {
+  justify-content: space-between;
+  margin-top: 0.75rem;
 }
 
 .compat-bleed {
@@ -391,6 +752,25 @@ function goSignup() {
   animation: ticker 40s linear infinite;
 }
 
+.cta-art {
+  position: absolute;
+  z-index: 1;
+  display: none;
+  width: 180px;
+  height: auto;
+  pointer-events: none;
+}
+
+.cta-art-left {
+  top: 1.5rem;
+  left: 2vw;
+}
+
+.cta-art-right {
+  top: 3rem;
+  right: 2vw;
+}
+
 @media (min-width: 1100px) {
   .hero-art,
   .cta-art {
@@ -418,19 +798,6 @@ function goSignup() {
   height: 100%;
   object-fit: contain;
   opacity: 0.85;
-}
-
-.feature-card::after {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: radial-gradient(100px 100px at var(--x, -100px) var(--y, -100px), #9333ea, transparent 70%);
-  content: '';
-  pointer-events: none;
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
 }
 
 @keyframes ticker {

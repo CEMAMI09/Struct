@@ -39,7 +39,7 @@
 
       <div
         class="mb-4 rounded-lg border border-dashed border-[#2A2F3A] bg-[#0F1115] px-4 py-8 text-center transition"
-        :class="dragOver ? 'border-[#38B6FF]/60 bg-[#38B6FF]/5' : ''"
+        :class="dragOver ? 'border-[#5617fc]/60 bg-[#5617fc]/5' : ''"
         @dragenter.prevent="dragOver = true"
         @dragover.prevent="dragOver = true"
         @dragleave.prevent="dragOver = false"
@@ -101,12 +101,12 @@
                 :class="row.errors.length ? 'bg-red-500/5' : ''"
               >
                 <td class="px-2 py-2 font-mono text-[#8B93A7]">{{ row.row }}</td>
-                <td class="px-2 py-2 font-mono text-[#38B6FF]">{{ row.serial || '—' }}</td>
+                <td class="px-2 py-2 font-mono text-[#b79bff]">{{ row.serial || '—' }}</td>
                 <td class="px-2 py-2 text-[#E8EAEF]">{{ row.name || '—' }}</td>
                 <td class="px-2 py-2 font-mono text-[#8B93A7]">{{ row.macDisplay || '—' }}</td>
                 <td class="px-2 py-2 font-mono text-[#8B93A7]">{{ row.tagsRaw || '—' }}</td>
                 <td class="px-2 py-2">
-                  <span v-if="!row.errors.length" class="text-[#38B6FF]">OK</span>
+                  <span v-if="!row.errors.length" class="text-[#b79bff]">OK</span>
                   <span v-else class="text-red-400">{{ row.errors[0] }}</span>
                 </td>
               </tr>
@@ -135,7 +135,7 @@
           </li>
         </ul>
         <label class="mt-3 flex cursor-pointer items-start gap-2 text-xs text-[#E8EAEF]">
-          <input v-model="confirmed" type="checkbox" class="mt-0.5 accent-[#38B6FF]" />
+          <input v-model="confirmed" type="checkbox" class="mt-0.5 accent-[#5617fc]" />
           <span>
             I understand adding {{ quote.deviceCount }} devices may add
             {{ quote.estimatedTrueUpFormatted }} to my next monthly true-up invoice.
@@ -144,7 +144,7 @@
       </div>
 
       <p v-if="actionError" class="mb-3 text-sm text-red-400">{{ actionError }}</p>
-      <p v-if="successMessage" class="mb-3 text-sm text-[#38B6FF]">{{ successMessage }}</p>
+      <p v-if="successMessage" class="mb-3 text-sm text-[#b79bff]">{{ successMessage }}</p>
 
       <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <button type="button" class="btn-ghost" @click="$emit('close')">Cancel</button>

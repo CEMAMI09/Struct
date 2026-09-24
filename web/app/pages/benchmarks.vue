@@ -215,7 +215,7 @@ useSeoMeta({
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11px;
   line-height: 1.55;
-  color: #38b6ff;
+  color: #b79bff;
   white-space: pre-wrap;
 }
 
@@ -226,9 +226,9 @@ useSeoMeta({
 }
 
 .todo {
-  border: 1px dashed rgba(56, 182, 255, 0.35);
+  border: 1px dashed rgba(86, 23, 252, 0.35);
   border-radius: 10px;
-  background: rgba(56, 182, 255, 0.05);
+  background: rgba(86, 23, 252, 0.05);
   padding: 0.85rem 1rem;
   color: #a8b2c4;
 }
@@ -258,6 +258,6 @@ useSeoMeta({
 }
 
 .btn-ghost:hover {
-  border-color: rgba(56, 182, 255, 0.45);
+  border-color: rgba(86, 23, 252, 0.45);
 }
 </style>

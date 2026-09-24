@@ -3,7 +3,7 @@
     <div class="auth-shell-inner">
       <div class="mb-8 text-center">
         <NuxtLink to="/" class="inline-flex w-full justify-center" aria-label="Struct home">
-          <StructLogo lockup />
+          <StructLogo variant="dark" size="lg" />
         </NuxtLink>
       </div>
       <slot />
@@ -50,7 +50,7 @@
 }
 
 .auth-field:focus {
-  border-color: #38b6ff;
-  box-shadow: 0 0 0 3px rgba(56, 182, 255, 0.16);
+  border-color: #b79bff;
+  box-shadow: 0 0 0 3px rgba(86, 23, 252, 0.16);
 }
 </style>

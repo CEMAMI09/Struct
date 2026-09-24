@@ -1,4 +1,12 @@
 @font-face {
+  font-family: 'Figtree';
+  src: url('../fonts/figtree-latin.woff2') format('woff2');
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: 'Geist';
   src: url('../fonts/geist-latin.woff2') format('woff2');
   font-weight: 100 900;
@@ -32,13 +40,13 @@
   --struct-border-strong: #3c4558;
   --struct-hover: rgba(255, 255, 255, 0.045);
   --struct-selected: #1c2430;
-  --struct-accent: #38b6ff;
-  --struct-accent-hover: #64c6ff;
-  --struct-focus: #38b6ff;
+  --struct-accent: #5617fc;
+  --struct-accent-hover: #6d3cfc;
+  --struct-focus: #8b6cff;
   --struct-danger: #f0a3a8;
   --struct-warning: #e6c27a;
   --struct-success: #8fd4ae;
-  --struct-info: #9fd4ff;
+  --struct-info: #b79bff;
   --struct-radius: 8px;
   --struct-space-1: 0.25rem;
   --struct-space-2: 0.5rem;
@@ -60,8 +68,7 @@ body,
 }
 
 body {
-  font-family: Geist, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  font-feature-settings: 'ss01' on, 'cv11' on;
+  font-family: Figtree, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   background: var(--struct-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -80,7 +87,7 @@ body {
   transform: translateY(-150%);
   border-radius: var(--struct-radius);
   background: var(--struct-accent);
-  color: #071018;
+  color: #fff;
   padding: 0.45rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 600;
@@ -119,7 +126,7 @@ body {
     min-height: 2.25rem;
     border-radius: var(--struct-radius);
     background: var(--struct-accent);
-    color: #071018;
+    color: #fff;
     letter-spacing: -0.01em;
   }
 
@@ -156,7 +163,7 @@ body {
   .input:focus {
     border-color: var(--struct-accent);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(56, 182, 255, 0.22);
+    box-shadow: 0 0 0 3px rgba(86, 23, 252, 0.28);
   }
 
   .label {
@@ -212,7 +219,7 @@ body {
 
   .status-pill[data-tone='info'] {
     color: var(--struct-info);
-    border-color: #2a4d66;
+    border-color: #3d2a66;
   }
 
   .table-scroll {
@@ -258,8 +265,7 @@ body {
 }
 
 .app-shell {
-  font-family: Geist, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  font-feature-settings: 'ss01' on, 'cv11' on;
+  font-family: Figtree, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   background: var(--struct-bg);
   color: var(--struct-text);
   min-height: 100%;

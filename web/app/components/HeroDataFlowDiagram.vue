@@ -18,7 +18,7 @@
         :d="d"
         class="hdf-path hdf-path--flow"
         fill="none"
-        stroke="#38b6ff"
+        stroke="#b79bff"
         stroke-width="1.85"
         stroke-dasharray="5.5 5"
       />
@@ -53,7 +53,7 @@
           </div>
           <div class="hdf-hub-core">
             <img
-              src="/struct-logo-mini.svg?v=1"
+              src="/struct-icon.svg?v=1"
               alt=""
               class="hdf-hub-logo"
               width="48"
@@ -306,7 +306,7 @@ onBeforeUnmount(() => {
 .hdf {
   --hdf-text: #e8eaef;
   --hdf-muted: #8b93a7;
-  --hdf-blue: #38b6ff;
+  --hdf-blue: #b79bff;
   --hdf-border: #2a2f3a;
   --hdf-surface: #15181e;
 
@@ -396,7 +396,7 @@ onBeforeUnmount(() => {
   margin: 0.15rem auto 0;
   background: repeating-linear-gradient(
     to bottom,
-    rgba(56, 182, 255, 0.55) 0 3px,
+    rgba(86, 23, 252, 0.55) 0 3px,
     transparent 3px 6px
   );
 }
@@ -416,8 +416,8 @@ onBeforeUnmount(() => {
   padding: 0.6rem 0.75rem;
   border-radius: 10px;
   background: rgba(26, 29, 36, 0.92);
-  border: 1px solid rgba(56, 182, 255, 0.32);
-  box-shadow: 0 0 14px rgba(56, 182, 255, 0.08);
+  border: 1px solid rgba(86, 23, 252, 0.32);
+  box-shadow: 0 0 14px rgba(86, 23, 252, 0.08);
   min-width: 0;
 }
 
@@ -432,7 +432,7 @@ onBeforeUnmount(() => {
   width: 1.1rem;
   height: 1.1rem;
   color: var(--hdf-blue);
-  filter: drop-shadow(0 0 6px rgba(56, 182, 255, 0.45));
+  filter: drop-shadow(0 0 6px rgba(86, 23, 252, 0.45));
 }
 
 .hdf-node-icon :deep(svg) {
@@ -465,11 +465,11 @@ onBeforeUnmount(() => {
   inset: 0;
   border-radius: 50%;
   background: var(--hdf-surface);
-  border: 1px solid rgba(56, 182, 255, 0.3);
+  border: 1px solid rgba(86, 23, 252, 0.3);
   box-shadow:
     0 0 0 1px rgba(42, 47, 58, 0.45),
-    0 0 36px rgba(56, 182, 255, 0.12),
-    0 0 72px rgba(56, 182, 255, 0.04);
+    0 0 36px rgba(86, 23, 252, 0.12),
+    0 0 72px rgba(86, 23, 252, 0.04);
 }
 
 .hdf-hub-core {
@@ -483,7 +483,7 @@ onBeforeUnmount(() => {
   overflow: hidden;
   background: #0f1115;
   border: 1px solid rgba(232, 234, 239, 0.3);
-  box-shadow: 0 0 18px rgba(56, 182, 255, 0.1);
+  box-shadow: 0 0 18px rgba(86, 23, 252, 0.1);
 }
 
 .hdf-hub-logo {

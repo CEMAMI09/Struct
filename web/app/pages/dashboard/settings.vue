@@ -28,7 +28,7 @@
     <p v-if="pageError || billingError || destinationError" class="mb-4 text-sm text-red-400">
       {{ pageError || billingError || destinationError }}
     </p>
-    <p v-if="pageMsg" class="mb-4 text-sm text-[#38B6FF]">{{ pageMsg }}</p>
+    <p v-if="pageMsg" class="mb-4 text-sm text-[#b79bff]">{{ pageMsg }}</p>
 
     <DeviceCredentialsModal
       v-if="pendingCredentials"
@@ -82,7 +82,7 @@
           </div>
           <div class="h-2 overflow-hidden rounded-full bg-[#0F1115]">
             <div
-              class="h-full rounded-full bg-[#38B6FF] transition-all"
+              class="h-full rounded-full bg-[#5617fc] transition-all"
               :style="{ width: `${usagePercent}%` }"
             />
           </div>
@@ -107,7 +107,7 @@
           >
             <div class="flex items-start justify-between gap-2">
               <h3 class="font-semibold text-[#E8EAEF]">{{ plan.name }}</h3>
-              <span class="shrink-0 font-mono text-sm text-[#38B6FF]">{{ plan.price }}</span>
+              <span class="shrink-0 font-mono text-sm text-[#b79bff]">{{ plan.price }}</span>
             </div>
             <p class="mt-1 text-xs text-[#8B93A7]">{{ plan.blurb }}</p>
             <button
@@ -250,21 +250,21 @@
             <span class="block text-sm text-[#E8EAEF]">Billing notifications</span>
             <span class="text-xs text-[#8B93A7]">Plan, payment, and device-limit updates.</span>
           </span>
-          <input v-model="notifications.billing" type="checkbox" class="accent-[#38B6FF]" />
+          <input v-model="notifications.billing" type="checkbox" class="accent-[#5617fc]" />
         </label>
         <label class="flex cursor-pointer items-center justify-between gap-4 p-4">
           <span>
             <span class="block text-sm text-[#E8EAEF]">Fleet alerts</span>
             <span class="text-xs text-[#8B93A7]">Device connectivity and delivery failures.</span>
           </span>
-          <input v-model="notifications.fleet" type="checkbox" class="accent-[#38B6FF]" />
+          <input v-model="notifications.fleet" type="checkbox" class="accent-[#5617fc]" />
         </label>
         <label class="flex cursor-pointer items-center justify-between gap-4 p-4">
           <span>
             <span class="block text-sm text-[#E8EAEF]">Product updates</span>
             <span class="text-xs text-[#8B93A7]">Occasional Struct feature announcements.</span>
           </span>
-          <input v-model="notifications.product" type="checkbox" class="accent-[#38B6FF]" />
+          <input v-model="notifications.product" type="checkbox" class="accent-[#5617fc]" />
         </label>
       </div>
       <button type="button" class="btn-primary" :disabled="savingNotifications" @click="saveNotifications">
