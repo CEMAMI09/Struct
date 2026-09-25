@@ -1,0 +1,82 @@
+{
+  "revision": 1,
+  "warning": "PUBLIC TEST CREDENTIALS ONLY. Frozen compatibility fixtures; never deploy these keys.",
+  "schema": [
+    {
+      "name": "temperature",
+      "type": "float32"
+    },
+    {
+      "name": "count",
+      "type": "int32"
+    },
+    {
+      "name": "alive",
+      "type": "boolean"
+    },
+    {
+      "name": "level",
+      "type": "uint8"
+    },
+    {
+      "name": "status",
+      "type": "flags",
+      "bits": [
+        {
+          "name": "ready",
+          "bit": 0
+        },
+        {
+          "name": "fault",
+          "bit": 7
+        }
+      ]
+    },
+    {
+      "name": "device_id",
+      "type": "char",
+      "length": 3
+    }
+  ],
+  "vectors": [
+    {
+      "name": "v2-plain",
+      "protocol": 2,
+      "keyId": "0123456789abcdef",
+      "apiSecret": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "schemaVersion": 7,
+      "timestampSec": 1700000000,
+      "nonceHex": "000102030405060708090a0b",
+      "payloadHex": "0000bc41d6ffffff01ff810080ff",
+      "frameHex": "02303132333435363738396162636465660700f15365000102030405060708090a0b0000bc41d6ffffff01ff810080ff7d31470b982ce4b6d9b795e77cca9650b7c31cb68a798e72870578326d0d3d30"
+    },
+    {
+      "name": "v3-plain",
+      "protocol": 3,
+      "keyId": "0123456789abcdef",
+      "apiSecret": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "schemaVersion": 7,
+      "timestampSec": 1700000000,
+      "nonceHex": "000102030405060708090a0b",
+      "payloadHex": "0000bc41d6ffffff01ff810080ff",
+      "frameHex": "03303132333435363738396162636465660700f15365000102030405060708090a0b0000bc41d6ffffff01ff810080ff560e00a70507f75b45f53f44921115b28bd039acbcc0cde7a04a7500dec906f4",
+      "receiptNewHex": "53545241560e00a70507f75b45f53f44921115b28bd039acbcc0cde7a04a7500dec906f4002c0cdc48cbee87c36d83aac39708b8c03d93b435bb737a9a23eac92655b9e6cd",
+      "receiptDuplicateHex": "53545241560e00a70507f75b45f53f44921115b28bd039acbcc0cde7a04a7500dec906f4019d5613e407bab7f3b10eededf40d720e6681e419401c8c506da69973e29a7de0"
+    },
+    {
+      "name": "v3-encrypted",
+      "protocol": 3,
+      "keyId": "0123456789abcdef",
+      "apiSecret": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "schemaVersion": 7,
+      "timestampSec": 1700000000,
+      "nonceHex": "000102030405060708090a0b",
+      "payloadHex": "0000bc41d6ffffff01ff810080ff",
+      "encryptionKey": "2222222222222222222222222222222222222222222222222222222222222222",
+      "encryptionNonceHex": "101112131415161718191a1b",
+      "frameHex": "03303132333435363738396162636465660700f15365000102030405060708090a0b101112131415161718191a1be9882165c0c600585d81fd91404770c8eea65d6c89aab173c196e83b12bd1f3eaa875aa129a8f7d0cc9cda603da39dd508192bdc827deb3e7725e0c17dd53ca93341",
+      "receiptNewHex": "535452415aa129a8f7d0cc9cda603da39dd508192bdc827deb3e7725e0c17dd53ca93341009630b6271da2a3ed511ecdb1bed795469cc760efcf271b29eb62a8960eda8cde",
+      "receiptDuplicateHex": "535452415aa129a8f7d0cc9cda603da39dd508192bdc827deb3e7725e0c17dd53ca9334101d678229a6126180bdc460509266d13364bce2356241bcf31d6e959bb5314c047"
+    }
+  ]
+}

@@ -75,6 +75,7 @@ export function generateSchemaCode(fields: SchemaField[], version: number, langu
     })
     source = [`// Use Buffer.from(pack(values)) with the Node StructClient.`,
       `export const SCHEMA_VERSION = ${version};`, `export const PACKET_SIZE = ${size};`,
+      '/** @param {{ '+fields.map(f=>`${f.name}: ${f.type==='char'?'Uint8Array':f.type==='boolean'?'boolean':f.type==='flags'?'Object<string,boolean>':'number'}`).join(', ')+' }} values @returns {Uint8Array} */',
       'export function pack(values) {', '  const out = new Uint8Array(PACKET_SIZE);',
       '  const view = new DataView(out.buffer);', ...lines, '  return out;', '}', ''].join('\n')
   } else if (language === 'Python') {
@@ -89,8 +90,9 @@ export function generateSchemaCode(fields: SchemaField[], version: number, langu
       const v = `values[${JSON.stringify(f.name)}]`
       return f.type === 'flags' ? '(' + f.bits.map(b => `(${1 << b.bit} if ${v}.get(${JSON.stringify(b.name)}, False) else 0)`).join(' | ') + ')' : v
     })
-    source = ['import struct', `SCHEMA_VERSION = ${version}`, `PACKET_SIZE = ${size}`, '',
-      'def pack(values):', ...checks, `    return struct.pack('${format}', ${args.join(', ')})`, ''].join('\n')
+    source = ['import struct', 'from typing import TypedDict', `SCHEMA_VERSION = ${version}`, `PACKET_SIZE = ${size}`, '',
+      `StructValues = TypedDict('StructValues', {${fields.map(f=>`${JSON.stringify(f.name)}: ${f.type==='char'?'bytes':f.type==='boolean'?'bool':f.type==='float32'?'float':f.type==='flags'?'dict[str, bool]':'int'}`).join(', ')}})`,
+      'def pack(values: StructValues) -> bytes:', ...checks, `    return struct.pack('${format}', ${args.join(', ')})`, ''].join('\n')
   } else {
     let offset = 0
     const lines = fields.map(f => {

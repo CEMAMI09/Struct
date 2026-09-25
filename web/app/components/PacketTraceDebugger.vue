@@ -32,7 +32,7 @@
     <ul class="space-y-1 text-sm"><li v-for="stage in trace.stages" :key="stage.stage" :class="stage.status==='failed'?'text-red-300':'text-emerald-200'"><strong>{{stage.stage}}: {{stage.status}}</strong> · {{stage.at_ms}} ms <span v-if="stage.explanation">— {{stage.explanation}}</span></li></ul>
     <p v-if="trace.bytes" class="text-sm">Payload {{trace.bytes.payload}} B · protocol {{trace.bytes.protocol}} B · stable event ID {{trace.bytes.event_identity}} B · encryption {{trace.bytes.encryption}} B · receipt {{trace.bytes.acknowledgment}} B</p>
     <p v-if="trace.bytes" class="text-xs text-[#8B93A7]">{{trace.bytes.transport_note}}. UDP transport: 28 B IPv4 or 48 B IPv6 per datagram. Receipt bytes are separate from the uplink.</p>
-    <p class="text-sm">Webhooks: {{webhookSummary(trace.event_id)}}</p>
+    <p class="text-sm">Webhooks: {{webhookSummary(trace.event_id)}} <NuxtLink class="underline" to="/dashboard/deliveries">Delivery history</NuxtLink></p>
    </article>
    <button v-if="traces.length" class="btn-primary" @click="download">Download sanitized diagnostic bundle</button>
   </template>
@@ -43,14 +43,19 @@ import type {Device,DeviceSchema} from '~/types'
 import {sanitizeTrace,sanitizeOutcome,sanitizeWebhook} from '~/utils/diagnostic'
 const props=defineProps<{devices:Device[],schemas:Record<string,DeviceSchema>}>()
 const db=useSupabaseClient(),{canWrite,currentOrgId}=useOrganization()
+const route=useRoute()
 const mode=ref('production'),deviceId=ref(''),scenario=ref('encrypted'),busy=ref(false),error=ref(''),notice=ref('')
+watch(() => [props.devices, route.query.device] as const, () => {
+ const requested = route.query.device
+ if (!deviceId.value && typeof requested === 'string' && props.devices.some((device) => device.id === requested)) deviceId.value = requested
+}, { immediate: true })
 const traces=ref<any[]>([]),webhooks=ref<any[]>([]),outcomes=ref<any[]>([])
 const scenarios=['success','encrypted','malformed','authentication','duplicate','packet-loss','timeout','retry','schema','storage','webhook-retry']
 const command=computed(()=>mode.value==='local'?`node scripts/debug-local.cjs --scenario ${scenario.value} --output struct-diagnostic.json`:'node scripts/debug-send.cjs payload.bin 1 struct-device-outcome.json')
 let generation=0
 function clear(){generation++;traces.value=[];webhooks.value=[];outcomes.value=[];error.value='';notice.value='';busy.value=false}
 watch([mode,deviceId,currentOrgId],clear)
-async function enable(){try{busy.value=true;const {error:e}=await db.rpc('enable_packet_tracing',{p_device_id:deviceId.value});if(e)throw e;notice.value='Capture enabled. Send an SDK packet, then refresh.'}catch{error.value='Could not enable capture. Check organization permissions and migration 025.'}finally{busy.value=false}}
+async function enable(){try{busy.value=true;const {error:e}=await db.rpc('enable_packet_tracing',{p_device_id:deviceId.value});if(e)throw e;notice.value='Capture enabled. Send an SDK packet, then refresh.'}catch{error.value='Could not enable capture. You may not have permission, or packet tracing is not set up for this project (diagnostic code 025).'}finally{busy.value=false}}
 async function refresh(){
  const run=++generation;busy.value=true;error.value=''
  try{
@@ -60,7 +65,7 @@ async function refresh(){
   const ids=[...new Set(traces.value.map(t=>t.event_id).filter(Boolean))]
   webhooks.value=[]
   if(ids.length){const jobs=await db.from('webhook_deliveries').select('event_id,status,attempts').in('event_id',ids).limit(1000);if(jobs.error)throw jobs.error;if(run===generation)webhooks.value=jobs.data||[]}
- }catch{if(run===generation)error.value='Could not load gateway traces or webhook status. Check connection and migration 025.'}finally{if(run===generation)busy.value=false}
+ }catch{if(run===generation)error.value='Could not load gateway traces or webhook status. Check the connection. If you operate this project, packet tracing may still need to be installed (diagnostic code 025).'}finally{if(run===generation)busy.value=false}
 }
 function deviceOutcome(t:any){const result=t.packet_id&&outcomes.value.find(o=>o.packet_id===t.packet_id&&o.status);return result?`${result.status} (${result.attempts} send attempts)`:'not observed — attach SDK result'}
 function webhookSummary(id:string){if(!id)return 'no correlated stored event';const jobs=webhooks.value.filter(j=>j.event_id===id);return jobs.length?jobs.map(j=>`${j.status} (${j.attempts} attempts)`).join(', '):'no jobs observed; refresh or inspect delivery history'}

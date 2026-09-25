@@ -33,7 +33,9 @@
       class="card mb-6 flex flex-col gap-3 p-4 sm:flex-row"
       @submit.prevent="onCreate"
     >
+      <label class="sr-only" for="new-device-name">Device name</label>
       <input
+        id="new-device-name"
         v-model="newName"
         class="input min-w-0 flex-1"
         placeholder="Device name (e.g. ESP32 Kitchen)"
@@ -49,11 +51,12 @@
       <input
         v-model="query"
         class="input max-w-md flex-1 mono"
-        placeholder="Filter: Chicago_Factory, offline, v1.0.4…"
+        placeholder="Filter: Chicago_Factory, v1.0.4…"
+        aria-label="Filter devices"
       />
-      <label class="flex cursor-pointer items-center gap-2 text-xs text-[#8B93A7]">
-        <input v-model="offlineOnly" type="checkbox" class="accent-[#38B6FF]" />
-        Offline in last hour
+      <label class="flex cursor-pointer items-center gap-2 text-xs text-[#9AA3B2]" title="Last packet was within the past hour, and none in the last 30 seconds">
+        <input v-model="offlineOnly" type="checkbox" class="accent-[#5617fc]" />
+        Quiet after a packet in the last hour
       </label>
       <span class="self-center font-mono text-[10px] text-[#8B93A7]">
         {{ filtered.length }} / {{ devices.length }}
@@ -69,8 +72,8 @@
       @close="clearPendingCredentials"
     />
 
-    <div v-if="!filtered.length" class="card p-8 text-center text-sm text-[#8B93A7]">
-      {{ devices.length ? 'No devices match this filter.' : 'No devices yet. Create one to get an API key.' }}
+    <div v-if="!filtered.length" class="card p-8 text-center text-sm text-[#9AA3B2]">
+      {{ devices.length ? 'No devices match this filter.' : 'No devices yet. Create one to get a key ID and API secret.' }}
     </div>
 
     <div v-else class="space-y-3 p-0.5">
@@ -84,7 +87,7 @@
             <StatusDot :online="isDeviceOnline(device.last_seen)" class="mt-1.5" />
             <div>
               <p class="font-medium text-[#E8EAEF]">{{ device.name }}</p>
-              <p class="mt-1 break-all font-mono text-xs text-[#9aa3b2]">{{ device.api_key }}</p>
+              <p class="mt-1 break-all font-mono text-xs text-[#9aa3b2]">Key ID {{ device.api_key }}</p>
               <p
                 v-if="device.mac_address"
                 class="mt-1 font-mono text-[10px] text-[#8B93A7]"
@@ -94,7 +97,7 @@
               <p class="mt-1 text-[10px] text-[#8B93A7]">
                 Last seen:
                 {{ device.last_seen ? new Date(device.last_seen).toLocaleString() : 'never' }}
-                <span v-if="device.encryption_enabled" class="ml-2 text-[#38B6FF]">· ChaCha20</span>
+                <span v-if="device.encryption_enabled" class="ml-2 text-[#b79bff]">· ChaCha20</span>
               </p>
               <div v-if="Object.keys(device.tags || {}).length" class="mt-2 flex flex-wrap gap-1.5">
                 <span
@@ -108,15 +111,27 @@
             </div>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button class="btn-ghost text-xs" @click="copyKey(device.api_key)">
-              {{ copied === device.api_key ? 'Copied' : 'Copy key' }}
+            <button type="button" class="btn-ghost text-xs" @click="copyKey(device.api_key)">
+              {{ copied === device.api_key ? 'Copied' : 'Copy key ID' }}
+            </button>
+            <NuxtLink class="btn-ghost text-xs" :to="`/dashboard?device=${device.id}`">Telemetry</NuxtLink>
+            <NuxtLink class="btn-ghost text-xs" :to="`/dashboard/schema?device=${device.id}`">Schema</NuxtLink>
+            <NuxtLink class="btn-ghost text-xs" :to="`/dashboard/debugger?device=${device.id}`">Diagnostics</NuxtLink>
+            <button
+              v-if="canWrite"
+              type="button"
+              class="btn-ghost text-xs"
+              @click="toggleEdit(device.id, 'tags')"
+            >
+              {{ editingId === device.id && editorPanel === 'tags' ? 'Close tags' : 'Tags' }}
             </button>
             <button
               v-if="canWrite"
+              type="button"
               class="btn-ghost text-xs"
-              @click="toggleEdit(device.id)"
+              @click="toggleEdit(device.id, 'commands')"
             >
-              {{ editingId === device.id ? 'Close' : 'Tags / Command' }}
+              {{ editingId === device.id && editorPanel === 'commands' ? 'Close commands' : 'Commands' }}
             </button>
             <button
               v-if="canWrite"
@@ -128,8 +143,7 @@
           </div>
         </div>
 
-        <!-- Expand: tags + downlink -->
-        <div v-if="editingId === device.id" class="mt-4 grid gap-4 border-t border-[#2A2F3A] pt-4 lg:grid-cols-2">
+        <div v-if="editingId === device.id && editorPanel === 'tags'" class="mt-4 border-t border-[#2A2F3A] pt-4">
           <div>
             <p class="label">Tags</p>
             <div class="space-y-2">
@@ -156,9 +170,11 @@
               </button>
             </div>
           </div>
+        </div>
 
+        <div v-if="editingId === device.id && editorPanel === 'commands'" class="mt-4 max-w-md border-t border-[#2A2F3A] pt-4">
           <div>
-            <p class="label">Send Command (downlink)</p>
+            <p class="label">Queue a TCP command</p>
             <div
               v-if="!canUseDownlinks"
               class="rounded-lg border border-amber-400/20 bg-amber-400/5 p-3 text-xs text-amber-300"
@@ -166,7 +182,8 @@
               Downlinks require Pro or higher.
               <NuxtLink to="/dashboard/settings" class="underline">View plans</NuxtLink>
             </div>
-            <select v-if="canUseDownlinks" v-model="cmdType" class="input mb-2 text-xs">
+            <label v-if="canUseDownlinks" class="label" :for="`cmd-type-${device.id}`">Command</label>
+            <select v-if="canUseDownlinks" :id="`cmd-type-${device.id}`" v-model="cmdType" class="input mb-2 text-xs">
               <option value="set_interval">set_interval — wake period (sec)</option>
               <option value="reboot">reboot</option>
               <option value="custom">custom hex</option>
@@ -194,11 +211,12 @@
             >
               {{ sendingCmd ? 'Queuing…' : 'Queue downlink' }}
             </button>
-            <p v-if="canUseDownlinks" class="mt-2 text-[10px] leading-relaxed text-[#8B93A7]">
-              Packed binary is delivered on the device’s next TCP session (or immediately if the
-              socket is still open).
+            <p v-if="canUseDownlinks" class="mt-2 text-xs leading-relaxed text-[#9AA3B2]">
+              This queues a legacy TCP downlink: set interval, reboot, or custom bytes.
+              The UDP device SDK does not execute these commands. Queued does not mean the device received it.
+              The downlink itself is not signed.
             </p>
-            <p v-if="cmdMsg" class="mt-2 text-xs" :class="cmdErr ? 'text-red-400' : 'text-[#38B6FF]'">
+            <p v-if="cmdMsg" class="mt-2 text-xs" :class="cmdErr ? 'text-red-400' : 'text-[#b79bff]'">
               {{ cmdMsg }}
             </p>
           </div>
@@ -238,6 +256,7 @@ const pendingCredentialsName = ref('')
 const query = ref('')
 const offlineOnly = ref(false)
 const editingId = ref<string | null>(null)
+const editorPanel = ref<'tags' | 'commands' | null>(null)
 const tagDraft = ref<{ key: string; value: string }[]>([])
 const savingTags = ref(false)
 
@@ -311,7 +330,10 @@ async function onDelete(id: string) {
   if (!confirm('Delete this device and its telemetry?')) return
   try {
     await deleteDevice(id)
-    if (editingId.value === id) editingId.value = null
+    if (editingId.value === id) {
+      editingId.value = null
+      editorPanel.value = null
+    }
   } catch (e: any) {
     error.value = e.message
   }
@@ -325,20 +347,18 @@ async function copyKey(key: string) {
   }, 1500)
 }
 
-function toggleEdit(id: string) {
-  if (editingId.value === id) {
+function toggleEdit(id: string, panel: 'tags' | 'commands') {
+  if (editingId.value === id && editorPanel.value === panel) {
     editingId.value = null
+    editorPanel.value = null
     return
   }
   const device = devices.value.find((d) => d.id === id) as Device | undefined
   editingId.value = id
-  tagDraft.value = tagsToPairs(device?.tags)
-  if (!tagDraft.value.length) {
-    tagDraft.value = [
-      { key: 'Location', value: '' },
-      { key: 'Version', value: '' },
-      { key: 'Status', value: 'Deployed' },
-    ]
+  editorPanel.value = panel
+  if (panel === 'tags') {
+    tagDraft.value = tagsToPairs(device?.tags)
+    if (!tagDraft.value.length) tagDraft.value = [{ key: '', value: '' }]
   }
   cmdMsg.value = ''
 }

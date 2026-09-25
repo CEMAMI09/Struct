@@ -1,0 +1,9 @@
+menu "Struct device SDK"
+config STRUCT_DEVICE
+ bool "Struct device SDK"
+ default y
+ depends on NETWORKING && NET_SOCKETS && CSPRNG_ENABLED
+ help
+   Requires PSA HMAC-SHA256 and ChaCha20-Poly1305 support from the board's
+   maintained crypto provider. Network and clock setup are application-owned.
+endmenu

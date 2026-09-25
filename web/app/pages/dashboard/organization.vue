@@ -8,7 +8,7 @@
 
     <p v-if="orgError" class="mb-4 text-sm text-red-400">{{ orgError }}</p>
     <p v-if="pageError" class="mb-4 text-sm text-red-400">{{ pageError }}</p>
-    <p v-if="pageMsg" class="mb-4 text-sm text-[#38B6FF]">{{ pageMsg }}</p>
+    <p v-if="pageMsg" class="mb-4 text-sm text-[#b79bff]">{{ pageMsg }}</p>
 
     <!-- Org identity -->
     <section class="card mb-4 p-4">

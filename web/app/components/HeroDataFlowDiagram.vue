@@ -17,8 +17,9 @@
         :key="`lane-${i}`"
         :d="d"
         class="hdf-path hdf-path--flow"
+        :class="{ 'hdf-path--in': i < sources.length }"
         fill="none"
-        stroke="#38b6ff"
+        stroke="#b79bff"
         stroke-width="1.85"
         stroke-dasharray="5.5 5"
       />
@@ -53,7 +54,7 @@
           </div>
           <div class="hdf-hub-core">
             <img
-              src="/struct-logo-mini.svg?v=1"
+              src="/lightmodestructicon.svg"
               alt=""
               class="hdf-hub-logo"
               width="48"
@@ -165,7 +166,7 @@ function staticDesktopPaths(): string[] {
   const leftYs = [48, 164, 280, 396, 512]
   const rightYs = [70, 210, 350, 490]
   return [
-    ...leftYs.map((y) => smoothFunnel(leftX, y, hubLx, hubY)),
+    ...leftYs.map((y) => smoothFunnel(hubLx, hubY, leftX, y)),
     ...rightYs.map((y) => smoothFunnel(hubRx, hubY, rightX, y)),
   ]
 }
@@ -188,16 +189,46 @@ function setDestRef(el: Element | ComponentPublicInstance | null, i: number) {
 }
 
 /**
- * Ably-style funnel cubic: leave/arrive horizontally, pinch at the hub.
- * dx is capped at span/2 so control points never cross.
+ * Leave each card horizontally, stay on that lane, then gather into one
+ * line in the last stretch before the hub.
  */
-function smoothFunnel(x1: number, y1: number, x2: number, y2: number): string {
+function smoothFunnel(x1: number, y1: number, x2: number, y2: number, neckRatio = 0.18): string {
   const span = Math.abs(x2 - x1)
   const dir = Math.sign(x2 - x1) || 1
-  const dx = span * 0.5
-  const c1x = x1 + dir * dx
-  const c2x = x2 - dir * dx
-  return `M ${x1.toFixed(1)} ${y1.toFixed(1)} C ${c1x.toFixed(1)} ${y1.toFixed(1)}, ${c2x.toFixed(1)} ${y2.toFixed(1)}, ${x2.toFixed(1)} ${y2.toFixed(1)}`
+  const neck = span * neckRatio
+  const gx = x2 - dir * neck
+  const gspan = Math.abs(gx - x1)
+  const c1x = x1 + dir * gspan * 0.55
+  const c2x = gx - dir * gspan * 0.42
+  return `M ${x1.toFixed(1)} ${y1.toFixed(1)} C ${c1x.toFixed(1)} ${y1.toFixed(1)}, ${c2x.toFixed(1)} ${y2.toFixed(1)}, ${gx.toFixed(1)} ${y2.toFixed(1)} L ${x2.toFixed(1)} ${y2.toFixed(1)}`
+}
+
+function syncDestSpread() {
+  const first = sourceEls.value[0]
+  const last = sourceEls.value[sourceEls.value.length - 1]
+  const dests = destEls.value.filter((el): el is HTMLElement => !!el)
+  const col = dests[0]?.parentElement as HTMLElement | undefined
+  if (!col) return
+
+  if (!isDesktopLayout() || !first || !last || dests.length < 2) {
+    col.style.justifyContent = ''
+    col.style.paddingTop = ''
+    col.style.paddingBottom = ''
+    col.style.gap = ''
+    return
+  }
+
+  const colRect = col.getBoundingClientRect()
+  const top = first.getBoundingClientRect().top
+  const bottom = last.getBoundingClientRect().bottom
+  const sumH = dests.reduce((sum, el) => sum + el.getBoundingClientRect().height, 0)
+  const gap = (bottom - top - sumH) / (dests.length - 1)
+
+  col.style.boxSizing = 'border-box'
+  col.style.justifyContent = 'flex-start'
+  col.style.paddingTop = `${Math.max(0, top - colRect.top)}px`
+  col.style.paddingBottom = `${Math.max(0, colRect.bottom - bottom)}px`
+  col.style.gap = `${Math.max(0, gap)}px`
 }
 
 const DESKTOP_MIN = 1024
@@ -213,9 +244,12 @@ function measure() {
 
   // Stacked mobile layout hides the SVG.
   if (!isDesktopLayout()) {
+    syncDestSpread()
     lanesReady.value = false
     return
   }
+
+  syncDestSpread()
 
   const rr = root.getBoundingClientRect()
   const nextW = rr.width
@@ -226,15 +260,13 @@ function measure() {
   const toVbY = (py: number) => (py / nextH) * VB_H
 
   const hubR = hub.getBoundingClientRect()
-  // Single shared meet point each side (inset under the ring so endpoint
-  // dash caps never flash at the circle edge).
-  const inset = 8
+  const overlap = (22 / nextW) * VB_W
   const hubLeft = {
-    x: toVbX(hubR.left - rr.left + inset),
+    x: toVbX(hubR.left - rr.left) + overlap,
     y: toVbY(hubR.top - rr.top + hubR.height / 2),
   }
   const hubRight = {
-    x: toVbX(hubR.right - rr.left - inset),
+    x: toVbX(hubR.right - rr.left) - overlap,
     y: toVbY(hubR.top - rr.top + hubR.height / 2),
   }
 
@@ -248,10 +280,10 @@ function measure() {
     const r = el.getBoundingClientRect()
     next.push(
       smoothFunnel(
-        toVbX(r.right - rr.left),
-        toVbY(r.top - rr.top + r.height / 2),
         hubLeft.x,
         hubLeft.y,
+        toVbX(r.right - rr.left) - overlap,
+        toVbY(r.top - rr.top + r.height / 2),
       ),
     )
   }
@@ -262,7 +294,7 @@ function measure() {
       smoothFunnel(
         hubRight.x,
         hubRight.y,
-        toVbX(r.left - rr.left),
+        toVbX(r.left - rr.left) + overlap,
         toVbY(r.top - rr.top + r.height / 2),
       ),
     )
@@ -278,6 +310,7 @@ function measure() {
 }
 
 let resizeTimer: ReturnType<typeof setTimeout> | null = null
+let visibilityObserver: IntersectionObserver | null = null
 
 function onWindowResize() {
   // Debounce — ignore carousel / font jitter; only real viewport changes
@@ -294,11 +327,20 @@ onMounted(() => {
   })
   void document.fonts?.ready.then(() => measure())
   window.addEventListener('resize', onWindowResize, { passive: true })
+  const root = rootEl.value
+  if (!root) return
+  visibilityObserver = new IntersectionObserver(([entry]) => {
+    const live = !!entry?.isIntersecting
+    root.classList.toggle('hdf--live', live)
+    if (live) measure()
+  }, { rootMargin: '160px' })
+  visibilityObserver.observe(root)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', onWindowResize)
   if (resizeTimer) clearTimeout(resizeTimer)
+  visibilityObserver?.disconnect()
 })
 </script>
 
@@ -306,7 +348,7 @@ onBeforeUnmount(() => {
 .hdf {
   --hdf-text: #e8eaef;
   --hdf-muted: #8b93a7;
-  --hdf-blue: #38b6ff;
+  --hdf-blue: #b79bff;
   --hdf-border: #2a2f3a;
   --hdf-surface: #15181e;
 
@@ -338,13 +380,29 @@ onBeforeUnmount(() => {
 .hdf-path--flow {
   opacity: 0.88;
   /* Offset must be an integer multiple of (dash+gap)=10.5 so the loop is seamless.
-     Absolute user-units (no pathLength) → identical dash size + px speed on every lane. */
+     Absolute user-units (no pathLength) → identical dash size + px speed on every lane.
+     The crawl only runs while the diagram is near the viewport. */
   animation: hdf-dash 1.2s linear infinite;
+  animation-play-state: paused;
+}
+
+.hdf--live .hdf-path--flow {
+  animation-play-state: running;
+}
+
+.hdf-path--in {
+  animation-name: hdf-dash-in;
 }
 
 @keyframes hdf-dash {
   to {
     stroke-dashoffset: -10.5;
+  }
+}
+
+@keyframes hdf-dash-in {
+  to {
+    stroke-dashoffset: 10.5;
   }
 }
 
@@ -396,7 +454,7 @@ onBeforeUnmount(() => {
   margin: 0.15rem auto 0;
   background: repeating-linear-gradient(
     to bottom,
-    rgba(56, 182, 255, 0.55) 0 3px,
+    rgba(86, 23, 252, 0.55) 0 3px,
     transparent 3px 6px
   );
 }
@@ -415,9 +473,9 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
   padding: 0.6rem 0.75rem;
   border-radius: 10px;
-  background: rgba(26, 29, 36, 0.92);
-  border: 1px solid rgba(56, 182, 255, 0.32);
-  box-shadow: 0 0 14px rgba(56, 182, 255, 0.08);
+  background: #101218;
+  border: 1px solid rgba(86, 23, 252, 0.32);
+  box-shadow: 0 0 14px rgba(86, 23, 252, 0.08);
   min-width: 0;
 }
 
@@ -432,7 +490,7 @@ onBeforeUnmount(() => {
   width: 1.1rem;
   height: 1.1rem;
   color: var(--hdf-blue);
-  filter: drop-shadow(0 0 6px rgba(56, 182, 255, 0.45));
+  filter: drop-shadow(0 0 6px rgba(86, 23, 252, 0.45));
 }
 
 .hdf-node-icon :deep(svg) {
@@ -465,11 +523,11 @@ onBeforeUnmount(() => {
   inset: 0;
   border-radius: 50%;
   background: var(--hdf-surface);
-  border: 1px solid rgba(56, 182, 255, 0.3);
+  border: 1px solid rgba(86, 23, 252, 0.3);
   box-shadow:
     0 0 0 1px rgba(42, 47, 58, 0.45),
-    0 0 36px rgba(56, 182, 255, 0.12),
-    0 0 72px rgba(56, 182, 255, 0.04);
+    0 0 36px rgba(86, 23, 252, 0.12),
+    0 0 72px rgba(86, 23, 252, 0.04);
 }
 
 .hdf-hub-core {
@@ -481,9 +539,9 @@ onBeforeUnmount(() => {
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: #0f1115;
-  border: 1px solid rgba(232, 234, 239, 0.3);
-  box-shadow: 0 0 18px rgba(56, 182, 255, 0.1);
+  background: #fff;
+  border: 1px solid rgba(15, 17, 21, 0.12);
+  box-shadow: 0 0 18px rgba(86, 23, 252, 0.16);
 }
 
 .hdf-hub-logo {
@@ -603,8 +661,9 @@ onBeforeUnmount(() => {
   .hdf-col--right {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    gap: 0;
+    justify-content: center;
+    gap: 1.05rem;
+    box-sizing: border-box;
   }
 
   .hdf-col--left {
@@ -627,14 +686,14 @@ onBeforeUnmount(() => {
   .hdf-node {
     width: 12.75rem;
     gap: 0.6rem;
-    padding: 0.65rem 1rem 0.65rem 0.75rem;
+    padding: 0.95rem 1rem 0.95rem 0.75rem;
     white-space: nowrap;
   }
 
   .hdf-node--dest {
     width: 13.25rem;
-    padding: 1.15rem 1.1rem 1.15rem 0.9rem;
-    min-height: 3.35rem;
+    padding: 1.05rem 1.1rem 1.05rem 0.9rem;
+    min-height: 0;
   }
 
   .hdf-node-label {

@@ -51,6 +51,7 @@ public:
     return ready;
   }
   struct_result encryption(const uint8_t *key_or_null) { return struct_set_encryption(&client, key_or_null); }
+  struct_result encryptionHex(const char *key) { struct_result result=struct_set_encryption_hex(&client,key);if(result!=STRUCT_IDLE)end();return result; }
   struct_result send(uint8_t version, const uint8_t *payload, size_t n, struct_delivery d = struct_delivery_default(0)) {
     time_t now = time(nullptr);
     if (!ready || now < 1577836800 || (uint64_t)now > UINT32_MAX) return STRUCT_INVALID;

@@ -1,29 +1,31 @@
 <template>
-  <div
-    class="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center"
-    @click.self="onDismiss"
-  >
+  <div class="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 sm:items-center">
     <div
-      class="relative w-full max-w-lg rounded-xl border border-[#252830] bg-[#14161c] p-5 shadow-xl"
+      ref="dialogEl"
+      class="relative w-full max-w-lg rounded-lg border border-[#2A3140] bg-[#161922] p-5 shadow-xl outline-none"
       role="dialog"
       aria-modal="true"
       aria-labelledby="device-creds-title"
+      aria-describedby="device-creds-desc"
+      tabindex="-1"
+      @keydown="onDialogKeydown"
     >
       <div class="mb-4">
-        <h3 id="device-creds-title" class="text-base font-semibold text-[#E8EAEF]">
+        <h2 id="device-creds-title" class="text-base font-semibold text-[#E8EAEF]">
           Save device credentials
-        </h3>
-        <p class="mt-1 text-xs text-[#8B93A7]">
-          <span v-if="deviceName">Credentials for <span class="text-[#E8EAEF]">{{ deviceName }}</span>. </span>
-          The API secret is shown only once — copy or download it before closing.
+        </h2>
+        <p id="device-creds-desc" class="mt-1 text-sm text-[#9AA3B2]">
+          <span v-if="deviceName">Credentials for {{ deviceName }}. </span>
+          The key ID is the public identifier sent with each frame. The API secret is the HMAC key and is shown only once.
         </p>
       </div>
 
       <div class="space-y-3">
         <div>
-          <p class="label">Key ID</p>
+          <label class="label" for="cred-key-id">Key ID</label>
           <div class="flex gap-2">
             <input
+              id="cred-key-id"
               class="input flex-1 font-mono text-xs"
               type="text"
               readonly
@@ -37,34 +39,37 @@
         </div>
 
         <div>
-          <p class="label">API Secret</p>
+          <label class="label" for="cred-api-secret">API secret</label>
           <div class="flex gap-2">
             <input
+              id="cred-api-secret"
               class="input flex-1 font-mono text-xs"
               type="text"
               readonly
               :value="credentials.apiSecret"
               @focus="($event.target as HTMLInputElement).select()"
             />
-            <button
-              type="button"
-              class="btn-ghost shrink-0 text-xs"
-              @click="copy(credentials.apiSecret, 'apiSecret')"
-            >
+            <button type="button" class="btn-ghost shrink-0 text-xs" @click="copy(credentials.apiSecret, 'apiSecret')">
               {{ copied === 'apiSecret' ? 'Copied' : 'Copy' }}
             </button>
           </div>
         </div>
       </div>
 
+      <p class="sr-only" aria-live="polite">{{ copyStatus }}</p>
+      <p v-if="closeHint" class="mt-3 text-sm text-[#E6C27A]" role="status">{{ closeHint }}</p>
+
+      <label class="mt-4 flex items-start gap-2 text-sm text-[#E8EAEF]">
+        <input id="cred-saved" v-model="acknowledged" type="checkbox" class="mt-1" />
+        <span>I have saved the API secret. It will not be shown again.</span>
+      </label>
+
       <div class="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
         <button type="button" class="btn-ghost text-xs" @click="copyBoth">
           {{ copied === 'both' ? 'Copied both' : 'Copy both' }}
         </button>
-        <button type="button" class="btn-ghost text-xs" @click="download">
-          Download .txt
-        </button>
-        <button type="button" class="btn-primary text-xs" @click="onDismiss">
+        <button type="button" class="btn-ghost text-xs" @click="download">Download .txt</button>
+        <button type="button" class="btn-primary text-xs" :disabled="!acknowledged" @click="onDismiss">
           Done
         </button>
       </div>
@@ -85,10 +90,25 @@ const emit = defineEmits<{
 }>()
 
 const copied = ref('')
+const acknowledged = ref(false)
+const closeHint = ref('')
+const copyStatus = ref('')
 let copyTimer: ReturnType<typeof setTimeout> | null = null
+
+const { dialogEl, onKeydown } = useDialogFocus({
+  onEscape: () => {
+    closeHint.value = 'Save the API secret, confirm it, then choose Done.'
+    document.getElementById('cred-saved')?.focus()
+  },
+})
+
+function onDialogKeydown(event: KeyboardEvent) {
+  onKeydown(event)
+}
 
 function markCopied(which: string) {
   copied.value = which
+  copyStatus.value = which === 'both' ? 'Copied key ID and API secret' : 'Copied'
   if (copyTimer) clearTimeout(copyTimer)
   copyTimer = setTimeout(() => {
     if (copied.value === which) copied.value = ''
@@ -107,16 +127,17 @@ async function copyBoth() {
 }
 
 function download() {
-  const name = (props.deviceName || 'device')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '') || 'device'
+  const name =
+    (props.deviceName || 'device')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '') || 'device'
   const body = [
-    `# Struct device credentials`,
+    '# Struct device credentials',
     `# Device: ${props.deviceName || name}`,
     `# Generated: ${new Date().toISOString()}`,
-    `# Keep the API secret private. It is not shown again.`,
+    '# Keep the API secret private. It is not shown again.',
     '',
     `KEY_ID=${props.credentials.keyId}`,
     `API_SECRET=${props.credentials.apiSecret}`,
@@ -133,6 +154,10 @@ function download() {
 }
 
 function onDismiss() {
+  if (!acknowledged.value) {
+    closeHint.value = 'Confirm that you saved the API secret before closing.'
+    return
+  }
   emit('close')
 }
 

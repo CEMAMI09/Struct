@@ -22,12 +22,13 @@
       @submit.prevent="onCreate"
     >
       <div>
-        <label class="label">Name</label>
-        <input v-model="form.name" class="input" placeholder="AWS API / Plant webhook" required />
+        <label class="label" for="destination-name">Name</label>
+        <input id="destination-name" v-model="form.name" class="input" placeholder="Plant webhook" required />
       </div>
       <div>
-        <label class="label">Webhook URL</label>
+        <label class="label" for="destination-url">HTTPS URL</label>
         <input
+          id="destination-url"
           v-model="form.url"
           class="input mono"
           type="url"
@@ -36,8 +37,8 @@
         />
       </div>
       <div>
-        <label class="label">Scope</label>
-        <select v-model="form.device_id" class="input">
+        <label class="label" for="destination-scope">Scope</label>
+        <select id="destination-scope" v-model="form.device_id" class="input">
           <option value="">All devices</option>
           <option v-for="d in devices" :key="d.id" :value="d.id">{{ d.name }}</option>
         </select>
@@ -90,7 +91,14 @@
           Example: temperature &gt; 100. Missing payload keys do not match.
         </p>
       </div>
-      <button type="submit" class="btn-primary" :disabled="creating">
+      <fieldset class="space-y-2">
+        <legend class="label">Events</legend>
+        <label v-for="event in eventOptions" :key="event.id" class="flex items-center gap-2 text-sm">
+          <input v-model="eventTypes" type="checkbox" :value="event.id" />
+          {{ event.name }}
+        </label>
+      </fieldset>
+      <button type="submit" class="btn-primary" :disabled="creating || !eventTypes.length">
         {{ creating ? 'Saving…' : 'Create destination' }}
       </button>
     </form>
@@ -99,7 +107,7 @@
 
     <div class="card divide-y divide-[#2A2F3A]">
       <div v-if="!destinations.length" class="p-8 text-center text-sm text-[#8B93A7]">
-        No destinations yet. Add a URL and every parsed JSON packet will POST there instantly.
+        No destinations yet. Add an HTTPS URL. Struct posts signed JSON after an event is stored. Storage is not delivery.
       </div>
 
       <div
@@ -110,22 +118,33 @@
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div class="min-w-0">
             <div class="flex items-center gap-2">
-              <span
-                class="h-2 w-2 rounded-full"
-                :class="dest.enabled ? 'bg-[#38B6FF]' : 'bg-[#8B93A7]'"
-              />
+              <span class="status-pill" :data-tone="dest.enabled ? 'info' : undefined">
+                {{ dest.enabled ? 'Enabled' : 'Disabled' }}
+              </span>
               <p class="font-medium text-[#E8EAEF]">{{ dest.name }}</p>
             </div>
             <p class="mt-1 break-all font-mono text-xs text-[#8B93A7]">{{ dest.url }}</p>
             <p class="mt-1 text-[10px] text-[#8B93A7]">
               {{ dest.device_id ? deviceName(dest.device_id) : 'All devices' }}
+              · {{ (dest.event_types || ['telemetry.received']).join(', ') }}
             </p>
-            <p v-if="dest.routing_rule" class="mt-1 font-mono text-[10px] text-[#38B6FF]">
+            <p class="mt-2 break-all font-mono text-[11px] text-[#9AA3B2]">
+              Signing secret:
+              {{
+                revealedSecrets.has(dest.id)
+                  ? dest.signing_secret || 'Not stored for this endpoint'
+                  : maskSecret(dest.signing_secret)
+              }}
+            </p>
+            <p v-if="dest.routing_rule" class="mt-1 font-mono text-[10px] text-[#b79bff]">
               When {{ dest.routing_rule.key }} {{ dest.routing_rule.operator }}
               {{ formatRuleValue(dest.routing_rule.value) }}
             </p>
           </div>
           <div v-if="canWrite" class="flex shrink-0 gap-2">
+            <button type="button" class="btn-ghost text-xs" @click="toggleSecret(dest.id)">
+              {{ revealedSecrets.has(dest.id) ? 'Hide secret' : 'View secret' }}
+            </button>
             <button
               v-if="canUseRouting || dest.routing_rule"
               class="btn-ghost text-xs"
@@ -205,8 +224,9 @@
     </div>
 
     <div class="card mt-6 p-4">
-      <p class="label">Webhook body</p>
-      <pre class="mono overflow-x-auto rounded-lg bg-[#0F1115] p-3 text-xs leading-relaxed text-[#38B6FF]">{{ webhookExample }}</pre>
+      <p class="label">Example webhook body</p>
+      <p class="mb-2 text-xs text-[#9AA3B2]">Illustrative JSON. It is not a captured delivery.</p>
+      <pre class="mono overflow-x-auto rounded-lg bg-[#0F1115] p-3 text-xs leading-relaxed text-[#b79bff]">{{ webhookExample }}</pre>
     </div>
   </div>
 </template>
@@ -214,7 +234,7 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'auth' })
 
-import type { Destination, RoutingOperator, RoutingRule } from '~/types'
+import type { Destination, RoutingOperator, RoutingRule, WebhookEventType } from '~/types'
 
 const { devices, fetchDevices } = useDevices()
 const { canWrite } = useOrganization()
@@ -231,6 +251,13 @@ const {
 } = useDestinations()
 
 const showForm = ref(false)
+const eventTypes = ref<WebhookEventType[]>(['telemetry.received'])
+const revealedSecrets = ref(new Set<string>())
+const eventOptions: { id: WebhookEventType; name: string }[] = [
+  { id: 'telemetry.received', name: 'Telemetry received' },
+  { id: 'device.connected', name: 'Device connected' },
+  { id: 'device.disconnected', name: 'Device disconnected' },
+]
 const creating = ref(false)
 const editingId = ref<string | null>(null)
 const savingRule = ref(false)
@@ -261,6 +288,18 @@ const webhookExample = `{
 onMounted(async () => {
   await Promise.all([fetchDevices(), fetchDestinations()])
 })
+
+function maskSecret(secret?: string) {
+  if (!secret) return 'Not stored for this endpoint'
+  return `${secret.slice(0, 6)}${'•'.repeat(12)}${secret.slice(-4)}`
+}
+
+function toggleSecret(id: string) {
+  const next = new Set(revealedSecrets.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  revealedSecrets.value = next
+}
 
 function deviceName(id: string) {
   return devices.value.find((d) => d.id === id)?.name || id.slice(0, 8)
@@ -341,7 +380,9 @@ async function onCreate() {
       url: form.url.trim(),
       device_id: form.device_id || null,
       routing_rule: routingRule,
+      event_types: eventTypes.value,
     })
+    eventTypes.value = ['telemetry.received']
     form.name = ''
     form.url = ''
     form.device_id = ''

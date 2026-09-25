@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "struct-device"
+version = "0.2.0"
+description = "Authenticated binary telemetry and bounded UDP storage receipts"
+requires-python = ">=3.10"
+readme = "README.md"
+
+[project.optional-dependencies]
+encryption = ["cryptography>=43,<51"]
+
+[tool.setuptools]
+py-modules = ["struct_device", "struct_persistent", "struct_commands"]

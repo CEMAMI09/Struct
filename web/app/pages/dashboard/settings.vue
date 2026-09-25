@@ -4,13 +4,15 @@
       <p class="text-sm text-[#8B93A7]">Billing, credentials, routing, and account preferences.</p>
     </div>
 
-    <div class="mb-6 overflow-x-auto border-b border-[#2A2F3A]">
-      <div class="flex min-w-max gap-1">
+      <div class="mb-6 overflow-x-auto border-b border-[#2A2F3A]">
+      <div class="flex min-w-max gap-1" role="tablist" aria-label="Settings">
         <button
           v-for="item in tabs"
           :key="item.id"
           type="button"
           class="border-b-2 px-4 py-3 text-sm transition"
+          role="tab"
+          :aria-selected="activeTab === item.id"
           :class="
             activeTab === item.id
               ? 'border-[#E8EAEF] text-[#E8EAEF]'
@@ -26,7 +28,7 @@
     <p v-if="pageError || billingError || destinationError" class="mb-4 text-sm text-red-400">
       {{ pageError || billingError || destinationError }}
     </p>
-    <p v-if="pageMsg" class="mb-4 text-sm text-[#38B6FF]">{{ pageMsg }}</p>
+    <p v-if="pageMsg" class="mb-4 text-sm text-[#b79bff]">{{ pageMsg }}</p>
 
     <DeviceCredentialsModal
       v-if="pendingCredentials"
@@ -80,7 +82,7 @@
           </div>
           <div class="h-2 overflow-hidden rounded-full bg-[#0F1115]">
             <div
-              class="h-full rounded-full bg-[#38B6FF] transition-all"
+              class="h-full rounded-full bg-[#5617fc] transition-all"
               :style="{ width: `${usagePercent}%` }"
             />
           </div>
@@ -105,7 +107,7 @@
           >
             <div class="flex items-start justify-between gap-2">
               <h3 class="font-semibold text-[#E8EAEF]">{{ plan.name }}</h3>
-              <span class="shrink-0 font-mono text-sm text-[#38B6FF]">{{ plan.price }}</span>
+              <span class="shrink-0 font-mono text-sm text-[#b79bff]">{{ plan.price }}</span>
             </div>
             <p class="mt-1 text-xs text-[#8B93A7]">{{ plan.blurb }}</p>
             <button
@@ -125,11 +127,11 @@
     <section v-else-if="activeTab === 'api-keys'" class="space-y-4">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p class="label">Device authentication</p>
-          <p class="text-xs text-[#8B93A7]">Each token authenticates one device connection.</p>
+          <p class="label">Device credentials</p>
+          <p class="text-xs text-[#8B93A7]">Each device has a public key ID. Rotating replaces the key ID and shows a new API secret once.</p>
         </div>
         <button v-if="canWrite" type="button" class="btn-primary" @click="showTokenForm = !showTokenForm">
-          Generate New Token
+          Rotate credentials
         </button>
       </div>
 
@@ -139,7 +141,7 @@
         @submit.prevent="onRotateToken"
       >
         <select v-model="tokenDeviceId" class="input flex-1" required>
-          <option value="" disabled>Select a device to rotate its token</option>
+          <option value="" disabled>Select a device</option>
           <option v-for="device in devices" :key="device.id" :value="device.id">
             {{ device.name }}
           </option>
@@ -151,7 +153,7 @@
 
       <div class="card overflow-hidden">
         <div v-if="!devices.length" class="p-8 text-center text-sm text-[#8B93A7]">
-          No device tokens yet.
+          No device credentials yet.
         </div>
         <div
           v-for="device in devices"
@@ -162,7 +164,7 @@
           <div class="min-w-0 flex-1">
             <p class="text-sm font-medium text-[#E8EAEF]">{{ device.name }}</p>
             <p class="mt-1 font-mono text-xs text-[#8B93A7]">
-              {{ revealedKeys.has(device.id) ? device.api_key : maskToken(device.api_key) }}
+              Key ID {{ revealedKeys.has(device.id) ? device.api_key : maskToken(device.api_key) }}
             </p>
           </div>
           <div class="flex gap-2">
@@ -173,7 +175,7 @@
               v-if="canWrite"
               type="button"
               class="btn-ghost text-xs text-red-400"
-              title="Delete device and revoke token"
+              title="Delete device and revoke its credentials"
               @click="onRevokeToken(device.id, device.name)"
             >
               Delete
@@ -182,88 +184,32 @@
         </div>
       </div>
       <p class="text-[11px] text-[#8B93A7]">
-        Generating replaces the selected device’s token immediately. Delete revokes the token by
-        deleting its device.
+        Rotating replaces the selected device’s key ID and API secret immediately. Delete removes the device.
       </p>
     </section>
 
     <!-- Webhooks -->
     <section v-else-if="activeTab === 'webhooks'" class="space-y-4">
-      <form v-if="canWrite" class="card space-y-4 p-5" @submit.prevent="onCreateWebhook">
-        <div>
-          <label class="label" for="webhook-url">Endpoint URL</label>
-          <input
-            id="webhook-url"
-            v-model="webhookUrl"
-            class="input font-mono"
-            type="url"
-            placeholder="https://api.example.com/struct/events"
-            required
-          />
+      <div class="card p-5">
+        <h2 class="text-sm font-semibold">Destinations are the webhook configuration</h2>
+        <p class="mt-2 text-sm text-[#9AA3B2]">
+          Create endpoints, choose events, set device scope, edit routing, and view signing secrets on Destinations.
+          Delivery attempts are on the Deliveries page.
+        </p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <NuxtLink to="/dashboard/destinations" class="btn-primary text-xs">Open destinations</NuxtLink>
+          <NuxtLink to="/dashboard/deliveries" class="btn-ghost text-xs">Open deliveries</NuxtLink>
         </div>
-        <div>
-          <p class="label">Event types</p>
-          <div class="mt-2 grid gap-2 sm:grid-cols-3">
-            <label
-              v-for="event in webhookEvents"
-              :key="event.id"
-              class="flex cursor-pointer items-center gap-2 rounded-lg border border-[#2A2F3A] px-3 py-2 text-xs text-[#E8EAEF]"
-            >
-              <input v-model="selectedEvents" type="checkbox" :value="event.id" />
-              {{ event.name }}
-            </label>
-          </div>
-        </div>
-        <button class="btn-primary" type="submit" :disabled="creatingWebhook || !selectedEvents.length">
-          {{ creatingWebhook ? 'Adding…' : 'Add webhook' }}
-        </button>
-      </form>
-
+      </div>
       <div class="card divide-y divide-[#2A2F3A]">
-        <div v-if="!destinations.length" class="p-8 text-center text-sm text-[#8B93A7]">
+        <div v-if="!destinations.length" class="p-6 text-sm text-[#9AA3B2]">
           No webhook endpoints configured.
         </div>
         <div v-for="destination in destinations" :key="destination.id" class="p-4">
-          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div class="min-w-0">
-              <p class="break-all font-mono text-xs text-[#E8EAEF]">{{ destination.url }}</p>
-              <p class="mt-2 text-[11px] text-[#8B93A7]">
-                {{ (destination.event_types || ['telemetry.received']).join(' · ') }}
-              </p>
-              <p class="mt-2 break-all font-mono text-[11px] text-[#8B93A7]">
-                Secret:
-                {{
-                  revealedSecrets.has(destination.id)
-                    ? destination.signing_secret
-                    : maskSecret(destination.signing_secret)
-                }}
-              </p>
-            </div>
-            <div class="flex gap-2">
-              <button
-                v-if="canWrite"
-                type="button"
-                class="btn-ghost text-xs"
-                @click="toggleSecret(destination.id)"
-              >
-                {{ revealedSecrets.has(destination.id) ? 'Hide secret' : 'View secret' }}
-              </button>
-              <button
-                v-if="canWrite"
-                type="button"
-                class="btn-ghost text-xs text-red-400"
-                @click="onDeleteWebhook(destination.id)"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
+          <p class="text-sm text-[#E8EAEF]">{{ destination.name }}</p>
+          <p class="mt-1 break-all font-mono text-xs text-[#9AA3B2]">{{ destination.url }}</p>
         </div>
       </div>
-      <p class="text-[11px] text-[#8B93A7]">
-        Verify <span class="font-mono">x-struct-signature</span> as HMAC-SHA256 of the exact request
-        body using this secret.
-      </p>
     </section>
 
     <!-- Account -->
@@ -304,21 +250,21 @@
             <span class="block text-sm text-[#E8EAEF]">Billing notifications</span>
             <span class="text-xs text-[#8B93A7]">Plan, payment, and device-limit updates.</span>
           </span>
-          <input v-model="notifications.billing" type="checkbox" class="accent-[#38B6FF]" />
+          <input v-model="notifications.billing" type="checkbox" class="accent-[#5617fc]" />
         </label>
         <label class="flex cursor-pointer items-center justify-between gap-4 p-4">
           <span>
             <span class="block text-sm text-[#E8EAEF]">Fleet alerts</span>
             <span class="text-xs text-[#8B93A7]">Device connectivity and delivery failures.</span>
           </span>
-          <input v-model="notifications.fleet" type="checkbox" class="accent-[#38B6FF]" />
+          <input v-model="notifications.fleet" type="checkbox" class="accent-[#5617fc]" />
         </label>
         <label class="flex cursor-pointer items-center justify-between gap-4 p-4">
           <span>
             <span class="block text-sm text-[#E8EAEF]">Product updates</span>
             <span class="text-xs text-[#8B93A7]">Occasional Struct feature announcements.</span>
           </span>
-          <input v-model="notifications.product" type="checkbox" class="accent-[#38B6FF]" />
+          <input v-model="notifications.product" type="checkbox" class="accent-[#5617fc]" />
         </label>
       </div>
       <button type="button" class="btn-primary" :disabled="savingNotifications" @click="saveNotifications">
@@ -331,7 +277,7 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'auth' })
 
-import type { DeviceCredentials, SubscriptionTier, WebhookEventType } from '~/types'
+import type { DeviceCredentials, SubscriptionTier } from '~/types'
 
 type SettingsTab = 'billing' | 'api-keys' | 'webhooks' | 'account'
 type PaidTier = Exclude<SubscriptionTier, 'free'>
@@ -358,8 +304,6 @@ const {
   destinations,
   error: destinationError,
   fetchDestinations,
-  createDestination,
-  deleteDestination,
 } = useDestinations()
 const {
   loading: billingLoading,
@@ -398,7 +342,7 @@ const showUpgradePlans = ref(false)
 
 const tabs: { id: SettingsTab; name: string }[] = [
   { id: 'billing', name: 'Billing' },
-  { id: 'api-keys', name: 'API Keys' },
+  { id: 'api-keys', name: 'Credentials' },
   { id: 'webhooks', name: 'Webhooks' },
   { id: 'account', name: 'Account' },
 ]
@@ -415,16 +359,6 @@ const showTokenForm = ref(false)
 const tokenDeviceId = ref('')
 const rotatingToken = ref(false)
 const revealedKeys = ref(new Set<string>())
-
-const webhookUrl = ref('')
-const selectedEvents = ref<WebhookEventType[]>(['telemetry.received'])
-const creatingWebhook = ref(false)
-const revealedSecrets = ref(new Set<string>())
-const webhookEvents: { id: WebhookEventType; name: string }[] = [
-  { id: 'telemetry.received', name: 'Telemetry received' },
-  { id: 'device.connected', name: 'Device connected' },
-  { id: 'device.disconnected', name: 'Device disconnected' },
-]
 
 const resettingPassword = ref(false)
 const newPassword = ref('')
@@ -520,11 +454,6 @@ function maskToken(token: string) {
   return token.length > 8 ? `${token.slice(0, 4)}••••••••${token.slice(-4)}` : '••••••••'
 }
 
-function maskSecret(secret?: string) {
-  if (!secret) return 'Migration 017 required'
-  return `${secret.slice(0, 6)}${'•'.repeat(18)}${secret.slice(-4)}`
-}
-
 function toggleSet(setRef: Ref<Set<string>>, id: string) {
   const next = new Set(setRef.value)
   if (next.has(id)) next.delete(id)
@@ -534,10 +463,6 @@ function toggleSet(setRef: Ref<Set<string>>, id: string) {
 
 function toggleKey(id: string) {
   toggleSet(revealedKeys, id)
-}
-
-function toggleSecret(id: string) {
-  toggleSet(revealedSecrets, id)
 }
 
 function clearPendingCredentials() {
@@ -561,7 +486,7 @@ async function onRotateToken() {
       pendingCredentials.value = result.credentials
       pageMsg.value = `New credentials for ${device.name}. Save the API secret now — it won’t be shown again.`
     } else {
-      pageMsg.value = `Generated a new token for ${device.name}.`
+      pageMsg.value = `Rotated credentials for ${device.name}.`
     }
   } catch (error: any) {
     pageError.value = error.message
@@ -571,42 +496,11 @@ async function onRotateToken() {
 }
 
 async function onRevokeToken(id: string, name: string) {
-  if (!confirm(`Delete “${name}” and permanently revoke its token?`)) return
+  if (!confirm(`Delete “${name}” and permanently revoke its credentials?`)) return
   setMessage()
   try {
     await deleteDevice(id)
-    pageMsg.value = 'Device token revoked.'
-  } catch (error: any) {
-    pageError.value = error.message
-  }
-}
-
-async function onCreateWebhook() {
-  creatingWebhook.value = true
-  setMessage()
-  try {
-    const url = new URL(webhookUrl.value)
-    await createDestination({
-      name: url.hostname,
-      url: url.toString(),
-      event_types: selectedEvents.value,
-    })
-    webhookUrl.value = ''
-    selectedEvents.value = ['telemetry.received']
-    pageMsg.value = 'Webhook endpoint added.'
-  } catch (error: any) {
-    pageError.value = error.message
-  } finally {
-    creatingWebhook.value = false
-  }
-}
-
-async function onDeleteWebhook(id: string) {
-  if (!confirm('Delete this webhook endpoint?')) return
-  setMessage()
-  try {
-    await deleteDestination(id)
-    pageMsg.value = 'Webhook deleted.'
+    pageMsg.value = 'Device deleted and credentials revoked.'
   } catch (error: any) {
     pageError.value = error.message
   }

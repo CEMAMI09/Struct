@@ -69,9 +69,9 @@
 
       <div
         v-if="created"
-        class="rounded-lg border border-[#38B6FF]/40 bg-[#38B6FF]/5 p-4"
+        class="rounded-lg border border-[#5617fc]/40 bg-[#5617fc]/5 p-4"
       >
-        <p class="text-sm font-semibold text-[#38B6FF]">Profile created</p>
+        <p class="text-sm font-semibold text-[#b79bff]">Profile created</p>
         <p class="mt-1 text-xs text-[#8B93A7]">
           Flash this Master Fleet Key on every unit. Identity comes from
           <span class="font-mono text-[#E8EAEF]">{{ created.profile.identity_field }}</span>
@@ -86,7 +86,7 @@
               </button>
             </div>
             <pre
-              class="mono overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-[#0F1115] p-3 text-xs text-[#38B6FF]"
+              class="mono overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-[#0F1115] p-3 text-xs text-[#b79bff]"
             >{{ created.credentials.fleetKeyId }}</pre>
           </div>
           <div>
@@ -97,7 +97,7 @@
               </button>
             </div>
             <pre
-              class="mono overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-[#0F1115] p-3 text-xs text-[#38B6FF]"
+              class="mono overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-[#0F1115] p-3 text-xs text-[#b79bff]"
             >{{ created.credentials.fleetSecret }}</pre>
           </div>
         </div>
@@ -112,7 +112,7 @@
         </div>
       </div>
 
-      <p v-if="message" class="text-sm" :class="error ? 'text-red-400' : 'text-[#38B6FF]'">
+      <p v-if="message" class="text-sm" :class="error ? 'text-red-400' : 'text-[#b79bff]'">
         {{ message }}
       </p>
 

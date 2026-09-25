@@ -1,0 +1,9 @@
+C:\Users\codye\OneDrive\Documents\Struct\sdk\rust\target\debug\deps\zmij-fff15df10af687db.d: C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zmij-1.0.23\src\lib.rs C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zmij-1.0.23\src\stdarch_x86.rs C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zmij-1.0.23\src\traits.rs
+
+C:\Users\codye\OneDrive\Documents\Struct\sdk\rust\target\debug\deps\libzmij-fff15df10af687db.rlib: C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zmij-1.0.23\src\lib.rs C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zmij-1.0.23\src\stdarch_x86.rs C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zmij-1.0.23\src\traits.rs
+
+C:\Users\codye\OneDrive\Documents\Struct\sdk\rust\target\debug\deps\libzmij-fff15df10af687db.rmeta: C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zmij-1.0.23\src\lib.rs C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zmij-1.0.23\src\stdarch_x86.rs C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zmij-1.0.23\src\traits.rs
+
+C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zmij-1.0.23\src\lib.rs:
+C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zmij-1.0.23\src\stdarch_x86.rs:
+C:/Users/codye/Documents/Codex/2026-09-09/t/work/rust-tools/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zmij-1.0.23\src\traits.rs:

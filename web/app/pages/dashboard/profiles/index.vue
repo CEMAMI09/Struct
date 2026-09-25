@@ -25,7 +25,7 @@
       <NuxtLink
         v-if="canWrite"
         to="/dashboard/profiles/new"
-        class="text-[#38B6FF] hover:underline"
+        class="text-[#b79bff] hover:underline"
       >
         create one
       </NuxtLink>
@@ -47,7 +47,7 @@
             <span v-if="profile.device_model || profile.firmware_version"> · </span>
             {{ profile.schema_definition.length }} fields · id={{ profile.identity_field }}
           </p>
-          <p class="mt-1 font-mono text-[10px] text-[#38B6FF]">
+          <p class="mt-1 font-mono text-[10px] text-[#b79bff]">
             fleet key {{ profile.fleet_key_id }}
             <span v-if="profile.fleet_secret_preview">
               · secret …{{ profile.fleet_secret_preview }}

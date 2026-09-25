@@ -13,15 +13,15 @@ export default {
       colors: {
         struct: {
           bg: '#0F1115',
-          card: '#1A1D24',
-          border: '#2A2F3A',
-          blue: '#38B6FF',
-          muted: '#8B93A7',
+          card: '#161922',
+          border: '#2A3140',
+          blue: '#5617fc',
+          muted: '#9AA3B2',
         },
       },
       fontFamily: {
-        sans: ['Montserrat', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        mono: ['Geist Mono', 'JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        sans: ['Figtree', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['Geist Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
     },
   },

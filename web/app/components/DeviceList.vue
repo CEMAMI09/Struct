@@ -6,23 +6,25 @@
     </div>
 
     <div v-if="!devices.length" class="flex flex-1 flex-col items-center justify-center text-center">
-      <p class="text-sm text-[#8B93A7]">No devices yet</p>
+      <p class="text-sm text-[#9AA3B2]">No devices yet</p>
       <NuxtLink to="/dashboard/devices" class="btn-primary mt-3 text-xs">Add device</NuxtLink>
     </div>
 
     <ul v-else class="min-h-0 flex-1 space-y-1.5 overflow-y-auto">
-      <li
-        v-for="device in devices"
-        :key="device.id"
-        class="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 transition"
-        :class="selectedId === device.id ? 'device-row--selected' : 'device-row--idle'"
-        @click="$emit('select', device.id)"
-      >
-        <StatusDot :online="isDeviceOnline(device.last_seen)" />
-        <div class="min-w-0 flex-1">
-          <p class="truncate text-sm font-medium text-[#E8EAEF]">{{ device.name }}</p>
-          <p class="mono truncate text-[10px] text-[#8B93A7]">{{ device.api_key }}</p>
-        </div>
+      <li v-for="device in devices" :key="device.id">
+        <button
+          type="button"
+          class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition"
+          :class="selectedId === device.id ? 'device-row--selected' : 'device-row--idle'"
+          :aria-current="selectedId === device.id ? 'true' : undefined"
+          @click="$emit('select', device.id)"
+        >
+          <StatusDot :online="isDeviceOnline(device.last_seen)" show-label />
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-sm font-medium text-[#E8EAEF]">{{ device.name }}</span>
+            <span class="mono block truncate text-[10px] text-[#9AA3B2]">Key ID {{ device.api_key }}</span>
+          </span>
+        </button>
       </li>
     </ul>
   </div>

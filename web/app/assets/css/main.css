@@ -1,4 +1,12 @@
 @font-face {
+  font-family: 'Figtree';
+  src: url('../fonts/figtree-latin.woff2') format('woff2');
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: 'Geist';
   src: url('../fonts/geist-latin.woff2') format('woff2');
   font-weight: 100 900;
@@ -23,11 +31,32 @@
 
 :root {
   --struct-bg: #0f1115;
-  --struct-card: #1a1d24;
-  --struct-border: #2a2f3a;
-  --struct-blue: #38b6ff;
-  --struct-muted: #8b93a7;
+  --struct-surface: #161922;
+  --struct-elevated: #1c212b;
   --struct-text: #e8eaef;
+  --struct-text-secondary: #c5cad3;
+  --struct-muted: #9aa3b2;
+  --struct-border: #2a3140;
+  --struct-border-strong: #3c4558;
+  --struct-hover: rgba(255, 255, 255, 0.045);
+  --struct-selected: #1c2430;
+  --struct-accent: #5617fc;
+  --struct-accent-hover: #6d3cfc;
+  --struct-focus: #8b6cff;
+  --struct-danger: #f0a3a8;
+  --struct-warning: #e6c27a;
+  --struct-success: #8fd4ae;
+  --struct-info: #b79bff;
+  --struct-radius: 8px;
+  --struct-space-1: 0.25rem;
+  --struct-space-2: 0.5rem;
+  --struct-space-3: 0.75rem;
+  --struct-space-4: 1rem;
+  --struct-space-5: 1.5rem;
+  --struct-space-6: 2rem;
+  --struct-space-7: 3rem;
+  --struct-content: 72rem;
+  color-scheme: dark;
 }
 
 html,
@@ -39,20 +68,10 @@ body,
 }
 
 body {
-  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(56, 182, 255, 0.05), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(42, 47, 58, 0.4), transparent);
-  background-attachment: fixed;
+  font-family: Figtree, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: var(--struct-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-@media (max-width: 767px) {
-  body {
-    /* fixed backgrounds jank scroll on many mobile browsers */
-    background-attachment: scroll;
-  }
 }
 
 .font-mono,
@@ -60,80 +79,220 @@ body {
   font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: 0.75rem;
+  z-index: 80;
+  transform: translateY(-150%);
+  border-radius: var(--struct-radius);
+  background: var(--struct-accent);
+  color: #fff;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--struct-focus);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 @layer components {
   .card {
-    @apply rounded-xl bg-[#1A1D24];
-    box-shadow: inset 0 0 0 1px #2a2f3a;
+    border-radius: var(--struct-radius);
+    background: var(--struct-surface);
+    box-shadow: inset 0 0 0 1px var(--struct-border);
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-lg bg-[#38B6FF] px-4 py-2 text-sm font-semibold text-[#0F1115] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+    min-height: 2.25rem;
+    border-radius: var(--struct-radius);
+    background: var(--struct-accent);
+    color: #fff;
+    letter-spacing: -0.01em;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--struct-accent-hover);
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center rounded-lg border border-[#2A2F3A] bg-transparent px-4 py-2 text-sm font-medium text-[#E8EAEF] transition hover:border-[#38B6FF]/40 hover:text-[#38B6FF];
+    @apply inline-flex items-center justify-center gap-1.5 bg-transparent px-3.5 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50;
+    min-height: 2.25rem;
+    border-radius: var(--struct-radius);
+    border: 1px solid var(--struct-border);
+    color: var(--struct-text);
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    border-color: var(--struct-border-strong);
+    background: var(--struct-hover);
   }
 
   .input {
-    @apply w-full rounded-lg border border-[#2A2F3A] bg-[#0F1115] px-3 py-2 text-sm text-[#E8EAEF] outline-none transition placeholder:text-[#8B93A7] focus:border-[#38B6FF]/60;
+    @apply w-full px-3 py-2 text-sm transition placeholder:text-[var(--struct-muted)];
+    min-height: 2.25rem;
+    border-radius: var(--struct-radius);
+    border: 1px solid var(--struct-border);
+    background: var(--struct-bg);
+    color: var(--struct-text);
+  }
+
+  .input:hover {
+    border-color: var(--struct-border-strong);
+  }
+
+  .input:focus {
+    border-color: var(--struct-accent);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(86, 23, 252, 0.28);
   }
 
   .label {
-    @apply mb-1.5 block text-xs font-medium uppercase tracking-wider text-[#8B93A7];
+    @apply mb-1.5 block text-[0.8125rem] font-medium;
+    color: var(--struct-muted);
+  }
+
+  .kicker {
+    margin: 0 0 0.5rem;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--struct-muted);
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    border: 1px solid var(--struct-border);
+    padding: 0.1rem 0.5rem;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--struct-text-secondary);
+    white-space: nowrap;
+  }
+
+  .status-pill::before {
+    content: '';
+    width: 0.4rem;
+    height: 0.4rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: currentColor;
+  }
+
+  .status-pill[data-tone='ok'] {
+    color: var(--struct-success);
+    border-color: #245c3d;
+  }
+
+  .status-pill[data-tone='warn'] {
+    color: var(--struct-warning);
+    border-color: #6a5424;
+  }
+
+  .status-pill[data-tone='bad'] {
+    color: var(--struct-danger);
+    border-color: #6a3034;
+  }
+
+  .status-pill[data-tone='info'] {
+    color: var(--struct-info);
+    border-color: #3d2a66;
+  }
+
+  .table-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .data-table {
+    width: 100%;
+    min-width: 40rem;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.55rem 0.7rem;
+    border-bottom: 1px solid var(--struct-border);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .data-table th {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--struct-muted);
+  }
+
+  .banner {
+    border-radius: var(--struct-radius);
+    border: 1px solid var(--struct-border);
+    background: var(--struct-surface);
+    padding: 0.55rem 0.75rem;
+    font-size: 0.75rem;
+    color: var(--struct-muted);
+  }
+
+  .banner-error {
+    border-color: #6a3034;
+    background: rgba(240, 163, 168, 0.08);
+    color: var(--struct-danger);
   }
 }
 
-/* Product app — scoped so the marketing landing keeps its existing look. */
 .app-shell {
-  font-family: Geist, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  font-feature-settings: 'ss01' on, 'cv11' on;
-  background: #0c0d10;
-  background-image: none;
-  color: #e8eaef;
+  font-family: Figtree, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: var(--struct-bg);
+  color: var(--struct-text);
   min-height: 100%;
 }
 
-.app-shell .card {
-  border-radius: 10px;
-  background: #14161c;
-  box-shadow: inset 0 0 0 1px #252830;
+.site {
+  min-height: 100%;
+  overflow-x: clip;
 }
 
-.app-shell .btn-primary {
-  border-radius: 8px;
-  font-weight: 550;
-  letter-spacing: -0.01em;
+.site-main {
+  width: min(100%, var(--struct-content));
+  margin-inline: auto;
+  padding: 2.5rem 1.25rem 4rem;
 }
 
-.app-shell .btn-primary:hover:not(:disabled) {
-  filter: none;
-  background: #5cc2ff;
-}
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
 
-.app-shell .btn-ghost {
-  border-radius: 8px;
-  border-color: #252830;
-}
-
-.app-shell .btn-ghost:hover:not(:disabled) {
-  border-color: #3a4050;
-  color: #e8eaef;
-}
-
-.app-shell .input {
-  border-radius: 8px;
-  border-color: #252830;
-  background: #0c0d10;
-}
-
-.app-shell .input:focus {
-  border-color: #4a5568;
-}
-
-.app-shell .label {
-  text-transform: none;
-  letter-spacing: 0;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: #9aa3b2;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

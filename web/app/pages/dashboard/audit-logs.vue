@@ -55,7 +55,7 @@
             </div>
             <div>
               <p class="label">New state</p>
-              <pre class="mono mt-1 max-h-80 overflow-auto rounded-lg bg-[#0F1115] p-3 text-xs text-[#38B6FF]">{{ formatData(entry.new_data) }}</pre>
+              <pre class="mono mt-1 max-h-80 overflow-auto rounded-lg bg-[#0F1115] p-3 text-xs text-[#b79bff]">{{ formatData(entry.new_data) }}</pre>
             </div>
           </div>
           <p class="mt-3 font-mono text-[10px] text-[#8B93A7]">

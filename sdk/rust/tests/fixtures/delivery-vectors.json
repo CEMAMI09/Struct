@@ -1,0 +1,13 @@
+{
+  "warning": "PUBLIC TEST CREDENTIALS ONLY. Frozen fixtures generated with Python stdlib independently of the SDK.",
+  "keyId": "0123456789abcdef",
+  "apiSecret": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "eventIdHex": "000102030405060708090a0b0c0d0e0f",
+  "nonceHex": "000102030405060708090a0b",
+  "payloadHex": "2a00",
+  "timestampSec": 1000,
+  "expires": 2000,
+  "schemaVersion": 1,
+  "frameHex": "043031323334353637383961626364656601e8030000000102030405060708090a0b000102030405060708090a0b0c0d0e0f2a0096b9496d05ec9580dcb285d77b2aeff2961c37fb27d1bbab29875571c5e7ca2c",
+  "commandHex": "5354524330313233343536373839616263646566000102030405060708090a0b0c0d0e0fe8030000d00700002a0032925f557e5598b37d5ff0929ec67629a11bdf778cdef7bf4eaced2b509e6ae6"
+}

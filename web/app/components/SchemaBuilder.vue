@@ -35,7 +35,7 @@
 
     <template v-else>
       <!-- ChaCha20 encryption -->
-      <div class="card shrink-0 p-4">
+      <div class="card order-3 shrink-0 p-4">
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div class="min-w-0 flex-1">
             <p class="text-sm font-semibold text-[#E8EAEF]">Enable ChaCha20 Edge Encryption</p>
@@ -52,7 +52,7 @@
           <button
             type="button"
             class="relative h-7 w-12 shrink-0 rounded-full transition"
-            :class="encryptionOn ? 'bg-[#38B6FF]' : 'bg-[#2A2F3A]'"
+            :class="encryptionOn ? 'bg-[#5617fc]' : 'bg-[#2A2F3A]'"
             :aria-pressed="encryptionOn"
             aria-label="Enable payload encryption"
             :disabled="togglingEnc || !canWrite || (!canUseEncryption && !encryptionOn)"
@@ -82,23 +82,23 @@
               </button>
             </div>
           </div>
-          <pre class="mono overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-[#0F1115] p-3 text-xs text-[#38B6FF]">{{ selectedDevice.encryption_key }}</pre>
+          <pre class="mono overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-[#0F1115] p-3 text-xs text-[#b79bff]">{{ selectedDevice.encryption_key }}</pre>
           <p class="mt-2 font-mono text-[10px] text-[#8B93A7]">
             Wire: [protocol][16B key_id][schema][4B ts][12B nonce][12B encryption nonce][4B ts + struct ciphertext][16B tag][32B HMAC]
           </p>
         </div>
-        <p v-if="encMsg" class="mt-3 text-xs" :class="encErr ? 'text-red-400' : 'text-[#38B6FF]'">
+        <p v-if="encMsg" class="mt-3 text-xs" :class="encErr ? 'text-red-400' : 'text-[#b79bff]'">
           {{ encMsg }}
         </p>
       </div>
 
-      <div class="card flex-1 overflow-auto p-4">
+      <div class="card order-1 flex-1 overflow-auto p-4">
         <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 class="text-sm font-semibold text-[#E8EAEF]">Fields</h3>
             <p class="mt-0.5 font-mono text-[10px] text-[#8B93A7]">
               schema version {{ displayVersion }}
-              <span v-if="willBumpOnSave" class="text-[#38B6FF]"> → {{ displayVersion + 1 }} on save</span>
+              <span v-if="willBumpOnSave" class="text-[#b79bff]"> → {{ displayVersion + 1 }} on save</span>
             </p>
           </div>
           <p class="font-mono text-[10px] text-[#8B93A7]">
@@ -248,7 +248,7 @@
         </div>
       </div>
 
-      <div class="card shrink-0 p-4">
+      <div class="card order-2 shrink-0 p-4">
         <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
           <p class="label mb-0">Encoder preview</p>
           <button
@@ -278,10 +278,11 @@
       </div>
 
       <div class="card flex flex-wrap gap-4 p-4 text-xs">
-        <a href="/sdk/struct-sdk.zip" download class="text-[#38B6FF] underline">Download SDK + integration guide</a>
-        <a href="/sdk/struct-arduino.zip" download class="text-[#38B6FF] underline">Arduino ZIP library (ESP32)</a>
+        <button class="btn-primary" :disabled="!canDownload || exportingProject" @click="downloadProject">{{ exportingProject ? 'Packaging…' : `Download ${codeLanguage} starter project` }}</button>
+        <a href="/sdk/struct-sdk.zip" download class="text-[#b79bff] underline">Download SDK + integration guide</a>
+        <a href="/sdk/struct-arduino.zip" download class="text-[#b79bff] underline">Arduino ZIP library (ESP32)</a>
       </div>
-      <p v-if="message" role="status" class="text-xs" :class="error ? 'text-red-400' : 'text-[#38B6FF]'">
+      <p v-if="message" role="status" class="text-xs" :class="error ? 'text-red-400' : 'text-[#b79bff]'">
         {{ message }}
       </p>
     </template>
@@ -292,6 +293,21 @@
 import type { Device, DeviceSchema, FieldType, SchemaField, SchemaVersion } from '~/types'
 import { FIELD_TYPES } from '~/types'
 import { CODE_LANGUAGES, generateSchemaCode, validateSchema, type CodeLanguage } from '#shared/schemaCodegen'
+import {generateSchemaProject} from '#shared/schemaProject'
+const exportingProject=ref(false)
+async function downloadProject(){
+ if(!canDownload.value||exportingProject.value)return
+ exportingProject.value=true
+ try{
+  const files=generateSchemaProject(cleanedFields(),exportVersion.value,codeLanguage.value,encryptionOn.value)
+  const {zipSync,unzipSync,strToU8}=await import('fflate')
+  const response=await fetch('/sdk/struct-sdk.zip');if(!response.ok)throw new Error('SDK download unavailable')
+  const archive=unzipSync(new Uint8Array(await response.arrayBuffer()))
+  for(const [name,source] of Object.entries(files))archive[`project/${name}`]=strToU8(source)
+  const blob=new Blob([zipSync(archive)],{type:'application/zip'}),url=URL.createObjectURL(blob),link=document.createElement('a')
+  link.href=url;link.download='struct-starter.zip';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)
+ }catch(e:any){error.value=true;message.value=e.message||'Unable to export starter project'}finally{exportingProject.value=false}
+}
 
 const props = defineProps<{
   devices: Device[]

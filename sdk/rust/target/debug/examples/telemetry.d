@@ -1,0 +1,1 @@
+C:\Users\codye\OneDrive\Documents\Struct\sdk\rust\target\debug\examples\telemetry.exe: C:\Users\codye\OneDrive\Documents\Struct\sdk\rust\examples\telemetry.rs C:\Users\codye\OneDrive\Documents\Struct\sdk\rust\src\lib.rs C:\Users\codye\OneDrive\Documents\Struct\sdk\rust\src\persistent.rs

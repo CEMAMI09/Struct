@@ -38,17 +38,31 @@
           </div>
         </div>
         <div class="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
-          <NuxtLink
-            v-if="showOrgBadge && currentOrganization"
-            to="/dashboard/organization"
-            class="app-org"
-            title="Organization settings"
-          >
-            <span class="truncate">{{ currentOrganization.name }}</span>
-            <span class="app-org-role" :class="isViewer ? 'is-muted' : ''">
-              {{ role || '—' }}
-            </span>
-          </NuxtLink>
+          <div v-if="showOrgBadge && currentOrganization" class="flex min-w-0 items-center gap-2">
+            <label v-if="memberships.length > 1" class="sr-only" for="org-switch">Organization</label>
+            <select
+              v-if="memberships.length > 1"
+              id="org-switch"
+              class="app-org-select"
+              :value="currentOrgId || ''"
+              @change="onSwitchOrg(($event.target as HTMLSelectElement).value)"
+            >
+              <option v-for="membership in memberships" :key="membership.organization_id" :value="membership.organization_id">
+                {{ membership.organization.name }}
+              </option>
+            </select>
+            <NuxtLink
+              v-else
+              to="/dashboard/organization"
+              class="app-org"
+              title="Organization settings"
+            >
+              <span class="truncate">{{ currentOrganization.name }}</span>
+              <span class="app-org-role" :class="isViewer ? 'is-muted' : ''">
+                {{ role || '—' }}
+              </span>
+            </NuxtLink>
+          </div>
           <span class="hidden max-w-[10rem] truncate text-xs text-[#8B93A7] lg:inline lg:max-w-none">
             {{ userEmail }}
           </span>
@@ -58,15 +72,12 @@
         </div>
       </header>
       <div class="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6">
-        <p
-          v-if="orgError"
-          class="mb-4 rounded-lg border border-red-400/30 bg-red-400/5 px-3 py-2 text-xs text-red-300"
-        >
+        <p v-if="orgError" class="banner banner-error mb-4" role="alert">
           Could not load your organizations: {{ orgError }}
         </p>
         <p
           v-if="isViewer"
-          class="mb-4 rounded-lg border border-[#252830] bg-[#14161c] px-3 py-2 text-xs text-[#8B93A7]"
+          class="banner mb-4"
         >
           You have <span class="text-[#E8EAEF]">viewer</span> access — you can inspect devices,
           schemas, and telemetry, but cannot create or edit.
@@ -95,6 +106,8 @@ function toggleNavCollapsed() {
 }
 
 const {
+  memberships,
+  currentOrgId,
   currentOrganization,
   role,
   isViewer,
@@ -104,6 +117,7 @@ const {
   ensureOrganization,
   clearOrganizationState,
   fetchUsageStats,
+  setCurrentOrg,
 } = useOrganization()
 const { syncFromStripe } = useBilling()
 
@@ -116,11 +130,12 @@ const title = computed(() => {
   const map: Record<string, string> = {
     '/dashboard': 'Overview',
     '/dashboard/schema': 'Schema',
-    '/dashboard/debugger': 'Debugger',
+    '/dashboard/debugger': 'Diagnostics',
     '/dashboard/devices': 'Devices',
     '/dashboard/profiles': 'Profiles',
     '/dashboard/profiles/new': 'New profile',
     '/dashboard/destinations': 'Destinations',
+    '/dashboard/deliveries': 'Deliveries',
     '/dashboard/organization': 'Organization',
     '/dashboard/settings': 'Settings',
     '/dashboard/audit-logs': 'Audit log',
@@ -176,6 +191,12 @@ watch(user, (u, prev) => {
     bootstrapOrg().catch(() => {})
   }
 })
+
+function onSwitchOrg(id: string) {
+  if (!id || id === currentOrgId.value) return
+  setCurrentOrg(id)
+  window.location.reload()
+}
 
 async function signOut() {
   if (signingOut.value) return
@@ -264,7 +285,18 @@ async function signOut() {
 }
 
 .app-org-role.is-muted {
-  color: #6b7380;
+  color: #9aa3b2;
+}
+
+.app-org-select {
+  max-width: 14rem;
+  min-height: 2rem;
+  border: 1px solid #252830;
+  border-radius: 8px;
+  background: #0c0d10;
+  color: #e8eaef;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.75rem;
 }
 </style>
 

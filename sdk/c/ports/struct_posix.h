@@ -3,6 +3,9 @@
 #include "struct_sdk.h"
 #include <mbedtls/entropy.h>
 #include <mbedtls/ctr_drbg.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef struct {
   int fd;
   mbedtls_entropy_context entropy;
@@ -12,4 +15,7 @@ typedef struct {
  * The caller owns WiFi/modem power management. Linux/POSIX + mbedTLS. */
 int struct_posix_open(struct_posix *, struct_port *, const char *host, const char *port);
 void struct_posix_close(struct_posix *);
+#ifdef __cplusplus
+}
+#endif
 #endif

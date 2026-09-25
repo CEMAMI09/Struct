@@ -33,7 +33,7 @@
           @keydown.enter.prevent="onSubmit"
         />
       </div>
-      <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
+      <p v-if="error" class="text-sm text-red-300" role="alert">{{ error }}</p>
       <button type="submit" class="btn-primary w-full" :disabled="loading">
         {{ loading ? 'Signing in…' : 'Sign in' }}
       </button>
@@ -43,7 +43,7 @@
 
     <p class="mt-6 text-center text-sm text-[#8B93A7]">
       No account?
-      <NuxtLink to="/signup" class="text-[#38B6FF] hover:underline">Create one</NuxtLink>
+      <NuxtLink to="/signup" class="text-[#b79bff] hover:underline">Create one</NuxtLink>
     </p>
   </div>
 </template>

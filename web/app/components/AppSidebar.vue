@@ -3,17 +3,14 @@
     class="app-side"
     :class="[
       open ? 'translate-x-0' : '-translate-x-full',
-      collapsed ? 'w-60 md:w-[4.5rem]' : 'w-60',
+      collapsed ? 'is-collapsed w-60 md:w-[4.5rem]' : 'w-60',
     ]"
   >
-    <div class="app-side-brand" :class="collapsed ? 'md:justify-center md:px-2' : ''">
-      <NuxtLink
-        to="/dashboard"
-        class="flex min-w-0 items-center"
-        :class="collapsed ? 'md:justify-center' : ''"
-        @click="emit('close')"
-      >
-        <StructLogo size="sm" />
+    <div class="app-side-brand">
+      <NuxtLink to="/dashboard" class="brand-link" aria-label="Struct" @click="emit('close')">
+        <span class="brand-swap">
+          <img class="brand-full" src="/structdarkmode.svg" alt="" />
+        </span>
       </NuxtLink>
       <button
         type="button"
@@ -25,24 +22,28 @@
       </button>
     </div>
 
-    <nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2" :class="collapsed ? 'md:px-2' : 'px-2.5'">
-      <NuxtLink
-        v-for="link in links"
-        :key="link.to"
-        :to="link.to"
-        class="app-nav-link"
-        :class="[
-          collapsed ? 'md:justify-center md:px-2' : 'px-2.5',
-          isActive(link.to) ? 'is-active' : '',
-        ]"
-        :title="collapsed ? link.label : undefined"
-        @mouseenter="prefetch(link.to)"
-        @focus="prefetch(link.to)"
-        @click="emit('close')"
-      >
-        <span class="app-nav-icon" aria-hidden="true" v-html="link.icon" />
-        <span :class="collapsed ? 'md:hidden' : ''">{{ link.label }}</span>
-      </NuxtLink>
+    <nav class="app-nav" :class="collapsed ? 'md:px-2' : 'px-2.5'" aria-label="Application">
+      <div v-for="group in groups" :key="group.label" class="app-nav-group">
+        <p class="app-nav-label" :class="collapsed ? 'md:hidden' : ''">{{ group.label }}</p>
+        <NuxtLink
+          v-for="link in group.links"
+          :key="link.to"
+          :to="link.to"
+          class="app-nav-link"
+          :class="[
+            collapsed ? 'md:justify-center md:px-2' : 'px-2.5',
+            isActive(link.to) ? 'is-active' : '',
+          ]"
+          :aria-current="isActive(link.to) ? 'page' : undefined"
+          :title="collapsed ? link.label : undefined"
+          @mouseenter="prefetch(link.to)"
+          @focus="prefetch(link.to)"
+          @click="emit('close')"
+        >
+          <span class="app-nav-icon" aria-hidden="true" v-html="link.icon" />
+          <span :class="collapsed ? 'md:hidden' : ''">{{ link.label }}</span>
+        </NuxtLink>
+      </div>
     </nav>
 
     <div class="app-side-foot" :class="collapsed ? 'p-2 md:px-2' : 'p-3'">
@@ -88,6 +89,8 @@ const icon = {
     '<svg viewBox="0 0 16 16" fill="none"><path d="M3.5 11.5 8 4.5l4.5 7H3.5Z" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/></svg>',
   destinations:
     '<svg viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9.5 4.5 13 8l-3.5 3.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  deliveries:
+    '<svg viewBox="0 0 16 16" fill="none"><path d="M3.5 4.5h9M3.5 8h9M3.5 11.5h5.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>',
   schema:
     '<svg viewBox="0 0 16 16" fill="none"><path d="M3.5 4.5h9M3.5 8h9M3.5 11.5h6" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>',
   debugger:
@@ -100,18 +103,42 @@ const icon = {
     '<svg viewBox="0 0 16 16" fill="none"><rect x="3.5" y="2.5" width="9" height="11" rx="1.2" stroke="currentColor" stroke-width="1.25"/><path d="M6 6h4M6 8.5h4M6 11h2.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>',
 }
 
-const links = computed(() => [
-  { to: '/dashboard', label: 'Overview', icon: icon.dashboard },
-  { to: '/dashboard/devices', label: 'Devices', icon: icon.devices },
-  { to: '/dashboard/profiles', label: 'Profiles', icon: icon.profiles },
-  { to: '/dashboard/destinations', label: 'Destinations', icon: icon.destinations },
-  { to: '/dashboard/schema', label: 'Schema', icon: icon.schema },
-  { to: '/dashboard/debugger', label: 'Debugger', icon: icon.debugger },
-  { to: '/dashboard/organization', label: 'Organization', icon: icon.organization },
-  { to: '/dashboard/settings', label: 'Settings', icon: icon.settings },
-  ...(isEnterprise.value
-    ? [{ to: '/dashboard/audit-logs', label: 'Audit log', icon: icon.audit }]
-    : []),
+const groups = computed(() => [
+  {
+    label: 'Overview',
+    links: [{ to: '/dashboard', label: 'Overview', icon: icon.dashboard }],
+  },
+  {
+    label: 'Fleet',
+    links: [
+      { to: '/dashboard/devices', label: 'Devices', icon: icon.devices },
+      { to: '/dashboard/profiles', label: 'Profiles', icon: icon.profiles },
+    ],
+  },
+  {
+    label: 'Device',
+    links: [
+      { to: '/dashboard/schema', label: 'Schema', icon: icon.schema },
+      { to: '/dashboard/debugger', label: 'Diagnostics', icon: icon.debugger },
+    ],
+  },
+  {
+    label: 'Delivery',
+    links: [
+      { to: '/dashboard/destinations', label: 'Destinations', icon: icon.destinations },
+      { to: '/dashboard/deliveries', label: 'Deliveries', icon: icon.deliveries },
+    ],
+  },
+  {
+    label: 'Workspace',
+    links: [
+      { to: '/dashboard/organization', label: 'Organization', icon: icon.organization },
+      { to: '/dashboard/settings', label: 'Settings', icon: icon.settings },
+      ...(isEnterprise.value
+        ? [{ to: '/dashboard/audit-logs', label: 'Audit log', icon: icon.audit }]
+        : []),
+    ],
+  },
 ])
 
 function isActive(path: string) {
@@ -148,7 +175,7 @@ function prefetch(path: string) {
   flex-direction: column;
   border-right: 1px solid #252830;
   background: #0c0d10;
-  transition: width 0.2s ease, transform 0.2s ease;
+  transition: width 0.28s ease, transform 0.28s ease;
 }
 
 @media (min-width: 768px) {
@@ -170,9 +197,59 @@ function prefetch(path: string) {
   padding: 0 0.85rem;
 }
 
-.app-side-brand :deep(.struct-logo) {
-  height: 1.75rem;
-  margin-inline: 0;
+.brand-link {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.brand-swap {
+  --brand-h: 2.25rem;
+  --brand-aspect: 3.21778;
+  /* Right edge of the icon inside the wordmark viewBox. */
+  --brand-icon-end: 0.30805;
+  height: var(--brand-h);
+  width: calc(var(--brand-h) * var(--brand-aspect));
+  overflow: hidden;
+  flex: none;
+  transition: width 0.28s ease;
+}
+
+.brand-full {
+  display: block;
+  height: var(--brand-h);
+  width: calc(var(--brand-h) * var(--brand-aspect));
+  max-width: none;
+}
+
+@media (min-width: 768px) {
+  .app-side.is-collapsed .brand-swap {
+    width: calc(var(--brand-h) * var(--brand-aspect) * var(--brand-icon-end));
+  }
+}
+
+.app-nav {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.85rem;
+  overflow-y: auto;
+  padding: 0.65rem 0.5rem;
+}
+
+.app-nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.app-nav-label {
+  margin: 0 0.55rem 0.15rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9aa3b2;
 }
 
 .app-nav-link {
@@ -192,8 +269,8 @@ function prefetch(path: string) {
 }
 
 .app-nav-link.is-active {
-  background: #181b22;
-  color: #f2f4f7;
+  background: rgba(86, 23, 252, 0.16);
+  color: #f4f1ff;
 }
 
 .app-nav-icon {

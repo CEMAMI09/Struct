@@ -1,0 +1,9 @@
+{
+ "name":"StructDevice",
+ "version":"0.2.0",
+ "description":"Authenticated telemetry and bounded UDP receipts",
+ "frameworks":["arduino","espidf"],
+ "platforms":["espressif32"],
+ "headers":["struct_sdk.h","StructEsp32.h"],
+ "build":{"srcFilter":["+<*.c>"]}
+}

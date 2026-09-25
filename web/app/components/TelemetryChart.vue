@@ -3,13 +3,6 @@
     <div class="mb-3 flex items-center justify-between gap-2">
       <h2 class="text-sm font-semibold text-[#E8EAEF]">Telemetry</h2>
       <div class="flex min-w-0 items-center gap-2">
-        <span
-          v-if="live"
-          class="flex shrink-0 items-center gap-1.5 text-xs text-[#8B93A7]"
-        >
-          <span class="h-1.5 w-1.5 rounded-full bg-[#3d9a6a]" />
-          Live
-        </span>
         <select
           v-if="numericFields.length > 1"
           v-model="selectedField"
@@ -28,7 +21,12 @@
     </div>
 
     <ClientOnly>
-      <VChart v-if="hasData" class="min-h-0 flex-1" :option="chartOption" autoresize />
+      <VChart
+        v-if="hasData"
+        ref="chartEl"
+        class="min-h-0 flex-1"
+        :option="chartOption"
+      />
       <template #fallback>
         <div class="flex flex-1 items-center justify-center text-sm text-[#8B93A7]">
           Loading chart…
@@ -38,10 +36,13 @@
 
     <div
       v-if="!hasData"
-      class="flex flex-1 items-center justify-center text-sm text-[#8B93A7]"
+      class="flex flex-1 items-center justify-center px-4 text-center text-sm text-[#9AA3B2]"
     >
-      Waiting for packets…
+      No events received yet. The chart appears after a numeric field is stored.
     </div>
+    <p v-else class="mt-2 text-xs text-[#9AA3B2]">
+      Points are stored samples. The line only joins those samples. No unit is shown unless the field name includes one.
+    </p>
   </div>
 </template>
 
@@ -61,11 +62,24 @@ use([CanvasRenderer, LineChart, GridComponent, TooltipComponent, LegendComponent
 
 const props = defineProps<{
   rows: TelemetryRow[]
-  live?: boolean
   field?: string | null
 }>()
 
 const selectedField = ref<string | null>(null)
+const chartEl = ref<{ $el?: HTMLElement, resize: (opts?: { animation?: { duration?: number } }) => void } | null>(null)
+let resizeObserver: ResizeObserver | undefined
+
+watch(chartEl, (chart) => {
+  resizeObserver?.disconnect()
+  const node = chart?.$el
+  if (!node || typeof ResizeObserver === 'undefined') return
+  resizeObserver = new ResizeObserver(() => {
+    chart.resize({ animation: { duration: 0 } })
+  })
+  resizeObserver.observe(node)
+})
+
+onUnmounted(() => resizeObserver?.disconnect())
 
 const numericFields = computed(() => {
   const keys = new Set<string>()
@@ -106,10 +120,9 @@ const chartOption = computed(() => {
   const field = activeField.value
   if (!field) return {}
 
-  const times = props.rows.map((r) => {
-    const d = new Date(r.timestamp)
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-  })
+  const times = props.rows.map((r) =>
+    new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+  )
   const values = props.rows.map((r) => {
     const v = r.parsed_json?.[field]
     return typeof v === 'number' ? v : null
@@ -117,34 +130,48 @@ const chartOption = computed(() => {
 
   return {
     backgroundColor: 'transparent',
+    animationDurationUpdate: 400,
     grid: { left: 40, right: 16, top: 24, bottom: 28 },
     tooltip: {
       trigger: 'axis',
       backgroundColor: '#14161c',
       borderColor: '#252830',
       textStyle: { color: '#E8EAEF', fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11 },
+      formatter: (params: unknown) => {
+        const point = (Array.isArray(params) ? params[0] : params) as {
+          dataIndex?: number
+          data?: number | null
+        }
+        const row = typeof point.dataIndex === 'number' ? props.rows[point.dataIndex] : undefined
+        const when = row
+          ? new Date(row.timestamp).toLocaleString([], { timeZoneName: 'short' })
+          : ''
+        const value = point.data ?? '—'
+        return `${when}<br/>${field}: ${value}`
+      },
     },
     xAxis: {
       type: 'category',
       data: times,
       axisLine: { lineStyle: { color: '#252830' } },
-      axisLabel: { color: '#8B93A7', fontSize: 10, fontFamily: 'Geist, ui-sans-serif, sans-serif' },
+      axisLabel: { color: '#8B93A7', fontSize: 10, fontFamily: 'Figtree, ui-sans-serif, sans-serif' },
     },
     yAxis: {
       type: 'value',
       splitLine: { lineStyle: { color: '#252830', type: 'dashed' } },
-      axisLabel: { color: '#8B93A7', fontSize: 10, fontFamily: 'Geist, ui-sans-serif, sans-serif' },
+      axisLabel: { color: '#8B93A7', fontSize: 10, fontFamily: 'Figtree, ui-sans-serif, sans-serif' },
     },
     series: [
       {
         name: field,
         type: 'line',
-        smooth: true,
-        showSymbol: props.rows.length < 20,
+        smooth: false,
+        connectNulls: false,
+        showSymbol: true,
         symbolSize: 6,
         data: values,
-        lineStyle: { color: '#38B6FF', width: 2 },
-        itemStyle: { color: '#38B6FF' },
+        lineStyle: { color: '#b79bff', width: 2 },
+        itemStyle: { color: '#b79bff' },
       },
     ],
   }

@@ -1,924 +1,277 @@
 <template>
-  <div class="landing">
-    <!-- Nav -->
-    <header class="nav">
-      <NuxtLink to="/" class="nav-logo" aria-label="Struct home">
-        <StructLogo size="md" />
-      </NuxtLink>
-
-      <nav class="nav-links" aria-label="Primary">
-        <a href="#architecture" @click="scrollToSection($event, 'architecture')">Platform</a>
-        <a href="#sandbox" @click="scrollToSection($event, 'sandbox')">Products</a>
-        <a href="#math" @click="scrollToSection($event, 'math')">Use cases</a>
-        <a href="#bandwidth" @click="scrollToSection($event, 'bandwidth')">Integrations</a>
-        <a href="#pricing" @click="scrollToSection($event, 'pricing')">Pricing</a>
-      </nav>
-
-      <div class="nav-actions">
-        <template v-if="user">
-          <NuxtLink to="/dashboard" class="btn-primary text-xs">Open dashboard</NuxtLink>
-        </template>
-        <template v-else>
-          <NuxtLink to="/login" class="nav-signin">Sign in</NuxtLink>
-          <NuxtLink to="/signup" class="btn-primary text-xs">Start Free</NuxtLink>
-        </template>
-        <button
-          type="button"
-          class="nav-menu-btn"
-          :aria-expanded="menuOpen"
-          aria-controls="mobile-menu"
-          @click="menuOpen = !menuOpen"
-        >
-          <span class="sr-only">{{ menuOpen ? 'Close menu' : 'Open menu' }}</span>
-          <span class="nav-menu-icon" :class="{ open: menuOpen }" aria-hidden="true" />
-        </button>
-      </div>
-    </header>
-
-    <div
-      id="mobile-menu"
-      class="mobile-menu"
-      :class="{ open: menuOpen }"
-      :hidden="!menuOpen"
-    >
-      <a href="#architecture" @click="scrollToSection($event, 'architecture')">Platform</a>
-      <a href="#sandbox" @click="scrollToSection($event, 'sandbox')">Products</a>
-      <a href="#math" @click="scrollToSection($event, 'math')">Use cases</a>
-      <a href="#bandwidth" @click="scrollToSection($event, 'bandwidth')">Integrations</a>
-      <a href="#pricing" @click="scrollToSection($event, 'pricing')">Pricing</a>
-      <NuxtLink
-        v-if="!user"
-        to="/login"
-        class="mobile-menu-signin"
-        @click="menuOpen = false"
+  <div class="template-landing bg-black text-white">
+    <Teleport to="body">
+      <header
+        class="landing-float"
+        :class="{ 'is-on': isHeaderSticky }"
+        :inert="!isHeaderSticky"
       >
-        Sign in
-      </NuxtLink>
-      <NuxtLink
-        v-if="user"
-        to="/dashboard"
-        class="btn-primary mt-2 w-full"
-        @click="menuOpen = false"
-      >
-        Open dashboard
-      </NuxtLink>
-      <NuxtLink
-        v-else
-        to="/signup"
-        class="btn-primary mt-2 w-full"
-        @click="menuOpen = false"
-      >
-        Start Free
-      </NuxtLink>
-    </div>
-
-    <!-- Hero -->
-    <section class="hero">
-      <HeroGradientCanvas />
-      <div class="hero-layout">
-        <div class="hero-copy">
-          <h1 class="hero-title">
-            Save Data Costs and Battery Life on
-            <span class="hero-rotate" aria-live="polite">
-              <span class="hero-rotate-sizer" aria-hidden="true">
-                <span v-for="word in heroWords" :key="word">{{ word }}</span>
-              </span>
-              <Transition name="hero-word" mode="out-in">
-                <span
-                  :key="heroWordIndex"
-                  class="hero-rotate-word"
-                >{{ heroWords[heroWordIndex] }}</span>
-              </Transition>
-            </span>
-          </h1>
-          <p class="hero-sub">
-            Keep device firmware simple. Send a packed struct over UDP or TCP, and Struct
-            handles authentication, schema parsing, storage, and JSON delivery.
-          </p>
-          <div class="hero-ctas">
-            <NuxtLink to="/signup" class="btn-primary hero-cta-primary">
-              Start Free →
-            </NuxtLink>
+        <div class="landing-float-bar">
+          <a href="#home" class="float-brand" aria-label="Struct home" @click.prevent="scrollToSection('home')">
+            <img src="/struct-icon.svg" alt="" width="40" height="40" />
+          </a>
+          <nav class="float-links" aria-label="Sections">
             <a
-              href="#sandbox"
-              class="btn-ghost hero-cta-secondary"
-              @click="scrollToSection($event, 'sandbox')"
+              v-for="link in sectionLinks"
+              :key="link.id"
+              :href="link.id === 'home' ? '#home' : `#${link.id}`"
+              @click.prevent="scrollToSection(link.id)"
             >
-              Try the schema →
+              {{ link.label }}
             </a>
+          </nav>
+          <button
+            type="button"
+            class="float-toggle"
+            :aria-expanded="floatMenuOpen"
+            aria-controls="float-menu"
+            @click="floatMenuOpen = !floatMenuOpen"
+          >
+            <span class="sr-only">{{ floatMenuOpen ? 'Close sections' : 'Open sections' }}</span>
+            <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+              <path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round" />
+            </svg>
+          </button>
+          <div class="float-actions">
+            <NuxtLink v-if="!user" to="/login" class="float-signin">Sign in</NuxtLink>
+            <NuxtLink :to="user ? '/dashboard' : '/signup'" class="float-signup">
+              {{ user ? 'Dashboard' : 'Sign up' }}
+            </NuxtLink>
           </div>
         </div>
-        <div class="hero-visual">
-          <HeroDataFlowDiagram class="hero-shot" />
-        </div>
-      </div>
-    </section>
-
-    <!-- Compatible with — logo marquee -->
-    <section class="compat" aria-label="Compatible platforms and tools">
-      <p class="compat-label">Compatible with:</p>
-      <div class="compat-marquee" aria-hidden="true">
-        <div class="compat-track">
-          <div
-            v-for="(logo, i) in [...compatLogos, ...compatLogos]"
-            :key="`${logo.src}-${i}`"
-            class="compat-item"
-            :class="{ 'compat-item--lg': logo.scale === 'lg' }"
+        <nav v-if="floatMenuOpen" id="float-menu" class="float-sheet" aria-label="Sections">
+          <a
+            v-for="link in sectionLinks"
+            :key="link.id"
+            :href="link.id === 'home' ? '#home' : `#${link.id}`"
+            @click.prevent="scrollToSection(link.id)"
           >
+            {{ link.label }}
+          </a>
+        </nav>
+      </header>
+    </Teleport>
+
+    <main>
+      <div ref="heroStage" class="hero-stage">
+        <section id="home" class="hero-pin relative bg-[linear-gradient(to_bottom,#000,#1a0858_34%,#5617fc_65%,#c4b5fd_82%)]">
+          <header class="landing-top" :class="{ 'is-gone': isHeaderSticky }">
+            <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
+              <NuxtLink to="/" class="header-logo" aria-label="Struct home">
+                <StructLogo variant="dark" />
+              </NuxtLink>
+              <nav class="flex items-center gap-3 sm:gap-5" aria-label="Account">
+                <NuxtLink v-if="!user" to="/login" class="text-sm text-white/70 transition hover:text-white">
+                  Sign in
+                </NuxtLink>
+                <NuxtLink :to="user ? '/dashboard' : '/signup'" class="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black">
+                  {{ user ? 'Open dashboard' : 'Sign up' }}
+                </NuxtLink>
+              </nav>
+            </div>
+          </header>
+          <img src="/landing/cursor.png" alt="" width="200" height="200" class="hero-art hero-art-left" />
+          <img src="/landing/message.png" alt="" width="200" height="200" class="hero-art hero-art-right" />
+          <div class="hero-glow absolute left-1/2 top-[calc(100%-96px)] h-[375px] w-[750px] -translate-x-1/2 rounded-[100%] border border-[#b79bff] bg-[radial-gradient(closest-side,#000_82%,#5617fc)] sm:top-[calc(100%-120px)] sm:h-[768px] sm:w-[1536px] lg:h-[1200px] lg:w-[2400px]" />
+          <div class="hero-copy relative mx-auto max-w-6xl px-4">
+            <div class="flex justify-center">
+              <h1 class="text-center text-6xl font-bold tracking-tighter md:text-7xl xl:text-8xl">
+                Less data.
+                <br />
+                More control.
+              </h1>
+            </div>
+
+            <div class="flex justify-center">
+              <p class="mt-8 max-w-2xl text-center text-xl text-white/80">
+                Reduce data usage and transmission costs with compact encoding, secure device communication, and direct delivery to your existing backend.
+              </p>
+            </div>
+            <div class="mt-8 flex justify-center">
+              <NuxtLink :to="user ? '/dashboard' : '/signup'" class="rounded-lg bg-white px-5 py-3 font-medium text-black">
+                {{ user ? 'Open dashboard' : 'Get started' }}
+              </NuxtLink>
+            </div>
+          </div>
+          <div ref="heroFrame" class="hero-frame">
             <img
-              :src="logo.src"
-              :alt="logo.name"
-              class="compat-logo"
-              width="120"
-              height="40"
+              src="/landing/dashboard.webp"
+              alt="Struct dashboard"
+              width="2560"
+              height="1434"
               decoding="async"
-              :loading="i >= compatLogos.length ? 'lazy' : 'eager'"
+              fetchpriority="high"
             />
           </div>
-        </div>
+        </section>
       </div>
-    </section>
 
-    <!-- Trust strip -->
-    <section class="trust-strip" aria-label="Implementation metrics">
-      <div class="trust-grid">
-        <div v-for="stat in trustStats" :key="stat.label" class="trust-stat">
-          <p class="trust-num">{{ stat.value }}</p>
-          <p class="trust-label">{{ stat.label }}</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Math / Proof — split + bento -->
-    <section id="math" class="py-20 sm:py-24">
-      <div class="mx-auto grid max-w-6xl gap-10 px-6 lg:grid-cols-12 lg:gap-14 lg:items-start">
-        <div class="lg:col-span-5">
-          <p class="label mb-5">Cold uplink comparison</p>
-          <h2
-            class="font-display text-3xl font-semibold leading-[1.15] tracking-[-0.03em] text-[#F4F5F7] sm:text-4xl"
-          >
-            Keep devices dumb and deterministic.
-          </h2>
-          <p class="landing-body mt-5">
-            Struct lets small devices send a compact authenticated binary packet instead of handling
-            heavier application-layer protocols on the device.
-          </p>
-        </div>
-
-        <div class="grid gap-4 lg:col-span-7">
-          <article
-            v-for="card in mathCards"
-            :key="card.label"
-            class="bento-card"
-          >
-            <p class="font-mono text-[10px] uppercase tracking-[0.14em] text-[#8B93A7]">
-              {{ card.label }}
-            </p>
-            <p class="metric-row">
-              <span class="metric-num">{{ card.winLead }}</span>
-              <span v-if="card.winTail" class="metric-tail"> {{ card.winTail }}</span>
-            </p>
-            <p v-if="card.winNote" class="landing-note mt-2">{{ card.winNote }}</p>
-          </article>
-          <p class="landing-note text-[#8B93A7]">
-            Cold-connection comparison only. Reused TLS sessions and persistent MQTT can have much
-            lower per-message overhead.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Instant Code sandbox -->
-    <section id="sandbox" class="border-t border-[#2A2F3A] py-20 sm:py-24">
-      <div class="mx-auto grid max-w-6xl items-start gap-10 px-6 lg:grid-cols-12 lg:gap-12">
-        <div class="lg:col-span-5">
-          <p class="label mb-3">Instant code</p>
-          <h2
-            class="font-display text-3xl font-semibold leading-[1.12] tracking-[-0.03em] text-[#F4F5F7] sm:text-4xl"
-          >
-            Type three fields.
-            <span class="text-[#38B6FF]">Get the struct.</span>
-          </h2>
-          <p class="landing-body mt-5">
-            Define your fields and generate a C, C++, JavaScript, Python, Rust, or Arduino encoder. No account required to
-            try it.
-          </p>
-          <NuxtLink to="/signup" class="btn-primary mt-8 inline-flex px-6 py-3 text-sm">
-            Start Free
-          </NuxtLink>
-        </div>
-
-        <div class="sandbox-window lg:col-span-7" aria-label="Interactive C++ struct sandbox">
-          <div class="sandbox-topbar">
-            <div class="flex items-center gap-2">
-              <span class="dot dot-r" />
-              <span class="dot dot-y" />
-              <span class="dot dot-g" />
-            </div>
-            <span class="font-mono text-[10px] text-[#5A6275]">schema sandbox</span>
-            <span class="sandbox-badge">LIVE</span>
-          </div>
-
-          <div class="sandbox-body">
-            <div class="sandbox-fields">
-              <p class="debug-label">Fields</p>
+      <section class="compat-bleed bg-black py-[72px] sm:py-24" aria-label="Compatible with">
+        <h2 class="text-center text-xl text-white/70">Compatible with</h2>
+        <div ref="tickerEl" class="ticker">
+            <div class="ticker-track">
               <div
-                v-for="(field, idx) in sandboxFields"
-                :key="idx"
-                class="sandbox-row"
+                v-for="(logo, index) in tickerLogos"
+                :key="`${logo.src}-${index}`"
+                class="ticker-item"
+                :class="{ 'ticker-item--lg': logo.scale === 'lg' }"
               >
-                <input
-                  v-model="field.name"
-                  type="text"
-                  class="sandbox-input"
-                  :aria-label="`Field ${idx + 1} name`"
-                  autocomplete="off"
-                  spellcheck="false"
-                />
-                <select
-                  v-model="field.type"
-                  class="sandbox-select"
-                  :aria-label="`Field ${idx + 1} type`"
-                >
-                  <option
-                    v-for="opt in sandboxTypeOptions"
-                    :key="opt.value"
-                    :value="opt.value"
-                  >
-                    {{ opt.label }}
-                  </option>
-                </select>
+                <img :src="logo.src" :alt="logo.name" class="ticker-logo" width="120" height="40" />
               </div>
             </div>
+        </div>
+      </section>
 
-            <div class="sandbox-preview">
-              <div class="flex items-center justify-between gap-3">
-                <select v-model="sandboxLanguage" aria-label="Encoder language" class="input w-auto text-xs">
-                  <option v-for="lang in CODE_LANGUAGES" :key="lang">{{ lang }}</option>
-                </select>
-                <button
-                  type="button"
-                  class="btn-ghost px-3 py-1 text-[10px]"
-                  @click="copySandboxCode"
-                >
-                  {{ sandboxCopied ? 'Copied' : 'Copy' }}
-                </button>
+      <section id="features" class="bg-black py-[72px] sm:py-24">
+        <div class="mx-auto w-full max-w-[1600px] px-6 sm:px-8">
+          <h2 class="text-center text-5xl font-bold tracking-tighter sm:text-6xl">Everything you need</h2>
+          <div class="mx-auto max-w-xl">
+            <p class="mt-5 text-center text-xl text-white/70">
+              Define a packed schema, authenticate each frame, store the event, and inspect webhook delivery separately.
+            </p>
+          </div>
+          <div class="need-flow">
+            <HeroDataFlowDiagram />
+          </div>
+        </div>
+      </section>
+
+      <LandingSchemaPlayground />
+
+      <section id="product" class="bg-gradient-to-b from-black to-[#3e11b5] pt-[72px] pb-20 sm:pt-24">
+        <div class="mx-auto w-full max-w-[1500px] px-6 sm:px-8">
+          <h2 class="text-center text-5xl font-bold tracking-tighter sm:text-6xl">Telemetry you can trust</h2>
+          <div class="mx-auto max-w-xl">
+            <p class="mt-5 text-center text-xl text-white/70">
+              Inspect decoded telemetry, verify device data, and track delivery from one dashboard.
+            </p>
+          </div>
+          <div class="product-scroll">
+            <div class="product-pin">
+              <div class="product-row">
+                <div class="product-copy">
+                  <p class="product-kicker">Event visibility</p>
+                  <h3 class="mt-3 text-3xl font-semibold tracking-tighter sm:text-4xl">Know exactly what happens to every event.</h3>
+                  <p class="mt-4 text-white/70">
+                    Struct helps you move beyond raw device data. Inspect decoded fields, verify authenticated ingestion, monitor webhook delivery, and troubleshoot failures across the full path from device to backend.
+                  </p>
+                  <div class="mt-8 space-y-5">
+                    <div>
+                      <h4 class="font-semibold">Inspect decoded data</h4>
+                      <p class="mt-1 text-sm leading-relaxed text-white/70">View stored events, inspect individual fields, and explore telemetry in real time.</p>
+                    </div>
+                    <div>
+                      <h4 class="font-semibold">Verify trusted ingestion</h4>
+                      <p class="mt-1 text-sm leading-relaxed text-white/70">Understand whether a device event was accepted and identify authentication or payload issues early.</p>
+                    </div>
+                    <div>
+                      <h4 class="font-semibold">Track delivery status</h4>
+                      <p class="mt-1 text-sm leading-relaxed text-white/70">See whether delivery is pending, sending, delivered, skipped, or failed.</p>
+                    </div>
+                    <div>
+                      <h4 class="font-semibold">Troubleshoot end to end</h4>
+                      <p class="mt-1 text-sm leading-relaxed text-white/70">Trace individual events across ingestion, decoding, storage, and delivery from one place.</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="product-stage">
+                  <EventVisibilityPath />
+                </div>
               </div>
-              <a href="/sdk/struct-sdk.zip" download class="text-xs text-[#38B6FF] underline">Download device SDK and integration guide</a>
-              <pre class="sandbox-code font-mono">{{ sandboxCpp }}</pre>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Bandwidth economics -->
-    <section id="bandwidth" class="border-t border-[#2A2F3A] py-20 sm:py-24">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="bandwidth-shell">
-          <div class="max-w-xl">
-            <p class="label mb-3">Fleet economics</p>
-            <h2
-              class="font-display text-3xl font-semibold leading-[1.12] tracking-[-0.03em] text-[#F4F5F7] sm:text-4xl"
-            >
-              Example fleet data savings
-            </h2>
-            <p class="landing-body mt-5">
-              For 10,000 devices sending one cold uplink per minute, a ~100&nbsp;B Struct frame
-              avoids about 2.2&nbsp;TB of cellular data per month versus the ~5.2&nbsp;KB cold
-              HTTPS example. That is modeled carrier data cost avoided — not Struct's price.
-            </p>
-            <div class="mt-7 flex flex-wrap gap-2">
-              <span class="signal-chip">LTE-M</span>
-              <span class="signal-chip">NB-IoT</span>
-              <span class="signal-chip">Satellite</span>
-              <span class="signal-chip">Metered SIMs</span>
+      <section id="faq" class="bg-gradient-to-b from-[#3e11b5] to-black py-[72px] sm:py-24">
+        <div class="mx-auto max-w-6xl px-4">
+          <h2 class="mx-auto max-w-[648px] text-left text-5xl font-bold tracking-tighter sm:text-6xl">
+            FAQs
+          </h2>
+          <div class="mx-auto mt-12 max-w-[648px]">
+            <div v-for="(item, index) in faqs" :key="item.question" class="border-b border-white/30 py-7">
+              <button
+                type="button"
+                class="flex w-full items-center gap-4 text-left"
+                :aria-expanded="openFaq === index"
+                @click="openFaq = openFaq === index ? -1 : index"
+              >
+                <span class="flex-1 text-lg font-bold">{{ item.question }}</span>
+                <svg v-if="openFaq === index" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+              </button>
+              <p v-if="openFaq === index" class="mt-4 text-white/70">
+                {{ item.answer }}
+                <NuxtLink v-if="item.href" :to="item.href" class="ml-1 underline hover:text-white">{{ item.linkLabel }}</NuxtLink>
+              </p>
             </div>
-            <NuxtLink to="/benchmarks" class="btn-ghost mt-6 inline-flex px-5 py-2.5 text-xs">
-              View benchmark methodology
+          </div>
+        </div>
+      </section>
+
+      <section class="relative bg-black py-[72px] text-center sm:py-24">
+        <img src="/landing/emojistar.png" alt="" class="cta-art cta-art-left" />
+        <img src="/landing/helix2.png" alt="" class="cta-art cta-art-right" />
+        <div class="relative mx-auto max-w-xl px-4">
+          <h2 class="text-5xl font-bold tracking-tighter sm:text-6xl">Send one event</h2>
+          <p class="mt-5 text-lg text-white/70">
+            Create a device, generate its encoder, and watch the stored telemetry in the dashboard.
+          </p>
+          <div class="mt-10 flex justify-center">
+            <NuxtLink :to="user ? '/dashboard' : '/signup'" class="rounded-lg bg-white px-5 py-3 font-medium text-black">
+              Get started
             </NuxtLink>
           </div>
-
-          <div class="bandwidth-meter" aria-label="Cold-uplink bandwidth comparison">
-            <div class="flex items-center justify-between gap-4">
-              <div>
-                <p class="font-mono text-[10px] uppercase tracking-[0.15em] text-[#8B93A7]">
-                  10k devices · 1 ping/min · cold HTTPS model
-                </p>
-                <p class="bandwidth-savings">
-                  ~$2,400/month saved
-                </p>
-                <p class="mt-1 text-xs text-[#8B93A7]">
-                  Modeled cellular data cost avoided at $1.10/GB
-                </p>
-                <p class="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#8B93A7]">
-                  Example only — not a customer bill, and not what Struct charges.
-                </p>
-              </div>
-              <div class="savings-ring savings-ring--99">
-                <span class="font-display text-xl font-semibold text-[#F4F5F7]">~98%</span>
-                <span class="font-mono text-[8px] uppercase tracking-wider text-[#8B93A7]">less data</span>
-              </div>
-            </div>
-
-            <div class="mt-8 space-y-5">
-              <div>
-                <div class="mb-2 flex flex-wrap justify-between gap-x-3 gap-y-1 font-mono text-[10px]">
-                  <span class="text-[#8B93A7]">HTTPS POST + TLS cold-start</span>
-                  <span class="text-[#E8EAEF]">~5,200 bytes</span>
-                </div>
-                <div class="meter-track"><span class="meter-json" /></div>
-              </div>
-              <div>
-                <div class="mb-2 flex flex-wrap justify-between gap-x-3 gap-y-1 font-mono text-[10px]">
-                  <span class="text-[#8B93A7]">Authenticated Struct UDP frame</span>
-                  <span class="text-[#38B6FF]">~100 bytes</span>
-                </div>
-                <div class="meter-track"><span class="meter-struct meter-struct--udp" /></div>
-              </div>
-            </div>
-            <p class="mt-6 text-[10px] leading-relaxed text-[#5A6275]">
-              Model inputs: 10,000 devices, one cold uplink per minute, ~5,100 bytes saved per ping,
-              $1.10/GB. Does not apply to keep-alive MQTT or reused TLS sessions. See
-              <NuxtLink to="/benchmarks" class="text-[#8B93A7] underline decoration-[#2A2F3A] underline-offset-2 hover:text-[#38B6FF]">
-                methodology
-              </NuxtLink>.
-            </p>
-          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </main>
 
-    <!-- Encoding comparison -->
-    <section id="compare" class="border-t border-[#2A2F3A] py-20 sm:py-24">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div class="max-w-2xl">
-            <p class="label mb-3">Comparison</p>
-            <h2
-              class="font-display text-3xl font-semibold leading-[1.12] tracking-[-0.03em] text-[#F4F5F7] sm:text-4xl"
-            >
-              How Struct compares
-            </h2>
-            <p class="landing-body mt-4">
-              Struct is not a replacement for every IoT protocol. CBOR, MessagePack, Protobuf, and
-              MQTT are better fits for many systems. This table shows the tradeoffs. Numeric cells
-              without a repository measurement are marked
-              <span class="font-mono text-[#E8EAEF]">Benchmark pending</span>.
-            </p>
-          </div>
-          <NuxtLink to="/benchmarks" class="btn-ghost inline-flex shrink-0 px-5 py-2.5 text-xs">
-            View benchmark methodology
-          </NuxtLink>
-        </div>
-
-        <div class="compare-wrap" role="region" aria-label="Encoding comparison matrix" tabindex="0">
-          <table class="compare-table">
-            <thead>
-              <tr>
-                <th scope="col">Stack</th>
-                <th scope="col">Encoding format</th>
-                <th scope="col">Payload size</th>
-                <th scope="col">Connection / session</th>
-                <th scope="col">Device memory</th>
-                <th scope="col">Serialization model</th>
-                <th scope="col">Best-fit workload</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in compareRows" :key="row.stack">
-                <th scope="row">{{ row.stack }}</th>
-                <td>{{ row.encoding }}</td>
-                <td :class="{ 'compare-pending': row.payloadPending }">{{ row.payload }}</td>
-                <td>{{ row.session }}</td>
-                <td>{{ row.memory }}</td>
-                <td>{{ row.model }}</td>
-                <td>{{ row.fit }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="landing-note mt-4 text-[#8B93A7]">
-          CBOR, MessagePack, Protobuf, and warm MQTT sizes are not measured in this repository yet.
-          Persistent sessions cut per-message overhead. Advantages of those stacks are listed in the
-          <NuxtLink to="/benchmarks" class="underline decoration-[#2A2F3A] underline-offset-2 hover:text-[#38B6FF]">
-            methodology
-          </NuxtLink>.
-        </p>
-      </div>
-    </section>
-
-    <!-- When Struct is not the right fit -->
-    <section id="fit" class="border-t border-[#2A2F3A] py-16 sm:py-20">
-      <div class="mx-auto max-w-3xl px-6">
-        <p class="label mb-3">Scope</p>
-        <h2
-          class="font-display text-2xl font-semibold leading-[1.15] tracking-[-0.03em] text-[#F4F5F7] sm:text-3xl"
-        >
-          When Struct is not the right fit
-        </h2>
-        <ul class="fit-list mt-6">
-          <li>Payloads change constantly.</li>
-          <li>Protobuf or CBOR already work well.</li>
-          <li>Bandwidth and power do not matter.</li>
-          <li>The system is mainly request/response.</li>
-          <li>A persistent bidirectional connection is required.</li>
+    <footer class="border-t border-white/20 bg-black py-5 text-white/60">
+      <div class="mx-auto flex max-w-6xl flex-col items-center gap-4 px-4 sm:flex-row sm:justify-between">
+        <p>© {{ year }} Struct</p>
+        <ul class="flex items-center gap-4">
+          <li><NuxtLink to="/benchmarks" class="hover:text-white">Benchmarks</NuxtLink></li>
+          <li><NuxtLink to="/privacy" class="hover:text-white">Privacy</NuxtLink></li>
+          <li><NuxtLink to="/terms" class="hover:text-white">Terms</NuxtLink></li>
+          <li>
+            <a href="https://github.com/CEMAMI09/Struct" class="hover:text-white" target="_blank" rel="noopener noreferrer">GitHub</a>
+          </li>
         </ul>
-        <p class="landing-body mt-6">
-          Struct is for intermittent, bandwidth-constrained, battery-powered telemetry. The device
-          stays simple and deterministic.
-        </p>
-      </div>
-    </section>
-
-    <!-- Architecture with packet motion -->
-    <section id="architecture" class="border-t border-[#2A2F3A] py-20 sm:py-24">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="mb-10 text-center">
-          <p class="label mb-2 text-center">Architecture</p>
-          <h2
-            class="font-display text-3xl font-semibold tracking-[-0.03em] text-[#F4F5F7] sm:text-4xl"
-          >
-            How a packet moves through Struct
-          </h2>
-          <p class="landing-body mx-auto mt-4 max-w-2xl">
-            The device sends a small authenticated binary frame. Struct verifies it, resolves the
-            schema, parses the payload, and forwards normal JSON to your backend.
-          </p>
-        </div>
-
-        <div class="arch-callout mb-14">
-          <p class="font-mono text-[10px] uppercase tracking-[0.14em] text-[#38B6FF]">
-            Per-frame auth. No TLS handshake on the UDP path.
-          </p>
-          <p class="landing-body mt-2">
-            UDP sends one authenticated datagram. TCP is available when you need a stream. Struct
-            does not replace TCP or MQTT for every workload.
-          </p>
-        </div>
-
-        <!-- Desktop: three nodes with gap-only connectors -->
-        <div
-          class="arch-desk hidden lg:grid lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:items-center lg:gap-0"
-        >
-          <div class="arch-node">
-            <div class="arch-glyph">01</div>
-            <h3 class="arch-title">Device</h3>
-            <p class="arch-body">
-              Pack the payload using the generated schema and send it over UDP or TCP.
-            </p>
-          </div>
-          <div class="arch-gap" aria-hidden="true">
-            <span class="arch-gap-line" />
-            <span class="font-mono text-[10px] text-[#5A6275]">UDP</span>
-          </div>
-          <div class="arch-node arch-node--accent">
-            <div class="arch-glyph text-[#38B6FF]">02</div>
-            <h3 class="arch-title">Struct Gateway</h3>
-            <p class="arch-body">
-              Authenticate the frame, reject replays, resolve the schema, optionally decrypt the
-              payload, and parse the binary values.
-            </p>
-          </div>
-          <div class="arch-gap" aria-hidden="true">
-            <span class="arch-gap-line" />
-            <span class="font-mono text-[10px] text-[#5A6275]">JSON</span>
-          </div>
-          <div class="arch-node">
-            <div class="arch-glyph">03</div>
-            <h3 class="arch-title">Your Backend</h3>
-            <p class="arch-body">
-              Receive parsed JSON through a signed HTTPS webhook.
-            </p>
-          </div>
-        </div>
-
-        <!-- Mobile stack -->
-        <div class="flex flex-col gap-3 lg:hidden">
-          <div class="arch-node">
-            <div class="arch-glyph">01 · Device</div>
-            <h3 class="arch-title">Device</h3>
-            <p class="arch-body">
-              Pack the payload using the generated schema and send it over UDP or TCP.
-            </p>
-          </div>
-          <div class="arch-gap-m" aria-hidden="true">
-            <span class="arch-gap-line-m" />
-          </div>
-          <div class="arch-node arch-node--accent">
-            <div class="arch-glyph text-[#38B6FF]">02 · Gateway</div>
-            <h3 class="arch-title">Struct Gateway</h3>
-            <p class="arch-body">
-              Authenticate the frame, reject replays, resolve the schema, optionally decrypt the
-              payload, and parse the binary values.
-            </p>
-          </div>
-          <div class="arch-gap-m" aria-hidden="true">
-            <span class="arch-gap-line-m" />
-          </div>
-          <div class="arch-node">
-            <div class="arch-glyph">03 · Backend</div>
-            <h3 class="arch-title">Your Backend</h3>
-            <p class="arch-body">
-              Receive parsed JSON through a signed HTTPS webhook.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Live debugger -->
-    <section id="debugger" class="border-t border-[#2A2F3A] py-20 sm:py-24">
-      <div class="mx-auto grid max-w-6xl items-center gap-12 px-6 lg:grid-cols-[0.8fr_1.2fr]">
-        <div>
-          <p class="label mb-3">Live debugger</p>
-          <h2
-            class="font-display text-3xl font-semibold leading-[1.12] tracking-[-0.03em] text-[#F4F5F7] sm:text-4xl"
-          >
-            Binary shouldn't mean blind.
-          </h2>
-          <p class="landing-body mt-5">
-            Build a frame from your schema and inspect the exact bytes beside the decoded JSON
-            without powering a device or sending traffic.
-          </p>
-          <ul class="landing-note mt-7 space-y-3">
-            <li class="feature-line">
-              <span class="feature-mark">01</span>
-              Generate little-endian frames from typed values
-            </li>
-            <li class="feature-line">
-              <span class="feature-mark">02</span>
-              Inspect schema version, byte offsets, and payload size
-            </li>
-            <li class="feature-line">
-              <span class="feature-mark">03</span>
-              Compare raw hex with decoded JSON
-            </li>
-          </ul>
-          <NuxtLink to="/signup" class="btn-ghost mt-8 inline-flex px-5 py-3 text-xs">
-            Debug your first frame
-          </NuxtLink>
-        </div>
-
-        <div class="debug-window" aria-label="Struct live debugger preview">
-          <div class="debug-topbar">
-            <div class="flex items-center gap-2">
-              <span class="dot dot-r" />
-              <span class="dot dot-y" />
-              <span class="dot dot-g" />
-            </div>
-            <span class="font-mono text-[10px] text-[#5A6275]">live-debugger / schema v3</span>
-            <span class="debug-status">LOCAL</span>
-          </div>
-          <div class="debug-grid">
-            <div class="debug-pane">
-              <p class="debug-label">Test values</p>
-              <div class="debug-fields">
-                <div class="debug-field">
-                  <span>temperature</span><strong>72.5</strong><em>float32</em>
-                </div>
-                <div class="debug-field">
-                  <span>humidity</span><strong>45</strong><em>uint8</em>
-                </div>
-                <div class="debug-field">
-                  <span>online</span><strong>true</strong><em>boolean</em>
-                </div>
-              </div>
-              <p class="debug-label mt-6">Raw payload · 6 bytes</p>
-              <div class="hex-block font-mono">
-                <span class="hex-data">00 00 91 42 2d 01</span>
-              </div>
-            </div>
-            <div class="debug-pane debug-pane--result">
-              <div class="flex items-center justify-between">
-                <p class="debug-label">Parsed output</p>
-                <span class="parse-ok">DECODED PAYLOAD</span>
-              </div>
-              <pre class="json-block font-mono"><span class="json-brace">{</span>
-  <span class="json-key">"temperature"</span>: <span class="json-value">72.5</span>,
-  <span class="json-key">"humidity"</span>: <span class="json-value">45</span>,
-  <span class="json-key">"online"</span>: <span class="json-bool">true</span>
-<span class="json-brace">}</span></pre>
-              <div class="mt-6 grid grid-cols-3 gap-2">
-                <div class="debug-stat"><strong>v3</strong><span>schema</span></div>
-                <div class="debug-stat"><strong>6B</strong><span>payload</span></div>
-                <div class="debug-stat"><strong>0</strong><span>errors</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Security -->
-    <section id="security" class="border-t border-[#2A2F3A] py-20 sm:py-24">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="security-intro">
-          <div>
-            <p class="label mb-3">Security</p>
-            <h2
-              class="font-display max-w-2xl text-3xl font-semibold leading-[1.12] tracking-[-0.03em] text-[#F4F5F7] sm:text-4xl"
-            >
-              Packet security and tenant isolation
-            </h2>
-          </div>
-          <p class="landing-body max-w-md">
-            Every uplink has HMAC authentication and replay protection. Organization isolation applies on every plan. Encryption, audit logs, and downlinks depend on plan.
-          </p>
-        </div>
-
-        <div class="security-grid mt-12">
-          <article class="security-card">
-            <div class="security-icon">HMAC</div>
-            <h3 class="security-title">HMAC authentication</h3>
-            <p class="security-copy">
-              Every frame is authenticated with HMAC-SHA256. The secret is not transmitted with the
-              packet; only the public key_id is sent.
-            </p>
-          </article>
-
-          <article class="security-card">
-            <div class="security-icon">ENC</div>
-            <h3 class="security-title">Optional encryption</h3>
-            <p class="security-copy">
-              Pro and Scale devices can encrypt payloads with ChaCha20-Poly1305.
-            </p>
-            <div class="crypto-strip font-mono">
-              <span>12B NONCE</span><i />
-              <span>ENCRYPTED PAYLOAD</span><i />
-              <span>16B AUTH TAG</span>
-            </div>
-          </article>
-
-          <article class="security-card">
-            <div class="security-icon">RPLY</div>
-            <h3 class="security-title">Replay protection</h3>
-            <p class="security-copy">
-              Timestamps reject stale frames. Atomic nonce tracking prevents duplicate telemetry and lets exact retries receive the same storage confirmation.
-            </p>
-          </article>
-
-          <article class="security-card">
-            <div class="security-icon">RLS</div>
-            <h3 class="security-title">Organization isolation</h3>
-            <p class="security-copy">
-              PostgreSQL Row Level Security and server-side role checks separate organizations and
-              roles.
-            </p>
-          </article>
-
-          <article class="security-card">
-            <div class="security-icon">LOG</div>
-            <h3 class="security-title">Audit logs</h3>
-            <p class="security-copy">
-              Scale keeps an append-only history of infrastructure changes. Database triggers reject
-              updates and deletes.
-            </p>
-          </article>
-
-          <article class="security-card">
-            <div class="security-icon">CMD</div>
-            <h3 class="security-title">Device downlinks</h3>
-            <p class="security-copy">
-              Pro and Scale can queue interval changes, reboots, and custom byte commands for
-              devices.
-            </p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- Pricing -->
-    <section id="pricing" class="border-t border-[#2A2F3A] py-20 sm:py-24">
-      <div class="mx-auto max-w-[96rem] px-4 sm:px-6">
-        <div class="mb-14 text-center">
-          <p class="label mb-2 text-center">Pricing</p>
-          <h2
-            class="font-display text-3xl font-semibold tracking-[-0.03em] text-[#F4F5F7] sm:text-4xl"
-          >
-            Start with five devices.
-          </h2>
-          <p class="landing-body mx-auto mt-4 max-w-xl">
-            Paid plans increase device limits, retention, encryption, downlinks, team access, and
-            routing.
-          </p>
-        </div>
-
-        <div
-          v-for="group in pricingGroups"
-          :key="group.label"
-          class="pricing-group"
-        >
-          <div class="mb-4 flex items-center gap-3">
-            <p class="font-mono text-[10px] uppercase tracking-[0.16em] text-[#8B93A7]">
-              {{ group.label }}
-            </p>
-            <span class="h-px flex-1 bg-[#2A2F3A]" />
-          </div>
-          <div class="pricing-grid" :class="`pricing-grid--${group.layout}`">
-            <article
-              v-for="plan in group.plans"
-              :key="plan.name"
-              class="pricing-card"
-              :class="{ 'pricing-card--featured': plan.featured }"
-            >
-            <span v-if="plan.featured" class="pricing-badge">Most popular</span>
-            <p class="font-mono text-[10px] uppercase tracking-[0.16em] text-[#8B93A7]">
-              {{ plan.name }}
-            </p>
-            <div class="mt-5 flex items-baseline gap-1.5">
-              <span class="font-display text-4xl font-semibold tracking-[-0.04em] text-[#F4F5F7]">
-                {{ plan.price }}
-              </span>
-              <span v-if="plan.interval" class="font-mono text-xs text-[#8B93A7]">
-                {{ plan.interval }}
-              </span>
-            </div>
-            <p class="landing-note mt-3 min-h-10">
-              {{ plan.description }}
-            </p>
-            <p class="mt-5 border-t border-[#2A2F3A] pt-5 font-mono text-xs text-[#E8EAEF]">
-              {{ plan.devices }}
-            </p>
-            <p v-if="plan.bestFor" class="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#8B93A7]">
-              {{ plan.bestFor }}
-            </p>
-            <p v-if="plan.deviceRate" class="mt-2 font-mono text-xs text-[#38B6FF]">
-              {{ plan.deviceRate }}
-            </p>
-            <p v-if="plan.crossover" class="mt-2 text-[11px] leading-snug text-[#5A6275]">
-              {{ plan.crossover }}
-            </p>
-            <ul class="landing-note mt-5 flex-1 space-y-2.5">
-              <li v-for="feature in plan.features" :key="feature" class="flex gap-2.5">
-                <span class="text-[#38B6FF]">✓</span>
-                <span>{{ feature }}</span>
-              </li>
-            </ul>
-            <NuxtLink
-              :to="plan.to"
-              class="mt-7 inline-flex w-full items-center justify-center px-5 py-3 text-xs"
-              :class="plan.featured ? 'btn-primary' : 'btn-ghost'"
-            >
-              {{ plan.cta }}
-            </NuxtLink>
-              </article>
-            </div>
-          </div>
-      </div>
-    </section>
-
-    <!-- CTA -->
-    <section class="border-t border-[#2A2F3A] py-20">
-      <div class="mx-auto max-w-3xl px-6 text-center">
-        <h2 class="font-display text-3xl font-semibold tracking-[-0.03em] text-[#F4F5F7] sm:text-4xl">
-          Try Struct with one device.
-        </h2>
-        <p class="landing-body mt-4">
-          Create a device, download its payload encoder and the SDK, send a test packet, and watch the parsed
-          telemetry appear in the dashboard.
-        </p>
-        <NuxtLink to="/signup" class="btn-primary mt-8 inline-flex px-8 py-3.5">
-          Create free device
-        </NuxtLink>
-      </div>
-    </section>
-
-    <footer class="site-footer">
-      <div class="site-footer-inner">
-        <div class="footer-grid">
-          <div class="footer-brand">
-            <NuxtLink to="/" class="footer-logo" aria-label="Struct home">
-              <StructLogo size="md" />
-            </NuxtLink>
-            <p class="footer-tagline">Binary telemetry gateway for microcontrollers.</p>
-          </div>
-
-          <div>
-            <h3 class="footer-heading">Product</h3>
-            <ul class="footer-links">
-              <li>
-                <a href="/#pricing" @click="scrollToSection($event, 'pricing')">Pricing</a>
-              </li>
-              <li><NuxtLink to="/signup">Start free</NuxtLink></li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 class="footer-heading">Developers</h3>
-            <ul class="footer-links">
-              <li><NuxtLink to="/benchmarks">Methodology</NuxtLink></li>
-              <li>
-                <a
-                  href="https://github.com/CEMAMI09/Struct"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >GitHub</a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 class="footer-heading">Legal</h3>
-            <ul class="footer-links">
-              <li>
-                <a href="mailto:sales@struct.dev?subject=Struct inquiry">Contact</a>
-              </li>
-              <li><NuxtLink to="/privacy">Privacy</NuxtLink></li>
-              <li><NuxtLink to="/terms">Terms of Use</NuxtLink></li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="footer-bottom">
-          <p class="footer-copy">© {{ new Date().getFullYear() }} Struct</p>
-          <NuxtLink to="/login" class="footer-signin">Sign in</NuxtLink>
-        </div>
       </div>
     </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { ScalarFieldType, SchemaField } from '~/types'
+import EventVisibilityPath from '~/components/EventVisibilityPath.vue'
 
 definePageMeta({ layout: false })
 
 const user = useSupabaseUser()
-import { CODE_LANGUAGES, generateSchemaCode, type CodeLanguage } from '#shared/schemaCodegen'
-const sandboxLanguage = ref<CodeLanguage>('C')
+const openFaq = ref(-1)
+const year = new Date().getFullYear()
+const isHeaderSticky = ref(false)
+const floatMenuOpen = ref(false)
+const heroStage = ref<HTMLElement | null>(null)
+const heroFrame = ref<HTMLElement | null>(null)
+const tickerEl = ref<HTMLElement | null>(null)
+let scrollAnim = 0
+let scrollRaf = 0
+let reduceMotion = false
+let tickerObserver: IntersectionObserver | null = null
+const heroMetrics = { top: 0, height: 0, viewH: 0 }
+
+const sectionLinks = [
+  { id: 'home', label: 'Home' },
+  { id: 'features', label: 'Features' },
+  { id: 'schema', label: 'Schema' },
+  { id: 'product', label: 'Product' },
+  { id: 'faq', label: 'Questions' },
+]
 
 useSeoMeta({
-  title: 'Struct — Binary telemetry gateway for microcontrollers',
-  description:
-    'Keep device firmware simple. Send a packed struct over UDP or TCP, and Struct handles authentication, schema parsing, storage, and JSON delivery.',
-})
-
-const menuOpen = ref(false)
-let sandboxCopyTimer: ReturnType<typeof setTimeout> | null = null
-
-const heroWords = [
-  'Remote Sensors',
-  'Asset Trackers',
-  'Field Robotics',
-  'Ag-Tech Devices',
-  'Microcontrollers',
-]
-const heroWordIndex = ref(0)
-const HERO_HOLD_MS = 3400
-const HERO_FADE_MS = 380
-let heroCarouselStopped = false
-let heroWordTimer: ReturnType<typeof setTimeout> | null = null
-
-function delay(ms: number) {
-  return new Promise<void>((resolve) => {
-    heroWordTimer = setTimeout(resolve, ms)
-  })
-}
-
-async function runHeroCarousel() {
-  while (!heroCarouselStopped) {
-    await delay(HERO_HOLD_MS)
-    if (heroCarouselStopped) break
-    heroWordIndex.value = (heroWordIndex.value + 1) % heroWords.length
-    // Wait for leave + enter (mode="out-in")
-    await delay(HERO_FADE_MS * 2)
-  }
-}
-
-function onResizeCloseMenu() {
-  if (window.innerWidth >= 1024) menuOpen.value = false
-}
-
-function prefersReducedMotion() {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
-
-async function scrollToSection(event: Event, id: string) {
-  event.preventDefault()
-  menuOpen.value = false
-  await nextTick()
-  const el = document.getElementById(id)
-  if (!el) return
-  const top = el.getBoundingClientRect().top + window.scrollY - 80
-  window.scrollTo({
-    top: Math.max(0, top),
-    behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-  })
-  history.replaceState(null, '', `#${id}`)
-}
-
-onMounted(() => {
-  window.addEventListener('resize', onResizeCloseMenu)
-  // Decorative: keep running under prefers-reduced-motion; CSS softens transitions.
-  runHeroCarousel()
-})
-
-onBeforeUnmount(() => {
-  heroCarouselStopped = true
-  window.removeEventListener('resize', onResizeCloseMenu)
-  if (heroWordTimer) clearTimeout(heroWordTimer)
-  if (sandboxCopyTimer) clearTimeout(sandboxCopyTimer)
+  title: 'Struct — Telemetry for constrained devices',
+  description: 'Generate a compact encoder, send authenticated telemetry, and trace delivery to your HTTPS backend.',
 })
 
 const compatLogos = [
@@ -935,1836 +288,633 @@ const compatLogos = [
   { src: '/supa.svg', name: 'Supabase' },
   { src: '/zapier.svg', name: 'Zapier' },
 ]
+const tickerLogos = [...compatLogos, ...compatLogos]
 
-const trustStats = [
-  { value: '~100 B', label: 'Authenticated example uplink' },
-  { value: '0', label: 'Heap allocations in the packing path' },
-  { value: '6', label: 'Packed field types' },
-]
-
-const mathCards: {
-  label: string
-  winLead: string
-  winTail: string
-  winNote: string
-}[] = [
+const faqs = [
   {
-    label: 'Cold-uplink data',
-    winLead: '~98%',
-    winTail: 'less transmitted data',
-    winNote:
-      'Illustrative estimate: ~100 B Struct UDP uplink vs ~5.2 KB cold HTTPS/TLS. Not a measured benchmark; excludes receipts and retries.',
+    question: 'How does pricing work?',
+    answer: 'Free includes five devices and one day of retention. Flexible is $1 per device each month. Pro is $49 per month. Scale is $249 per month.',
+    href: '/signup',
+    linkLabel: 'Create an account',
   },
   {
-    label: 'Heap allocations',
-    winLead: '0',
-    winTail: 'heap allocations in the packing path',
-    winNote:
-      'Fixed-memory serialization with no dynamic allocation in the Struct packing path.',
+    question: 'Does a stored event mean my backend received it?',
+    answer: 'No. A stored event means Struct committed it. Webhook delivery is separate and can be pending, sending, delivered, skipped, or failed.',
+    href: '/benchmarks',
+    linkLabel: 'Read the methodology',
+  },
+  {
+    question: 'Can I change my plan later?',
+    answer: 'Yes. Paid plans are managed through Stripe in billing settings after you sign in.',
+  },
+  {
+    question: 'When is Struct the wrong fit?',
+    answer: 'When payloads change constantly, the system is mainly request/response, or you need a persistent bidirectional session as the primary transport. Self-serve SAML and compliance certifications are not part of this product.',
   },
 ]
 
-/*
- * TODO(benchmarks): replace payloadPending cells with measured encodings of the
- * shared sample schema (temp float32, humidity float32, is_active uint8) for
- * CBOR, MessagePack, Protobuf, JSON+MQTT, and JSON+HTTPS. Do not invent sizes.
- */
-const compareRows = [
-  {
-    stack: 'JSON + HTTPS',
-    encoding: 'JSON text',
-    payload: '~5.2 KB cold uplink (TLS+HTTP); JSON body is much smaller',
-    payloadPending: false,
-    session: 'TLS + HTTP per cold request; reused sessions are much cheaper',
-    memory: 'Typically a JSON parser/buffer on device',
-    model: 'Self-describing text',
-    fit: 'Request/response and internet APIs',
-  },
-  {
-    stack: 'JSON + MQTT/TLS',
-    encoding: 'JSON text',
-    payload: 'Benchmark pending',
-    payloadPending: true,
-    session: 'Persistent MQTT session; per-message overhead drops after connect',
-    memory: 'MQTT client + JSON parser',
-    model: 'Self-describing text over a session',
-    fit: 'Connected devices that stay online',
-  },
-  {
-    stack: 'CBOR + MQTT',
-    encoding: 'CBOR',
-    payload: 'Benchmark pending',
-    payloadPending: true,
-    session: 'Persistent MQTT; compact binary once connected',
-    memory: 'Often a small static or streaming encoder',
-    model: 'Self-describing binary — no out-of-band schema required',
-    fit: 'Constrained devices that still need flexible payloads',
-  },
-  {
-    stack: 'MessagePack',
-    encoding: 'MessagePack',
-    payload: 'Benchmark pending',
-    payloadPending: true,
-    session: 'Transport-dependent',
-    memory: 'Often a small encoder/decoder',
-    model: 'Self-describing binary, JSON-like types',
-    fit: 'Compact interchange when a schema registry is unavailable',
-  },
-  {
-    stack: 'Protobuf',
-    encoding: 'Protocol Buffers',
-    payload: 'Benchmark pending',
-    payloadPending: true,
-    session: 'Transport-dependent; schema on both ends',
-    memory: 'Generated code; typically no JSON parser',
-    model: 'Schema-driven TLV — strong evolution and multi-language codegen',
-    fit: 'Evolving, nested, polyglot service payloads',
-  },
-  {
-    stack: 'Struct',
-    encoding: 'Packed C struct + Protocol v2',
-    payload: '75 B frame (9 B payload + 66 B v2); ~100 B rounded example',
-    payloadPending: false,
-    session: 'UDP: no app session. TCP stream available when needed',
-    memory: '0 heap allocs in the generated packing path',
-    model: 'Fixed little-endian layout; schema lives in the gateway',
-    fit: 'Intermittent, battery-powered telemetry',
-  },
-]
-
-type SandboxField = { name: string; type: ScalarFieldType }
-
-const sandboxTypeOptions: { value: ScalarFieldType; label: string }[] = [
-  { value: 'float32', label: 'float' },
-  { value: 'int32', label: 'int32' },
-  { value: 'uint8', label: 'uint8' },
-  { value: 'boolean', label: 'boolean' },
-]
-
-const sandboxFields = ref<SandboxField[]>([
-  { name: 'temp', type: 'float32' },
-  { name: 'humidity', type: 'uint8' },
-  { name: 'battery', type: 'uint8' },
-])
-
-const sandboxCopied = ref(false)
-
-const sandboxSchemaFields = computed<SchemaField[]>(() =>
-  sandboxFields.value.map((f) => ({
-    name: f.name.trim() || 'unnamed',
-    type: f.type,
-  })),
-)
-
-const sandboxCpp = computed(() => {
-  try { return generateSchemaCode(sandboxSchemaFields.value, 1, sandboxLanguage.value).source }
-  catch (e: any) { return e.message }
-})
-
-async function copySandboxCode() {
-  try {
-    await navigator.clipboard.writeText(sandboxCpp.value)
-    sandboxCopied.value = true
-    if (sandboxCopyTimer) clearTimeout(sandboxCopyTimer)
-    sandboxCopyTimer = setTimeout(() => {
-      sandboxCopied.value = false
-    }, 1600)
-  } catch {
-    sandboxCopied.value = false
-  }
+function readHeroMetrics() {
+  const stage = heroStage.value
+  heroMetrics.top = stage?.offsetTop ?? 0
+  heroMetrics.height = stage?.offsetHeight ?? window.innerHeight * 2
+  heroMetrics.viewH = window.innerHeight
 }
 
-const pricingPlans = [
-  {
-    name: 'Free (Developer)',
-    price: '$0',
-    interval: 'forever',
-    description: 'Test Struct with up to 5 devices.',
-    devices: 'Up to 5 devices',
-    bestFor: 'Best for 1–5 devices',
-    deviceRate: '',
-    crossover: '',
-    features: ['Standard dashboard', 'Basic webhooks', '24-hour telemetry retention'],
-    cta: 'Start free',
-    to: '/signup',
-    featured: false,
-  },
-  {
-    name: 'Flexible',
-    price: '$1.00',
-    interval: 'per device / month',
-    description: 'Pay per device for small fleets.',
-    devices: 'Minimum 5 devices',
-    bestFor: 'Best for 5–49 devices',
-    deviceRate: '',
-    crossover: 'Pro becomes cheaper than Flexible at 50 devices.',
-    features: ['Everything in Free', 'Pay per additional device', '7-day telemetry retention'],
-    cta: 'Choose Flexible',
-    to: '/signup',
-    featured: false,
-  },
-  {
-    name: 'Pro',
-    price: '$49',
-    interval: '/ month',
-    description: '150 included devices, encryption, downlinks, and longer telemetry retention.',
-    devices: 'Includes 150 devices',
-    bestFor: 'Best for 50–549 devices',
-    deviceRate: '$0.50 per extra device / month',
-    crossover: 'Cheaper than Flexible from 50 devices. Equals Scale at 550 ($249).',
-    features: ['ChaCha20 encryption', 'Device downlinks', '30-day telemetry retention'],
-    cta: 'Choose Pro',
-    to: '/signup',
-    featured: true,
-  },
-  {
-    name: 'Scale',
-    price: '$249',
-    interval: '/ month',
-    description: '1,000 included devices, team roles, audit logs, and routing rules.',
-    devices: 'Includes 1,000 devices',
-    bestFor: 'Best for 550+ devices',
-    deviceRate: '$0.20 per extra device / month',
-    crossover: 'Same $249 as Pro at 550 devices, with 1,000 included. Cheaper above 550.',
-    features: ['Team roles', 'Append-only audit logs', 'Webhook routing rules'],
-    cta: 'Choose Scale',
-    to: '/signup',
-    featured: false,
-  },
-  {
-    name: 'Enterprise',
-    price: 'Custom',
-    interval: '',
-    description: 'Custom infrastructure, SSO, and support terms.',
-    devices: 'Custom device allowance',
-    bestFor: '',
-    deviceRate: '',
-    crossover: '',
-    features: ['SAML SSO', 'Dedicated ingestion ports', 'Custom SLAs'],
-    cta: 'Contact sales',
-    to: 'mailto:sales@struct.dev?subject=Struct Enterprise',
-    featured: false,
-  },
-]
+function applyScroll() {
+  scrollRaf = 0
+  const y = window.scrollY
+  const { top, height, viewH } = heroMetrics
+  const sticky = y > top + height - viewH
+  if (isHeaderSticky.value !== sticky) {
+    isHeaderSticky.value = sticky
+    if (!sticky) floatMenuOpen.value = false
+  }
+  const frame = heroFrame.value
+  if (!frame || reduceMotion) return
+  const travel = height - viewH
+  const progress = travel <= 0 ? 1 : Math.min(1, Math.max(0, (y - top) / travel))
+  frame.style.transform = `translate3d(-50%, ${(1 - progress) * 100}%, 0)`
+}
 
-const pricingGroups = [
-  {
-    label: 'Self-serve',
-    layout: 'self-serve',
-    plans: pricingPlans.slice(0, 3),
-  },
-  {
-    label: 'Scale & Enterprise',
-    layout: 'scale',
-    plans: pricingPlans.slice(3),
-  },
-]
+function onScroll() {
+  if (scrollRaf) return
+  scrollRaf = requestAnimationFrame(applyScroll)
+}
+
+function onResize() {
+  readHeroMetrics()
+  applyScroll()
+}
+
+function easeInOut(t: number) {
+  return t < 0.5 ? 2 * t * t : 1 - ((-2 * t + 2) ** 2) / 2
+}
+
+function cancelScrollAnim() {
+  cancelAnimationFrame(scrollAnim)
+  scrollAnim = 0
+  window.removeEventListener('wheel', cancelScrollAnim)
+  window.removeEventListener('touchstart', cancelScrollAnim)
+}
+
+function animateScroll(targetY: number) {
+  cancelScrollAnim()
+  const startY = window.scrollY
+  const distance = targetY - startY
+  const duration = 700
+  const start = performance.now()
+  window.addEventListener('wheel', cancelScrollAnim, { passive: true })
+  window.addEventListener('touchstart', cancelScrollAnim, { passive: true })
+
+  const step = (now: number) => {
+    const t = Math.min(1, (now - start) / duration)
+    window.scrollTo(0, startY + distance * easeInOut(t))
+    if (t < 1) {
+      scrollAnim = requestAnimationFrame(step)
+      return
+    }
+    cancelScrollAnim()
+  }
+  scrollAnim = requestAnimationFrame(step)
+}
+
+function scrollToSection(id: string) {
+  floatMenuOpen.value = false
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (id === 'home') {
+    if (reduce) window.scrollTo(0, 0)
+    else animateScroll(0)
+    history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
+    return
+  }
+  const el = document.getElementById(id)
+  if (!el) return
+  if (reduce) {
+    el.scrollIntoView()
+  } else {
+    const top = el.getBoundingClientRect().top + window.scrollY - 88
+    animateScroll(Math.max(0, top))
+  }
+  history.replaceState(null, '', `#${id}`)
+}
+
+onMounted(() => {
+  reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  readHeroMetrics()
+  if (reduceMotion && heroFrame.value) heroFrame.value.style.transform = ''
+  else applyScroll()
+  window.addEventListener('scroll', onScroll, { passive: true })
+  window.addEventListener('resize', onResize)
+  const ticker = tickerEl.value
+  if (ticker) {
+    tickerObserver = new IntersectionObserver(([entry]) => {
+      ticker.classList.toggle('is-live', !!entry?.isIntersecting)
+    }, { rootMargin: '180px' })
+    tickerObserver.observe(ticker)
+  }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', onScroll)
+  window.removeEventListener('resize', onResize)
+  if (scrollRaf) cancelAnimationFrame(scrollRaf)
+  tickerObserver?.disconnect()
+  cancelScrollAnim()
+})
+
 </script>
 
 <style scoped>
-.landing {
-  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
-  font-size: 1.0625rem;
-  line-height: 1.65;
+.template-landing {
   overflow-x: clip;
-  width: 100%;
+  font-family: Figtree, ui-sans-serif, system-ui, sans-serif;
 }
 
-.landing section[id] {
+.landing-top {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 5;
+  width: 100%;
+  background: transparent;
+  opacity: 1;
+  transition: opacity 200ms ease 200ms;
+}
+
+.landing-top.is-gone {
+  opacity: 0;
+  pointer-events: none;
+  transition-delay: 0ms;
+}
+
+.header-logo :deep(.struct-logo) {
+  position: relative;
+  height: 3.5rem;
+  width: auto;
+  margin: 0;
+}
+
+.landing-float {
+  position: fixed;
+  top: 0.75rem;
+  left: 1rem;
+  right: 1rem;
+  z-index: 50;
+  max-width: 900px;
+  margin-inline: auto;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 28px;
+  background: rgba(11, 14, 20, 0.85);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font-family: Figtree, ui-sans-serif, system-ui, sans-serif;
+  backdrop-filter: blur(12px);
+  opacity: 0;
+  transform: translateY(-12px);
+  pointer-events: none;
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease;
+}
+
+.landing-float.is-on {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  transition-delay: 200ms;
+}
+
+.landing-float-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.5rem;
+  padding: 0.45rem 1.15rem;
+}
+
+.float-brand {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+.float-brand img {
+  display: block;
+  height: 2.5rem;
+  width: auto;
+}
+
+.float-links {
+  display: none;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+}
+
+.float-links a,
+.float-sheet a {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+  transition: color 150ms ease;
+}
+
+.float-links a:hover,
+.float-sheet a:hover {
+  color: #fff;
+}
+
+.float-toggle {
+  display: inline-flex;
+  margin-left: auto;
+  height: 2.25rem;
+  width: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  color: #fff;
+}
+
+.float-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.float-signin {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+  transition: color 150ms ease;
+}
+
+.float-signin:hover {
+  color: #fff;
+}
+
+.float-signup {
+  border-radius: 999px;
+  background: #fff;
+  padding: 0.45rem 0.9rem;
+  color: #000;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.float-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.15rem 0.65rem 0.75rem;
+}
+
+.float-sheet a {
+  border-radius: 0.6rem;
+  padding: 0.55rem 0.35rem;
+}
+
+@media (min-width: 768px) {
+  .float-links {
+    display: flex;
+  }
+
+  .float-toggle,
+  .float-sheet {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-float,
+  .landing-top {
+    transition: none;
+  }
+
+  .hero-stage {
+    height: auto;
+  }
+
+  .hero-pin {
+    position: relative;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: visible;
+    padding-block: 7rem 3rem;
+  }
+
+  .hero-frame {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    width: min(1280px, calc(100% - 2.5rem));
+    margin: 4rem auto 0;
+    transform: none;
+    padding: 16px;
+    border-radius: 24px;
+  }
+
+  .hero-frame img {
+    border-radius: 14px;
+  }
+}
+
+#features,
+#schema,
+#product,
+#faq {
   scroll-margin-top: 5.5rem;
 }
 
-.font-display {
-  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+.hero-stage {
+  height: 200vh;
 }
 
-.landing-body {
-  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
-  font-size: 1.125rem;
-  font-weight: 400;
-  line-height: 1.7;
-  color: #b4bcc9;
-}
-
-.landing-note {
-  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
-  font-size: 1rem;
-  font-weight: 400;
-  line-height: 1.65;
-  color: #b4bcc9;
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.nav {
+.hero-pin {
   position: sticky;
   top: 0;
-  z-index: 40;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  height: 4.25rem;
-  padding: 0 max(1rem, env(safe-area-inset-right)) 0 max(1rem, env(safe-area-inset-left));
-  border-bottom: 1px solid #2a2f3a;
-  background: rgba(15, 17, 21, 0.88);
-  backdrop-filter: blur(16px);
-}
-
-@media (min-width: 1024px) {
-  .nav {
-    padding: 0 2.5rem;
-  }
-}
-
-.nav-logo :deep(.struct-logo) {
-  margin-inline: 0;
-  height: 2.25rem;
-}
-
-.nav-links {
-  display: none;
-  align-items: center;
-  gap: 1.75rem;
-}
-
-@media (min-width: 1024px) {
-  .nav-links {
-    display: flex;
-  }
-}
-
-.nav-links a {
-  font-size: 0.875rem;
-  color: #a8b2c4;
-  transition: color 0.15s ease;
-}
-
-.nav-links a:hover {
-  color: #38b6ff;
-}
-
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.nav-signin {
-  display: none;
-  font-size: 0.8125rem;
-  color: #a8b2c4;
-}
-
-@media (min-width: 640px) {
-  .nav-signin {
-    display: inline;
-  }
-}
-
-.nav-signin:hover {
-  color: #38b6ff;
-}
-
-.nav-menu-btn {
-  display: flex;
-  width: 2.25rem;
-  height: 2.25rem;
+  height: 100vh;
+  height: 100dvh;
   align-items: center;
   justify-content: center;
-  border-radius: 0.5rem;
-  border: 1px solid #2a2f3a;
-  background: transparent;
-}
-
-@media (min-width: 1024px) {
-  .nav-menu-btn {
-    display: none;
-  }
-}
-
-.nav-menu-icon,
-.nav-menu-icon::before,
-.nav-menu-icon::after {
-  display: block;
-  width: 1rem;
-  height: 1.5px;
-  background: #e8eaef;
-  transition: transform 0.2s ease, opacity 0.2s ease;
-}
-
-.nav-menu-icon {
-  position: relative;
-}
-
-.nav-menu-icon::before,
-.nav-menu-icon::after {
-  content: '';
-  position: absolute;
-  left: 0;
-}
-
-.nav-menu-icon::before {
-  top: -5px;
-}
-
-.nav-menu-icon::after {
-  top: 5px;
-}
-
-.nav-menu-icon.open {
-  background: transparent;
-}
-
-.nav-menu-icon.open::before {
-  top: 0;
-  transform: rotate(45deg);
-}
-
-.nav-menu-icon.open::after {
-  top: 0;
-  transform: rotate(-45deg);
-}
-
-.mobile-menu {
-  display: none;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.75rem 1.25rem 1.25rem;
-  border-bottom: 1px solid #2a2f3a;
-  background: #15181e;
-}
-
-.mobile-menu.open {
-  display: flex;
-}
-
-@media (min-width: 1024px) {
-  .mobile-menu,
-  .mobile-menu.open {
-    display: none;
-  }
-}
-
-.mobile-menu a {
-  padding: 0.75rem 0.5rem;
-  font-size: 0.9375rem;
-  color: #e8eaef;
-  border-radius: 0.5rem;
-}
-
-.mobile-menu a:hover {
-  background: rgba(56, 182, 255, 0.08);
-  color: #38b6ff;
-}
-
-.mobile-menu-signin {
-  color: #a8b2c4 !important;
-}
-
-.hero {
-  position: relative;
   overflow: hidden;
-  padding: 3rem 0 3.25rem;
-}
-
-@media (min-width: 640px) {
-  .hero {
-    padding: 6rem 0 6.5rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .hero {
-    padding: 7rem 0 8rem;
-  }
-}
-
-.hero-layout {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 2rem;
-  align-items: center;
-  padding-left: max(1rem, env(safe-area-inset-left));
-  padding-right: max(1rem, env(safe-area-inset-right));
-}
-
-@media (min-width: 1024px) {
-  .hero-layout {
-    grid-template-columns: minmax(0, 32rem) minmax(0, 1fr);
-    gap: 1rem;
-    max-width: none;
-    padding-left: max(1.5rem, calc((100vw - 72rem) / 2 - 3rem));
-    padding-right: 0;
-    transform: translateX(0.5rem);
-  }
 }
 
 .hero-copy {
-  text-align: left;
-}
-
-@media (min-width: 1024px) {
-  .hero-copy {
-    margin-left: -1rem;
-  }
-}
-
-.hero-title {
-  margin: 0;
-  max-width: 32rem;
-  font-size: clamp(1.65rem, 6.2vw, 3.15rem);
-  font-weight: 650;
-  line-height: 1.12;
-  letter-spacing: -0.035em;
-  color: #f4f5f7;
-  overflow-wrap: anywhere;
-}
-
-.hero-rotate {
-  display: block;
-  margin-top: 0.12em;
-  text-align: left;
   position: relative;
+  z-index: 2;
 }
 
-.hero-rotate-sizer {
-  display: grid;
-  visibility: hidden;
+.hero-glow {
+  z-index: 1;
+  contain: paint;
   pointer-events: none;
 }
 
-.hero-rotate-sizer > span {
-  grid-area: 1 / 1;
-}
-
-.hero-rotate-word {
+.hero-frame {
   position: absolute;
-  inset: 0;
+  bottom: 0;
+  left: 50%;
+  z-index: 4;
+  width: min(1280px, calc(100vw - 2.5rem));
+  transform: translateX(-50%) translateY(100%);
+  overflow: hidden;
+  padding: 16px 16px 0;
+  border-radius: 24px 24px 0 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  pointer-events: none;
+  contain: layout paint;
+  will-change: transform;
+}
+
+.hero-frame img {
   display: block;
-  color: #38b6ff;
-}
-
-.hero-word-enter-active,
-.hero-word-leave-active {
-  transition:
-    opacity 0.38s ease,
-    transform 0.38s ease;
-}
-
-.hero-word-enter-from {
-  opacity: 0;
-  transform: translateY(6px);
-}
-
-.hero-word-leave-to {
-  opacity: 0;
-  transform: translateY(-6px);
-}
-
-.hero-sub {
-  margin: 1.1rem 0 0;
-  max-width: 32rem;
-  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
-  font-size: 1.125rem;
-  font-weight: 400;
-  line-height: 1.7;
-  color: #b4bcc9;
-}
-
-.hero-ctas {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.75rem;
-  margin-top: 1.75rem;
-}
-
-@media (min-width: 480px) {
-  .hero-ctas {
-    flex-direction: row;
-    align-items: center;
-  }
-}
-
-.hero-cta-primary,
-.hero-cta-secondary {
-  padding: 0.85rem 1.5rem;
-  font-size: 0.9375rem;
-  border-radius: 0.65rem;
-}
-
-.hero-visual {
-  position: relative;
   width: 100%;
+  height: auto;
+  border-radius: 14px 14px 0 0;
+}
+
+.hero-art {
+  position: absolute;
+  z-index: 3;
+  display: none;
+  width: 150px;
+  height: auto;
+  pointer-events: none;
+}
+
+.hero-art-left {
+  top: 14rem;
+  left: max(1rem, calc(50% - 28rem));
+}
+
+.hero-art-right {
+  top: 11.5rem;
+  right: max(1rem, calc(50% - 28rem));
+}
+
+.product-scroll {
+  margin-top: 4.5rem;
+}
+
+.product-pin {
+  display: block;
+}
+
+.product-row {
+  display: grid;
+  gap: 2.5rem;
+  align-items: center;
+}
+
+.product-kicker {
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #b79bff;
+}
+
+.product-copy {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.85rem;
+  background: #050505;
+  padding: 1.75rem 1.5rem;
+}
+
+.product-stage {
+  display: flex;
+  justify-content: center;
   min-width: 0;
   min-height: 0;
 }
 
-@media (min-width: 1024px) {
-  .hero-visual {
-    min-height: 480px;
-    height: 100%;
-    width: calc(100% + 2rem);
-    max-width: none;
-  }
-}
-
-.hero-shot {
+.product-shot {
   display: block;
+  width: 100%;
   height: auto;
-  max-height: none;
-  margin-inline: auto;
 }
 
-@media (max-width: 1023px) {
-  .hero-shot {
+@media (min-width: 900px) {
+  .product-scroll {
+    height: 580vh;
+    margin-top: 5.5rem;
+  }
+
+  .product-pin {
+    position: sticky;
+    top: 0;
+    display: flex;
+    height: 100vh;
+    height: 100dvh;
+    align-items: center;
+  }
+
+  .product-row {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    gap: 2rem;
     width: 100%;
+    height: 100%;
+    align-items: center;
+  }
+
+  .product-stage {
+    align-self: stretch;
+    height: 100%;
+    overflow: hidden;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-word-enter-active,
-  .hero-word-leave-active {
-    transition: opacity 0.35s ease;
+  .product-scroll {
+    height: auto;
   }
 
-  .hero-word-enter-from,
-  .hero-word-leave-to {
-    opacity: 0;
-    transform: none;
+  .product-pin {
+    position: relative;
+    display: block;
+    height: auto;
   }
 
-  .cursor {
-    animation: none;
-    opacity: 1;
+  .product-row,
+  .product-stage {
+    height: auto;
+    overflow: visible;
   }
 }
 
-/* Glass terminal (sandbox / debugger) */
-.terminal {
-  border-radius: 12px;
-  border: 1px solid rgba(42, 47, 58, 0.9);
-  background: linear-gradient(
-    165deg,
-    rgba(26, 29, 36, 0.72) 0%,
-    rgba(15, 17, 21, 0.88) 100%
-  );
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
-    0 24px 48px -24px rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+.need-flow {
+  position: relative;
+  height: auto;
+  margin-top: 4rem;
+}
+
+.need-flow :deep(.hdf) {
+  position: relative;
+  left: auto;
+  top: auto;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  transform: none;
+}
+
+@media (min-width: 1024px) {
+  .need-flow {
+    height: 34rem;
+  }
+
+  .need-flow :deep(.hdf) {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(100%, 72rem);
+    transform: translate(-50%, -50%);
+  }
+}
+
+.compat-bleed {
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: calc(50% - 50vw);
+}
+
+.ticker {
+  position: relative;
+  width: 100%;
+  margin-top: 2.25rem;
   overflow: hidden;
 }
 
-.terminal-chrome {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 10px 14px;
-  border-bottom: 1px solid rgba(42, 47, 58, 0.85);
-  background: rgba(15, 17, 21, 0.45);
+.ticker::before,
+.ticker::after {
+  position: absolute;
+  top: 0;
+  z-index: 1;
+  height: 100%;
+  width: 4.5rem;
+  content: '';
+  pointer-events: none;
 }
 
-.dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 999px;
-  flex-shrink: 0;
-}
-.dot-r {
-  background: #ff5f57;
-}
-.dot-y {
-  background: #febc2e;
-}
-.dot-g {
-  background: #28c840;
+.ticker::before {
+  left: 0;
+  background: linear-gradient(to right, #000 10%, transparent);
 }
 
-.terminal-title {
-  margin-left: 8px;
-  font-size: 10px;
-  color: #5a6275;
+.ticker::after {
+  right: 0;
+  background: linear-gradient(to left, #000 10%, transparent);
 }
 
-.terminal-body {
-  margin: 0;
-  padding: 14px 16px 16px;
-  font-size: 12px;
-  line-height: 1.7;
-  text-align: left;
-  white-space: pre;
-  overflow-x: auto;
-}
-
-.t-muted {
-  color: #5a6275;
-}
-.t-cmd {
-  color: #e8eaef;
-}
-.t-flag {
-  color: #8b93a7;
-}
-.t-dim {
-  color: #6b7388;
-}
-.t-strike {
-  color: #5a6275;
-  text-decoration: line-through;
-  text-decoration-color: rgba(90, 98, 117, 0.85);
-}
-.t-ok {
-  color: #38b6ff;
-}
-.t-hi {
-  color: #38b6ff;
-  text-shadow: 0 0 12px rgba(56, 182, 255, 0.35);
-}
-
-.cursor {
-  display: inline-block;
-  width: 7px;
-  height: 1em;
-  margin-left: 2px;
-  vertical-align: text-bottom;
-  background: #38b6ff;
-  box-shadow: 0 0 10px rgba(56, 182, 255, 0.55);
-  animation: caret-blink 1.05s step-end infinite;
-}
-
-@keyframes caret-blink {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
-}
-
-/* Compatible with — logo marquee */
-.compat {
-  padding: 1.25rem 0 2.75rem;
-  border-top: 1px solid #2a2f3a;
-  background: #0f1115;
-}
-
-@media (min-width: 640px) {
-  .compat {
-    padding: 1.5rem 0 3.75rem;
-  }
-}
-
-.compat-label {
-  margin: 0 0 1.5rem;
-  text-align: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #8b93a7;
-}
-
-.compat-marquee {
-  overflow: hidden;
-  mask-image: linear-gradient(
-    90deg,
-    transparent 0%,
-    #000 8%,
-    #000 92%,
-    transparent 100%
-  );
-  -webkit-mask-image: linear-gradient(
-    90deg,
-    transparent 0%,
-    #000 8%,
-    #000 92%,
-    transparent 100%
-  );
-}
-
-.compat-track {
+.ticker-track {
   display: flex;
   width: max-content;
-  gap: 2.25rem;
   align-items: center;
-  padding-left: 2.25rem;
-  animation: compat-scroll 40s linear infinite;
+  gap: 3.5rem;
+  animation: ticker 40s linear infinite;
+  animation-play-state: paused;
+  will-change: transform;
 }
 
-@media (min-width: 640px) {
-  .compat-track {
-    gap: 3.5rem;
-    padding-left: 3.5rem;
+.ticker.is-live .ticker-track {
+  animation-play-state: running;
+}
+
+.cta-art {
+  position: absolute;
+  z-index: 1;
+  display: none;
+  width: 180px;
+  height: auto;
+  pointer-events: none;
+}
+
+.cta-art-left {
+  top: 1.5rem;
+  left: 2vw;
+}
+
+.cta-art-right {
+  top: 3rem;
+  right: 2vw;
+}
+
+@media (min-width: 1100px) {
+  .hero-art,
+  .cta-art {
+    display: block;
   }
 }
 
-.compat-item {
+.ticker-item {
   display: flex;
-  flex-shrink: 0;
+  flex: none;
   align-items: center;
   justify-content: center;
-  width: 5.75rem;
-  height: 2.25rem;
-}
-
-@media (min-width: 640px) {
-  .compat-item {
-    width: 7.5rem;
-    height: 2.75rem;
-  }
-}
-
-.compat-item--lg {
-  width: 7rem;
+  width: 7.5rem;
   height: 2.75rem;
 }
 
-@media (min-width: 640px) {
-  .compat-item--lg {
-    width: 9.25rem;
-    height: 3.5rem;
-  }
+.ticker-item--lg {
+  width: 9.25rem;
+  height: 3.5rem;
 }
 
-.compat-logo {
+.ticker-logo {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  object-position: center;
   opacity: 0.85;
 }
 
-@keyframes compat-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  /* Still scroll, but slower — static wrap looked broken on marketing pages. */
-  .compat-track {
-    animation-duration: 80s;
-  }
-}
-
-/* Trust strip */
-.trust-strip {
-  background: #0f1115;
-  border-bottom: 1px solid #2a2f3a;
-}
-
-.trust-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-  max-width: 72rem;
-  margin: 0 auto;
-  padding: 2.25rem max(1rem, env(safe-area-inset-right)) 3rem max(1rem, env(safe-area-inset-left));
-}
-
-@media (min-width: 640px) {
-  .trust-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1.5rem;
-    padding: 3rem 1.5rem 4.25rem;
-  }
-}
-
-.trust-stat {
-  text-align: center;
-}
-
-@media (min-width: 640px) {
-  .trust-stat:not(:last-child) {
-    border-right: 1px solid #2a2f3a;
-  }
-}
-
-.trust-num {
-  margin: 0;
-  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
-  font-size: clamp(1.75rem, 3.2vw, 2.25rem);
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  color: #38b6ff;
-}
-
-.trust-label {
-  margin: 0.55rem 0 0;
-  font-size: 1rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  color: #8b93a7;
-}
-
-/* Math bento cards */
-.bento-card {
-  border-radius: 14px;
-  border: 1px solid #2a2f3a;
-  background: #1a1d24;
-  padding: 1.4rem 1.5rem;
-  overflow: visible;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.bento-card:hover {
-  border-color: rgba(56, 182, 255, 0.35);
-  box-shadow: 0 0 0 1px rgba(56, 182, 255, 0.08);
-}
-
-.metric-row {
-  margin: 1.35rem 0 0;
-  line-height: 1.4;
-}
-
-.metric-num {
-  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
-  font-size: clamp(1.875rem, 3.4vw, 2.25rem);
-  font-weight: 600;
-  letter-spacing: -0.04em;
-  line-height: 1.15;
-  margin-right: 0.4em;
-  color: #38b6ff;
-}
-
-.metric-tail {
-  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
-  font-size: 1.05rem;
-  font-weight: 500;
-  line-height: 1.4;
-  color: #a8b2c4;
-}
-
-/* Instant Code sandbox */
-.sandbox-window {
-  overflow: hidden;
-  border: 1px solid #343a47;
-  border-radius: 16px;
-  background: #111319;
-  box-shadow:
-    0 40px 80px -42px rgba(0, 0, 0, 0.9),
-    0 0 0 1px rgba(255, 255, 255, 0.025) inset;
-}
-
-.sandbox-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  border-bottom: 1px solid #2a2f3a;
-  padding: 0.7rem 1rem;
-  background: #15181e;
-}
-
-.sandbox-badge {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  color: #38b6ff;
-}
-
-.sandbox-body {
-  display: grid;
-  gap: 0;
-}
-
-@media (min-width: 720px) {
-  .sandbox-body {
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-  }
-}
-
-.sandbox-fields,
-.sandbox-preview {
-  padding: 1.1rem 1.15rem 1.25rem;
-}
-
-.sandbox-fields {
-  border-bottom: 1px solid #2a2f3a;
-}
-
-@media (min-width: 720px) {
-  .sandbox-fields {
-    border-bottom: none;
-    border-right: 1px solid #2a2f3a;
-  }
-}
-
-.sandbox-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(5.5rem, 6.5rem);
-  gap: 0.5rem;
-  margin-top: 0.55rem;
-}
-
-.sandbox-input,
-.sandbox-select {
-  min-width: 0;
-  border: 1px solid #2a2f3a;
-  border-radius: 8px;
-  background: #0f1115;
-  padding: 0.55rem 0.65rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-  color: #e8eaef;
-  outline: none;
-}
-
-.sandbox-input:focus,
-.sandbox-select:focus {
-  border-color: rgba(56, 182, 255, 0.55);
-}
-
-.sandbox-select {
-  color: #38b6ff;
-}
-
-.sandbox-code {
-  margin-top: 0.65rem;
-  overflow-x: auto;
-  border-radius: 10px;
-  background: #0f1115;
-  padding: 0.85rem 0.9rem;
-  font-size: 11px;
-  line-height: 1.55;
-  color: #38b6ff;
-  white-space: pre;
-}
-
-.arch-callout {
-  max-width: 40rem;
-  margin-left: auto;
-  margin-right: auto;
-  border: 1px solid rgba(56, 182, 255, 0.22);
-  border-radius: 14px;
-  background: rgba(56, 182, 255, 0.05);
-  padding: 1.1rem 1.25rem;
-  text-align: left;
-}
-
-/* Architecture */
-.arch-desk {
-  width: 100%;
-}
-
-.arch-node {
-  @apply relative rounded-xl border border-[#2A2F3A] bg-[#1A1D24] p-5;
-}
-
-.arch-node--accent {
-  border-color: rgba(56, 182, 255, 0.28);
-  background: linear-gradient(160deg, rgba(56, 182, 255, 0.05), rgba(26, 29, 36, 1) 55%);
-  box-shadow: 0 0 40px -16px rgba(56, 182, 255, 0.3);
-}
-
-.arch-glyph {
-  @apply mb-3 font-mono text-[10px] tracking-widest text-[#8B93A7];
-}
-
-.arch-title {
-  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
-  @apply text-base font-semibold tracking-tight text-[#E8EAEF];
-}
-
-.arch-body {
-  margin-top: 0.5rem;
-  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
-  font-size: 1rem;
-  line-height: 1.65;
-  color: #b4bcc9;
-}
-
-.arch-gap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 64px;
-  flex-shrink: 0;
-}
-
-.arch-gap-line {
-  display: block;
-  width: 40px;
-  height: 1px;
-  background: repeating-linear-gradient(
-    to right,
-    #2a2f3a 0 4px,
-    transparent 4px 8px
-  );
-}
-
-.arch-gap-m {
-  display: flex;
-  justify-content: center;
-  height: 20px;
-}
-
-.arch-gap-line-m {
-  display: block;
-  width: 1px;
-  height: 100%;
-  background: repeating-linear-gradient(
-    to bottom,
-    #2a2f3a 0 3px,
-    transparent 3px 6px
-  );
-}
-
-/* Bandwidth economics */
-.bandwidth-shell {
-  display: grid;
-  gap: 3rem;
-  align-items: center;
-  border: 1px solid #2a2f3a;
-  border-radius: 20px;
-  padding: clamp(1.5rem, 4vw, 3.5rem);
-  background:
-    radial-gradient(circle at 85% 15%, rgba(56, 182, 255, 0.1), transparent 32%),
-    #15181e;
-  overflow: hidden;
-}
-
-@media (min-width: 900px) {
-  .bandwidth-shell {
-    grid-template-columns: minmax(0, 1fr) minmax(22rem, 0.8fr);
-  }
-}
-
-.signal-chip {
-  border: 1px solid #2a2f3a;
-  border-radius: 999px;
-  padding: 0.4rem 0.7rem;
-  background: rgba(15, 17, 21, 0.7);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 9px;
-  letter-spacing: 0.08em;
-  color: #8b93a7;
-}
-
-.bandwidth-meter {
-  border: 1px solid rgba(56, 182, 255, 0.2);
-  border-radius: 16px;
-  padding: 1.15rem;
-  background: rgba(15, 17, 21, 0.82);
-  box-shadow: 0 28px 60px -36px rgba(56, 182, 255, 0.5);
-}
-
-@media (min-width: 640px) {
-  .bandwidth-meter {
-    padding: 1.5rem;
-  }
-}
-
-.bandwidth-savings {
-  margin-top: 0.15rem;
-  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
-  font-size: clamp(1.85rem, 7vw, 2.25rem);
-  font-weight: 600;
-  letter-spacing: -0.04em;
-  line-height: 1.1;
-  color: #38b6ff;
-}
-
-.savings-ring {
-  display: flex;
-  width: 5.2rem;
-  height: 5.2rem;
-  flex-shrink: 0;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(56, 182, 255, 0.45);
-  border-radius: 999px;
-  background:
-    radial-gradient(circle, #151b22 58%, transparent 60%),
-    conic-gradient(#38b6ff 0 78%, #2a2f3a 78% 100%);
-  box-shadow: 0 0 30px -10px rgba(56, 182, 255, 0.6);
-}
-
-.savings-ring--99 {
-  background:
-    radial-gradient(circle, #151b22 58%, transparent 60%),
-    conic-gradient(#38b6ff 0 99%, #2a2f3a 99% 100%);
-}
-
-.meter-track {
-  height: 8px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #242933;
-}
-
-.meter-json,
-.meter-struct {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-}
-
-.meter-json {
-  width: 100%;
-  background: #596174;
-}
-
-.meter-struct {
-  width: 22%;
-  background: #38b6ff;
-  box-shadow: 0 0 14px rgba(56, 182, 255, 0.6);
-}
-
-.meter-struct--udp {
-  width: 2%;
-  min-width: 6px;
-}
-
-/* Encoding comparison */
-.compare-wrap {
-  overflow-x: auto;
-  border: 1px solid #2a2f3a;
-  border-radius: 14px;
-  background: #15181e;
-  -webkit-overflow-scrolling: touch;
-}
-
-.compare-table {
-  width: 100%;
-  min-width: 58rem;
-  border-collapse: collapse;
-  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
-  font-size: 0.9375rem;
-  line-height: 1.5;
-}
-
-.compare-table th,
-.compare-table td {
-  padding: 0.85rem 0.9rem;
-  text-align: left;
-  vertical-align: top;
-  border-bottom: 1px solid #2a2f3a;
-}
-
-.compare-table thead th {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #8b93a7;
-  background: #111319;
-  white-space: nowrap;
-}
-
-.compare-table tbody th {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
-  font-weight: 500;
-  color: #e8eaef;
-  white-space: nowrap;
-}
-
-.compare-table td {
-  color: #b4bcc9;
-}
-
-.compare-table tbody tr:last-child th,
-.compare-table tbody tr:last-child td {
-  border-bottom: 0;
-  background: rgba(56, 182, 255, 0.04);
-}
-
-.compare-table tbody tr:last-child th {
-  color: #38b6ff;
-}
-
-.compare-pending {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 10px;
-  letter-spacing: 0.04em;
-  color: #a8b2c4;
-}
-
-.fit-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.fit-list li {
-  position: relative;
-  padding: 0.7rem 0 0.7rem 1.15rem;
-  border-bottom: 1px solid #2a2f3a;
-  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
-  font-size: 1.0625rem;
-  line-height: 1.65;
-  color: #b4bcc9;
-}
-
-.fit-list li::before {
-  content: '–';
-  position: absolute;
-  left: 0;
-  color: #5a6275;
-}
-
-.fit-list li:last-child {
-  border-bottom: 0;
-}
-
-/* Debugger */
-.feature-line {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.feature-mark {
-  display: inline-flex;
-  min-width: 2rem;
-  height: 1.4rem;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(56, 182, 255, 0.25);
-  border-radius: 5px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 8px;
-  color: #38b6ff;
-}
-
-.debug-window {
-  overflow: hidden;
-  border: 1px solid #343a47;
-  border-radius: 16px;
-  background: #111319;
-  box-shadow:
-    0 40px 80px -42px rgba(0, 0, 0, 0.9),
-    0 0 0 1px rgba(255, 255, 255, 0.025) inset;
-}
-
-.debug-topbar {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 0.5rem;
-  border-bottom: 1px solid #2a2f3a;
-  padding: 0.75rem 0.85rem;
-  background: #181b22;
-}
-
-.debug-topbar > .font-mono {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: center;
-  font-size: 9px;
-}
-
-@media (min-width: 480px) {
-  .debug-topbar {
-    grid-template-columns: 1fr auto 1fr;
-    gap: 1rem;
-    padding: 0.75rem 1rem;
-  }
-
-  .debug-topbar > .font-mono {
-    font-size: 10px;
-  }
-}
-
-.debug-status {
-  justify-self: end;
-  border: 1px solid rgba(56, 182, 255, 0.3);
-  border-radius: 999px;
-  padding: 0.2rem 0.45rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 7px;
-  letter-spacing: 0.12em;
-  color: #38b6ff;
-}
-
-.debug-grid {
-  display: grid;
-}
-
-@media (min-width: 640px) {
-  .debug-grid {
-    grid-template-columns: 1fr 0.9fr;
-  }
-}
-
-.debug-pane {
-  min-width: 0;
-  padding: 1.25rem;
-}
-
-.debug-pane--result {
-  border-top: 1px solid #2a2f3a;
-  background: rgba(26, 29, 36, 0.55);
-}
-
-@media (min-width: 640px) {
-  .debug-pane--result {
-    border-top: 0;
-    border-left: 1px solid #2a2f3a;
-  }
-}
-
-.debug-label {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 8px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #6b7388;
-}
-
-.debug-fields {
-  margin-top: 0.75rem;
-  overflow: hidden;
-  border: 1px solid #2a2f3a;
-  border-radius: 8px;
-}
-
-.debug-field {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 0.45rem;
-  align-items: center;
-  padding: 0.65rem 0.75rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 9px;
-}
-
-@media (max-width: 379px) {
-  .debug-field {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .debug-field em {
-    display: none;
-  }
-}
-
-.debug-field + .debug-field {
-  border-top: 1px solid #242933;
-}
-
-.debug-field span {
-  overflow: hidden;
-  color: #8b93a7;
-  text-overflow: ellipsis;
-}
-
-.debug-field strong {
-  font-weight: 500;
-  color: #e8eaef;
-}
-
-.debug-field em {
-  font-size: 7px;
-  font-style: normal;
-  color: #596174;
-}
-
-.hex-block,
-.json-block {
-  margin: 0.75rem 0 0;
-  border: 1px solid #242933;
-  border-radius: 8px;
-  padding: 0.85rem;
-  background: #0c0e12;
-  font-size: 10px;
-  line-height: 1.8;
-  color: #6b7388;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.hex-key {
-  color: #596174;
-}
-
-.hex-version,
-.json-bool {
-  color: #c792ea;
-}
-
-.hex-data,
-.json-value {
-  color: #38b6ff;
-}
-
-.json-key {
-  color: #a8b2c4;
-}
-
-.json-brace {
-  color: #6b7388;
-}
-
-.parse-ok {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 7px;
-  letter-spacing: 0.08em;
-  color: #58d6a8;
-}
-
-.debug-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  border: 1px solid #242933;
-  border-radius: 7px;
-  padding: 0.6rem;
-  text-align: center;
-}
-
-.debug-stat strong {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
-  font-weight: 500;
-  color: #e8eaef;
-}
-
-.debug-stat span {
-  font-size: 8px;
-  color: #596174;
-}
-
-/* Security */
-.security-intro {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-@media (min-width: 768px) {
-  .security-intro {
-    flex-direction: row;
-    align-items: end;
-    justify-content: space-between;
-  }
-}
-
-.security-grid {
-  display: grid;
-  gap: 1rem;
-}
-
-@media (min-width: 768px) {
-  .security-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-.security-card {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid #2a2f3a;
-  border-radius: 16px;
-  padding: 1.15rem;
-  background: #1a1d24;
-}
-
-@media (min-width: 640px) {
-  .security-card {
-    padding: 1.5rem;
-  }
-}
-
-.security-card--wide {
-  background:
-    linear-gradient(110deg, rgba(56, 182, 255, 0.08), transparent 55%),
-    #1a1d24;
-}
-
-.security-icon {
-  display: inline-flex;
-  height: 1.6rem;
-  align-items: center;
-  border: 1px solid rgba(56, 182, 255, 0.28);
-  border-radius: 5px;
-  padding: 0 0.5rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 8px;
-  letter-spacing: 0.1em;
-  color: #38b6ff;
-}
-
-.security-kicker {
-  margin-top: 1.25rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 8px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #6b7388;
-}
-
-.security-title {
-  margin-top: 1.25rem;
-  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
-  font-size: 1.1rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: #e8eaef;
-}
-
-.security-copy {
-  margin-top: 0.75rem;
-  max-width: 48rem;
-  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
-  font-size: 1rem;
-  line-height: 1.65;
-  color: #b4bcc9;
-}
-
-.crypto-strip {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.6rem;
-  margin-top: 1.5rem;
-  color: #6b7388;
-  font-size: 8px;
-  letter-spacing: 0.08em;
-}
-
-.crypto-strip i {
-  width: 1.5rem;
-  height: 1px;
-  background: #343a47;
-}
-
-.crypto-strip span:nth-of-type(2) {
-  color: #38b6ff;
-}
-
-/* Pricing */
-.pricing-grid {
-  display: grid;
-  gap: 1rem;
-}
-
-.pricing-group + .pricing-group {
-  margin-top: 3.5rem;
-}
-
-.pricing-card {
-  position: relative;
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  border: 1px solid #2a2f3a;
-  border-radius: 16px;
-  background: #1a1d24;
-  padding: 1.35rem 1.25rem 1.5rem;
-}
-
-@media (min-width: 640px) {
-  .pricing-card {
-    padding: 2rem;
-  }
-}
-
-.pricing-card--featured {
-  border-color: rgba(56, 182, 255, 0.58);
-  background: linear-gradient(165deg, rgba(56, 182, 255, 0.09), #1a1d24 48%);
-  box-shadow:
-    0 0 0 1px rgba(56, 182, 255, 0.08),
-    0 28px 55px -32px rgba(56, 182, 255, 0.58);
-}
-
-.pricing-badge {
-  position: absolute;
-  top: 0;
-  right: 1.25rem;
-  transform: translateY(-50%);
-  border: 1px solid rgba(56, 182, 255, 0.5);
-  border-radius: 999px;
-  background: #101b24;
-  padding: 0.3rem 0.65rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #38b6ff;
-}
-
-@media (min-width: 900px) {
-  .pricing-grid--self-serve {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .pricing-grid--scale {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    width: calc((100% - 1rem) * 2 / 3);
-    margin-inline: auto;
-  }
-
-  .pricing-grid {
-    align-items: stretch;
-    padding-top: 1.25rem;
-  }
-
-  .pricing-card--featured {
-    transform: translateY(-1.25rem);
-  }
-
-  .pricing-grid .pricing-card {
-    min-height: 32rem;
-  }
-}
-
-@media (min-width: 900px) and (max-width: 1099px) {
-  .pricing-grid .pricing-card {
-    min-height: 0;
-    padding: 1.5rem 1.25rem;
-  }
-
-  .pricing-card--featured {
-    transform: translateY(-0.75rem);
-  }
-}
-
-/* Footer */
-.site-footer {
-  border-top: 1px solid #2a2f3a;
-  padding: 3rem 0 max(2rem, env(safe-area-inset-bottom));
-}
-
-.site-footer-inner {
-  margin-inline: auto;
-  max-width: 72rem;
-  padding-inline: max(1rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-right));
-}
-
-.footer-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2.5rem;
-}
-
-@media (min-width: 640px) {
-  .footer-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 2.5rem 2rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .footer-grid {
-    grid-template-columns: 1.35fr repeat(3, minmax(0, 1fr));
-    gap: 3rem;
-  }
-}
-
-.footer-brand {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.85rem;
-  max-width: 16rem;
-}
-
-.footer-logo :deep(.struct-logo) {
-  margin-inline: 0;
-  height: 2.25rem;
-  width: auto;
-}
-
-.footer-tagline {
-  margin: 0;
-  font-size: 1rem;
-  line-height: 1.55;
-  color: #b4bcc9;
-}
-
-.footer-heading {
-  margin: 0 0 1rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #f4f5f7;
-}
-
-.footer-links {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-}
-
-.footer-links a {
-  font-size: 0.9375rem;
-  color: #b4bcc9;
-  transition: color 0.15s ease;
-}
-
-.footer-links a:hover {
-  color: #38b6ff;
-}
-
-.footer-bottom {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 3rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #2a2f3a;
-}
-
-@media (min-width: 640px) {
-  .footer-bottom {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-}
-
-.footer-copy {
-  margin: 0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
-  color: #5a6275;
-}
-
-.footer-signin {
-  font-size: 0.75rem;
-  color: #8b93a7;
-  transition: color 0.15s ease;
-}
-
-.footer-signin:hover {
-  color: #38b6ff;
-}
-
 </style>
