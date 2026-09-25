@@ -63,6 +63,8 @@ html,
 body,
 #__nuxt {
   min-height: 100%;
+  max-width: 100%;
+  overflow-x: clip;
   background: var(--struct-bg);
   color: var(--struct-text);
 }
@@ -72,6 +74,16 @@ body {
   background: var(--struct-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+@media (max-width: 640px) {
+  .input,
+  .auth-field,
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 .font-mono,

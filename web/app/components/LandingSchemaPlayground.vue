@@ -2,7 +2,7 @@
   <section id="schema" class="bg-black py-[72px] sm:py-24" aria-labelledby="schema-heading">
     <div class="mx-auto w-full max-w-[1600px] px-6 sm:px-8">
       <div class="mx-auto max-w-xl text-center">
-        <h2 id="schema-heading" class="text-5xl font-semibold tracking-tighter sm:text-6xl">Try a schema</h2>
+        <h2 id="schema-heading" class="section-title">Try a schema</h2>
         <p class="mt-5 text-xl text-white/70">
           Add fields and preview the encoder. Nothing is saved until you create an account.
         </p>
@@ -199,9 +199,41 @@ async function copyCode() {
 
 .field-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 7.25rem auto;
-  gap: 0.55rem;
+  grid-template-columns: minmax(0, 1fr) 2.75rem;
+  gap: 0.4rem;
   align-items: center;
+}
+
+.field-type {
+  grid-column: 1;
+}
+
+.field-remove {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  align-self: center;
+}
+
+@media (min-width: 480px) {
+  .field-row {
+    grid-template-columns: minmax(0, 1fr) 7.25rem auto;
+    gap: 0.55rem;
+  }
+
+  .field-type,
+  .field-remove {
+    grid-row: auto;
+    grid-column: auto;
+    align-self: center;
+  }
+}
+
+.section-title {
+  font-size: clamp(2.15rem, 8.5vw, 3.75rem);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+  text-wrap: balance;
 }
 
 .field-input,
@@ -232,9 +264,9 @@ async function copyCode() {
 }
 
 .field-remove {
-  width: 2rem;
-  height: 2rem;
-  font-size: 1rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 1.15rem;
   line-height: 1;
 }
 

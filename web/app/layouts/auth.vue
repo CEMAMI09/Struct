@@ -28,6 +28,12 @@
   max-width: 24rem;
 }
 
+.auth-shell-inner :deep(.struct-logo) {
+  width: min(180px, 70vw);
+  max-width: 100%;
+  height: auto;
+}
+
 .auth-field {
   display: block;
   width: 100%;

@@ -66,7 +66,7 @@
           <span class="hidden max-w-[10rem] truncate text-xs text-[#8B93A7] lg:inline lg:max-w-none">
             {{ userEmail }}
           </span>
-          <button class="btn-ghost text-xs" type="button" :disabled="signingOut" @click="signOut">
+          <button class="btn-ghost shrink-0 whitespace-nowrap text-xs" type="button" :disabled="signingOut" @click="signOut">
             {{ signingOut ? 'Signing out…' : 'Sign out' }}
           </button>
         </div>
@@ -235,13 +235,15 @@ async function signOut() {
 <style scoped>
 .app-topbar {
   display: flex;
-  height: 3.5rem;
+  min-height: 3.5rem;
   flex-shrink: 0;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.5rem 0.75rem;
   border-bottom: 1px solid #252830;
-  padding: 0 1rem;
+  padding: 0.4rem max(0.75rem, env(safe-area-inset-right)) 0.4rem max(0.75rem, env(safe-area-inset-left));
+  padding-top: max(0.4rem, env(safe-area-inset-top));
   background: #0c0d10;
 }
 
@@ -289,7 +291,7 @@ async function signOut() {
 }
 
 .app-org-select {
-  max-width: 14rem;
+  max-width: min(14rem, 42vw);
   min-height: 2rem;
   border: 1px solid #252830;
   border-radius: 8px;
