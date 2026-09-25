@@ -1,21 +1,5 @@
 <template>
   <div class="template-landing bg-black text-white">
-    <header class="landing-top">
-      <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
-        <NuxtLink to="/" class="header-logo" aria-label="Struct home">
-          <StructLogo variant="dark" />
-        </NuxtLink>
-        <nav class="flex items-center gap-3 sm:gap-5" aria-label="Account">
-          <NuxtLink v-if="!user" to="/login" class="text-sm text-white/70 transition hover:text-white">
-            Sign in
-          </NuxtLink>
-          <NuxtLink :to="user ? '/dashboard' : '/signup'" class="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black">
-            {{ user ? 'Open dashboard' : 'Sign up' }}
-          </NuxtLink>
-        </nav>
-      </div>
-    </header>
-
     <Teleport to="body">
       <header
         class="landing-float"
@@ -69,35 +53,62 @@
     </Teleport>
 
     <main>
-      <section class="relative overflow-clip bg-[linear-gradient(to_bottom,#000,#1a0858_34%,#5617fc_65%,#c4b5fd_82%)] pb-[72px] pt-36 sm:pb-24 sm:pt-52">
-        <img src="/landing/cursor.png" alt="" width="200" height="200" class="hero-art hero-art-left" />
-        <img src="/landing/message.png" alt="" width="200" height="200" class="hero-art hero-art-right" />
-        <div class="absolute left-1/2 top-[calc(100%-96px)] h-[375px] w-[750px] -translate-x-1/2 rounded-[100%] border border-[#b79bff] bg-[radial-gradient(closest-side,#000_82%,#5617fc)] sm:top-[calc(100%-120px)] sm:h-[768px] sm:w-[1536px] lg:h-[1200px] lg:w-[2400px]" />
-        <div class="relative mx-auto max-w-6xl px-4">
-          <div class="flex justify-center">
-            <h1 class="mt-8 text-center text-6xl font-bold tracking-tighter md:text-7xl xl:text-8xl">
-              From device
-              <br />
-              to backend
-            </h1>
-          </div>
+      <div ref="heroStage" class="hero-stage">
+        <section id="home" class="hero-pin relative bg-[linear-gradient(to_bottom,#000,#1a0858_34%,#5617fc_65%,#c4b5fd_82%)]">
+          <header class="landing-top" :class="{ 'is-gone': isHeaderSticky }">
+            <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
+              <NuxtLink to="/" class="header-logo" aria-label="Struct home">
+                <StructLogo variant="dark" />
+              </NuxtLink>
+              <nav class="flex items-center gap-3 sm:gap-5" aria-label="Account">
+                <NuxtLink v-if="!user" to="/login" class="text-sm text-white/70 transition hover:text-white">
+                  Sign in
+                </NuxtLink>
+                <NuxtLink :to="user ? '/dashboard' : '/signup'" class="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black">
+                  {{ user ? 'Open dashboard' : 'Sign up' }}
+                </NuxtLink>
+              </nav>
+            </div>
+          </header>
+          <img src="/landing/cursor.png" alt="" width="200" height="200" class="hero-art hero-art-left" />
+          <img src="/landing/message.png" alt="" width="200" height="200" class="hero-art hero-art-right" />
+          <div class="hero-glow absolute left-1/2 top-[calc(100%-96px)] h-[375px] w-[750px] -translate-x-1/2 rounded-[100%] border border-[#b79bff] bg-[radial-gradient(closest-side,#000_82%,#5617fc)] sm:top-[calc(100%-120px)] sm:h-[768px] sm:w-[1536px] lg:h-[1200px] lg:w-[2400px]" />
+          <div class="hero-copy relative mx-auto max-w-6xl px-4">
+            <div class="flex justify-center">
+              <h1 class="text-center text-6xl font-bold tracking-tighter md:text-7xl xl:text-8xl">
+                Less data.
+                <br />
+                More control.
+              </h1>
+            </div>
 
-          <div class="flex justify-center">
-            <p class="mt-8 max-w-md text-center text-xl text-white/80">
-              Generate a compact encoder, send authenticated telemetry, and trace delivery to your HTTPS backend.
-            </p>
+            <div class="flex justify-center">
+              <p class="mt-8 max-w-2xl text-center text-xl text-white/80">
+                Reduce data usage and transmission costs with compact encoding, secure device communication, and direct delivery to your existing backend.
+              </p>
+            </div>
+            <div class="mt-8 flex justify-center">
+              <NuxtLink :to="user ? '/dashboard' : '/signup'" class="rounded-lg bg-white px-5 py-3 font-medium text-black">
+                {{ user ? 'Open dashboard' : 'Get started' }}
+              </NuxtLink>
+            </div>
           </div>
-          <div class="mt-8 flex justify-center">
-            <NuxtLink :to="user ? '/dashboard' : '/signup'" class="rounded-lg bg-white px-5 py-3 font-medium text-black">
-              {{ user ? 'Open dashboard' : 'Get started' }}
-            </NuxtLink>
+          <div ref="heroFrame" class="hero-frame">
+            <img
+              src="/landing/dashboard.webp"
+              alt="Struct dashboard"
+              width="2560"
+              height="1434"
+              decoding="async"
+              fetchpriority="high"
+            />
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
       <section class="compat-bleed bg-black py-[72px] sm:py-24" aria-label="Compatible with">
         <h2 class="text-center text-xl text-white/70">Compatible with</h2>
-        <div class="ticker">
+        <div ref="tickerEl" class="ticker">
             <div class="ticker-track">
               <div
                 v-for="(logo, index) in tickerLogos"
@@ -119,40 +130,8 @@
               Define a packed schema, authenticate each frame, store the event, and inspect webhook delivery separately.
             </p>
           </div>
-          <div class="need-grid mt-16">
-            <article class="need-card need-card--tall">
-              <div class="need-stage" aria-hidden="true">
-                <p class="viz-label">JSON</p>
-                <p class="viz-muted">{"temp":22.5,"humidity":40}</p>
-                <p class="viz-label mt-6">Packed fields</p>
-                <p class="viz-bytes"><span>00 00 B4 41</span><span>00 00 20 42</span></p>
-              </div>
-              <div class="need-copy">
-                <h3>{{ compactEncoding.title }}</h3>
-                <p>{{ compactEncoding.description }}</p>
-              </div>
-            </article>
-            <article class="need-card need-card--split">
-              <div class="need-copy">
-                <h3>{{ authenticatedIngestion.title }}</h3>
-                <p>{{ authenticatedIngestion.description }}</p>
-              </div>
-              <div class="need-panel" aria-hidden="true">
-                <p class="viz-label">Frame</p>
-                <p class="viz-bytes"><span>key</span><span>schema</span><span>payload</span><span>HMAC</span></p>
-                <p class="viz-ok">Verified before decode</p>
-              </div>
-            </article>
-            <article class="need-card need-card--split">
-              <div class="need-copy">
-                <h3>{{ deliveryInspect.title }}</h3>
-                <p>{{ deliveryInspect.description }}</p>
-              </div>
-              <div class="need-panel" aria-hidden="true">
-                <p class="viz-row"><span>Stored</span><span class="viz-ok">Committed</span></p>
-                <p class="viz-row"><span>Webhook</span><span>Pending</span></p>
-              </div>
-            </article>
+          <div class="need-flow">
+            <HeroDataFlowDiagram />
           </div>
         </div>
       </section>
@@ -161,36 +140,44 @@
 
       <section id="product" class="bg-gradient-to-b from-black to-[#3e11b5] pt-[72px] pb-20 sm:pt-24">
         <div class="mx-auto w-full max-w-[1500px] px-6 sm:px-8">
-          <h2 class="text-center text-5xl font-bold tracking-tighter sm:text-6xl">Inspect the event</h2>
+          <h2 class="text-center text-5xl font-bold tracking-tighter sm:text-6xl">Telemetry you can trust</h2>
           <div class="mx-auto max-w-xl">
             <p class="mt-5 text-center text-xl text-white/70">
-              Inspect decoded telemetry, monitor delivery, and troubleshoot device events from one dashboard.
+              Inspect decoded telemetry, verify device data, and track delivery from one dashboard.
             </p>
           </div>
-          <div class="product-row">
-            <div class="product-copy">
-              <p class="product-kicker">Event visibility</p>
-              <h3 class="mt-3 text-3xl font-semibold tracking-tighter sm:text-4xl">Know exactly what happens to your data.</h3>
-              <p class="mt-4 text-white/70">
-                From the moment your device sends an event to its final delivery, Struct gives you the visibility to understand your telemetry and troubleshoot issues.
-              </p>
-              <div class="mt-8 space-y-5">
-                <div>
-                  <h4 class="font-semibold">Decoded telemetry</h4>
-                  <p class="mt-1 text-sm leading-relaxed text-white/70">View stored events, inspect individual fields, and visualize incoming telemetry in real time.</p>
+          <div class="product-scroll">
+            <div class="product-pin">
+              <div class="product-row">
+                <div class="product-copy">
+                  <p class="product-kicker">Event visibility</p>
+                  <h3 class="mt-3 text-3xl font-semibold tracking-tighter sm:text-4xl">Know exactly what happens to every event.</h3>
+                  <p class="mt-4 text-white/70">
+                    Struct helps you move beyond raw device data. Inspect decoded fields, verify authenticated ingestion, monitor webhook delivery, and troubleshoot failures across the full path from device to backend.
+                  </p>
+                  <div class="mt-8 space-y-5">
+                    <div>
+                      <h4 class="font-semibold">Inspect decoded data</h4>
+                      <p class="mt-1 text-sm leading-relaxed text-white/70">View stored events, inspect individual fields, and explore telemetry in real time.</p>
+                    </div>
+                    <div>
+                      <h4 class="font-semibold">Verify trusted ingestion</h4>
+                      <p class="mt-1 text-sm leading-relaxed text-white/70">Understand whether a device event was accepted and identify authentication or payload issues early.</p>
+                    </div>
+                    <div>
+                      <h4 class="font-semibold">Track delivery status</h4>
+                      <p class="mt-1 text-sm leading-relaxed text-white/70">See whether delivery is pending, sending, delivered, skipped, or failed.</p>
+                    </div>
+                    <div>
+                      <h4 class="font-semibold">Troubleshoot end to end</h4>
+                      <p class="mt-1 text-sm leading-relaxed text-white/70">Trace individual events across ingestion, decoding, storage, and delivery from one place.</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h4 class="font-semibold">Delivery tracking</h4>
-                  <p class="mt-1 text-sm leading-relaxed text-white/70">Monitor webhook attempts and see whether an event was delivered, is still pending, or requires attention.</p>
-                </div>
-                <div>
-                  <h4 class="font-semibold">Event diagnostics</h4>
-                  <p class="mt-1 text-sm leading-relaxed text-white/70">Trace individual events to understand authentication, decoding, and delivery failures.</p>
+                <div class="product-stage">
+                  <EventVisibilityPath />
                 </div>
               </div>
-            </div>
-            <div class="product-stage">
-              <img src="/macbookmockup.svg" alt="Struct dashboard on a MacBook" class="product-shot" />
             </div>
           </div>
         </div>
@@ -198,8 +185,8 @@
 
       <section id="faq" class="bg-gradient-to-b from-[#3e11b5] to-black py-[72px] sm:py-24">
         <div class="mx-auto max-w-6xl px-4">
-          <h2 class="mx-auto max-w-[648px] text-center text-5xl font-bold tracking-tighter sm:text-6xl">
-            Frequently asked questions
+          <h2 class="mx-auto max-w-[648px] text-left text-5xl font-bold tracking-tighter sm:text-6xl">
+            FAQs
           </h2>
           <div class="mx-auto mt-12 max-w-[648px]">
             <div v-for="(item, index) in faqs" :key="item.question" class="border-b border-white/30 py-7">
@@ -256,6 +243,8 @@
 </template>
 
 <script setup lang="ts">
+import EventVisibilityPath from '~/components/EventVisibilityPath.vue'
+
 definePageMeta({ layout: false })
 
 const user = useSupabaseUser()
@@ -263,8 +252,14 @@ const openFaq = ref(-1)
 const year = new Date().getFullYear()
 const isHeaderSticky = ref(false)
 const floatMenuOpen = ref(false)
-const STICKY_THRESHOLD = 140
+const heroStage = ref<HTMLElement | null>(null)
+const heroFrame = ref<HTMLElement | null>(null)
+const tickerEl = ref<HTMLElement | null>(null)
 let scrollAnim = 0
+let scrollRaf = 0
+let reduceMotion = false
+let tickerObserver: IntersectionObserver | null = null
+const heroMetrics = { top: 0, height: 0, viewH: 0 }
 
 const sectionLinks = [
   { id: 'home', label: 'Home' },
@@ -295,40 +290,6 @@ const compatLogos = [
 ]
 const tickerLogos = [...compatLogos, ...compatLogos]
 
-const features = [
-  {
-    kicker: 'Compact encoding',
-    title: 'Less overhead. More useful data.',
-    description: 'Define packed schemas and generate encoders for supported languages and platforms. Transmit compact binary fields without repeating JSON field names in every payload.',
-    visual: 'encoding',
-    visualLabel: 'JSON field names compared with packed bytes',
-  },
-  {
-    kicker: 'Authenticated ingestion',
-    title: 'Authenticate telemetry before accepting it.',
-    description: 'Struct verifies authenticated device frames before decoding and storing telemetry, using established cryptographic primitives and versioned schemas.',
-    visual: 'auth',
-    visualLabel: 'Authenticated frame parts',
-  },
-  {
-    kicker: 'Delivery you can inspect',
-    title: 'Know what happened to your event.',
-    description: 'See when Struct stores an event, inspect its decoded fields, and track webhook delivery to your HTTPS backend as a separate operation.',
-    visual: 'delivery',
-    visualLabel: 'Stored event and webhook status',
-  },
-]
-
-function requireFeature(index: number) {
-  const feature = features[index]
-  if (!feature) throw new Error(`Missing landing feature ${index}`)
-  return feature
-}
-
-const compactEncoding = requireFeature(0)
-const authenticatedIngestion = requireFeature(1)
-const deliveryInspect = requireFeature(2)
-
 const faqs = [
   {
     question: 'How does pricing work?',
@@ -352,10 +313,37 @@ const faqs = [
   },
 ]
 
-function updateStickyHeader() {
-  const sticky = window.scrollY > STICKY_THRESHOLD
-  isHeaderSticky.value = sticky
-  if (!sticky) floatMenuOpen.value = false
+function readHeroMetrics() {
+  const stage = heroStage.value
+  heroMetrics.top = stage?.offsetTop ?? 0
+  heroMetrics.height = stage?.offsetHeight ?? window.innerHeight * 2
+  heroMetrics.viewH = window.innerHeight
+}
+
+function applyScroll() {
+  scrollRaf = 0
+  const y = window.scrollY
+  const { top, height, viewH } = heroMetrics
+  const sticky = y > top + height - viewH
+  if (isHeaderSticky.value !== sticky) {
+    isHeaderSticky.value = sticky
+    if (!sticky) floatMenuOpen.value = false
+  }
+  const frame = heroFrame.value
+  if (!frame || reduceMotion) return
+  const travel = height - viewH
+  const progress = travel <= 0 ? 1 : Math.min(1, Math.max(0, (y - top) / travel))
+  frame.style.transform = `translate3d(-50%, ${(1 - progress) * 100}%, 0)`
+}
+
+function onScroll() {
+  if (scrollRaf) return
+  scrollRaf = requestAnimationFrame(applyScroll)
+}
+
+function onResize() {
+  readHeroMetrics()
+  applyScroll()
 }
 
 function easeInOut(t: number) {
@@ -411,12 +399,26 @@ function scrollToSection(id: string) {
 }
 
 onMounted(() => {
-  updateStickyHeader()
-  window.addEventListener('scroll', updateStickyHeader, { passive: true })
+  reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  readHeroMetrics()
+  if (reduceMotion && heroFrame.value) heroFrame.value.style.transform = ''
+  else applyScroll()
+  window.addEventListener('scroll', onScroll, { passive: true })
+  window.addEventListener('resize', onResize)
+  const ticker = tickerEl.value
+  if (ticker) {
+    tickerObserver = new IntersectionObserver(([entry]) => {
+      ticker.classList.toggle('is-live', !!entry?.isIntersecting)
+    }, { rootMargin: '180px' })
+    tickerObserver.observe(ticker)
+  }
 })
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', updateStickyHeader)
+  window.removeEventListener('scroll', onScroll)
+  window.removeEventListener('resize', onResize)
+  if (scrollRaf) cancelAnimationFrame(scrollRaf)
+  tickerObserver?.disconnect()
   cancelScrollAnim()
 })
 
@@ -429,10 +431,21 @@ onUnmounted(() => {
 }
 
 .landing-top {
-  position: relative;
-  z-index: 40;
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 5;
   width: 100%;
   background: transparent;
+  opacity: 1;
+  transition: opacity 200ms ease 200ms;
+}
+
+.landing-top.is-gone {
+  opacity: 0;
+  pointer-events: none;
+  transition-delay: 0ms;
 }
 
 .header-logo :deep(.struct-logo) {
@@ -461,14 +474,15 @@ onUnmounted(() => {
   transform: translateY(-12px);
   pointer-events: none;
   transition:
-    opacity 300ms ease-out,
-    transform 300ms ease-out;
+    opacity 200ms ease,
+    transform 200ms ease;
 }
 
 .landing-float.is-on {
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
+  transition-delay: 200ms;
 }
 
 .landing-float-bar {
@@ -573,8 +587,37 @@ onUnmounted(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .landing-float {
+  .landing-float,
+  .landing-top {
     transition: none;
+  }
+
+  .hero-stage {
+    height: auto;
+  }
+
+  .hero-pin {
+    position: relative;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: visible;
+    padding-block: 7rem 3rem;
+  }
+
+  .hero-frame {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    width: min(1280px, calc(100% - 2.5rem));
+    margin: 4rem auto 0;
+    transform: none;
+    padding: 16px;
+    border-radius: 24px;
+  }
+
+  .hero-frame img {
+    border-radius: 14px;
   }
 }
 
@@ -585,9 +628,59 @@ onUnmounted(() => {
   scroll-margin-top: 5.5rem;
 }
 
+.hero-stage {
+  height: 200vh;
+}
+
+.hero-pin {
+  position: sticky;
+  top: 0;
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-glow {
+  z-index: 1;
+  contain: paint;
+  pointer-events: none;
+}
+
+.hero-frame {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  z-index: 4;
+  width: min(1280px, calc(100vw - 2.5rem));
+  transform: translateX(-50%) translateY(100%);
+  overflow: hidden;
+  padding: 16px 16px 0;
+  border-radius: 24px 24px 0 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  pointer-events: none;
+  contain: layout paint;
+  will-change: transform;
+}
+
+.hero-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px 14px 0 0;
+}
+
 .hero-art {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
   display: none;
   width: 150px;
   height: auto;
@@ -604,11 +697,18 @@ onUnmounted(() => {
   right: max(1rem, calc(50% - 28rem));
 }
 
+.product-scroll {
+  margin-top: 4.5rem;
+}
+
+.product-pin {
+  display: block;
+}
+
 .product-row {
   display: grid;
   gap: 2.5rem;
-  margin-top: 4.5rem;
-  align-items: start;
+  align-items: center;
 }
 
 .product-kicker {
@@ -619,9 +719,18 @@ onUnmounted(() => {
   color: #b79bff;
 }
 
+.product-copy {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.85rem;
+  background: #050505;
+  padding: 1.75rem 1.5rem;
+}
+
 .product-stage {
   display: flex;
   justify-content: center;
+  min-width: 0;
+  min-height: 0;
 }
 
 .product-shot {
@@ -631,145 +740,81 @@ onUnmounted(() => {
 }
 
 @media (min-width: 900px) {
-  .product-row {
-    grid-template-columns: 2fr 3fr;
-    gap: 2rem;
+  .product-scroll {
+    height: 580vh;
+    margin-top: 5.5rem;
+  }
+
+  .product-pin {
+    position: sticky;
+    top: 0;
+    display: flex;
+    height: 100vh;
+    height: 100dvh;
     align-items: center;
   }
 
-  /* The display sits in the upper part of the mockup. Shift the copy up
-     so it centers on the screen instead of the keyboard. */
-  .product-copy {
-    transform: translateY(-14%);
+  .product-row {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    gap: 2rem;
+    width: 100%;
+    height: 100%;
+    align-items: center;
   }
 
-  .product-shot {
-    transform: translateX(1.75rem);
-  }
-}
-
-.need-grid {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.need-card {
-  display: flex;
-  min-height: 16rem;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 0.85rem;
-  background: #050505;
-}
-
-.need-card--tall .need-stage {
-  flex: 1;
-  padding: 1.75rem 1.75rem 0;
-}
-
-.need-copy {
-  padding: 1.35rem 1.5rem 1.5rem;
-}
-
-.need-copy h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-}
-
-.need-copy p {
-  margin-top: 0.4rem;
-  max-width: 28rem;
-  font-size: 0.875rem;
-  line-height: 1.45;
-  color: rgba(255, 255, 255, 0.62);
-}
-
-.need-panel {
-  margin: 0 1rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 0.7rem;
-  background: #111;
-  padding: 1rem;
-}
-
-@media (min-width: 900px) {
-  .need-grid {
-    grid-template-columns: 0.92fr 1.08fr;
-    grid-template-rows: 1fr 1fr;
-    min-height: 38rem;
-  }
-
-  .need-card--tall {
-    grid-row: 1 / span 2;
-    min-height: 0;
-  }
-
-  .need-card--split {
-    display: grid;
-    grid-template-columns: 1fr 0.95fr;
-    min-height: 0;
-    align-items: stretch;
-  }
-
-  .need-card--split .need-copy {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-
-  .need-card--split .need-panel {
-    margin: 1rem 1rem 1rem 0;
-    align-self: center;
+  .product-stage {
+    align-self: stretch;
+    height: 100%;
+    overflow: hidden;
   }
 }
 
-.viz-label,
-.viz-muted,
-.viz-ok,
-.viz-row,
-.viz-bytes {
-  font-family: 'Geist Mono', ui-monospace, monospace;
-  font-size: 0.8125rem;
+@media (prefers-reduced-motion: reduce) {
+  .product-scroll {
+    height: auto;
+  }
+
+  .product-pin {
+    position: relative;
+    display: block;
+    height: auto;
+  }
+
+  .product-row,
+  .product-stage {
+    height: auto;
+    overflow: visible;
+  }
 }
 
-.viz-label {
-  color: rgba(255, 255, 255, 0.5);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.6875rem;
+.need-flow {
+  position: relative;
+  height: auto;
+  margin-top: 4rem;
 }
 
-.viz-muted {
-  margin-top: 0.4rem;
-  color: rgba(255, 255, 255, 0.7);
-  overflow-wrap: anywhere;
+.need-flow :deep(.hdf) {
+  position: relative;
+  left: auto;
+  top: auto;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  transform: none;
 }
 
-.viz-ok {
-  margin-top: 1rem;
-  color: #b79bff;
-}
+@media (min-width: 1024px) {
+  .need-flow {
+    height: 34rem;
+  }
 
-.viz-bytes,
-.viz-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.6rem;
-}
-
-.viz-bytes span,
-.viz-row {
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 0.4rem;
-  padding: 0.35rem 0.55rem;
-}
-
-.viz-row {
-  justify-content: space-between;
-  margin-top: 0.75rem;
+  .need-flow :deep(.hdf) {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(100%, 72rem);
+    transform: translate(-50%, -50%);
+  }
 }
 
 .compat-bleed {
@@ -812,6 +857,12 @@ onUnmounted(() => {
   align-items: center;
   gap: 3.5rem;
   animation: ticker 40s linear infinite;
+  animation-play-state: paused;
+  will-change: transform;
+}
+
+.ticker.is-live .ticker-track {
+  animation-play-state: running;
 }
 
 .cta-art {
