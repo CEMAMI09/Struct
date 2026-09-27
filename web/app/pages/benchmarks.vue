@@ -164,27 +164,27 @@ useSeoMeta({
   font-weight: 600;
   letter-spacing: -0.03em;
   line-height: 1.15;
-  color: #f4f5f7;
+  color: var(--struct-text);
 }
 
 .method-lede {
   margin-top: 1rem;
   font-size: 1.125rem;
   line-height: 1.7;
-  color: #b4bcc9;
+  color: var(--struct-text-secondary);
 }
 
 .method-section {
   margin-top: 2.5rem;
   padding-top: 2rem;
-  border-top: 1px solid #2a2f3a;
+  border-top: 1px solid var(--struct-border);
 }
 
 .method-section h2 {
   font-size: 1.15rem;
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: #f4f5f7;
+  color: var(--struct-text);
 }
 
 .method-section p,
@@ -192,7 +192,7 @@ useSeoMeta({
   margin-top: 0.75rem;
   font-size: 1.0625rem;
   line-height: 1.7;
-  color: #b4bcc9;
+  color: var(--struct-text-secondary);
 }
 
 .method-section ul {
@@ -202,27 +202,27 @@ useSeoMeta({
 
 .method-section strong {
   font-weight: 600;
-  color: #e8eaef;
+  color: var(--struct-text);
 }
 
 .method-pre {
   margin-top: 0.85rem;
   overflow-x: auto;
-  border: 1px solid #2a2f3a;
+  border: 1px solid var(--struct-border);
   border-radius: 10px;
-  background: #111319;
+  background: var(--struct-inset);
   padding: 0.9rem 1rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11px;
   line-height: 1.55;
-  color: #b79bff;
+  color: var(--struct-info);
   white-space: pre-wrap;
 }
 
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.85em;
-  color: #a8b2c4;
+  color: var(--struct-text-secondary);
 }
 
 .todo {
@@ -230,7 +230,7 @@ useSeoMeta({
   border-radius: 10px;
   background: rgba(86, 23, 252, 0.05);
   padding: 0.85rem 1rem;
-  color: #a8b2c4;
+  color: var(--struct-text-secondary);
 }
 
 .label {
@@ -238,7 +238,7 @@ useSeoMeta({
   font-size: 10px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #8b93a7;
+  color: var(--struct-muted);
 }
 
 .nav-logo {
@@ -250,10 +250,10 @@ useSeoMeta({
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #2a2f3a;
+  border: 1px solid var(--struct-border);
   border-radius: 8px;
   padding: 0.45rem 0.85rem;
-  color: #e8eaef;
+  color: var(--struct-text);
   text-decoration: none;
 }
 

@@ -21,7 +21,7 @@
   justify-content: center;
   padding: 2rem 1rem;
   box-sizing: border-box;
-  background: #000;
+  background: var(--struct-bg);
 }
 
 .auth-shell-inner {
@@ -40,10 +40,10 @@
   width: 100%;
   min-height: 44px;
   padding: 0.65rem 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--struct-border);
   border-radius: 12px;
   background: transparent;
-  color: #e8eaef;
+  color: var(--struct-text);
   font-size: 0.875rem;
   line-height: 1.4;
   outline: none;
@@ -53,11 +53,11 @@
 }
 
 .auth-field:hover {
-  border-color: rgba(255, 255, 255, 0.16);
+  border-color: var(--struct-border-strong);
 }
 
 .auth-field:focus {
-  border-color: #b79bff;
+  border-color: var(--struct-info);
   box-shadow: 0 0 0 3px rgba(86, 23, 252, 0.16);
 }
 </style>

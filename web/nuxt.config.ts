@@ -73,6 +73,14 @@ export default defineNuxtConfig({
         },
         { name: 'theme-color', content: '#5617fc' },
       ],
+      script: [
+        {
+          innerHTML:
+            "(function(){try{var m=document.cookie.match(/(?:^|; )struct-theme=(dark|light)/);var t=m&&m[1];if(!t){var s=localStorage.getItem('struct-theme');if(s==='light'||s==='dark')t=s}if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);if(t==='light'){var meta=document.querySelector('meta[name=\"theme-color\"]');if(meta)meta.setAttribute('content','#f5f6f8')}}catch(e){}})();",
+          type: 'text/javascript',
+          tagPosition: 'head',
+        },
+      ],
       link: [
         { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32x32.png' },
         { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16x16.png' },

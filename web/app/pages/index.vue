@@ -8,7 +8,8 @@
       >
         <div class="landing-float-bar">
           <a href="#home" class="float-brand" aria-label="Struct home" @click.prevent="scrollToSection('home')">
-            <img src="/struct-icon.svg" alt="" width="40" height="40" />
+            <img class="logo-for-dark" src="/struct-icon.svg" alt="" width="40" height="40" />
+            <img class="logo-for-light" src="/3.svg" alt="" width="40" height="40" />
           </a>
           <nav class="float-links" aria-label="Sections">
             <a

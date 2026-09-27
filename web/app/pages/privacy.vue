@@ -75,7 +75,8 @@
       <h2>Cookies and local storage</h2>
       <p>
         We store a session so you stay signed in. The dashboard also keeps a few UI preferences in
-        the browser, such as whether the sidebar is collapsed. We do not use advertising cookies.
+        the browser, such as whether the sidebar is collapsed and which color mode you chose. We do
+        not use advertising cookies.
       </p>
     </section>
 

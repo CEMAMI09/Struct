@@ -54,7 +54,7 @@
           </div>
           <div class="hdf-hub-core">
             <img
-              src="/lightmodestructicon.svg"
+              src="/3.svg"
               alt=""
               class="hdf-hub-logo"
               width="48"

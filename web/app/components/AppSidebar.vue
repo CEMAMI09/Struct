@@ -9,7 +9,8 @@
     <div class="app-side-brand">
       <NuxtLink to="/dashboard" class="brand-link" aria-label="Struct" @click="emit('close')">
         <span class="brand-swap">
-          <img class="brand-full" src="/structdarkmode.svg" alt="" />
+          <img class="brand-full logo-for-dark" src="/structdarkmode.svg" alt="" />
+          <img class="brand-full logo-for-light" src="/2.svg" alt="" />
         </span>
       </NuxtLink>
       <button
@@ -149,8 +150,8 @@ function isActive(path: string) {
   display: flex;
   flex-shrink: 0;
   flex-direction: column;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  background: #000;
+  border-right: 1px solid var(--struct-border);
+  background: var(--struct-bg);
   transition: width 0.28s ease, transform 0.28s ease;
 }
 
@@ -169,7 +170,7 @@ function isActive(path: string) {
   display: flex;
   height: 3.5rem;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--struct-border);
   padding: 0 0.85rem;
 }
 
@@ -220,7 +221,7 @@ function isActive(path: string) {
 }
 
 .app-nav-group + .app-nav-group {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--struct-border);
   padding-top: 0.45rem;
 }
 
@@ -230,7 +231,7 @@ function isActive(path: string) {
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #9aa3b2;
+  color: var(--struct-muted);
 }
 
 .app-nav-link {
@@ -240,18 +241,18 @@ function isActive(path: string) {
   gap: 0.55rem;
   border-radius: 8px;
   font-size: 0.875rem;
-  color: #9aa3b2;
+  color: var(--struct-muted);
   transition: background 0.12s ease, color 0.12s ease;
 }
 
 .app-nav-link:hover {
-  background: rgba(255, 255, 255, 0.04);
-  color: #e8eaef;
+  background: var(--struct-hover);
+  color: var(--struct-text);
 }
 
 .app-nav-link.is-active {
-  background: rgba(255, 255, 255, 0.06);
-  color: #e8eaef;
+  background: var(--struct-selected);
+  color: var(--struct-text);
 }
 
 .app-nav-icon {
@@ -269,7 +270,7 @@ function isActive(path: string) {
 
 .app-side-foot {
   display: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--struct-border);
 }
 
 .app-side-collapse {
@@ -282,13 +283,13 @@ function isActive(path: string) {
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #9aa3b2;
+  color: var(--struct-muted);
   font-size: 0.75rem;
 }
 
 .app-side-collapse:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #e8eaef;
+  background: var(--struct-hover);
+  color: var(--struct-text);
 }
 
 @media (min-width: 768px) {

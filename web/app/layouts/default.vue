@@ -241,10 +241,10 @@ async function signOut() {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem 0.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--struct-border);
   padding: 0.4rem max(0.75rem, env(safe-area-inset-right)) 0.4rem max(0.75rem, env(safe-area-inset-left));
   padding-top: max(0.4rem, env(safe-area-inset-top));
-  background: #000;
+  background: var(--struct-bg);
 }
 
 @media (min-width: 768px) {
@@ -258,11 +258,11 @@ async function signOut() {
   min-width: 0;
   align-items: center;
   gap: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--struct-border);
   border-radius: 12px;
   padding: 0.3rem 0.55rem 0.3rem 0.7rem;
   font-size: 0.75rem;
-  color: #e8eaef;
+  color: var(--struct-text);
   transition: border-color 0.15s ease;
 }
 
@@ -273,30 +273,30 @@ async function signOut() {
 }
 
 .app-org:hover {
-  border-color: rgba(255, 255, 255, 0.16);
+  border-color: var(--struct-border-strong);
 }
 
 .app-org-role {
   flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--struct-border);
   border-radius: 4px;
   padding: 0.1rem 0.4rem;
   font-size: 0.65rem;
   text-transform: capitalize;
-  color: #9aa3b2;
+  color: var(--struct-muted);
 }
 
 .app-org-role.is-muted {
-  color: #9aa3b2;
+  color: var(--struct-muted);
 }
 
 .app-org-select {
   max-width: min(14rem, 42vw);
   min-height: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--struct-border);
   border-radius: 12px;
-  background: #000;
-  color: #e8eaef;
+  background: var(--struct-bg);
+  color: var(--struct-text);
   padding: 0.2rem 0.45rem;
   font-size: 0.75rem;
 }

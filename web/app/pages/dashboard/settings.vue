@@ -212,6 +212,40 @@
       </div>
     </section>
 
+    <!-- Appearance -->
+    <section v-else-if="activeTab === 'appearance'" class="space-y-4">
+      <div class="card p-5">
+        <p class="label">Color mode</p>
+        <p class="mt-1 text-xs text-[#8B93A7]">
+          Dark or light. Saved in this browser and used across the site.
+        </p>
+        <div class="mt-4 grid max-w-lg grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Color mode">
+          <button
+            type="button"
+            role="radio"
+            class="rounded-xl border px-4 py-4 text-left transition"
+            :aria-checked="mode === 'dark'"
+            :class="mode === 'dark' ? 'border-[#5617fc] bg-[#5617fc]/10' : 'border-[#2A2F3A]'"
+            @click="setMode('dark')"
+          >
+            <span class="block text-sm font-semibold text-[#E8EAEF]">Dark</span>
+            <span class="mt-1 block text-xs text-[#8B93A7]">Black surfaces and light text</span>
+          </button>
+          <button
+            type="button"
+            role="radio"
+            class="rounded-xl border px-4 py-4 text-left transition"
+            :aria-checked="mode === 'light'"
+            :class="mode === 'light' ? 'border-[#5617fc] bg-[#5617fc]/10' : 'border-[#2A2F3A]'"
+            @click="setMode('light')"
+          >
+            <span class="block text-sm font-semibold text-[#E8EAEF]">Light</span>
+            <span class="mt-1 block text-xs text-[#8B93A7]">White surfaces and dark text</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
     <!-- Account -->
     <section v-else class="space-y-4">
       <div class="card p-5">
@@ -253,7 +287,7 @@ definePageMeta({ middleware: 'auth' })
 
 import type { DeviceCredentials, SubscriptionTier } from '~/types'
 
-type SettingsTab = 'billing' | 'api-keys' | 'webhooks' | 'account'
+type SettingsTab = 'billing' | 'api-keys' | 'webhooks' | 'account' | 'appearance'
 type PaidTier = Exclude<SubscriptionTier, 'free'>
 
 const route = useRoute()
@@ -314,11 +348,14 @@ const hasPaidSubscription = computed(
 )
 const showUpgradePlans = ref(false)
 
+const { mode, setMode } = useTheme()
+
 const tabs: { id: SettingsTab; name: string }[] = [
   { id: 'billing', name: 'Billing' },
   { id: 'api-keys', name: 'Credentials' },
   { id: 'webhooks', name: 'Webhooks' },
   { id: 'account', name: 'Account' },
+  { id: 'appearance', name: 'Appearance' },
 ]
 const activeTab = ref<SettingsTab>('billing')
 

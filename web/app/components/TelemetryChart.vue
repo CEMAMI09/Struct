@@ -85,6 +85,23 @@ const props = defineProps<{
   field?: string | null
 }>()
 
+const { mode } = useTheme()
+const chartInk = computed(() =>
+  mode.value === 'light'
+    ? {
+        tooltipBg: '#ffffff',
+        tooltipBorder: 'rgba(20, 22, 28, 0.12)',
+        text: '#14161c',
+        muted: '#5c6575',
+      }
+    : {
+        tooltipBg: '#101012',
+        tooltipBorder: 'rgba(255, 255, 255, 0.08)',
+        text: '#E8EAEF',
+        muted: '#8B93A7',
+      },
+)
+
 const selectedField = ref<string | null>(null)
 const savedField = ref<string | null>(readSavedField())
 const chartEl = ref<{ $el?: HTMLElement, resize: (opts?: { animation?: { duration?: number } }) => void } | null>(null)
@@ -193,9 +210,9 @@ const chartOption = computed<EChartsCoreOption>(() => {
     grid: { left: 40, right: 16, top: 24, bottom: 28 },
     tooltip: {
       trigger: 'axis',
-      backgroundColor: '#101012',
-      borderColor: 'rgba(255, 255, 255, 0.08)',
-      textStyle: { color: '#E8EAEF', fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11 },
+      backgroundColor: chartInk.value.tooltipBg,
+      borderColor: chartInk.value.tooltipBorder,
+      textStyle: { color: chartInk.value.text, fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11 },
       formatter: (params: unknown) => {
         const point = (Array.isArray(params) ? params[0] : params) as {
           dataIndex?: number
@@ -214,14 +231,14 @@ const chartOption = computed<EChartsCoreOption>(() => {
       data: times,
       axisLine: { show: false },
       axisTick: { show: false },
-      axisLabel: { color: '#8B93A7', fontSize: 10, fontFamily: 'Figtree, ui-sans-serif, sans-serif' },
+      axisLabel: { color: chartInk.value.muted, fontSize: 10, fontFamily: 'Figtree, ui-sans-serif, sans-serif' },
     },
     yAxis: {
       type: 'value',
       axisLine: { show: false },
       axisTick: { show: false },
       splitLine: { show: false },
-      axisLabel: { color: '#8B93A7', fontSize: 10, fontFamily: 'Figtree, ui-sans-serif, sans-serif' },
+      axisLabel: { color: chartInk.value.muted, fontSize: 10, fontFamily: 'Figtree, ui-sans-serif, sans-serif' },
     },
     series: [
       {

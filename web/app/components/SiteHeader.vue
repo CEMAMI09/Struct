@@ -82,7 +82,7 @@ onUnmounted(() => window.removeEventListener('resize', onResize))
   height: 3.5rem;
   padding: 0 max(1rem, env(safe-area-inset-right)) 0 max(1rem, env(safe-area-inset-left));
   border-bottom: 1px solid var(--struct-border);
-  background: rgba(15, 17, 21, 0.92);
+  background: var(--struct-header);
 }
 
 .site-brand {
