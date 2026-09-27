@@ -25,6 +25,10 @@ export default defineNuxtConfig({
   },
 
   supabase: {
+    // Prerender calls the Supabase client on every public page. Without a URL
+    // and key at build time that client throws and Nitro records a 500.
+    url: process.env.NUXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || 'http://127.0.0.1:54321',
+    key: process.env.NUXT_PUBLIC_SUPABASE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY || 'public-anon-key',
     redirect: false,
     redirectOptions: {
       login: '/login',
@@ -51,9 +55,6 @@ export default defineNuxtConfig({
     '/privacy': { prerender: true },
     '/terms': { prerender: true },
     '/confirm': { ssr: false },
-    '/api/stripe/webhook': {
-      bodyParser: false,
-    },
   },
 
   app: {
