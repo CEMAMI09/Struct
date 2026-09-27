@@ -2,7 +2,7 @@
   <div class="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 sm:items-center">
     <div
       ref="dialogEl"
-      class="relative w-full max-w-lg rounded-xl border border-white/10 bg-[#101012] p-5 shadow-xl outline-none"
+      class="relative max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-xl border border-white/10 bg-[#101012] p-5 shadow-xl outline-none"
       role="dialog"
       aria-modal="true"
       aria-labelledby="device-creds-title"
@@ -57,6 +57,7 @@
       </div>
 
       <p class="sr-only" aria-live="polite">{{ copyStatus }}</p>
+      <p v-if="copyError" class="mt-3 text-sm text-red-300" role="alert">{{ copyError }}</p>
       <p v-if="closeHint" class="mt-3 text-sm text-[#E6C27A]" role="status">{{ closeHint }}</p>
 
       <label class="mt-4 flex items-start gap-2 text-sm text-[#E8EAEF]">
@@ -93,6 +94,7 @@ const copied = ref('')
 const acknowledged = ref(false)
 const closeHint = ref('')
 const copyStatus = ref('')
+const copyError = ref('')
 let copyTimer: ReturnType<typeof setTimeout> | null = null
 
 const { dialogEl, onKeydown } = useDialogFocus({
@@ -107,6 +109,7 @@ function onDialogKeydown(event: KeyboardEvent) {
 }
 
 function markCopied(which: string) {
+  copyError.value = ''
   copied.value = which
   copyStatus.value = which === 'both' ? 'Copied key ID and API secret' : 'Copied'
   if (copyTimer) clearTimeout(copyTimer)
@@ -116,14 +119,17 @@ function markCopied(which: string) {
 }
 
 async function copy(text: string, which: string) {
-  await navigator.clipboard.writeText(text)
-  markCopied(which)
+  try {
+    await navigator.clipboard.writeText(text)
+    markCopied(which)
+  } catch {
+    copyError.value = 'Clipboard access failed. Select the value in its field and copy it manually.'
+  }
 }
 
 async function copyBoth() {
   const text = `Key ID: ${props.credentials.keyId}\nAPI Secret: ${props.credentials.apiSecret}`
-  await navigator.clipboard.writeText(text)
-  markCopied('both')
+  await copy(text, 'both')
 }
 
 function download() {
@@ -149,8 +155,10 @@ function download() {
   const a = document.createElement('a')
   a.href = url
   a.download = `struct-${name}-credentials.txt`
+  document.body.appendChild(a)
   a.click()
-  URL.revokeObjectURL(url)
+  a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 function onDismiss() {

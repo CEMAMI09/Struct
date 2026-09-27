@@ -96,6 +96,19 @@ export interface DeviceCredentials {
   apiSecret: string
 }
 
+export interface BulkDeviceCredential extends DeviceCredentials {
+  deviceId: string
+  name: string
+}
+
+export interface BulkDeviceImportResult {
+  importId: string
+  devices: Device[]
+  alreadyCompleted?: boolean
+  credentialsRecovered?: boolean
+  credentials: BulkDeviceCredential[]
+}
+
 export interface BulkDeviceInput {
   name: string
   mac_address: string

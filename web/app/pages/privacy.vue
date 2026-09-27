@@ -2,7 +2,7 @@
   <div>
     <p class="doc-label">Legal</p>
     <h1 class="doc-title">Privacy Policy</h1>
-    <p class="doc-updated">Last updated September 9, 2026</p>
+    <p class="doc-updated">Last updated September 26, 2026</p>
     <p class="doc-lede">
       This page describes the information Struct collects when you use the website, dashboard, and
       device gateway, and how that information is used.
@@ -63,8 +63,11 @@
       <h2>Retention</h2>
       <p>
         Telemetry retention follows the plan shown on Pricing: 24 hours on Free, 7 days on Flexible,
-        and 30 days on Pro. Scale and custom contracts can keep data longer. Account, organization,
-        device, and schema records stay until you delete them or close the workspace.
+        and 30 days on Pro and Scale. This window also applies to delivery payload copies and packet
+        traces. Replay nonces are removed after their security window; minimal event identities are
+        kept for device deduplication. Account, organization, device, schema, billing, and audit
+        records have separate lifecycles and may remain until you delete the workspace or a longer
+        operational or legal retention period ends. Custom retention requires a separate agreement.
       </p>
     </section>
 

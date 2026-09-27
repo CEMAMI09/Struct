@@ -14,6 +14,7 @@ export interface UsagePeriodRow {
   peak_paid_quantity: number
   true_up_amount_cents: number | null
   true_up_invoice_item_id: string | null
+  true_up_baseline_verified: boolean
   status: 'open' | 'invoiced' | 'void'
 }
 

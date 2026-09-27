@@ -2,6 +2,7 @@ import { serverSupabaseServiceRole } from '#supabase/server'
 import { requireOrgWriter } from '../../utils/auth'
 import { createDeviceCredentials, sanitizeDeviceForClient } from '../../utils/deviceCredentials'
 import { validateProfileSchema } from '../../utils/profileSchema'
+import { asDatabaseJson } from '../../utils/databaseJson'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{
@@ -36,7 +37,7 @@ export default defineEventHandler(async (event) => {
       name,
       device_model: deviceModel,
       firmware_version: firmwareVersion,
-      schema_definition: schemaDefinition,
+      schema_definition: asDatabaseJson(schemaDefinition),
       identity_field: identityField,
       fleet_key_id: creds.keyId,
       fleet_secret_encrypted: creds.apiSecretEncrypted,

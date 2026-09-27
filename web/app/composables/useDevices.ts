@@ -1,5 +1,6 @@
 import type {
   BulkDeviceInput,
+  BulkDeviceImportResult,
   BulkUploadQuote,
   Device,
   DeviceSchema,
@@ -8,6 +9,7 @@ import type {
   SchemaVersion,
 } from '~/types'
 import { formatMacAddress } from '#shared/bulkUpload'
+import type { Json } from '~/types/database.types'
 
 const DEVICE_FIELDS = 'id,user_id,organization_id,name,api_key,key_id,api_secret_preview,protocol_version,mac_address,last_seen,created_at,tags,encryption_enabled,profile_id,hardware_id'
 
@@ -41,6 +43,26 @@ function normalizeSchema(row: any): DeviceSchema {
     version: Number(row.version) >= 1 ? Number(row.version) : 1,
     updated_at: row.updated_at,
   }
+}
+
+function normalizeSchemaVersion(row: any): SchemaVersion {
+  return {
+    id: row.id,
+    device_id: row.device_id,
+    version: row.version,
+    schema_definition: Array.isArray(row.schema_definition) ? row.schema_definition as SchemaField[] : [],
+    created_at: row.created_at,
+  }
+}
+
+function schemaDefinitionJson(definition: SchemaField[]): Json {
+  return definition.map(field => {
+    if (field.type === 'flags') {
+      return { name: field.name, type: field.type, bits: field.bits.map(bit => ({ name: bit.name, bit: bit.bit })) }
+    }
+    if (field.type === 'char') return { name: field.name, type: field.type, length: field.length }
+    return { name: field.name, type: field.type }
+  })
 }
 
 function definitionsEqual(a: SchemaField[], b: SchemaField[]) {
@@ -190,33 +212,26 @@ export function useDevices() {
     }
 
     const device = normalizeDevice(response.device)
-
-    const { data: schema, error: sErr } = await supabase
-      .from('schemas')
-      .select('*')
-      .eq('device_id', device.id)
-      .maybeSingle()
-
-    if (sErr) throw sErr
-
-    const { data: versionRows, error: vErr } = await supabase
-      .from('schema_versions')
-      .select('*')
-      .eq('device_id', device.id)
-      .order('version', { ascending: true })
-
-    if (vErr) throw vErr
-
     devices.value = [device, ...devices.value]
-    if (schema) {
-      schemas.value = { ...schemas.value, [device.id]: normalizeSchema(schema) }
+    // The API created the empty schema before returning the one-time secret.
+    // Do not risk losing that secret to a follow-up read or usage refresh error.
+    schemas.value = {
+      ...schemas.value,
+      [device.id]: {
+        id: '',
+        device_id: device.id,
+        organization_id,
+        schema_definition: [],
+        version: 1,
+        updated_at: new Date().toISOString(),
+      },
     }
     schemaVersions.value = {
       ...schemaVersions.value,
-      [device.id]: (versionRows || []) as SchemaVersion[],
+      [device.id]: [],
     }
 
-    await fetchMembershipsFromOrg()
+    void fetchMembershipsFromOrg().catch(() => {})
     return { device, credentials: response.credentials ?? null }
   }
 
@@ -242,13 +257,9 @@ export function useDevices() {
     requireWrite()
     const organization_id = requireOrgId()
 
-    let response: {
-      importId: string
-      devices: any[]
-      alreadyCompleted?: boolean
-    }
+    let response: BulkDeviceImportResult
     try {
-      response = await $fetch('/api/devices/bulk', {
+      response = await $fetch<BulkDeviceImportResult>('/api/devices/bulk', {
         method: 'POST',
         body: { orgId: organization_id, importId },
       })
@@ -262,7 +273,8 @@ export function useDevices() {
 
     const created = (response.devices || []).map(normalizeDevice)
     if (created.length) {
-      devices.value = [...created, ...devices.value]
+      const createdIds = new Set(created.map(device => device.id))
+      devices.value = [...created, ...devices.value.filter(device => !createdIds.has(device.id))]
       for (const device of created) {
         schemas.value = {
           ...schemas.value,
@@ -282,8 +294,9 @@ export function useDevices() {
       }
     }
 
-    await fetchDevices()
-    await fetchMembershipsFromOrg()
+    // Return one-time secrets before any optional refresh can fail.
+    void fetchDevices({ force: true }).catch(() => {})
+    void fetchMembershipsFromOrg().catch(() => {})
     return response
   }
 
@@ -394,7 +407,7 @@ export function useDevices() {
     const expectedVersion = schemas.value[deviceId]?.version || 1
     const { data, error: err } = await supabase.rpc('publish_device_schema', {
       p_device_id: deviceId,
-      p_definition: definition,
+      p_definition: schemaDefinitionJson(definition),
       p_expected_version: expectedVersion,
     })
     if (err) throw err
@@ -403,7 +416,7 @@ export function useDevices() {
     const { data: versions, error: versionError } = await supabase.from('schema_versions')
       .select('id,device_id,version,schema_definition,created_at').eq('device_id', deviceId).order('version', { ascending: true })
     if (versionError) throw versionError
-    schemaVersions.value = { ...schemaVersions.value, [deviceId]: (versions || []) as SchemaVersion[] }
+    schemaVersions.value = { ...schemaVersions.value, [deviceId]: (versions || []).map(normalizeSchemaVersion) }
     return saved
   }
 
@@ -419,7 +432,7 @@ export function useDevices() {
       .order('version', { ascending: true })
     if (err) throw err
     if (currentOrgId.value !== orgId) return
-    schemaVersions.value = { ...schemaVersions.value, [deviceId]: (data || []) as SchemaVersion[] }
+    schemaVersions.value = { ...schemaVersions.value, [deviceId]: (data || []).map(normalizeSchemaVersion) }
   }
 
   function subscribePresence() {

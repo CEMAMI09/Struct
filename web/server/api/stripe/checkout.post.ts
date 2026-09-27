@@ -34,11 +34,12 @@ export default defineEventHandler(async (event) => {
   await requireOrgWriter(event, orgId)
 
   const config = useRuntimeConfig()
-  const priceId = getPriceIdForTier(targetTier as PaidTier, {
+  const prices = {
     flexible: config.stripePriceFlexible,
     pro: config.stripePricePro,
     scale: config.stripePriceScale,
-  })
+  }
+  const priceId = getPriceIdForTier(targetTier as PaidTier, prices)
 
   if (!priceId) {
     throw createError({
@@ -76,23 +77,28 @@ export default defineEventHandler(async (event) => {
     if (subscription.status === 'canceled' || subscription.status === 'incomplete_expired') {
       // Fall through to Checkout for a fresh subscription.
     } else {
-      const tierOrder: SubscriptionTier[] = ['free', 'flexible', 'pro', 'scale']
-      if (tierOrder.indexOf(targetTier) < tierOrder.indexOf(org.subscription_tier)) {
+      const currentItem = subscription.items.data.find((item) => item.id === org.stripe_item_id)
+      if (!currentItem) {
+        throw createError({ statusCode: 409, message: 'Billing item mismatch. Synchronize billing and retry.' })
+      }
+      const currentTier = PAID_TIERS.find((tier) => prices[tier] === currentItem.price.id)
+      if (!currentTier) {
+        throw createError({ statusCode: 409, message: 'Billing price mismatch. Contact support.' })
+      }
+      if (PAID_TIERS.indexOf(targetTier as PaidTier) < PAID_TIERS.indexOf(currentTier)) {
         throw createError({
           statusCode: 409,
           message: 'Plan downgrades need a reviewed device quantity and price. Contact support before changing tiers.',
         })
       }
-      const currentItem = subscription.items.data.find((item) => item.id === org.stripe_item_id)
-      if (!currentItem) {
-        throw createError({ statusCode: 409, message: 'Billing item mismatch. Synchronize billing and retry.' })
+      if (targetTier === currentTier) {
+        throw createError({ statusCode: 409, message: 'Billing needs to be synchronized before changing plans.' })
       }
       // Keep the paid quantity on upgrades. Downgrades require a reviewed quote
       // because carrying this quantity into a higher unit price is surprising.
       const upgradeQuantity = Math.max(
         targetQuantity,
         TIER_CHECKOUT_QUANTITY[targetTier as PaidTier],
-        org.stripe_quantity,
         currentItem.quantity ?? 0,
       )
       const updated = await stripe.subscriptions.update(org.stripe_subscription_id, {

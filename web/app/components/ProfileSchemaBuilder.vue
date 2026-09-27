@@ -122,7 +122,7 @@
               placeholder="flag_name"
               :disabled="disabled"
               @input="
-                patchFlag(idx, bIdx, {
+                patchFlag(idx, Number(bIdx), {
                   name: ($event.target as HTMLInputElement).value,
                 })
               "
@@ -135,7 +135,7 @@
               class="input mono text-xs"
               :disabled="disabled"
               @input="
-                patchFlag(idx, bIdx, {
+                patchFlag(idx, Number(bIdx), {
                   bit: Number(($event.target as HTMLInputElement).value),
                 })
               "
@@ -144,7 +144,7 @@
               type="button"
               class="btn-ghost min-h-10 text-[#8B93A7] hover:text-red-400 sm:min-h-0 sm:px-0"
               :disabled="disabled"
-              @click="removeFlagBit(idx, bIdx)"
+              @click="removeFlagBit(idx, Number(bIdx))"
             >
               ×
             </button>

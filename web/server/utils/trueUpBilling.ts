@@ -24,20 +24,49 @@ export async function processClosedUsagePeriods(
   invoiceId: string,
   asOf = new Date(),
 ) {
+  const dueBefore = asOf.toISOString()
+  // Historical rows may have only the tier floor, not the quantity already
+  // paid to Stripe. Keep them open for manual reconciliation, while allowing
+  // independently verified months to reach this draft invoice. Read these
+  // first so a concurrent manual verification appears in the verified scan
+  // or remains visible for retry, never silently falling between two scans.
+  const { data: unverified, error: unverifiedError } = await supabase
+    .from('organization_device_usage_periods')
+    .select('id, stripe_period_start, stripe_period_end')
+    .eq('organization_id', orgId)
+    .eq('status', 'open')
+    .eq('true_up_baseline_verified', false)
+    .lte('stripe_period_end', dueBefore)
+    .order('stripe_period_end', { ascending: true })
+    .limit(20)
+  dbError(unverifiedError)
+
   const { data: periods, error } = await supabase
     .from('organization_device_usage_periods')
     .select('*')
     .eq('organization_id', orgId)
     .eq('status', 'open')
-    .lte('stripe_period_end', asOf.toISOString())
+    .eq('true_up_baseline_verified', true)
+    .lte('stripe_period_end', dueBefore)
     .order('stripe_period_end', { ascending: true })
-    .limit(100)
+    .limit(101)
   dbError(error)
+
+  const unresolvedIds = (unverified || []).map((row) => row.id)
+  if (unresolvedIds.length) {
+    console.error('[stripe true-up] USAGE_BASELINE_RECONCILIATION_REQUIRED', {
+      orgId, invoiceId, periodIds: unresolvedIds,
+      action: 'Verify historical paid quantities before marking these usage periods billable.',
+    })
+  }
+
+  const duePeriods = (periods || []) as UsagePeriodRow[]
+  const batch = duePeriods.slice(0, 100)
 
   // Older versions also created subscription-date rows. A calendar row and a
   // subscription row can represent the same devices. Never charge both by
   // guessing which is authoritative; flag the overlap for reconciliation.
-  for (const period of (periods || []) as UsagePeriodRow[]) {
+  for (const period of batch) {
     const { data: overlap, error: overlapError } = await supabase
       .from('organization_device_usage_periods')
       .select('id')
@@ -56,11 +85,23 @@ export async function processClosedUsagePeriods(
     }
   }
 
-  for (const period of (periods || []) as UsagePeriodRow[]) {
+  for (const period of batch) {
     await processPeriodTrueUp(supabase, stripe, period, invoiceId)
   }
 
-  return periods?.length || 0
+  // Stripe retries a non-2xx invoice.created webhook. Process a bounded batch
+  // per delivery, then require another delivery until every due period closes.
+  if (unresolvedIds.length) {
+    throw createError({
+      statusCode: 503,
+      message: `USAGE_BASELINE_RECONCILIATION_REQUIRED for organization ${orgId}, invoice ${invoiceId}, periods ${unresolvedIds.join(', ')}`,
+    })
+  }
+  if (duePeriods.length > batch.length) {
+    throw createError({ statusCode: 503, message: 'More usage periods require true-up processing' })
+  }
+
+  return batch.length
 }
 
 export async function processPeriodTrueUp(
@@ -130,6 +171,9 @@ export async function processPeriodTrueUp(
       new Date(claimed.stripe_period_end),
     )
     if (existing) {
+      if (existing.amount !== amountCents || existing.currency !== 'usd') {
+        throw createError({ statusCode: 503, message: 'Prior true-up amount needs billing reconciliation' })
+      }
       const existingInvoiceId = typeof existing.invoice === 'string'
         ? existing.invoice : existing.invoice?.id || null
       if (!existingInvoiceId) {

@@ -1,6 +1,11 @@
 import type { Destination, RoutingRule, WebhookEventType } from '~/types'
+import type { Json } from '~/types/database.types'
 
 const DESTINATION_FIELDS = 'id,user_id,organization_id,name,device_id,routing_rule,event_types,enabled,created_at'
+
+function routingRuleJson(rule: RoutingRule | null): Json {
+  return rule ? { key: rule.key, operator: rule.operator, value: rule.value } : null
+}
 
 function normalizeDestination(row: any): Destination {
   return {
@@ -124,7 +129,7 @@ export function useDestinations() {
         name: input.name,
         url: input.url,
         device_id: input.device_id || null,
-        routing_rule: input.routing_rule || null,
+        routing_rule: routingRuleJson(input.routing_rule || null),
         event_types: input.event_types?.length
           ? input.event_types
           : ['telemetry.received'],
@@ -183,7 +188,7 @@ export function useDestinations() {
     const organizationId = requireOrgId()
     const { data, error: err } = await supabase
       .from('destinations')
-      .update({ routing_rule: routingRule })
+      .update({ routing_rule: routingRuleJson(routingRule) })
       .eq('id', id)
       .eq('organization_id', organizationId)
       .select(DESTINATION_FIELDS)

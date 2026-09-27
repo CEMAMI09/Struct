@@ -1,8 +1,8 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 import { requireOrgWriter } from '../../../utils/auth'
 import type { BulkImportRow } from '../../../utils/bulkDevices'
-import { createDeviceCredentials } from '../../../utils/deviceCredentials'
-import { recordCapacityUsage, resolveCapacityPlan } from '../../../utils/deviceCapacity'
+import { createDeviceCredentials, recoverDeviceCredentials, sanitizeDeviceForClient } from '../../../utils/deviceCredentials'
+import { resolveCapacityPlan } from '../../../utils/deviceCapacity'
 import type { ProfileBulkDeviceInput } from '#shared/profileBulkUpload'
 
 export default defineEventHandler(async (event) => {
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  await requireOrgWriter(event, orgId)
+  const { user } = await requireOrgWriter(event, orgId)
   const supabase = await serverSupabaseServiceRole(event)
 
   const { data: profile, error: profileError } = await supabase
@@ -54,7 +54,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Provisioning quote not found' })
   }
 
-  const quote = existing as BulkImportRow
+  const quote = existing as unknown as BulkImportRow
 
   if (quote.status === 'completed') {
     const { data: devices, error: devicesError } = await supabase
@@ -66,9 +66,13 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 500, message: devicesError.message })
     }
 
+    const canRecover = quote.user_id === user.id && new Date(quote.expires_at).getTime() > Date.now()
+    const credentials = canRecover ? recoverDeviceCredentials(devices || []) : []
     return {
       importId: quote.id,
-      devices: devices || [],
+      devices: (devices || []).map(sanitizeDeviceForClient),
+      credentials,
+      credentialsRecovered: credentials.length > 0,
       alreadyCompleted: true,
     }
   }
@@ -102,7 +106,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const quotedDevices = (quote.devices || []) as Array<ProfileBulkDeviceInput & { profile_id?: string }>
+  const quotedDevices = (quote.devices || []) as unknown as Array<ProfileBulkDeviceInput & { profile_id?: string }>
   if (quotedDevices.some((d) => d.profile_id && d.profile_id !== profileId)) {
     throw createError({
       statusCode: 400,
@@ -147,18 +151,16 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const enriched = quotedDevices.map((d) => {
-      const creds = createDeviceCredentials()
-      return {
-        name: d.name,
-        hardware_id: d.hardware_id,
-        mac_address: d.mac_address || null,
-        tags: d.tags || {},
-        key_id: creds.keyId,
-        api_secret_encrypted: creds.apiSecretEncrypted,
-        api_secret_preview: creds.apiSecretPreview,
-      }
-    })
+    const generated = quotedDevices.map((device) => ({ device, creds: createDeviceCredentials() }))
+    const enriched = generated.map(({ device: d, creds }) => ({
+      name: d.name,
+      hardware_id: d.hardware_id,
+      mac_address: d.mac_address || null,
+      tags: d.tags || {},
+      key_id: creds.keyId,
+      api_secret_encrypted: creds.apiSecretEncrypted,
+      api_secret_preview: creds.apiSecretPreview,
+    }))
 
     const { data: inserted, error: rpcError } = await supabase.rpc(
       'bulk_provision_profile_devices',
@@ -188,10 +190,15 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 500, message })
     }
 
-    await recordCapacityUsage(supabase, orgId, plan.projectedCount)
-
     const created = (inserted || []) as Array<Record<string, unknown>>
     const createdIds = created.map((d) => String(d.id))
+    const createdIdByKey = new Map(created.map((d) => [String(d.key_id), String(d.id)]))
+    const credentials = generated.map(({ device, creds }) => ({
+      deviceId: createdIdByKey.get(creds.keyId) || '',
+      name: device.name,
+      keyId: creds.keyId,
+      apiSecret: creds.apiSecret,
+    }))
 
     await supabase
       .from('bulk_device_imports')
@@ -205,7 +212,8 @@ export default defineEventHandler(async (event) => {
 
     return {
       importId,
-      devices: created,
+      devices: created.map(sanitizeDeviceForClient),
+      credentials,
       alreadyCompleted: false,
       peakPaidDelta: plan.overageDelta,
       projectedDeviceCount: plan.projectedCount,

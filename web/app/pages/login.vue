@@ -32,6 +32,9 @@
           autocomplete="current-password"
           @keydown.enter.prevent="onSubmit"
         />
+        <NuxtLink to="/forgot-password" class="mt-2 block text-right text-xs text-[#b79bff] hover:underline">
+          Forgot password?
+        </NuxtLink>
       </div>
       <p v-if="error" class="text-sm text-red-300" role="alert">{{ error }}</p>
       <button type="submit" class="btn-primary w-full" :disabled="loading">

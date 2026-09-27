@@ -72,7 +72,15 @@
       @close="clearPendingCredentials"
     />
 
-    <div v-if="!filtered.length" class="card p-8 text-center text-sm text-[#9AA3B2]">
+    <div v-if="createdDeviceId && !pendingCredentials" class="card mb-4 flex flex-wrap items-center justify-between gap-3 p-4" role="status">
+      <p class="text-sm text-[#E8EAEF]">Device created. Define its packed schema before sending an event.</p>
+      <NuxtLink :to="`/dashboard/schema?device=${encodeURIComponent(createdDeviceId)}`" class="btn-primary text-xs">
+        Define schema
+      </NuxtLink>
+    </div>
+
+    <p v-if="loading && !devices.length" class="card p-8 text-center text-sm text-[#9AA3B2]">Loading devices…</p>
+    <div v-else-if="!filtered.length" class="card p-8 text-center text-sm text-[#9AA3B2]">
       {{ devices.length ? 'No devices match this filter.' : 'No devices yet. Create one to get a key ID and API secret.' }}
     </div>
 
@@ -234,6 +242,7 @@ import type { Device, DeviceCredentials } from '~/types'
 
 const {
   devices,
+  loading,
   error,
   fetchDevices,
   createDevice,
@@ -243,6 +252,7 @@ const {
 } = useDevices()
 const { sendCommand } = useDownlinks()
 const { canWrite, deviceLimit } = useOrganization()
+const route = useRoute()
 const { hasEntitlement } = useEntitlements()
 const canUseDownlinks = computed(() => hasEntitlement('downlinks'))
 
@@ -253,6 +263,7 @@ const creating = ref(false)
 const copied = ref('')
 const pendingCredentials = ref<DeviceCredentials | null>(null)
 const pendingCredentialsName = ref('')
+const createdDeviceId = ref<string | null>(null)
 const query = ref('')
 const offlineOnly = ref(false)
 const editingId = ref<string | null>(null)
@@ -297,7 +308,10 @@ const filtered = computed(() => {
   })
 })
 
-onMounted(fetchDevices)
+onMounted(async () => {
+  await fetchDevices()
+  if (route.query.create === '1' && canWrite.value) showForm.value = true
+})
 
 async function onBulkImported() {
   await fetchDevices()
@@ -310,9 +324,11 @@ function clearPendingCredentials() {
 
 async function onCreate() {
   creating.value = true
+  error.value = null
   try {
     const name = newName.value.trim()
     const result = await createDevice(name)
+    createdDeviceId.value = result.device.id
     newName.value = ''
     showForm.value = false
     if (result.credentials) {

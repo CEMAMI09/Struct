@@ -14,6 +14,7 @@ const ids = {
   device: '20000000-0000-0000-0000-000000000007',
   otherDevice: '20000000-0000-0000-0000-000000000008',
   destination: '20000000-0000-0000-0000-000000000009',
+  profile: '20000000-0000-0000-0000-000000000010',
 }
 
 async function run() {
@@ -36,6 +37,7 @@ async function run() {
     await db.query("insert into organization_members(organization_id,user_id,role) values($1,$2,'owner')", [ids.otherOrg, ids.outsider])
     await db.query("insert into devices(id,user_id,organization_id,name,api_key,key_id,encryption_key,api_secret_encrypted) values($1,$2,$3,'Sensor','sensor-key','sensor-key',$4,'ciphertext')", [ids.device, ids.owner, ids.org, 'ab'.repeat(32)])
     await db.query("insert into devices(id,user_id,organization_id,name,api_key,key_id) values($1,$2,$3,'Other','other-key','other-key')", [ids.otherDevice, ids.outsider, ids.otherOrg])
+    await db.query("insert into device_profiles(id,organization_id,user_id,name,fleet_key_id,fleet_secret_encrypted) values($1,$2,$3,'Fleet','0123456789abcdef','fleet-ciphertext')", [ids.profile, ids.org, ids.owner])
     await db.query("insert into destinations(id,user_id,organization_id,name,url,signing_secret) values($1,$2,$3,'Hook','https://example.com/hook?token=secret','webhook-secret')", [ids.destination, ids.owner, ids.org])
     const firstEvent = (await db.query("insert into telemetry(device_id,parsed_json) values($1,'{}') returning id", [ids.device])).rows[0]
     const firstDelivery = (await db.query('select id from webhook_deliveries where event_id=$1', [firstEvent.id])).rows[0]
@@ -48,6 +50,10 @@ async function run() {
 
     for (const field of ['encryption_key', 'api_secret_encrypted']) {
       assert.equal(await scalar("select has_column_privilege('authenticated','public.devices',$1,'SELECT')", [field]), false)
+    }
+    assert.equal(await scalar("select has_column_privilege('authenticated','public.device_profiles','fleet_secret_encrypted','SELECT')"), false)
+    for (const privilege of ['INSERT', 'UPDATE', 'DELETE']) {
+      assert.equal(await scalar("select has_table_privilege('authenticated','public.device_profiles',$1)", [privilege]), false)
     }
     assert.equal(await scalar("select has_column_privilege('authenticated','public.destinations','signing_secret','SELECT')"), false)
     assert.equal(await scalar("select has_column_privilege('authenticated','public.destinations','url','SELECT')"), false)
@@ -76,6 +82,9 @@ async function run() {
     await assert.rejects(db.query("insert into telemetry(device_id,parsed_json) values($1,'{}')", [ids.device]), /permission denied/)
     await assert.rejects(db.query("insert into organization_members(organization_id,user_id,role) values($1,$2,'owner')", [ids.org, ids.outsider]), /permission denied/)
     await assert.rejects(db.query('select encryption_key from devices where id=$1', [ids.device]), /permission denied/)
+    await assert.rejects(db.query('select fleet_secret_encrypted from device_profiles where id=$1', [ids.profile]), /permission denied/)
+    await assert.rejects(db.query("update device_profiles set fleet_secret_encrypted='forged' where id=$1", [ids.profile]), /permission denied/)
+    await assert.rejects(db.query("insert into device_profiles(organization_id,user_id,name,fleet_key_id,fleet_secret_encrypted) values($1,$2,'Forged','fedcba9876543210','forged')", [ids.org, ids.owner]), /permission denied/)
     await assert.rejects(db.query('select signing_secret from destinations where id=$1', [ids.destination]), /permission denied/)
     await assert.rejects(db.query('select url from destinations where id=$1', [ids.destination]), /permission denied/)
     await assert.rejects(db.query('select destination_url from webhook_deliveries where id=$1', [firstDelivery.id]), /permission denied/)
@@ -102,6 +111,7 @@ async function run() {
 
     await asUser(ids.viewer)
     assert.equal((await db.query('select id,name from devices where id=$1', [ids.device])).rows.length, 1)
+    assert.equal((await db.query('select id,name,fleet_key_id,fleet_secret_preview from device_profiles where id=$1', [ids.profile])).rows.length, 1)
     assert.equal(JSON.stringify((await db.query("select previous_data,new_data from audit_logs where table_name='devices'")).rows).includes(newKey), false)
     await assert.rejects(db.query('select get_device_encryption_key($1)', [ids.device]), /Not authorized/)
     await assert.rejects(db.query('select get_destination_signing_secret($1)', [ids.destination]), /Not authorized/)

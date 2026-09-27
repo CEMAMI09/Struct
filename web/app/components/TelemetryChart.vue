@@ -65,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { graphic, use } from 'echarts/core'
+import { graphic, use, type EChartsCoreOption } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { LineChart } from 'echarts/charts'
 import {
@@ -174,7 +174,7 @@ function sampleValue(row: TelemetryRow) {
   return typeof value === 'number' ? String(value) : '—'
 }
 
-const chartOption = computed(() => {
+const chartOption = computed<EChartsCoreOption>(() => {
   const field = activeField.value
   if (!field) return {}
 

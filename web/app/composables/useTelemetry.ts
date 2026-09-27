@@ -32,7 +32,11 @@ export function useTelemetry() {
   const rowsDeviceId = useState<string | null>('telemetry-rows-device', () => null)
 
   async function fetchTelemetry(deviceId: string, limit = 50) {
-    const replace = rowsDeviceId.value !== null && rowsDeviceId.value !== deviceId
+    if ((rowsDeviceId.value && rowsDeviceId.value !== deviceId) || rows.value.some(row => row.device_id !== deviceId)) {
+      rows.value = []
+      rowsDeviceId.value = null
+    }
+    const existingIds = new Set(rows.value.filter(row => row.device_id === deviceId).map(row => row.id))
     selectedDeviceId.value = deviceId
     const generation = ++control.fetchGeneration
     const retentionStart = new Date(
@@ -40,7 +44,7 @@ export function useTelemetry() {
     ).toISOString()
     const { data, error } = await supabase
       .from('telemetry')
-      .select('*')
+      .select('id,device_id,parsed_json,timestamp')
       .eq('device_id', deviceId)
       .gte('timestamp', retentionStart)
       .order('timestamp', { ascending: false })
@@ -52,17 +56,22 @@ export function useTelemetry() {
     }
     if (generation !== control.fetchGeneration || selectedDeviceId.value !== deviceId) return
     const incoming = (data || []) as TelemetryRow[]
-    if (replace) {
-      const buffered = control.pendingLive.filter((row) => row.device_id === deviceId)
-      control.pendingLive = control.pendingLive.filter((row) => row.device_id !== deviceId)
-      rows.value = mergeRows(buffered, incoming, limit)
-    } else {
-      rows.value = mergeRows(rows.value, incoming, limit)
-    }
+    const liveSinceRequest = rows.value.filter(row =>
+      row.device_id === deviceId && !existingIds.has(row.id) && row.timestamp >= retentionStart,
+    )
+    const buffered = control.pendingLive.filter((row) => row.device_id === deviceId)
+    control.pendingLive = control.pendingLive.filter((row) => row.device_id !== deviceId)
+    // A refresh is authoritative for history. Keep only live rows that arrived
+    // during the request, so retention expiry and deletions disappear from UI.
+    rows.value = mergeRows(incoming, [...liveSinceRequest, ...buffered], limit)
     rowsDeviceId.value = deviceId
   }
 
   function subscribe(deviceId: string) {
+    if ((rowsDeviceId.value && rowsDeviceId.value !== deviceId) || rows.value.some(row => row.device_id !== deviceId)) {
+      rows.value = []
+      rowsDeviceId.value = null
+    }
     selectedDeviceId.value = deviceId
     const generation = ++control.subscriptionGeneration
     let active = true
@@ -113,6 +122,17 @@ export function useTelemetry() {
     }
   }
 
+  function clearTelemetry() {
+    control.fetchGeneration++
+    control.subscriptionGeneration++
+    control.pendingLive = []
+    rows.value = []
+    rowsDeviceId.value = null
+    selectedDeviceId.value = null
+    live.value = false
+    connectionStatus.value = 'unavailable'
+  }
+
   return {
     rows,
     live,
@@ -120,5 +140,6 @@ export function useTelemetry() {
     selectedDeviceId,
     fetchTelemetry,
     subscribe,
+    clearTelemetry,
   }
 }

@@ -29,7 +29,7 @@
   max-width: 24rem;
 }
 
-.auth-shell-inner :deep(.struct-logo) {
+.auth-shell-inner .struct-logo {
   width: min(180px, 70vw);
   max-width: 100%;
   height: auto;

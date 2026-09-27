@@ -195,22 +195,22 @@ function setAnchor(el: Element | ComponentPublicInstance | null, index: number) 
 }
 
 function waypointAt(p: number) {
-  if (p <= KEYS[0][0]) return KEYS[0][1]
+  if (p <= KEYS[0]![0]) return KEYS[0]![1]
   for (let i = 1; i < KEYS.length; i++) {
-    if (p <= KEYS[i][0]) {
-      const [p0, w0] = KEYS[i - 1]
-      const [p1, w1] = KEYS[i]
+    if (p <= KEYS[i]![0]) {
+      const [p0, w0] = KEYS[i - 1]!
+      const [p1, w1] = KEYS[i]!
       return w0 + (w1 - w0) * ((p - p0) / (p1 - p0))
     }
   }
-  return KEYS[KEYS.length - 1][1]
+  return KEYS[KEYS.length - 1]![1]
 }
 
 function pointAlong(pts: Pt[], w: number) {
   const segLens: number[] = []
   let total = 0
   for (let i = 1; i < pts.length; i++) {
-    const d = Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y)
+    const d = Math.hypot(pts[i]!.x - pts[i - 1]!.x, pts[i]!.y - pts[i - 1]!.y)
     segLens.push(d)
     total += d
   }
@@ -219,11 +219,11 @@ function pointAlong(pts: Pt[], w: number) {
   const i = Math.min(pts.length - 2, Math.floor(idx))
   const atEnd = idx >= pts.length - 1
   const t = atEnd ? 1 : idx - i
-  const a = pts[i]
-  const b = pts[i + 1]
+  const a = pts[i]!
+  const b = pts[i + 1]!
   let length = 0
-  for (let s = 0; s < i; s++) length += segLens[s]
-  length += segLens[i] * t
+  for (let s = 0; s < i; s++) length += segLens[s]!
+  length += segLens[i]! * t
   return {
     x: a.x + (b.x - a.x) * t,
     y: a.y + (b.y - a.y) * t,
@@ -247,7 +247,7 @@ function buildPoints() {
       y: r.top + r.height / 2 - box.top,
     }
   })
-  const [a1, a2, a3, a4] = locals
+  const [a1, a2, a3, a4] = locals as [Pt, Pt, Pt, Pt]
   const s = (y: number): Pt => ({ x: spineX, y })
   points.value = [
     { x: a1.x - 36, y: a1.y },
@@ -296,7 +296,7 @@ const pulseOn = computed(() => scrubbing.value && progress.value > 0.02 && progr
 function revealFor(index: number) {
   const w = waypointAt(progress.value)
   const gates = [0.35, 3.65, 6.65, 9.65]
-  return clamp((w - gates[index]) / 0.45)
+  return clamp((w - gates[index]!) / 0.45)
 }
 
 function cardStyle(index: number) {
@@ -398,22 +398,22 @@ const graphTip = computed(() => {
   let total = 0
   const lens: number[] = []
   for (let i = 1; i < GRAPH.length; i++) {
-    const d = Math.hypot(GRAPH[i][0] - GRAPH[i - 1][0], GRAPH[i][1] - GRAPH[i - 1][1])
+    const d = Math.hypot(GRAPH[i]![0] - GRAPH[i - 1]![0], GRAPH[i]![1] - GRAPH[i - 1]![1])
     lens.push(d)
     total += d
   }
   let remain = t * total
   for (let i = 0; i < lens.length; i++) {
-    if (remain <= lens[i] || i === lens.length - 1) {
-      const u = lens[i] === 0 ? 0 : clamp(remain / lens[i])
+    if (remain <= lens[i]! || i === lens.length - 1) {
+      const u = lens[i] === 0 ? 0 : clamp(remain / lens[i]!)
       return {
-        x: GRAPH[i][0] + (GRAPH[i + 1][0] - GRAPH[i][0]) * u,
-        y: GRAPH[i][1] + (GRAPH[i + 1][1] - GRAPH[i][1]) * u,
+        x: GRAPH[i]![0] + (GRAPH[i + 1]![0] - GRAPH[i]![0]) * u,
+        y: GRAPH[i]![1] + (GRAPH[i + 1]![1] - GRAPH[i]![1]) * u,
       }
     }
-    remain -= lens[i]
+    remain -= lens[i]!
   }
-  const last = GRAPH[GRAPH.length - 1]
+  const last = GRAPH[GRAPH.length - 1]!
   return { x: last[0], y: last[1] }
 })
 

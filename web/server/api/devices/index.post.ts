@@ -4,7 +4,7 @@ import {
   createDeviceCredentials,
   sanitizeDeviceForClient,
 } from '../../utils/deviceCredentials'
-import { recordCapacityUsage, resolveCapacityPlan } from '../../utils/deviceCapacity'
+import { resolveCapacityPlan } from '../../utils/deviceCapacity'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{
@@ -26,52 +26,30 @@ export default defineEventHandler(async (event) => {
   const plan = await resolveCapacityPlan(serviceSupabase, orgId, 1)
   const creds = createDeviceCredentials()
 
-  const { data: device, error: deviceError } = await serviceSupabase
-    .from('devices')
-    .insert({
-      name,
-      api_key: creds.keyId,
-      key_id: creds.keyId,
-      api_secret_encrypted: creds.apiSecretEncrypted,
-      api_secret_preview: creds.apiSecretPreview,
-      protocol_version: 2,
-      user_id: user.id,
-      organization_id: orgId,
-      tags: {},
-      encryption_enabled: false,
-      mac_address: macAddress,
-    })
-    .select()
-    .single()
+  // The database creates the device, initial schemas, and usage peak in one
+  // transaction. A failed usage update must not strand a one-time secret.
+  const { data: device, error: deviceError } = await serviceSupabase.rpc(
+    'create_device_with_usage',
+    {
+      p_org_id: orgId,
+      p_user_id: user.id,
+      p_name: name,
+      p_key_id: creds.keyId,
+      p_api_secret_encrypted: creds.apiSecretEncrypted,
+      p_api_secret_preview: creds.apiSecretPreview,
+      p_mac_address: macAddress,
+      p_expected_current_count: plan.currentCount,
+    },
+  )
 
   if (deviceError) {
+    if (deviceError.message.includes('DEVICE_COUNT_CHANGED')) {
+      throw createError({ statusCode: 409, message: 'Fleet size changed. Refresh and try again.' })
+    }
     throw createError({ statusCode: 500, message: deviceError.message })
   }
 
-  const { error: schemaError } = await serviceSupabase.from('schemas').insert({
-    device_id: device.id,
-    organization_id: orgId,
-    schema_definition: [],
-    version: 1,
-  })
-
-  if (schemaError) {
-    await serviceSupabase.from('devices').delete().eq('id', device.id)
-    throw createError({ statusCode: 500, message: schemaError.message })
-  }
-
-  const { error: versionError } = await serviceSupabase.from('schema_versions').insert({
-    device_id: device.id,
-    version: 1,
-    schema_definition: [],
-  })
-
-  if (versionError) {
-    await serviceSupabase.from('devices').delete().eq('id', device.id)
-    throw createError({ statusCode: 500, message: versionError.message })
-  }
-
-  await recordCapacityUsage(serviceSupabase, orgId, plan.projectedCount)
+  if (!device) throw createError({ statusCode: 500, message: 'Device creation returned no row' })
 
   return {
     device: sanitizeDeviceForClient(device),

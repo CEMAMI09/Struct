@@ -30,10 +30,11 @@ export async function applyStripeSubscriptionToOrg(
     throw createError({ statusCode: 500, message: 'Subscription belongs to another organization' })
   }
   const orgId = orgIdHint || subscription.metadata?.orgId || null
-  const item = subscription.items.data.find((candidate) => tierForPrice(candidate.price.id, prices))
-  if (!item) {
-    throw createError({ statusCode: 500, message: 'Subscription has no configured Struct price' })
+  const items = subscription.items.data.filter((candidate) => tierForPrice(candidate.price.id, prices))
+  if (items.length !== 1) {
+    throw createError({ statusCode: 500, message: 'Subscription must have exactly one configured Struct price' })
   }
+  const item = items[0]!
 
   const liveQuantity = item.quantity ?? 0
 
@@ -57,6 +58,10 @@ export async function applyStripeSubscriptionToOrg(
   if (existing.stripe_customer_id && customerId !== existing.stripe_customer_id) {
     throw createError({ statusCode: 500, message: 'Subscription customer does not match organization' })
   }
+
+  // Checkout can create a subscription before its first payment succeeds.
+  // Do not grant paid capacity until Stripe has activated it.
+  if (subscription.status === 'incomplete') return null
 
   if (
     existing?.stripe_subscription_id &&
@@ -86,7 +91,7 @@ export async function applyStripeSubscriptionToOrg(
     patch.stripe_subscription_id = null
     patch.stripe_item_id = null
     patch.stripe_quantity = 0
-  } else if (tier && tier !== 'free') {
+  } else if (tier) {
     patch.subscription_tier = tier
   }
 

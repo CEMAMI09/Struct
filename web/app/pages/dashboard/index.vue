@@ -24,13 +24,16 @@
     <p v-if="telemetryError" class="banner banner-error" role="alert">{{ telemetryError }}</p>
     <p v-else-if="loading && !devices.length" class="text-sm text-[#9AA3B2]">Loading devices…</p>
 
-    <div v-if="!loading && !devices.length" class="card p-6">
-      <h2 class="text-sm font-semibold">No devices yet</h2>
-      <p class="mt-1 text-sm text-[#9AA3B2]">Create a device, then send an authenticated event.</p>
-      <NuxtLink to="/dashboard/devices" class="btn-primary mt-3 text-xs">Add device</NuxtLink>
-    </div>
+    <FirstDeviceGuide
+      v-if="!loading && !error && (!selectedDevice || !selectedSchema?.schema_definition.length || !rows.length)"
+      :device-id="selectedId"
+      :has-device="!!selectedDevice"
+      :has-schema="!!selectedSchema?.schema_definition.length"
+      :has-telemetry="!!rows.length"
+      :can-write="canWrite"
+    />
 
-    <template v-else>
+    <template v-if="devices.length">
       <div class="grid min-h-0 items-stretch gap-4 lg:grid-cols-12">
         <section class="card flex min-h-[360px] flex-col p-4 lg:col-span-8">
           <TelemetryChart :rows="rows" />
@@ -46,10 +49,10 @@
             <dd class="mt-2 text-lg font-medium tracking-tight text-[#E8EAEF]">{{ rows.length }}</dd>
           </div>
           <div class="card flex-1 px-4 py-3.5">
-            <dt class="text-xs text-[#9AA3B2]">Seen in the last 30 seconds</dt>
-            <dd class="mt-2 text-lg font-medium tracking-tight text-[#E8EAEF]">
-              {{ recentCount }}
-              <span class="mt-1 block text-xs font-normal tracking-normal text-[#9AA3B2]">Not a connection status.</span>
+            <dt class="text-xs text-[#9AA3B2]">Selected device activity</dt>
+            <dd class="mt-2 text-sm font-medium tracking-tight text-[#E8EAEF]">
+              {{ selectedDeviceActive ? 'Packet seen within 30 seconds' : 'No packet in the last 30 seconds' }}
+              <span class="mt-1 block text-xs font-normal tracking-normal text-[#9AA3B2]">Based on the latest packet, not a connection status.</span>
             </dd>
           </div>
         </dl>
@@ -77,7 +80,7 @@
             <NuxtLink v-if="selectedId" class="underline" :to="`/dashboard/schema?device=${selectedId}`">
               Check this device’s schema
             </NuxtLink>
-            and send a packet.
+            <span v-if="selectedId"> and send a packet.</span>
           </p>
           <pre
             v-else
@@ -98,9 +101,10 @@ definePageMeta({ middleware: 'auth' })
 import { isDeviceOnline } from '~/types'
 
 const route = useRoute()
-const { devices, loading, error, fetchDevices, subscribePresence } = useDevices()
-const { rows, connectionStatus, fetchTelemetry, subscribe } = useTelemetry()
+const { devices, schemas, loading, error, fetchDevices, subscribePresence } = useDevices()
+const { rows, connectionStatus, fetchTelemetry, subscribe, clearTelemetry } = useTelemetry()
 const { telemetryRetentionDays } = useEntitlements()
+const { canWrite } = useOrganization()
 
 const selectedId = ref<string | null>(null)
 const refreshing = ref(false)
@@ -109,10 +113,11 @@ let unsubPresence: (() => void) | undefined
 let unsubTelemetry: (() => void) | undefined
 
 const selectedDevice = computed(() => devices.value.find((d) => d.id === selectedId.value))
-const recentCount = computed(
-  () => devices.value.filter((d) => isDeviceOnline(d.last_seen)).length,
-)
+const selectedSchema = computed(() => selectedId.value ? schemas.value[selectedId.value] : null)
 const latest = computed(() => rows.value[rows.value.length - 1] || null)
+const selectedDeviceActive = computed(() =>
+  isDeviceOnline(selectedDevice.value?.last_seen || null) || isDeviceOnline(latest.value?.timestamp || null),
+)
 const latestJson = computed(() =>
   latest.value ? JSON.stringify(latest.value.parsed_json, null, 2) : '',
 )
@@ -160,6 +165,7 @@ async function onRefresh() {
       unsubTelemetry?.()
       unsubTelemetry = undefined
       selectedId.value = null
+      clearTelemetry()
     }
   } finally {
     refreshing.value = false
@@ -172,6 +178,7 @@ onMounted(async () => {
   const requested = typeof route.query.device === 'string' ? route.query.device : ''
   const id = devices.value.some((d) => d.id === requested) ? requested : devices.value[0]?.id
   if (id) await onSelectDevice(id)
+  else clearTelemetry()
 })
 
 watch(() => route.query.device, (requested) => {

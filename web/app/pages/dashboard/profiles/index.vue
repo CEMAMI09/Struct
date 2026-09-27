@@ -112,7 +112,6 @@ function openProvisionFromQuery() {
 }
 
 async function onProvisioned() {
-  provisionTarget.value = null
   await Promise.all([fetchProfiles(), fetchDevices()])
 }
 </script>

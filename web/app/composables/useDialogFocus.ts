@@ -24,7 +24,10 @@ export function useDialogFocus(options?: { onEscape?: () => void }) {
     }
     const first = nodes[0]!
     const last = nodes[nodes.length - 1]!
-    if (event.shiftKey && document.activeElement === first) {
+    if (document.activeElement === dialogEl.value || !dialogEl.value?.contains(document.activeElement)) {
+      event.preventDefault()
+      ;(event.shiftKey ? last : first).focus()
+    } else if (event.shiftKey && document.activeElement === first) {
       event.preventDefault()
       last.focus()
     } else if (!event.shiftKey && document.activeElement === last) {

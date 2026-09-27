@@ -321,6 +321,12 @@ const tabs: { id: SettingsTab; name: string }[] = [
   { id: 'account', name: 'Account' },
 ]
 const activeTab = ref<SettingsTab>('billing')
+
+watch(() => route.query.tab, (tab) => {
+  if (typeof tab === 'string' && tabs.some(item => item.id === tab)) {
+    activeTab.value = tab as SettingsTab
+  }
+}, { immediate: true })
 const pendingCredentials = ref<DeviceCredentials | null>(null)
 const pendingCredentialsName = ref('')
 const pageError = ref('')

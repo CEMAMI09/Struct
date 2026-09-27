@@ -80,5 +80,28 @@ export function createDeviceCredentials(): DeviceCredentialBundle {
 export function sanitizeDeviceForClient<T extends Record<string, unknown>>(device: T) {
   const copy = { ...device }
   delete copy.api_secret_encrypted
+  delete copy.encryption_key
+  delete copy.fleet_secret_encrypted
   return copy
+}
+
+/** Recover a just-completed import for its original uploader during quote TTL. */
+export function recoverDeviceCredentials(
+  devices: readonly {
+    id: string
+    name: string
+    key_id: string
+    api_secret_encrypted: string | null
+  }[],
+) {
+  return devices.flatMap((device) =>
+    device.api_secret_encrypted
+      ? [{
+          deviceId: device.id,
+          name: device.name,
+          keyId: device.key_id,
+          apiSecret: decryptApiSecret(device.api_secret_encrypted),
+        }]
+      : [],
+  )
 }

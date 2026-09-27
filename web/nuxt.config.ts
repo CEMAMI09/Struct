@@ -33,7 +33,7 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/login',
       callback: '/confirm',
-      exclude: ['/', '/login', '/signup', '/confirm', '/benchmarks', '/privacy', '/terms'],
+      exclude: ['/', '/login', '/signup', '/confirm', '/forgot-password', '/reset-password', '/benchmarks', '/privacy', '/terms'],
     },
   },
 
@@ -55,6 +55,7 @@ export default defineNuxtConfig({
     '/privacy': { prerender: true },
     '/terms': { prerender: true },
     '/confirm': { ssr: false },
+    '/reset-password': { ssr: false },
   },
 
   app: {

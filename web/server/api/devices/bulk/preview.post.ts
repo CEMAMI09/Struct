@@ -7,6 +7,7 @@ import {
   QUOTE_TTL_MS,
 } from '../../../utils/bulkDevices'
 import { estimateProrationCents, resolveCapacityPlan } from '../../../utils/deviceCapacity'
+import { asDatabaseJson } from '../../../utils/databaseJson'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{ orgId?: string; devices?: unknown }>(event)
@@ -44,7 +45,7 @@ export default defineEventHandler(async (event) => {
       organization_id: orgId,
       user_id: user.id,
       payload_hash: payloadHash,
-      devices,
+      devices: asDatabaseJson(devices),
       status: 'quoted',
       current_device_count: plan.currentCount,
       projected_device_count: plan.projectedCount,

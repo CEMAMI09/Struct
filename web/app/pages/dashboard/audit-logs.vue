@@ -11,7 +11,7 @@
         class="btn-ghost text-xs"
         type="button"
         :disabled="loading"
-        @click="fetchAuditLogs"
+        @click="() => fetchAuditLogs()"
       >
         {{ loading ? 'Refreshing…' : 'Refresh' }}
       </button>

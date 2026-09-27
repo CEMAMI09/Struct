@@ -5,8 +5,8 @@ import {
   type BulkDeviceInput,
   type BulkImportRow,
 } from '../../../utils/bulkDevices'
-import { createDeviceCredentials } from '../../../utils/deviceCredentials'
-import { recordCapacityUsage, resolveCapacityPlan } from '../../../utils/deviceCapacity'
+import { createDeviceCredentials, recoverDeviceCredentials, sanitizeDeviceForClient } from '../../../utils/deviceCredentials'
+import { resolveCapacityPlan } from '../../../utils/deviceCapacity'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{ orgId?: string; importId?: string }>(event)
@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'orgId and importId are required' })
   }
 
-  await requireOrgWriter(event, orgId)
+  const { user } = await requireOrgWriter(event, orgId)
   const supabase = await serverSupabaseServiceRole(event)
 
   const { data: existing, error: lookupError } = await supabase
@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Bulk import quote not found' })
   }
 
-  const quote = existing as BulkImportRow
+  const quote = existing as unknown as BulkImportRow
 
   if (quote.status === 'completed') {
     const { data: devices, error: devicesError } = await supabase
@@ -46,9 +46,13 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 500, message: devicesError.message })
     }
 
+    const canRecover = quote.user_id === user.id && new Date(quote.expires_at).getTime() > Date.now()
+    const credentials = canRecover ? recoverDeviceCredentials(devices || []) : []
     return {
       importId: quote.id,
-      devices: devices || [],
+      devices: (devices || []).map(sanitizeDeviceForClient),
+      credentials,
+      credentialsRecovered: credentials.length > 0,
       alreadyCompleted: true,
     }
   }
@@ -104,7 +108,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const devices = (claimed.devices || []) as BulkDeviceInput[]
+  const devices = (claimed.devices || []) as unknown as BulkDeviceInput[]
 
   try {
     const conflicts = await findConflictingMacs(supabase, orgId, devices)
@@ -130,17 +134,15 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const enriched = devices.map((d) => {
-      const creds = createDeviceCredentials()
-      return {
-        name: d.name,
-        mac_address: d.mac_address,
-        tags: d.tags || {},
-        key_id: creds.keyId,
-        api_secret_encrypted: creds.apiSecretEncrypted,
-        api_secret_preview: creds.apiSecretPreview,
-      }
-    })
+    const generated = devices.map((device) => ({ device, creds: createDeviceCredentials() }))
+    const enriched = generated.map(({ device: d, creds }) => ({
+      name: d.name,
+      mac_address: d.mac_address,
+      tags: d.tags || {},
+      key_id: creds.keyId,
+      api_secret_encrypted: creds.apiSecretEncrypted,
+      api_secret_preview: creds.apiSecretPreview,
+    }))
 
     const { data: inserted, error: rpcError } = await supabase.rpc('bulk_insert_devices', {
       p_org_id: orgId,
@@ -162,10 +164,15 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 500, message })
     }
 
-    await recordCapacityUsage(supabase, orgId, plan.projectedCount)
-
     const created = (inserted || []) as Array<Record<string, unknown>>
     const createdIds = created.map((d) => String(d.id))
+    const createdIdByKey = new Map(created.map((d) => [String(d.key_id), String(d.id)]))
+    const credentials = generated.map(({ device, creds }) => ({
+      deviceId: createdIdByKey.get(creds.keyId) || '',
+      name: device.name,
+      keyId: creds.keyId,
+      apiSecret: creds.apiSecret,
+    }))
 
     await supabase
       .from('bulk_device_imports')
@@ -179,7 +186,8 @@ export default defineEventHandler(async (event) => {
 
     return {
       importId,
-      devices: created,
+      devices: created.map(sanitizeDeviceForClient),
+      credentials,
       alreadyCompleted: false,
       peakPaidDelta: plan.overageDelta,
       projectedDeviceCount: plan.projectedCount,

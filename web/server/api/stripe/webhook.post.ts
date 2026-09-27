@@ -98,6 +98,10 @@ export default defineEventHandler(async (event) => {
     case 'invoice.created': {
       const invoice = stripeEvent.data.object as Stripe.Invoice
       if (invoice.status !== 'draft') break
+      // Stripe sends the first invoice before Checkout completes and links the
+      // new subscription to the organization. There is no closed usage period
+      // on that subscription to true up yet; rejecting it can stall Checkout.
+      if (invoice.billing_reason === 'subscription_create') break
       const subscriptionId = subscriptionIdFromInvoice(invoice)
       if (!subscriptionId) break
 

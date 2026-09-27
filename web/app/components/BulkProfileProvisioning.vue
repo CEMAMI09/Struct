@@ -15,14 +15,14 @@
             Bulk provision · {{ profile.name }}
           </h3>
           <p class="mt-1 text-xs text-[#8B93A7]">
-            Upload serial numbers for this fleet profile. Devices inherit the packed schema and
-            share the Master Fleet Key at connect time.
+            Upload serial numbers for this fleet profile. Devices inherit its packed schema and
+            receive individual credentials. The Master Fleet Key is for zero-touch registration.
           </p>
         </div>
-        <button type="button" class="btn-ghost text-xs" @click="$emit('close')">Close</button>
+        <button type="button" class="btn-ghost text-xs" @click="requestClose">Close</button>
       </div>
 
-      <div class="mb-4 flex flex-wrap gap-2">
+      <div v-if="!completed" class="mb-4 flex flex-wrap gap-2">
         <button type="button" class="btn-ghost text-xs" @click="downloadProfileBulkTemplate">
           Download template
         </button>
@@ -38,6 +38,7 @@
       </div>
 
       <div
+        v-if="!completed"
         class="mb-4 rounded-lg border border-dashed border-[#2A2F3A] bg-[#0F1115] px-4 py-8 text-center transition"
         :class="dragOver ? 'border-[#5617fc]/60 bg-[#5617fc]/5' : ''"
         @dragenter.prevent="dragOver = true"
@@ -52,7 +53,7 @@
       </div>
 
       <div
-        v-if="Object.keys(columnMap).length"
+        v-if="Object.keys(columnMap).length && !completed"
         class="mb-4 rounded-lg border border-[#2A2F3A] bg-[#0F1115] p-3"
       >
         <p class="mb-2 text-xs text-[#8B93A7]">Mapped columns</p>
@@ -74,7 +75,7 @@
         <li v-for="(err, i) in fileErrors" :key="i">{{ err }}</li>
       </ul>
 
-      <div v-if="rows.length" class="mb-4">
+      <div v-if="rows.length && !completed" class="mb-4">
         <div class="mb-2 flex items-center justify-between gap-2">
           <p class="font-mono text-[10px] text-[#8B93A7]">
             Preview · {{ validCount }} valid / {{ rows.length }} rows
@@ -116,7 +117,7 @@
       </div>
 
       <div
-        v-if="quote"
+        v-if="quote && !completed"
         class="mb-4 rounded-lg border border-amber-400/30 bg-amber-400/5 p-4 text-sm text-[#E8EAEF]"
       >
         <p class="font-medium text-amber-200">Confirm billing impact</p>
@@ -145,11 +146,20 @@
 
       <p v-if="actionError" class="mb-3 text-sm text-red-400">{{ actionError }}</p>
       <p v-if="successMessage" class="mb-3 text-sm text-[#b79bff]">{{ successMessage }}</p>
+      <BulkCredentialsPanel
+        v-if="completed"
+        v-model:acknowledged="credentialsSaved"
+        :credentials="credentials"
+        :already-completed="alreadyCompleted"
+        :credentials-recovered="credentialsRecovered"
+      />
+      <p v-if="closeHint" class="mt-3 text-sm text-[#E6C27A]" role="alert">{{ closeHint }}</p>
 
       <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <button type="button" class="btn-ghost" @click="$emit('close')">Cancel</button>
+        <button v-if="!completed" type="button" class="btn-ghost" @click="requestClose">Cancel</button>
+        <button v-else type="button" class="btn-primary" :disabled="credentials.length > 0 && !credentialsSaved" @click="requestClose">Done</button>
         <button
-          v-if="!quote"
+          v-if="!quote && !completed"
           type="button"
           class="btn-primary"
           :disabled="!canQuote || quoting"
@@ -158,7 +168,7 @@
           {{ quoting ? 'Calculating…' : 'Check cost & continue' }}
         </button>
         <button
-          v-else
+          v-else-if="quote && !completed"
           type="button"
           class="btn-primary"
           :disabled="!confirmed || importing"
@@ -172,7 +182,7 @@
 </template>
 
 <script setup lang="ts">
-import type { BulkUploadQuote, DeviceProfile } from '~/types'
+import type { BulkDeviceCredential, BulkUploadQuote, DeviceProfile } from '~/types'
 import type { ParsedProfileBulkRow, ProfileBulkDeviceInput } from '#shared/profileBulkUpload'
 import {
   downloadProfileBulkTemplate,
@@ -188,7 +198,7 @@ const emit = defineEmits<{
   provisioned: []
 }>()
 
-const { dialogEl, onKeydown } = useDialogFocus({ onEscape: () => emit('close') })
+const { dialogEl, onKeydown } = useDialogFocus({ onEscape: requestClose })
 
 const { previewProfileProvision, confirmProfileProvision } = useProfiles()
 
@@ -205,6 +215,21 @@ const quoting = ref(false)
 const importing = ref(false)
 const actionError = ref('')
 const successMessage = ref('')
+const completed = ref(false)
+const alreadyCompleted = ref(false)
+const credentialsRecovered = ref(false)
+const credentials = ref<BulkDeviceCredential[]>([])
+const credentialsSaved = ref(false)
+const closeHint = ref('')
+
+function requestClose() {
+  if (completed.value && credentials.value.length && !credentialsSaved.value) {
+    closeHint.value = 'Save the credentials, check the confirmation box, then choose Done.'
+    return
+  }
+  credentials.value = []
+  emit('close')
+}
 
 const validCount = computed(() => validDevices.value.length)
 const errorCount = computed(() => rows.value.filter((r) => r.errors.length).length)
@@ -259,10 +284,10 @@ async function onQuote() {
   quoting.value = true
   actionError.value = ''
   try {
-    quote.value = (await previewProfileProvision(
+    quote.value = await previewProfileProvision(
       props.profile.id,
       validDevices.value,
-    )) as BulkUploadQuote
+    )
     confirmed.value = false
   } catch (e: any) {
     actionError.value = e?.message || 'Failed to calculate billing impact'
@@ -279,11 +304,14 @@ async function onConfirm() {
   successMessage.value = ''
   try {
     const result = await confirmProfileProvision(props.profile.id, quote.value.importId)
+    credentials.value = result.credentials || []
+    alreadyCompleted.value = !!result.alreadyCompleted
+    credentialsRecovered.value = !!result.credentialsRecovered
+    completed.value = true
     successMessage.value = result.alreadyCompleted
-      ? `Provisioning already completed (${result.devices.length} devices).`
+      ? `Provisioning already completed (${result.devices.length} devices). ${result.credentialsRecovered ? 'Credentials recovered; save them now.' : 'Credential recovery is unavailable.'}`
       : `Provisioned ${result.devices.length} devices under ${props.profile.name}.`
     emit('provisioned')
-    setTimeout(() => emit('close'), 900)
   } catch (e: any) {
     actionError.value = e?.message || 'Provisioning failed'
     if (e?.refreshRequired) {

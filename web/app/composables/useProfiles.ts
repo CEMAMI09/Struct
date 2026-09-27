@@ -1,4 +1,6 @@
 import type {
+  BulkDeviceImportResult,
+  BulkUploadQuote,
   DeviceProfile,
   DeviceProfileCredentials,
   ProfileBulkDeviceInput,
@@ -109,7 +111,7 @@ export function useProfiles() {
       credentials: DeviceProfileCredentials
     }
     try {
-      response = await $fetch('/api/profiles', {
+      response = await $fetch<{ profile: DeviceProfile; credentials: DeviceProfileCredentials }>('/api/profiles', {
         method: 'POST',
         body: {
           orgId,
@@ -136,7 +138,7 @@ export function useProfiles() {
     const orgId = requireOrgId()
 
     try {
-      return await $fetch('/api/profiles/provision/preview', {
+      return await $fetch<BulkUploadQuote>('/api/profiles/provision/preview', {
         method: 'POST',
         body: { orgId, profileId, devices },
       })
@@ -153,7 +155,7 @@ export function useProfiles() {
     const orgId = requireOrgId()
 
     try {
-      return await $fetch('/api/profiles/provision', {
+      return await $fetch<BulkDeviceImportResult>('/api/profiles/provision', {
         method: 'POST',
         body: { orgId, profileId, importId },
       })

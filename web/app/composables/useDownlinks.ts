@@ -102,7 +102,7 @@ export function useDownlinks() {
   async function sendCommand(
     deviceId: string,
     commandType: string,
-    payload: Record<string, unknown>,
+    payload: Record<string, string | number | boolean | null | undefined>,
   ) {
     requireWrite()
     const { data: authData, error: authErr } = await supabase.auth.getUser()

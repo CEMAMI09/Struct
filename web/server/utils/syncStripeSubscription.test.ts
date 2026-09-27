@@ -59,4 +59,21 @@ describe('subscription reconciliation', () => {
       .rejects.toThrow('customer does not match')
     expect(update).not.toHaveBeenCalled()
   })
+
+  it('does not grant capacity for a subscription awaiting its first payment', async () => {
+    const { db, update } = fakeDb()
+    const subscription = fakeSubscription('sub_linked')
+    subscription.status = 'incomplete'
+    expect(await applyStripeSubscriptionToOrg(db, subscription, prices, 'org_1')).toBeNull()
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('flags subscriptions containing two Struct plan prices for review', async () => {
+    const { db, update } = fakeDb()
+    const subscription = fakeSubscription('sub_linked')
+    subscription.items.data.push({ id: 'si_scale', price: { id: prices.scale }, quantity: 1000 } as Stripe.SubscriptionItem)
+    await expect(applyStripeSubscriptionToOrg(db, subscription, prices, 'org_1'))
+      .rejects.toThrow('exactly one configured Struct price')
+    expect(update).not.toHaveBeenCalled()
+  })
 })

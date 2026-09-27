@@ -118,7 +118,7 @@ export default defineEventHandler(async (event) => {
 
   const schemaDefinition = (
     Array.isArray(profile.schema_definition) ? profile.schema_definition : []
-  ) as SchemaField[]
+  ) as unknown as SchemaField[]
 
   if (!schemaDefinition.length) {
     throw createError({ statusCode: 400, message: 'Profile has an empty schema' })

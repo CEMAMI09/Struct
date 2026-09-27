@@ -8,13 +8,12 @@ import { createDeviceCredentials, sanitizeDeviceForClient } from './deviceCreden
 export function hardwareIdFromIdentityValue(value: unknown): string | null {
   if (value == null) return null
   if (typeof value === 'string') {
-    const trimmed = value.trim().toLowerCase()
-    if (!trimmed) return null
-    const cleaned = trimmed.replace(/[^0-9a-z]/g, '')
-    return cleaned.length >= 2 && cleaned.length <= 64 ? cleaned : null
+    // Char-array identities are opaque values. Case folding, trimming, or
+    // removing punctuation can alias two distinct hardware IDs.
+    return /^[\x20-\x7e]{2,64}$/.test(value) && value.trim() ? value : null
   }
   if (typeof value === 'number' && Number.isFinite(value)) {
-    return String(Math.trunc(value))
+    return String(value)
   }
   return null
 }

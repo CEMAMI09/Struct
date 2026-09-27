@@ -87,3 +87,31 @@ it('reports live only after subscription and retains a live row during history b
   unsubscribe()
   expect(api.live.value).toBe(false)
 })
+
+it('removes expired history on refresh while keeping a live event received during the request', async () => {
+  const { api, pending, channels } = setup()
+  const unsubscribe = api.subscribe('device-a')
+  const first = api.fetchTelemetry('device-a')
+  pending.get('device-a')![0]!.resolve({ data: [row('old', 'device-a', 1)], error: null })
+  await first
+
+  const refresh = api.fetchTelemetry('device-a')
+  channels[0]!.event!({ new: row('live', 'device-a', 3) })
+  pending.get('device-a')![1]!.resolve({ data: [row('stored', 'device-a', 2)], error: null })
+  await refresh
+
+  expect(api.rows.value.map(item => item.id)).toEqual(['stored', 'live'])
+  unsubscribe()
+})
+
+it('clears old device data when no device remains selected', async () => {
+  const { api, pending } = setup()
+  const first = api.fetchTelemetry('device-a')
+  pending.get('device-a')![0]!.resolve({ data: [row('old', 'device-a', 1)], error: null })
+  await first
+  expect(api.rows.value).toHaveLength(1)
+
+  api.clearTelemetry()
+  expect(api.rows.value).toEqual([])
+  expect(api.selectedDeviceId.value).toBeNull()
+})

@@ -30,6 +30,7 @@ function schemaByteLength(schema: SchemaField[]) {
       validateFlags(f)
       return sum + 1
     }
+    if (f.type === 'char') throw new Error('char fields are outside this flag-only fixture')
     return sum + (TYPE_SIZES[f.type] || 0)
   }, 0)
 }
@@ -71,6 +72,7 @@ function parsePayload(buf: Uint8Array, schema: SchemaField[]) {
   const out: Record<string, unknown> = {}
   let offset = 0
   for (const field of schema) {
+    if (field.type === 'char') throw new Error('char fields are outside this flag-only fixture')
     const size = field.type === 'flags' ? 1 : TYPE_SIZES[field.type]
     if (offset + size > buf.length) throw new Error(`Truncated at field "${field.name}"`)
     if (field.type === 'float32') out[field.name] = view.getFloat32(offset, true)
