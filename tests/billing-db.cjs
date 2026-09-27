@@ -202,6 +202,37 @@ async function run() {
     assert.equal(await peakCount(), 5)
     await db.exec('reset role')
 
+    const checkoutToken1 = '30000000-0000-0000-0000-00000000000a'
+    const checkoutToken2 = '30000000-0000-0000-0000-00000000000b'
+    const checkoutClaim = async (token) => (await db.query(
+      'select claim_org_checkout_session($1,$2) as result', [deviceOrg, token],
+    )).rows[0].result
+    await db.exec('set role service_role')
+    assert.deepEqual(await checkoutClaim(checkoutToken1), { status: 'claimed', claimToken: checkoutToken1 })
+    assert.deepEqual(await checkoutClaim(checkoutToken2), { status: 'busy' },
+      'concurrent checkout cannot create a second paid session')
+    await db.query("update organization_checkout_claims set claim_expires_at=now()-interval '1 second' where organization_id=$1", [deviceOrg])
+    assert.deepEqual(await checkoutClaim(checkoutToken2), { status: 'claimed', claimToken: checkoutToken1 },
+      'retry after timeout must reuse Stripe idempotency key')
+    assert.equal((await db.query(
+      "select complete_org_checkout_session($1,$2,'cs_test',now()+interval '30 minutes') as recorded",
+      [deviceOrg, checkoutToken1],
+    )).rows[0].recorded, true)
+    assert.deepEqual(await checkoutClaim(checkoutToken2), { status: 'session', sessionId: 'cs_test' })
+    assert.equal((await db.query(
+      "select release_org_checkout_session($1,'cs_wrong') as released", [deviceOrg],
+    )).rows[0].released, false)
+    assert.equal((await db.query(
+      "select release_org_checkout_session($1,'cs_test') as released", [deviceOrg],
+    )).rows[0].released, true)
+    assert.deepEqual(await checkoutClaim(checkoutToken2), { status: 'claimed', claimToken: checkoutToken2 })
+    assert.equal((await db.query(
+      'select release_org_checkout_claim($1,$2) as released', [deviceOrg, checkoutToken2],
+    )).rows[0].released, true)
+    await db.query("update organizations set stripe_subscription_id='sub_paid' where id=$1", [deviceOrg])
+    assert.deepEqual(await checkoutClaim(checkoutToken2), { status: 'subscribed' })
+    await db.exec('reset role')
+
     for (const role of ['anon', 'authenticated']) {
       for (const signature of [
         'record_org_device_peak(uuid,integer)',
@@ -212,6 +243,10 @@ async function run() {
         'complete_org_usage_true_up(uuid,uuid,text,integer,public.usage_period_status)',
         'release_org_usage_true_up(uuid,uuid)',
         'finalize_bulk_device_import(uuid,uuid,uuid,uuid,jsonb,integer)',
+        'claim_org_checkout_session(uuid,uuid)',
+        'complete_org_checkout_session(uuid,uuid,text,timestamptz)',
+        'release_org_checkout_session(uuid,text)',
+        'release_org_checkout_claim(uuid,uuid)',
       ]) {
         const allowed = (await db.query("select has_function_privilege($1,$2,'EXECUTE') as allowed", [role, `public.${signature}`])).rows[0].allowed
         assert.equal(allowed, false, `${role} can execute ${signature}`)

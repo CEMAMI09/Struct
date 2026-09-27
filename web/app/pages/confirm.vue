@@ -31,7 +31,7 @@ function queryError() {
 async function goDashboard() {
   if (redirected) return
   redirected = true
-  await navigateTo('/dashboard', { replace: true })
+  await navigateTo('/dashboard', { replace: true, external: true })
 }
 
 watch(

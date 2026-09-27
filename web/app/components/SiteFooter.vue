@@ -10,15 +10,15 @@
       <div>
         <h2>Product</h2>
         <ul>
-          <li><a href="/#how">How it works</a></li>
-          <li><a href="/#pricing">Pricing</a></li>
+          <li><a href="/#features">How it works</a></li>
+          <li><a href="/#faq">Questions</a></li>
           <li><NuxtLink to="/signup">Get started</NuxtLink></li>
         </ul>
       </div>
       <div>
         <h2>Developers</h2>
         <ul>
-          <li><a href="/#sandbox">Schema sandbox</a></li>
+          <li><a href="/#schema">Schema sandbox</a></li>
           <li><NuxtLink to="/benchmarks">Benchmark methodology</NuxtLink></li>
           <li>
             <a href="https://github.com/CEMAMI09/Struct" target="_blank" rel="noopener noreferrer">GitHub</a>

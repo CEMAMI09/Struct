@@ -382,6 +382,44 @@ export type Database = {
           },
         ]
       }
+      organization_checkout_claims: {
+        Row: {
+          claim_expires_at: string
+          claim_token: string
+          created_at: string
+          organization_id: string
+          session_expires_at: string | null
+          stripe_session_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          claim_expires_at: string
+          claim_token: string
+          created_at?: string
+          organization_id: string
+          session_expires_at?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          claim_expires_at?: string
+          claim_token?: string
+          created_at?: string
+          organization_id?: string
+          session_expires_at?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_checkout_claims_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_device_usage_periods: {
         Row: {
           created_at: string
@@ -958,6 +996,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_org_checkout_session: {
+        Args: { p_claim_token: string; p_org_id: string }
+        Returns: Json
+      }
       claim_org_usage_true_up: {
         Args: { p_claim_token: string; p_period_id: string }
         Returns: {
@@ -1042,6 +1084,15 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      complete_org_checkout_session: {
+        Args: {
+          p_claim_token: string
+          p_expires_at: string
+          p_org_id: string
+          p_session_id: string
+        }
+        Returns: boolean
       }
       complete_org_usage_true_up: {
         Args: {
@@ -1317,6 +1368,14 @@ export type Database = {
       redact_infrastructure_audit_data: {
         Args: { p_data: Json; p_table_name: string }
         Returns: Json
+      }
+      release_org_checkout_claim: {
+        Args: { p_claim_token: string; p_org_id: string }
+        Returns: boolean
+      }
+      release_org_checkout_session: {
+        Args: { p_org_id: string; p_session_id: string }
+        Returns: boolean
       }
       release_org_usage_true_up: {
         Args: { p_claim_token: string; p_period_id: string }

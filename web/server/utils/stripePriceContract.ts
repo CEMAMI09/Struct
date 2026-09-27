@@ -7,6 +7,25 @@ const EXPECTED: Record<PaidTier, { floor: number; baseCents: number; extraCents:
   scale: { floor: 1000, baseCents: 24900, extraCents: 20 },
 }
 
+// Temporary transition for the one archived live Pro price that charged $50
+// per extra device instead of $0.50. Remove after every deployment environment
+// uses the corrected price. These are public Stripe object IDs, not secrets.
+const ARCHIVED_LIVE_PRO_PRICE = 'price_1TtJ9NRu9PxBJUvyU8TsUSvX'
+const CORRECTED_LIVE_PRO_PRICE = 'price_1UKPCFRu9PxBJUvyd5HMupyP'
+
+export function resolveStripePriceIds(config: {
+  stripePriceFlexible: string
+  stripePricePro: string
+  stripePriceScale: string
+}) {
+  return {
+    flexible: config.stripePriceFlexible,
+    pro: config.stripePricePro === ARCHIVED_LIVE_PRO_PRICE
+      ? CORRECTED_LIVE_PRO_PRICE : config.stripePricePro,
+    scale: config.stripePriceScale,
+  }
+}
+
 /** Prevent a stale or misconfigured Stripe price from charging customers more
  * than the amount quoted by Struct. Stripe prices are immutable, so compare
  * the actual price before creating Checkout or changing a subscription. */

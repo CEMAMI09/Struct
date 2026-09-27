@@ -66,11 +66,18 @@ const password = ref('')
 const loading = ref(false)
 const error = ref('')
 const info = ref('')
+let leaving = false
+
+function goDashboard() {
+  if (leaving) return
+  leaving = true
+  return navigateTo('/dashboard', { replace: true, external: true })
+}
 
 watch(
   user,
   (u) => {
-    if (u) navigateTo('/dashboard', { replace: true })
+    if (u) goDashboard()
   },
   { immediate: true },
 )
@@ -125,22 +132,15 @@ async function onSubmit() {
       error.value = err.message
       return
     }
-    if (data.session) {
-      try {
-        await useOrganization().ensureOrganization()
-      } catch {
-        // org bootstrap is retried on dashboard mount
-      }
-      await supabase.auth.getSession()
-      await waitForUser()
-      await navigateTo('/dashboard', { replace: true })
+    if (data.session || (await waitForUser())) {
+      await goDashboard()
       return
     }
     info.value = 'Check your email to confirm, then sign in.'
   } catch (e: any) {
     error.value = e?.message || 'Sign up failed. Check your connection and try again.'
   } finally {
-    loading.value = false
+    if (!leaving) loading.value = false
   }
 }
 </script>

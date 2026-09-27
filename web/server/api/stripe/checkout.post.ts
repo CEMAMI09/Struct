@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { serverSupabaseServiceRole } from '#supabase/server'
 import {
   getPriceIdForTier,
@@ -13,9 +14,15 @@ import {
 } from '../../utils/organizations'
 import { useStripeClient } from '../../utils/stripe'
 import { applyStripeSubscriptionToOrg } from '../../utils/syncStripeSubscription'
-import { assertStripePriceMatchesPlan } from '../../utils/stripePriceContract'
+import { assertStripePriceMatchesPlan, resolveStripePriceIds } from '../../utils/stripePriceContract'
+import { ensureOrganizationStripeCustomer } from '../../utils/stripeCustomer'
 
 const PAID_TIERS: PaidTier[] = ['flexible', 'pro', 'scale']
+type CheckoutClaim = {
+  status: 'claimed' | 'busy' | 'subscribed' | 'session'
+  claimToken?: string
+  sessionId?: string
+}
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{ orgId?: string; targetTier?: SubscriptionTier }>(event)
@@ -36,11 +43,7 @@ export default defineEventHandler(async (event) => {
   await requireOrgWriter(event, orgId)
 
   const config = useRuntimeConfig()
-  const prices = {
-    flexible: config.stripePriceFlexible,
-    pro: config.stripePricePro,
-    scale: config.stripePriceScale,
-  }
+  const prices = resolveStripePriceIds(config)
   const priceId = getPriceIdForTier(targetTier as PaidTier, prices)
 
   if (!priceId) {
@@ -132,36 +135,99 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 409, message: 'Upgrade payment is not complete. Refresh billing before retrying.' })
       }
 
-      const item = updated.items.data.find((candidate) => candidate.id === org.stripe_item_id)
-      const { error } = await serviceSupabase
-        .from('organizations')
-        .update({
-          subscription_tier: targetTier,
-          stripe_subscription_id: updated.id,
-          stripe_item_id: item?.id || org.stripe_item_id,
-          stripe_quantity: item?.quantity ?? upgradeQuantity,
-          stripe_customer_id:
-            typeof updated.customer === 'string'
-              ? updated.customer
-              : updated.customer?.id || org.stripe_customer_id,
-        })
-        .eq('id', orgId)
-
-      if (error) {
-        throw createError({ statusCode: 500, message: error.message })
+      // Another plan request could have run concurrently. Read Stripe's live
+      // object and reconcile that, rather than overwriting a newer plan with
+      // the response from this request.
+      const confirmed = await stripe.subscriptions.retrieve(updated.id)
+      const result = await applyStripeSubscriptionToOrg(serviceSupabase, confirmed, prices, orgId)
+      if (!result || result.subscriptionTier !== targetTier) {
+        throw createError({ statusCode: 409, message: 'Billing changed during the upgrade. Refresh billing.' })
       }
 
       return {
         upgraded: true,
-        subscriptionTier: targetTier,
-        stripeQuantity: item?.quantity ?? upgradeQuantity,
+        subscriptionTier: result.subscriptionTier,
+        stripeQuantity: result.stripeQuantity,
       }
     }
   }
 
+  // Bind Checkout to one stable Stripe customer. Otherwise two free-org
+  // sessions can each create a different customer and paid subscription.
+  const customerId = await ensureOrganizationStripeCustomer(serviceSupabase, stripe, org)
+  if (!org.stripe_customer_id) {
+    org = await getOrganizationBilling(serviceSupabase, orgId)
+  }
+
+  // A completed session whose webhook has not arrived must not let the org
+  // start another paid subscription. Session claims below cover requests that
+  // race before either session completes.
+  const subscriptions = await stripe.subscriptions.list({
+    customer: customerId,
+    status: 'all',
+    limit: 100,
+  })
+  if (subscriptions.has_more || subscriptions.data.some((subscription) =>
+    subscription.status !== 'canceled' && subscription.status !== 'incomplete_expired')) {
+    throw createError({
+      statusCode: 409,
+      message: 'A Stripe subscription already exists for this organization. Refresh billing or contact support.',
+    })
+  }
+
+  let claimToken: string | null = null
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const { data: rawClaim, error: claimError } = await serviceSupabase.rpc('claim_org_checkout_session', {
+      p_org_id: orgId,
+      p_claim_token: randomUUID(),
+    })
+    if (claimError) throw createError({ statusCode: 500, message: claimError.message })
+    const claim = rawClaim as CheckoutClaim | null
+    if (claim?.status === 'claimed' && typeof claim.claimToken === 'string') {
+      claimToken = claim.claimToken
+      break
+    }
+    if (claim?.status === 'busy') {
+      throw createError({ statusCode: 409, message: 'Checkout is starting. Please retry in a moment.' })
+    }
+    if (claim?.status === 'subscribed') {
+      throw createError({ statusCode: 409, message: 'Billing changed. Refresh before choosing a plan.' })
+    }
+    if (claim?.status === 'session' && typeof claim.sessionId === 'string') {
+      const prior = await stripe.checkout.sessions.retrieve(claim.sessionId)
+      if (prior.status === 'open' && prior.url) {
+        if (prior.metadata?.targetTier !== targetTier) {
+          throw createError({
+            statusCode: 409,
+            message: 'A different plan checkout is already open. Complete or cancel that checkout first.',
+          })
+        }
+        return { url: prior.url, upgraded: false }
+      }
+      if (prior.status === 'complete') {
+        throw createError({
+          statusCode: 409,
+          message: 'A prior Checkout completed. Refresh billing before starting another payment.',
+        })
+      }
+      if (prior.status === 'expired') {
+        const { error: releaseError } = await serviceSupabase.rpc('release_org_checkout_session', {
+          p_org_id: orgId, p_session_id: prior.id,
+        })
+        if (releaseError) throw createError({ statusCode: 500, message: releaseError.message })
+        continue
+      }
+    }
+    throw createError({ statusCode: 503, message: 'Checkout state needs reconciliation. Contact support.' })
+  }
+  if (!claimToken) {
+    throw createError({ statusCode: 503, message: 'Checkout could not be reserved. Please retry.' })
+  }
+
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
-    customer: org.stripe_customer_id || undefined,
+    customer: customerId,
+    client_reference_id: orgId,
     line_items: [
       {
         price: priceId,
@@ -179,6 +245,7 @@ export default defineEventHandler(async (event) => {
       orgId,
       targetTier,
       previousSubscriptionId: org.stripe_subscription_id || '',
+      checkoutClaimToken: claimToken,
     },
     subscription_data: {
       metadata: {
@@ -186,10 +253,21 @@ export default defineEventHandler(async (event) => {
         targetTier,
       },
     },
-  })
+  }, { idempotencyKey: `struct:checkout:v1:${claimToken}` })
 
   if (!session.url) {
     throw createError({ statusCode: 500, message: 'Failed to create checkout session' })
+  }
+
+  const { data: recorded, error: recordError } = await serviceSupabase.rpc('complete_org_checkout_session', {
+    p_org_id: orgId,
+    p_claim_token: claimToken,
+    p_session_id: session.id,
+    p_expires_at: new Date(session.expires_at * 1000).toISOString(),
+  })
+  if (recordError || !recorded) {
+    console.error('[stripe] failed to record Checkout session', { orgId, sessionId: session.id, error: recordError?.message })
+    throw createError({ statusCode: 503, message: 'Checkout session needs reconciliation. Contact support.' })
   }
 
   return { url: session.url, upgraded: false }

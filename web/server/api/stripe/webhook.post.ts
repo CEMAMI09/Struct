@@ -5,6 +5,7 @@ import { useStripeClient } from '../../utils/stripe'
 import { customerIdFromInvoice, subscriptionIdFromInvoice } from '../../utils/stripeInvoice'
 import { applyStripeSubscriptionToOrg } from '../../utils/syncStripeSubscription'
 import { processClosedUsagePeriods } from '../../utils/trueUpBilling'
+import { resolveStripePriceIds } from '../../utils/stripePriceContract'
 
 const PAID_TIERS = new Set<PaidTier>(['flexible', 'pro', 'scale'])
 
@@ -51,11 +52,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const serviceSupabase = await serverSupabaseServiceRole(event)
-  const prices = {
-    flexible: config.stripePriceFlexible,
-    pro: config.stripePricePro,
-    scale: config.stripePriceScale,
-  }
+  const prices = resolveStripePriceIds(config)
 
   switch (stripeEvent.type) {
     case 'checkout.session.completed':
@@ -88,6 +85,24 @@ export default defineEventHandler(async (event) => {
       if (!result || result.subscriptionTier !== targetTier) {
         throw createError({ statusCode: 500, message: 'Checkout plan could not be reconciled' })
       }
+      const { error: releaseError } = await serviceSupabase.rpc('release_org_checkout_session', {
+        p_org_id: orgId, p_session_id: session.id,
+      })
+      if (releaseError) {
+        console.error('[stripe] failed to release completed Checkout session', { orgId, sessionId: session.id, error: releaseError.message })
+      }
+      break
+    }
+
+    case 'checkout.session.expired':
+    case 'checkout.session.async_payment_failed': {
+      const session = stripeEvent.data.object as Stripe.Checkout.Session
+      const orgId = session.metadata?.orgId
+      if (!orgId) break
+      const { error } = await serviceSupabase.rpc('release_org_checkout_session', {
+        p_org_id: orgId, p_session_id: session.id,
+      })
+      if (error) throw createError({ statusCode: 500, message: error.message })
       break
     }
 

@@ -49,10 +49,10 @@ const route = useRoute()
 const menuOpen = ref(false)
 
 const links = [
-  { href: '/#how', label: 'How it works' },
-  { href: '/#sandbox', label: 'Schema' },
+  { href: '/#features', label: 'How it works' },
+  { href: '/#schema', label: 'Schema' },
   { href: '/benchmarks', label: 'Benchmarks' },
-  { href: '/#pricing', label: 'Pricing' },
+  { href: '/#faq', label: 'Questions' },
 ]
 
 watch(

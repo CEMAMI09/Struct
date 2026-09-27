@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type Stripe from 'stripe'
-import { assertStripePriceMatchesPlan } from './stripePriceContract'
+import { assertStripePriceMatchesPlan, resolveStripePriceIds } from './stripePriceContract'
 
 beforeEach(() => {
   vi.stubGlobal('createError', ({ message }: { message: string }) => new Error(message))
@@ -22,6 +22,23 @@ function price(extraCents: number) {
 }
 
 describe('configured Stripe price contract', () => {
+  it('replaces only the known archived live Pro price across billing paths', () => {
+    expect(resolveStripePriceIds({
+      stripePriceFlexible: 'price_flexible',
+      stripePricePro: 'price_1TtJ9NRu9PxBJUvyU8TsUSvX',
+      stripePriceScale: 'price_scale',
+    })).toEqual({
+      flexible: 'price_flexible',
+      pro: 'price_1UKPCFRu9PxBJUvyd5HMupyP',
+      scale: 'price_scale',
+    })
+    expect(resolveStripePriceIds({
+      stripePriceFlexible: 'price_flexible',
+      stripePricePro: 'price_test_pro',
+      stripePriceScale: 'price_scale',
+    }).pro).toBe('price_test_pro')
+  })
+
   it('accepts the Pro price only when its Stripe marginal charge matches the customer quote', async () => {
     const retrieve = vi.fn().mockResolvedValueOnce(price(50)).mockResolvedValueOnce(price(5000))
     const stripe = { prices: { retrieve } } as unknown as Stripe

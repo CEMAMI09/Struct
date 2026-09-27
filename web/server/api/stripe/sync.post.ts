@@ -3,6 +3,7 @@ import { requireOrgWriter } from '../../utils/auth'
 import { getOrganizationBilling } from '../../utils/organizations'
 import { useStripeClient } from '../../utils/stripe'
 import { applyStripeSubscriptionToOrg } from '../../utils/syncStripeSubscription'
+import { resolveStripePriceIds } from '../../utils/stripePriceContract'
 
 /**
  * Pull live Stripe subscription quantity/tier into organizations.
@@ -34,11 +35,7 @@ export default defineEventHandler(async (event) => {
 
   const stripe = useStripeClient()
   const config = useRuntimeConfig()
-  const prices = {
-    flexible: config.stripePriceFlexible,
-    pro: config.stripePricePro,
-    scale: config.stripePriceScale,
-  }
+  const prices = resolveStripePriceIds(config)
 
   const subscriptionId = org.stripe_subscription_id
 

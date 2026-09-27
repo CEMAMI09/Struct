@@ -1,4 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest'
+import { computed } from 'vue'
 import { useDevices } from './useDevices'
 import { useDestinations } from './useDestinations'
 
@@ -21,6 +22,7 @@ it.each([
   const selected: string[] = []
 
   vi.stubGlobal('useNuxtApp', () => app)
+  vi.stubGlobal('computed', computed)
   vi.stubGlobal('useState', (key: string, init: () => unknown) => {
     if (!state.has(key)) state.set(key, { value: init() })
     return state.get(key)

@@ -1,5 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { fileURLToPath } from 'node:url'
+import { AUTH_CALLBACK_BOOT_SCRIPT } from './app/utils/postAuthRedirect'
 
 const sharedDir = fileURLToPath(new URL('./shared', import.meta.url))
 
@@ -77,6 +78,12 @@ export default defineNuxtConfig({
         {
           innerHTML:
             "(function(){try{var m=document.cookie.match(/(?:^|; )struct-theme=(dark|light)/);var t=m&&m[1];if(!t){var s=localStorage.getItem('struct-theme');if(s==='light'||s==='dark')t=s}if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);if(t==='light'){var meta=document.querySelector('meta[name=\"theme-color\"]');if(meta)meta.setAttribute('content','#f5f6f8')}}catch(e){}})();",
+          type: 'text/javascript',
+          tagPosition: 'head',
+        },
+        {
+          // Mark signup, email-confirm, and OAuth returns before the client strips the URL.
+          innerHTML: AUTH_CALLBACK_BOOT_SCRIPT,
           type: 'text/javascript',
           tagPosition: 'head',
         },

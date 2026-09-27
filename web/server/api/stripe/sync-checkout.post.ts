@@ -3,6 +3,7 @@ import type { PaidTier, SubscriptionTier } from '../../utils/billing'
 import { requireOrgWriter } from '../../utils/auth'
 import { useStripeClient } from '../../utils/stripe'
 import { applyStripeSubscriptionToOrg } from '../../utils/syncStripeSubscription'
+import { resolveStripePriceIds } from '../../utils/stripePriceContract'
 
 const PAID_TIERS = new Set<PaidTier>(['flexible', 'pro', 'scale'])
 
@@ -67,13 +68,19 @@ export default defineEventHandler(async (event) => {
   if (!sessionCustomer || sessionCustomer !== subscriptionCustomer) {
     throw createError({ statusCode: 500, message: 'Checkout customer mismatch' })
   }
-  const result = await applyStripeSubscriptionToOrg(serviceSupabase, subscription, {
-    flexible: useRuntimeConfig().stripePriceFlexible,
-    pro: useRuntimeConfig().stripePricePro,
-    scale: useRuntimeConfig().stripePriceScale,
-  }, orgId, true)
+  const result = await applyStripeSubscriptionToOrg(
+    serviceSupabase, subscription, resolveStripePriceIds(useRuntimeConfig()), orgId, true,
+  )
   if (!result || result.subscriptionTier !== targetTier) {
     throw createError({ statusCode: 500, message: 'Checkout plan could not be reconciled' })
+  }
+
+  const { error: releaseError } = await serviceSupabase.rpc('release_org_checkout_session', {
+    p_org_id: orgId,
+    p_session_id: session.id,
+  })
+  if (releaseError) {
+    console.error('[stripe] failed to release completed Checkout session', { orgId, sessionId: session.id, error: releaseError.message })
   }
 
   return {
