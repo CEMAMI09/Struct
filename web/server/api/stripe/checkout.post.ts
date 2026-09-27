@@ -56,6 +56,9 @@ export default defineEventHandler(async (event) => {
 
   // Already subscribed: swap price on the existing subscription instead of
   // opening a second Checkout session (which left Flexible + Scale both active).
+  if (org.stripe_subscription_id && !org.stripe_item_id) {
+    throw createError({ statusCode: 409, message: 'Billing needs to be synchronized before changing plans.' })
+  }
   if (org.stripe_subscription_id && org.stripe_item_id) {
     if (org.subscription_tier === targetTier) {
       throw createError({
@@ -65,16 +68,32 @@ export default defineEventHandler(async (event) => {
     }
 
     const subscription = await stripe.subscriptions.retrieve(org.stripe_subscription_id)
+    const subscriptionCustomer = typeof subscription.customer === 'string'
+      ? subscription.customer : subscription.customer?.id || null
+    if (!org.stripe_customer_id || subscriptionCustomer !== org.stripe_customer_id) {
+      throw createError({ statusCode: 409, message: 'Billing customer mismatch. Contact support.' })
+    }
     if (subscription.status === 'canceled' || subscription.status === 'incomplete_expired') {
       // Fall through to Checkout for a fresh subscription.
     } else {
-      const currentStripeQuantity = subscription.items.data[0]?.quantity ?? 0
-      // Never shrink paid capacity on a plan upgrade — keep portal extras.
+      const tierOrder: SubscriptionTier[] = ['free', 'flexible', 'pro', 'scale']
+      if (tierOrder.indexOf(targetTier) < tierOrder.indexOf(org.subscription_tier)) {
+        throw createError({
+          statusCode: 409,
+          message: 'Plan downgrades need a reviewed device quantity and price. Contact support before changing tiers.',
+        })
+      }
+      const currentItem = subscription.items.data.find((item) => item.id === org.stripe_item_id)
+      if (!currentItem) {
+        throw createError({ statusCode: 409, message: 'Billing item mismatch. Synchronize billing and retry.' })
+      }
+      // Keep the paid quantity on upgrades. Downgrades require a reviewed quote
+      // because carrying this quantity into a higher unit price is surprising.
       const upgradeQuantity = Math.max(
         targetQuantity,
         TIER_CHECKOUT_QUANTITY[targetTier as PaidTier],
         org.stripe_quantity,
-        currentStripeQuantity,
+        currentItem.quantity ?? 0,
       )
       const updated = await stripe.subscriptions.update(org.stripe_subscription_id, {
         items: [
@@ -89,9 +108,9 @@ export default defineEventHandler(async (event) => {
           orgId,
           targetTier,
         },
-      })
+      }, { idempotencyKey: `struct:plan:v1:${org.stripe_subscription_id}:${targetTier}:${upgradeQuantity}` })
 
-      const item = updated.items.data[0]
+      const item = updated.items.data.find((candidate) => candidate.id === org.stripe_item_id)
       const { error } = await serviceSupabase
         .from('organizations')
         .update({
@@ -108,16 +127,6 @@ export default defineEventHandler(async (event) => {
 
       if (error) {
         throw createError({ statusCode: 500, message: error.message })
-      }
-
-      // Cancel any other active subscriptions on this customer (orphans from
-      // earlier buggy upgrades that stacked Flexible + Scale).
-      if (org.stripe_customer_id) {
-        await cancelSiblingSubscriptions(
-          stripe,
-          org.stripe_customer_id,
-          updated.id,
-        )
       }
 
       return {
@@ -164,31 +173,3 @@ export default defineEventHandler(async (event) => {
   return { url: session.url, upgraded: false }
 })
 
-async function cancelSiblingSubscriptions(
-  stripe: ReturnType<typeof useStripeClient>,
-  customerId: string,
-  keepSubscriptionId: string,
-) {
-  const list = await stripe.subscriptions.list({
-    customer: customerId,
-    status: 'active',
-    limit: 20,
-  })
-
-  await Promise.all(
-    list.data
-      .filter((sub) => sub.id !== keepSubscriptionId)
-      .map(async (sub) => {
-        try {
-          await stripe.subscriptions.cancel(sub.id, {
-            prorate: true,
-          })
-        } catch (err: any) {
-          console.error(
-            `[stripe] failed to cancel sibling subscription ${sub.id}:`,
-            err?.message || err,
-          )
-        }
-      }),
-  )
-}

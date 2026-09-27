@@ -12,9 +12,9 @@ export default {
     extend: {
       colors: {
         struct: {
-          bg: '#0F1115',
-          card: '#161922',
-          border: '#2A3140',
+          bg: '#000000',
+          card: '#101012',
+          border: 'rgba(255, 255, 255, 0.08)',
           blue: '#5617fc',
           muted: '#9AA3B2',
         },

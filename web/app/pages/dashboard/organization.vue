@@ -18,12 +18,12 @@
           <input
             v-model="orgNameDraft"
             class="input"
-            :disabled="!canWrite || savingName"
+            :disabled="!isOwner || savingName"
             placeholder="Organization name"
           />
         </div>
         <button
-          v-if="canWrite"
+          v-if="isOwner"
           type="button"
           class="btn-primary shrink-0"
           :disabled="savingName || orgNameDraft.trim() === currentOrganization?.name"
@@ -37,6 +37,7 @@
           Your role:
           <span class="font-medium capitalize text-[#E8EAEF]">{{ role }}</span>
         </span>
+        <span v-if="!isOwner">Only workspace owners can change the name.</span>
       </div>
     </section>
 
@@ -144,7 +145,7 @@
         Loading members…
       </div>
       <div v-else-if="!members.length" class="py-6 text-center text-sm text-[#8B93A7]">
-        Run migration 006 in Supabase if member emails fail to load, then refresh.
+        No members are visible in this workspace. Refresh or contact support if you expect to see teammates.
       </div>
       <ul v-if="members.length" class="divide-y divide-[#2A2F3A]">
         <li
@@ -256,7 +257,7 @@ async function refreshMembers() {
   try {
     members.value = await listMembers()
   } catch (e: any) {
-    pageError.value = e.message || 'Failed to load members (is migration 006 applied?)'
+    pageError.value = e.message || 'Unable to load members. Refresh and try again.'
     if (!members.value.length) members.value = []
   } finally {
     loadingMembers.value = false

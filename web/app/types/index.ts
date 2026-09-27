@@ -87,7 +87,6 @@ export interface Device {
   created_at: string
   tags: DeviceTags
   encryption_enabled: boolean
-  encryption_key: string | null
   profile_id: string | null
   hardware_id: string | null
 }
@@ -167,11 +166,10 @@ export interface Destination {
   user_id: string
   organization_id: string
   name: string
-  url: string
+  url: string | null
   device_id: string | null
   routing_rule: RoutingRule | null
   event_types: WebhookEventType[]
-  signing_secret: string
   enabled: boolean
   created_at: string
 }

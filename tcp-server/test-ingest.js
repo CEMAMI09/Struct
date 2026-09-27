@@ -50,6 +50,15 @@ async function run() {
   assert.equal(commits, 1)
   const tampered = Buffer.from(frame); tampered[34] ^= 1
   await assert.rejects(processFrame(tampered, ctx), /authentication/)
+  let rateChecks = 0
+  const rated = { ...ctx, authorizeRate: () => { rateChecks++; return { allowed: true } } }
+  await assert.rejects(processFrame(tampered, rated), /authentication/)
+  assert.equal(rateChecks, 0, 'invalid HMAC must not spend a device rate allowance')
+  await processFrame(frame, rated)
+  assert.equal(rateChecks, 1)
+  const beforeRateReject = commits
+  await assert.rejects(processFrame(frame, { ...ctx, authorizeRate: () => ({ allowed: false }) }), /AUTHENTICATED_RATE_LIMIT/)
+  assert.equal(commits, beforeRateReject, 'rate rejection must happen before storage')
   const trailing = buildFrame({ keyId, apiSecret: secret, schemaVersion: 1, payload: Buffer.from([1, 2]) })
   await assert.rejects(processFrame(trailing, ctx), /schema needs 1/)
   const skewed = buildFrame({ keyId, apiSecret: secret, schemaVersion: 1, payload: Buffer.from([1]), timestampSec: 1 })

@@ -52,11 +52,14 @@ export async function getOpenUsagePeriod(
   supabase: SupabaseClient,
   orgId: string,
 ): Promise<UsagePeriodRow | null> {
+  const now = new Date().toISOString()
   const { data, error } = await supabase
     .from('organization_device_usage_periods')
     .select('*')
     .eq('organization_id', orgId)
     .eq('status', 'open')
+    .lte('stripe_period_start', now)
+    .gt('stripe_period_end', now)
     .order('stripe_period_start', { ascending: false })
     .limit(1)
     .maybeSingle()

@@ -4,7 +4,7 @@ const fs = require('node:fs')
 const path = require('node:path')
 const { PGlite } = require('@electric-sql/pglite')
 
-async function createDatabase() {
+async function createDatabase(throughMigration = '999') {
   const db = new PGlite()
   await db.exec(`
     create role anon; create role authenticated; create role service_role bypassrls;
@@ -20,7 +20,7 @@ async function createDatabase() {
       $$ select decode(repeat('ab', $1), 'hex') $$;
   `)
   const dir = path.join(__dirname, '../supabase/migrations')
-  for (const file of fs.readdirSync(dir).filter(f => f.endsWith('.sql')).sort()) {
+  for (const file of fs.readdirSync(dir).filter(f => f.endsWith('.sql') && f.slice(0, 3) <= throughMigration).sort()) {
     let sql = fs.readFileSync(path.join(dir, file), 'utf8')
     // PGlite has built-in gen_random_uuid, but no Supabase extension scheduler.
     sql = sql.replace(/create extension if not exists "pgcrypto";/i, '')

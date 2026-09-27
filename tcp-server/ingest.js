@@ -33,6 +33,7 @@ const secretCache = new Map()
  *   transport: 'tcp' | 'udp',
  *   supabase: import('@supabase/supabase-js').SupabaseClient,
  *   onTelemetryDeliver?: (deviceId: string, device: object) => Promise<void> | void,
+ *   authorizeRate?: (keyId: string) => {allowed: boolean},
  * }} TransportContext
  */
 
@@ -344,6 +345,9 @@ async function processFrameInner(buf, ctx) {
 
     ctx.trace?.finish()
     checkTimestamp()
+    if (ctx.authorizeRate && !ctx.authorizeRate(header.keyId).allowed) {
+      throw new Error('AUTHENTICATED_RATE_LIMIT')
+    }
     if (header.schemaVersion === 0) {
       ctx.trace?.begin('acknowledgment')
       await handleAckFrame(ctx.supabase, device, body)
@@ -366,6 +370,9 @@ async function processFrameInner(buf, ctx) {
     throw new Error(`Invalid frame authentication for fleet profile "${profile.name}"`)
   }
   checkTimestamp()
+  if (ctx.authorizeRate && !ctx.authorizeRate(header.keyId).allowed) {
+    throw new Error('AUTHENTICATED_RATE_LIMIT')
+  }
 
   if (header.schemaVersion === 0) {
     throw new Error('ACK frames require a per-device key_id (not Master Fleet Key)')

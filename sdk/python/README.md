@@ -23,6 +23,7 @@ application TCP stream adapter and idempotent action handler, as in Node.
 
 Queues are capped, single writer and plaintext at rest. An expired head remains
 until explicitly discarded. Unknown delivery remains queued. Close/reopen after
-storage errors. After process death, remove the `.lock` file only after verifying
-no owner process is alive; never automatically recover a live writer. Python,
+storage errors. The OS releases the queue lock when a process dies, so reopen
+normally after a crash; a live writer still prevents a second owner. The `.lock`
+sidecar remains in place to keep all processes locking the same file. Python,
 Node and Rust queue files are not interchangeable. Use OS storage encryption.

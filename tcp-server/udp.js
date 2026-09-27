@@ -5,7 +5,7 @@
  * Connected/disconnected webhooks are not emitted for UDP.
  */
 const dgram = require('dgram')
-const { checkIpConnection, checkPayloadRateLimit } = require('./rateLimit')
+const { checkUdpDatagram, checkPayloadRateLimit } = require('./rateLimit')
 const {
   MAX_FRAME_BYTES,
   processFrame,
@@ -13,6 +13,7 @@ const {
 const { parseV2Header } = require('./protocol')
 
 const UDP_ENDPOINT_TTL_MS = Number(process.env.UDP_ENDPOINT_TTL_MS || 5 * 60_000)
+const UDP_MAX_IN_FLIGHT = Number(process.env.UDP_MAX_IN_FLIGHT || 128)
 
 /**
  * @typedef {{ address: string, port: number, expiresAt: number }} UdpEndpoint
@@ -24,10 +25,15 @@ const UDP_ENDPOINT_TTL_MS = Number(process.env.UDP_ENDPOINT_TTL_MS || 5 * 60_000
  */
 function startUdpServer(supabase, opts = {}) {
   const port = Number(opts.port ?? process.env.UDP_PORT ?? 8081)
+  const maxInFlight = Number(opts.maxInFlight ?? UDP_MAX_IN_FLIGHT)
+  if (!Number.isInteger(maxInFlight) || maxInFlight < 1 || maxInFlight > 100_000) {
+    throw new Error('UDP_MAX_IN_FLIGHT must be a positive integer')
+  }
   const socket = dgram.createSocket('udp4')
 
   /** @type {Map<string, UdpEndpoint>} */
   const endpoints = new Map()
+  let inFlight = 0
 
   function rememberEndpoint(deviceId, rinfo) {
     if (endpoints.size >= 4096) endpoints.delete(endpoints.keys().next().value)
@@ -50,10 +56,16 @@ function startUdpServer(supabase, opts = {}) {
 
   socket.on('message', async (msg, rinfo) => {
     const remote = `${rinfo.address}:${rinfo.port}`
+    let acquired = false
     try {
-      const ipCheck = checkIpConnection(rinfo.address)
+      const ipCheck = checkUdpDatagram(rinfo.address)
       if (!ipCheck.allowed) {
         console.warn(`[struct] UDP IP rate-limited from ${remote}`)
+        return
+      }
+
+      if (inFlight >= maxInFlight) {
+        console.warn(`[struct] UDP busy; dropped datagram from ${remote}`)
         return
       }
 
@@ -71,15 +83,12 @@ function startUdpServer(supabase, opts = {}) {
       // The shared processor authenticates and checks exact schema length.
       // Keep schema/length failures in the same trace as accepted packets.
 
-      const rate = checkPayloadRateLimit(header.keyId)
-      if (!rate.allowed) {
-        console.warn(`[struct] UDP payload rate-limited ${remote} key=${header.keyId}`)
-        return
-      }
-
+      inFlight++
+      acquired = true
       const result = await processFrame(msg, {
         transport: 'udp',
         supabase,
+        authorizeRate: checkPayloadRateLimit,
         // UDP downlinks are intentionally not delivered here without an
         // authenticated downlink reply path. Endpoint is tracked for future use.
         onTelemetryDeliver: async (deviceId) => {
@@ -107,6 +116,8 @@ function startUdpServer(supabase, opts = {}) {
       }
     } catch (err) {
       console.error(`[struct] UDP error from ${remote}:`, err.message)
+    } finally {
+      if (acquired) inFlight--
     }
   })
 
@@ -119,7 +130,7 @@ function startUdpServer(supabase, opts = {}) {
     console.log('[struct] UDP: one Protocol v2 frame per datagram')
   })
 
-  return { socket, getEndpoint, endpoints }
+  return { socket, getEndpoint, endpoints, getInFlight: () => inFlight }
 }
 
 module.exports = {

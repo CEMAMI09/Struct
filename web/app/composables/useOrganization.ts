@@ -277,7 +277,7 @@ export function useOrganization() {
   }
 
   async function renameOrganization(name: string) {
-    requireWrite()
+    if (!isOwner.value) throw new Error('Only workspace owners can rename the organization')
     const orgId = requireOrgId()
     const trimmed = name.trim()
     if (!trimmed) throw new Error('Organization name is required')

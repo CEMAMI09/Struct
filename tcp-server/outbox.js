@@ -37,19 +37,66 @@ async function tick(supabase, post) {
   for (const result of results) if (result.status === 'rejected') console.error(result.reason.message)
   return results
 }
-function startOutbox(supabase) {
-  let stopped = false, timer, iterations = 0
-  const run = async () => {
-    try {
-      if (iterations++ % 30 === 0) {
-        const {error}=await supabase.rpc('expire_pending_commands')
-        if(error)console.error('Command expiry sweep failed')
-      }
-      await tick(supabase)
-    } catch (error) { console.error(error.message) }
-    if (!stopped) timer = setTimeout(run, 1000)
+function startOutbox(supabase, {
+  concurrency = Number(process.env.OUTBOX_CONCURRENCY || 8),
+  idlePollMs = Number(process.env.OUTBOX_IDLE_POLL_MS || 1000),
+  post = postWebhook,
+} = {}) {
+  if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 64 ||
+      !Number.isInteger(idlePollMs) || idlePollMs < 1) {
+    throw new Error('Invalid outbox worker configuration')
   }
-  void run()
-  return () => { stopped = true; clearTimeout(timer) }
+  let stopped = false, timer = null, running = false, lastCommandSweep = 0
+  let currentPump = Promise.resolve()
+  const active = new Set()
+
+  function schedule(delay) {
+    if (stopped || timer !== null) return
+    timer = setTimeout(() => {
+      timer = null
+      currentPump = pump()
+    }, delay)
+  }
+
+  function launch(job) {
+    const work = deliver(supabase, job, post)
+      .catch(error => console.error(error.message))
+      .finally(() => {
+        active.delete(work)
+        schedule(0)
+      })
+    active.add(work)
+  }
+
+  async function pump() {
+    if (stopped || running || active.size >= concurrency) return
+    running = true
+    try {
+      if (Date.now() - lastCommandSweep >= 30_000) {
+        lastCommandSweep = Date.now()
+        const { error } = await supabase.rpc('expire_pending_commands')
+        if (error) console.error('Command expiry sweep failed')
+      }
+      const { data, error } = await supabase.rpc('claim_webhook_deliveries', {
+        p_limit: concurrency - active.size,
+      })
+      if (error) throw new Error(`Outbox claim failed: ${error.message}`)
+      for (const job of data || []) launch(job)
+      if (active.size < concurrency) schedule(data?.length ? 0 : idlePollMs)
+    } catch (error) {
+      console.error(error.message)
+      schedule(idlePollMs)
+    } finally {
+      running = false
+    }
+  }
+
+  currentPump = pump()
+  return async () => {
+    stopped = true
+    if (timer !== null) clearTimeout(timer)
+    await currentPump
+    await Promise.allSettled([...active])
+  }
 }
 module.exports = { deliver, tick, startOutbox }

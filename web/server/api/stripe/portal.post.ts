@@ -1,12 +1,9 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 import { requireOrgWriter } from '../../utils/auth'
 import { getOrganizationBilling } from '../../utils/organizations'
-import { getOrCreateQuantityPortalConfiguration } from '../../utils/portal'
+import { getBillingPortalConfiguration } from '../../utils/portal'
 import { useStripeClient } from '../../utils/stripe'
-import {
-  applyStripeSubscriptionToOrg,
-  pickBestSubscription,
-} from '../../utils/syncStripeSubscription'
+import { applyStripeSubscriptionToOrg } from '../../utils/syncStripeSubscription'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{ orgId?: string }>(event)
@@ -29,6 +26,7 @@ export default defineEventHandler(async (event) => {
     pro: config.stripePricePro,
     scale: config.stripePriceScale,
   }
+  const portalConfiguration = await getBillingPortalConfiguration(stripe)
 
   // Free orgs may not have a Stripe customer yet — create one so they can
   // open the portal and subscribe / upgrade.
@@ -50,38 +48,13 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Repair stacked subscriptions: keep the highest-quantity plan, cancel orphans.
-  const siblings = await stripe.subscriptions.list({
-    customer: customerId,
-    status: 'active',
-    limit: 20,
-  })
-  const best = pickBestSubscription(siblings.data)
-  if (best) {
-    try {
-      await applyStripeSubscriptionToOrg(serviceSupabase, best, prices, orgId)
-    } catch (err: any) {
-      console.error('[stripe portal] failed to sync best subscription:', err?.message || err)
-    }
-    await Promise.all(
-      siblings.data
-        .filter((sub) => sub.id !== best.id)
-        .map((sub) =>
-          stripe.subscriptions.cancel(sub.id, { prorate: true }).catch((err: any) => {
-            console.error(
-              `[stripe portal] failed to cancel orphan ${sub.id}:`,
-              err?.message || err,
-            )
-          }),
-        ),
-    )
+  // Opening billing must never cancel a subscription. Reconcile the subscription
+  // already linked to this organization; investigate other active subscriptions
+  // separately, with an explicit customer-approved billing action.
+  if (org.stripe_subscription_id) {
+    const subscription = await stripe.subscriptions.retrieve(org.stripe_subscription_id)
+    await applyStripeSubscriptionToOrg(serviceSupabase, subscription, prices, orgId)
   }
-
-  const portalConfiguration = await getOrCreateQuantityPortalConfiguration(stripe, {
-    flexible: config.stripePriceFlexible,
-    pro: config.stripePricePro,
-    scale: config.stripePriceScale,
-  })
 
   const session = await stripe.billingPortal.sessions.create({
     customer: customerId,

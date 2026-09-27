@@ -5,9 +5,10 @@
       <div class="flex min-w-0 items-center gap-2">
         <select
           v-if="numericFields.length > 1"
-          v-model="selectedField"
+          :value="activeField || ''"
           class="input max-w-[10rem] py-1 font-mono text-[10px]"
           aria-label="Chart field"
+          @change="chooseField"
         >
           <option v-for="field in numericFields" :key="field" :value="field">
             {{ field }}
@@ -43,11 +44,28 @@
     <p v-else class="mt-2 text-xs text-[#9AA3B2]">
       Points are stored samples. The line only joins those samples. No unit is shown unless the field name includes one.
     </p>
+    <details v-if="hasData" class="mt-2 text-xs text-[#C5CAD3]">
+      <summary class="cursor-pointer rounded py-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b79bff]">View telemetry as a table</summary>
+      <div class="mt-2 max-h-56 overflow-auto rounded-xl border border-white/10">
+        <table class="w-full text-left">
+          <caption class="sr-only">Stored samples for {{ fieldLabel }}</caption>
+          <thead class="sticky top-0 bg-[#101012]">
+            <tr><th scope="col" class="px-3 py-2">Stored at</th><th scope="col" class="px-3 py-2">{{ fieldLabel }}</th></tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in rows" :key="row.id" class="border-t border-white/10">
+              <td class="px-3 py-2">{{ formatSampleTime(row.timestamp) }}</td>
+              <td class="px-3 py-2 font-mono">{{ sampleValue(row) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
   </div>
 </template>
 
 <script setup lang="ts">
-import { use } from 'echarts/core'
+import { graphic, use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { LineChart } from 'echarts/charts'
 import {
@@ -60,12 +78,15 @@ import type { TelemetryRow } from '~/types'
 
 use([CanvasRenderer, LineChart, GridComponent, TooltipComponent, LegendComponent])
 
+const FIELD_KEY = 'struct-telemetry-field'
+
 const props = defineProps<{
   rows: TelemetryRow[]
   field?: string | null
 }>()
 
 const selectedField = ref<string | null>(null)
+const savedField = ref<string | null>(readSavedField())
 const chartEl = ref<{ $el?: HTMLElement, resize: (opts?: { animation?: { duration?: number } }) => void } | null>(null)
 let resizeObserver: ResizeObserver | undefined
 
@@ -91,18 +112,46 @@ const numericFields = computed(() => {
   return [...keys]
 })
 
-watch(
-  numericFields,
-  (fields) => {
-    if (props.field && fields.includes(props.field)) {
-      selectedField.value = props.field
-      return
-    }
-    if (selectedField.value && fields.includes(selectedField.value)) return
-    selectedField.value = fields[0] || null
-  },
-  { immediate: true },
-)
+function readSavedField() {
+  if (!import.meta.client) return null
+  try {
+    return localStorage.getItem(FIELD_KEY) || null
+  } catch {
+    return null
+  }
+}
+
+function chooseField(event: Event) {
+  const value = (event.target as HTMLSelectElement).value
+  if (!value || !numericFields.value.includes(value)) return
+  selectedField.value = value
+  savedField.value = value
+  try {
+    localStorage.setItem(FIELD_KEY, value)
+  } catch {
+    /* ignore quota or private mode */
+  }
+}
+
+function applyField(fields: string[]) {
+  if (props.field && fields.includes(props.field)) {
+    selectedField.value = props.field
+    return
+  }
+  if (savedField.value && fields.includes(savedField.value)) {
+    selectedField.value = savedField.value
+    return
+  }
+  if (selectedField.value && fields.includes(selectedField.value)) return
+  selectedField.value = fields[0] || null
+}
+
+onMounted(() => {
+  savedField.value = readSavedField()
+  applyField(numericFields.value)
+})
+
+watch(numericFields, (fields) => applyField(fields), { immediate: true })
 
 const activeField = computed(() => {
   if (props.field && numericFields.value.includes(props.field)) return props.field
@@ -115,6 +164,15 @@ const activeField = computed(() => {
 const fieldLabel = computed(() => activeField.value || '—')
 
 const hasData = computed(() => props.rows.length > 0 && !!activeField.value)
+
+function formatSampleTime(value: string) {
+  return new Date(value).toLocaleString([], { timeZoneName: 'short' })
+}
+
+function sampleValue(row: TelemetryRow) {
+  const value = activeField.value ? row.parsed_json?.[activeField.value] : null
+  return typeof value === 'number' ? String(value) : '—'
+}
 
 const chartOption = computed(() => {
   const field = activeField.value
@@ -130,12 +188,13 @@ const chartOption = computed(() => {
 
   return {
     backgroundColor: 'transparent',
-    animationDurationUpdate: 400,
+    animationDurationUpdate: 500,
+    animationEasingUpdate: 'cubicOut',
     grid: { left: 40, right: 16, top: 24, bottom: 28 },
     tooltip: {
       trigger: 'axis',
-      backgroundColor: '#14161c',
-      borderColor: '#252830',
+      backgroundColor: '#101012',
+      borderColor: 'rgba(255, 255, 255, 0.08)',
       textStyle: { color: '#E8EAEF', fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11 },
       formatter: (params: unknown) => {
         const point = (Array.isArray(params) ? params[0] : params) as {
@@ -153,25 +212,36 @@ const chartOption = computed(() => {
     xAxis: {
       type: 'category',
       data: times,
-      axisLine: { lineStyle: { color: '#252830' } },
+      axisLine: { show: false },
+      axisTick: { show: false },
       axisLabel: { color: '#8B93A7', fontSize: 10, fontFamily: 'Figtree, ui-sans-serif, sans-serif' },
     },
     yAxis: {
       type: 'value',
-      splitLine: { lineStyle: { color: '#252830', type: 'dashed' } },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      splitLine: { show: false },
       axisLabel: { color: '#8B93A7', fontSize: 10, fontFamily: 'Figtree, ui-sans-serif, sans-serif' },
     },
     series: [
       {
+        id: 'telemetry',
         name: field,
         type: 'line',
-        smooth: false,
+        animationDurationUpdate: 500,
+        animationEasingUpdate: 'cubicOut',
+        smooth: true,
         connectNulls: false,
-        showSymbol: true,
-        symbolSize: 6,
+        showSymbol: false,
         data: values,
-        lineStyle: { color: '#b79bff', width: 2 },
-        itemStyle: { color: '#b79bff' },
+        lineStyle: { color: '#8b6cff', width: 2 },
+        itemStyle: { color: '#8b6cff' },
+        areaStyle: {
+          color: new graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(139, 108, 255, 0.36)' },
+            { offset: 1, color: 'rgba(139, 108, 255, 0)' },
+          ]),
+        },
       },
     ],
   }

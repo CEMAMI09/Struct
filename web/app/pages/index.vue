@@ -39,7 +39,7 @@
             </NuxtLink>
           </div>
         </div>
-        <nav v-if="floatMenuOpen" id="float-menu" class="float-sheet" aria-label="Sections">
+          <nav v-if="floatMenuOpen" id="float-menu" class="float-sheet" aria-label="Sections">
           <a
             v-for="link in sectionLinks"
             :key="link.id"
@@ -48,6 +48,10 @@
           >
             {{ link.label }}
           </a>
+          <NuxtLink v-if="!user" to="/login" @click="floatMenuOpen = false">Sign in</NuxtLink>
+          <NuxtLink :to="user ? '/dashboard' : '/signup'" @click="floatMenuOpen = false">
+            {{ user ? 'Dashboard' : 'Sign up' }}
+          </NuxtLink>
         </nav>
       </header>
     </Teleport>
@@ -56,16 +60,16 @@
       <div ref="heroStage" class="hero-stage">
         <section id="home" class="hero-pin relative bg-[linear-gradient(to_bottom,#000,#1a0858_34%,#5617fc_65%,#c4b5fd_82%)]">
           <header class="landing-top" :class="{ 'is-gone': isHeaderSticky }">
-            <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
+            <div class="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3 sm:gap-4 sm:py-4">
               <NuxtLink to="/" class="header-logo" aria-label="Struct home">
                 <StructLogo variant="dark" />
               </NuxtLink>
-              <nav class="flex items-center gap-3 sm:gap-5" aria-label="Account">
-                <NuxtLink v-if="!user" to="/login" class="text-sm text-white/70 transition hover:text-white">
+              <nav class="flex shrink-0 items-center gap-2 sm:gap-5" aria-label="Account">
+                <NuxtLink v-if="!user" to="/login" class="header-signin">
                   Sign in
                 </NuxtLink>
-                <NuxtLink :to="user ? '/dashboard' : '/signup'" class="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black">
-                  {{ user ? 'Open dashboard' : 'Sign up' }}
+                <NuxtLink :to="user ? '/dashboard' : '/signup'" class="header-cta">
+                  {{ user ? 'Dashboard' : 'Sign up' }}
                 </NuxtLink>
               </nav>
             </div>
@@ -75,7 +79,7 @@
           <div class="hero-glow absolute left-1/2 top-[calc(100%-96px)] h-[375px] w-[750px] -translate-x-1/2 rounded-[100%] border border-[#b79bff] bg-[radial-gradient(closest-side,#000_82%,#5617fc)] sm:top-[calc(100%-120px)] sm:h-[768px] sm:w-[1536px] lg:h-[1200px] lg:w-[2400px]" />
           <div class="hero-copy relative mx-auto max-w-6xl px-4">
             <div class="flex justify-center">
-              <h1 class="text-center text-6xl font-bold tracking-tighter md:text-7xl xl:text-8xl">
+              <h1 class="hero-title">
                 Less data.
                 <br />
                 More control.
@@ -83,7 +87,7 @@
             </div>
 
             <div class="flex justify-center">
-              <p class="mt-8 max-w-2xl text-center text-xl text-white/80">
+              <p class="mt-6 max-w-2xl text-center text-base text-white/80 sm:mt-8 sm:text-xl">
                 Reduce data usage and transmission costs with compact encoding, secure device communication, and direct delivery to your existing backend.
               </p>
             </div>
@@ -124,7 +128,7 @@
 
       <section id="features" class="bg-black py-[72px] sm:py-24">
         <div class="mx-auto w-full max-w-[1600px] px-6 sm:px-8">
-          <h2 class="text-center text-5xl font-bold tracking-tighter sm:text-6xl">Everything you need</h2>
+          <h2 class="section-title text-center">Everything you need</h2>
           <div class="mx-auto max-w-xl">
             <p class="mt-5 text-center text-xl text-white/70">
               Define a packed schema, authenticate each frame, store the event, and inspect webhook delivery separately.
@@ -140,7 +144,7 @@
 
       <section id="product" class="bg-gradient-to-b from-black to-[#3e11b5] pt-[72px] pb-20 sm:pt-24">
         <div class="mx-auto w-full max-w-[1500px] px-6 sm:px-8">
-          <h2 class="text-center text-5xl font-bold tracking-tighter sm:text-6xl">Telemetry you can trust</h2>
+          <h2 class="section-title text-center">Telemetry you can trust</h2>
           <div class="mx-auto max-w-xl">
             <p class="mt-5 text-center text-xl text-white/70">
               Inspect decoded telemetry, verify device data, and track delivery from one dashboard.
@@ -151,7 +155,7 @@
               <div class="product-row">
                 <div class="product-copy">
                   <p class="product-kicker">Event visibility</p>
-                  <h3 class="mt-3 text-3xl font-semibold tracking-tighter sm:text-4xl">Know exactly what happens to every event.</h3>
+                  <h3 class="mt-3 text-2xl font-semibold tracking-tight sm:text-4xl sm:tracking-tighter">Know exactly what happens to every event.</h3>
                   <p class="mt-4 text-white/70">
                     Struct helps you move beyond raw device data. Inspect decoded fields, verify authenticated ingestion, monitor webhook delivery, and troubleshoot failures across the full path from device to backend.
                   </p>
@@ -185,14 +189,14 @@
 
       <section id="faq" class="bg-gradient-to-b from-[#3e11b5] to-black py-[72px] sm:py-24">
         <div class="mx-auto max-w-6xl px-4">
-          <h2 class="mx-auto max-w-[648px] text-left text-5xl font-bold tracking-tighter sm:text-6xl">
+          <h2 class="section-title mx-auto max-w-[648px] text-left">
             FAQs
           </h2>
           <div class="mx-auto mt-12 max-w-[648px]">
             <div v-for="(item, index) in faqs" :key="item.question" class="border-b border-white/30 py-7">
               <button
                 type="button"
-                class="flex w-full items-center gap-4 text-left"
+                class="flex min-h-11 w-full items-center gap-4 text-left"
                 :aria-expanded="openFaq === index"
                 @click="openFaq = openFaq === index ? -1 : index"
               >
@@ -213,7 +217,7 @@
         <img src="/landing/emojistar.png" alt="" class="cta-art cta-art-left" />
         <img src="/landing/helix2.png" alt="" class="cta-art cta-art-right" />
         <div class="relative mx-auto max-w-xl px-4">
-          <h2 class="text-5xl font-bold tracking-tighter sm:text-6xl">Send one event</h2>
+          <h2 class="section-title text-center">Send one event</h2>
           <p class="mt-5 text-lg text-white/70">
             Create a device, generate its encoder, and watch the stored telemetry in the dashboard.
           </p>
@@ -229,7 +233,7 @@
     <footer class="border-t border-white/20 bg-black py-5 text-white/60">
       <div class="mx-auto flex max-w-6xl flex-col items-center gap-4 px-4 sm:flex-row sm:justify-between">
         <p>© {{ year }} Struct</p>
-        <ul class="flex items-center gap-4">
+        <ul class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
           <li><NuxtLink to="/benchmarks" class="hover:text-white">Benchmarks</NuxtLink></li>
           <li><NuxtLink to="/privacy" class="hover:text-white">Privacy</NuxtLink></li>
           <li><NuxtLink to="/terms" class="hover:text-white">Terms</NuxtLink></li>
@@ -450,16 +454,67 @@ onUnmounted(() => {
 
 .header-logo :deep(.struct-logo) {
   position: relative;
-  height: 3.5rem;
+  height: 2.15rem;
   width: auto;
+  max-width: 9.5rem;
   margin: 0;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.header-signin {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+}
+
+.header-signin:hover {
+  color: #fff;
+}
+
+.header-cta {
+  border-radius: 0.5rem;
+  background: #fff;
+  padding: 0.45rem 0.75rem;
+  color: #000;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.hero-title,
+.section-title {
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+  text-wrap: balance;
+}
+
+.hero-title {
+  text-align: center;
+  font-size: clamp(2.35rem, 11vw, 6rem);
+}
+
+.section-title {
+  font-size: clamp(2.15rem, 8.5vw, 3.75rem);
+}
+
+@media (min-width: 640px) {
+  .header-logo :deep(.struct-logo) {
+    height: 3.5rem;
+    max-width: none;
+  }
+
+  .header-cta {
+    padding: 0.5rem 1rem;
+  }
 }
 
 .landing-float {
   position: fixed;
-  top: 0.75rem;
-  left: 1rem;
-  right: 1rem;
+  top: max(0.5rem, env(safe-area-inset-top));
+  left: max(0.5rem, env(safe-area-inset-left));
+  right: max(0.5rem, env(safe-area-inset-right));
   z-index: 50;
   max-width: 900px;
   margin-inline: auto;
@@ -488,9 +543,9 @@ onUnmounted(() => {
 .landing-float-bar {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  min-height: 3.5rem;
-  padding: 0.45rem 1.15rem;
+  gap: 0.45rem;
+  min-height: 3.25rem;
+  padding: 0.35rem 0.55rem 0.35rem 0.7rem;
 }
 
 .float-brand {
@@ -545,8 +600,10 @@ onUnmounted(() => {
 }
 
 .float-signin {
+  display: none;
   color: rgba(255, 255, 255, 0.7);
   font-size: 0.875rem;
+  white-space: nowrap;
   transition: color 150ms ease;
 }
 
@@ -557,10 +614,11 @@ onUnmounted(() => {
 .float-signup {
   border-radius: 999px;
   background: #fff;
-  padding: 0.45rem 0.9rem;
+  padding: 0.45rem 0.75rem;
   color: #000;
   font-size: 0.875rem;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .float-sheet {
@@ -573,6 +631,17 @@ onUnmounted(() => {
 .float-sheet a {
   border-radius: 0.6rem;
   padding: 0.55rem 0.35rem;
+}
+
+@media (min-width: 480px) {
+  .float-signin {
+    display: inline;
+  }
+
+  .landing-float-bar {
+    gap: 0.75rem;
+    padding: 0.45rem 1.15rem;
+  }
 }
 
 @media (min-width: 768px) {
@@ -723,7 +792,13 @@ onUnmounted(() => {
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 0.85rem;
   background: #050505;
-  padding: 1.75rem 1.5rem;
+  padding: 1.25rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .product-copy {
+    padding: 1.75rem 1.5rem;
+  }
 }
 
 .product-stage {

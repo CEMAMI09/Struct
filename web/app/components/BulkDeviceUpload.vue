@@ -25,11 +25,12 @@
         <button type="button" class="btn-ghost text-xs" @click="downloadBulkTemplate">
           Download template
         </button>
-        <label class="btn-ghost cursor-pointer text-xs">
+        <label class="btn-ghost cursor-pointer text-xs focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[#b79bff]">
           Choose file
           <input
-            class="hidden"
+            class="sr-only"
             type="file"
+            aria-label="Choose a CSV or XLSX file"
             accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             @change="onFileInput"
           />

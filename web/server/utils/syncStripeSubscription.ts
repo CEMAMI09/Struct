@@ -5,15 +5,6 @@ import {
   type SubscriptionTier,
 } from './billing'
 
-const PAID_TIERS = new Set<PaidTier>(['flexible', 'pro', 'scale'])
-
-function parseTier(value: string | null | undefined): SubscriptionTier | null {
-  if (!value) return null
-  if (value === 'free') return 'free'
-  if (PAID_TIERS.has(value as PaidTier)) return value as PaidTier
-  return null
-}
-
 function tierForPrice(
   priceId: string | undefined,
   prices: { flexible: string; pro: string; scale: string },
@@ -25,71 +16,70 @@ function tierForPrice(
   return null
 }
 
-function subscriptionQuantity(subscription: Stripe.Subscription) {
-  return subscription.items.data.reduce((sum, item) => sum + (item.quantity ?? 0), 0)
-}
-
-/**
- * Apply a live Stripe subscription onto the matching organization.
- * Never lets a lower-quantity sibling (stacked checkout orphan) overwrite a
- * healthier subscription on the same org.
- */
+/** Apply only the subscription linked to the organization, unless a verified
+ * Checkout explicitly replaces it. A larger sibling is not automatically the
+ * customer's intended plan. */
 export async function applyStripeSubscriptionToOrg(
   supabase: SupabaseClient,
   subscription: Stripe.Subscription,
   prices: { flexible: string; pro: string; scale: string },
   orgIdHint?: string | null,
+  allowReplacement = false,
 ) {
+  if (orgIdHint && subscription.metadata?.orgId && subscription.metadata.orgId !== orgIdHint) {
+    throw createError({ statusCode: 500, message: 'Subscription belongs to another organization' })
+  }
   const orgId = orgIdHint || subscription.metadata?.orgId || null
-  const item = subscription.items.data[0]
+  const item = subscription.items.data.find((candidate) => tierForPrice(candidate.price.id, prices))
   if (!item) {
-    return null
+    throw createError({ statusCode: 500, message: 'Subscription has no configured Struct price' })
   }
 
-  const liveQuantity = subscriptionQuantity(subscription)
+  const liveQuantity = item.quantity ?? 0
 
   let existingQuery = supabase
     .from('organizations')
-    .select('id, stripe_subscription_id, stripe_quantity, subscription_tier')
+    .select('id, stripe_customer_id, stripe_subscription_id, stripe_quantity, subscription_tier')
   if (orgId) {
     existingQuery = existingQuery.eq('id', orgId)
   } else {
     existingQuery = existingQuery.eq('stripe_subscription_id', subscription.id)
   }
-  const { data: existing } = await existingQuery.maybeSingle()
+  const { data: existing, error: existingError } = await existingQuery.maybeSingle()
+  if (existingError) {
+    throw createError({ statusCode: 500, message: existingError.message })
+  }
+  if (!existing) return null
+
+  const customerId = typeof subscription.customer === 'string'
+    ? subscription.customer
+    : subscription.customer?.id || null
+  if (existing.stripe_customer_id && customerId !== existing.stripe_customer_id) {
+    throw createError({ statusCode: 500, message: 'Subscription customer does not match organization' })
+  }
 
   if (
     existing?.stripe_subscription_id &&
     existing.stripe_subscription_id !== subscription.id
   ) {
-    // Event is for a different subscription on this org (usually an orphan).
-    // Only take over when this one is clearly better; never shrink capacity.
-    if (
-      subscription.status === 'canceled' ||
-      subscription.status === 'incomplete_expired'
-    ) {
-      return null
-    }
-    if (liveQuantity < (existing.stripe_quantity ?? 0)) {
+    // Only an explicitly completed Checkout can replace the linked
+    // subscription. Unrelated events must never choose a plan by quantity.
+    if (!allowReplacement) return null
+    if (subscription.status === 'canceled' || subscription.status === 'incomplete_expired') {
       return null
     }
   }
 
   const patch: Record<string, unknown> = {
     stripe_subscription_id: subscription.id,
-    stripe_customer_id:
-      typeof subscription.customer === 'string'
-        ? subscription.customer
-        : subscription.customer?.id || null,
+    stripe_customer_id: customerId,
     stripe_item_id: item.id,
     // Always trust Stripe's live quantity on the winning subscription.
     stripe_quantity: liveQuantity,
   }
 
   const tier =
-    tierForPrice(item.price.id, prices) ||
-    parseTier(subscription.metadata?.targetTier) ||
-    parseTier(subscription.metadata?.tier)
+    tierForPrice(item.price.id, prices)
 
   if (subscription.status === 'canceled' || subscription.status === 'incomplete_expired') {
     patch.subscription_tier = 'free'
@@ -122,13 +112,3 @@ export async function applyStripeSubscriptionToOrg(
   }
 }
 
-/** Pick the active subscription with the highest billed quantity. */
-export function pickBestSubscription(subscriptions: Stripe.Subscription[]) {
-  if (!subscriptions.length) return null
-  return [...subscriptions].sort((a, b) => {
-    const qa = subscriptionQuantity(a)
-    const qb = subscriptionQuantity(b)
-    if (qb !== qa) return qb - qa
-    return b.created - a.created
-  })[0]!
-}

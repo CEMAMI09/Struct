@@ -207,7 +207,7 @@
         </div>
         <div v-for="destination in destinations" :key="destination.id" class="p-4">
           <p class="text-sm text-[#E8EAEF]">{{ destination.name }}</p>
-          <p class="mt-1 break-all font-mono text-xs text-[#9AA3B2]">{{ destination.url }}</p>
+          <p class="mt-1 text-xs text-[#9AA3B2]">Endpoint URL hidden. Owners and admins can reveal it on Destinations.</p>
         </div>
       </div>
     </section>
@@ -244,32 +244,6 @@
         </form>
       </div>
 
-      <div class="card divide-y divide-[#2A2F3A]">
-        <label class="flex cursor-pointer items-center justify-between gap-4 p-4">
-          <span>
-            <span class="block text-sm text-[#E8EAEF]">Billing notifications</span>
-            <span class="text-xs text-[#8B93A7]">Plan, payment, and device-limit updates.</span>
-          </span>
-          <input v-model="notifications.billing" type="checkbox" class="accent-[#5617fc]" />
-        </label>
-        <label class="flex cursor-pointer items-center justify-between gap-4 p-4">
-          <span>
-            <span class="block text-sm text-[#E8EAEF]">Fleet alerts</span>
-            <span class="text-xs text-[#8B93A7]">Device connectivity and delivery failures.</span>
-          </span>
-          <input v-model="notifications.fleet" type="checkbox" class="accent-[#5617fc]" />
-        </label>
-        <label class="flex cursor-pointer items-center justify-between gap-4 p-4">
-          <span>
-            <span class="block text-sm text-[#E8EAEF]">Product updates</span>
-            <span class="text-xs text-[#8B93A7]">Occasional Struct feature announcements.</span>
-          </span>
-          <input v-model="notifications.product" type="checkbox" class="accent-[#5617fc]" />
-        </label>
-      </div>
-      <button type="button" class="btn-primary" :disabled="savingNotifications" @click="saveNotifications">
-        {{ savingNotifications ? 'Saving…' : 'Save notification settings' }}
-      </button>
     </section>
   </div>
 </template>
@@ -363,12 +337,6 @@ const revealedKeys = ref(new Set<string>())
 const resettingPassword = ref(false)
 const newPassword = ref('')
 const confirmPassword = ref('')
-const savingNotifications = ref(false)
-const notifications = reactive({
-  billing: true,
-  fleet: true,
-  product: false,
-})
 
 onMounted(async () => {
   try {
@@ -382,13 +350,6 @@ onMounted(async () => {
       await syncFromStripe()
     }
     await fetchUsageStats()
-
-    const saved = user.value?.user_metadata?.notifications
-    if (saved && typeof saved === 'object') {
-      notifications.billing = saved.billing ?? true
-      notifications.fleet = saved.fleet ?? true
-      notifications.product = saved.product ?? false
-    }
 
     if (route.query.billing === 'success') {
       const sessionId =
@@ -530,19 +491,4 @@ async function onResetPassword() {
   }
 }
 
-async function saveNotifications() {
-  savingNotifications.value = true
-  setMessage()
-  try {
-    const { error } = await supabase.auth.updateUser({
-      data: { notifications: { ...notifications } },
-    })
-    if (error) throw error
-    pageMsg.value = 'Notification settings saved.'
-  } catch (error: any) {
-    pageError.value = error.message
-  } finally {
-    savingNotifications.value = false
-  }
-}
 </script>

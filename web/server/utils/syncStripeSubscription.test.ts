@@ -1,0 +1,62 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type Stripe from 'stripe'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { applyStripeSubscriptionToOrg } from './syncStripeSubscription'
+
+const prices = { flexible: 'price_flex', pro: 'price_pro', scale: 'price_scale' }
+
+beforeEach(() => {
+  vi.stubGlobal('createError', ({ message }: { message: string }) => new Error(message))
+})
+
+function fakeSubscription(id: string, customer = 'cus_1') {
+  return {
+    id,
+    customer,
+    status: 'active',
+    metadata: { orgId: 'org_1' },
+    items: { data: [
+      { id: 'si_other', price: { id: 'price_other' }, quantity: 999 },
+      { id: 'si_pro', price: { id: prices.pro }, quantity: 150 },
+    ] },
+  } as unknown as Stripe.Subscription
+}
+
+function fakeDb() {
+  const update = vi.fn(() => ({ eq: vi.fn(async () => ({ error: null })) }))
+  const query: any = {
+    select: () => query,
+    eq: () => query,
+    maybeSingle: async () => ({ data: {
+      id: 'org_1', stripe_customer_id: 'cus_1', stripe_subscription_id: 'sub_linked',
+      stripe_quantity: 5, subscription_tier: 'flexible',
+    }, error: null }),
+    update,
+  }
+  const db = { from: vi.fn(() => query) } as unknown as SupabaseClient
+  return { db, update }
+}
+
+describe('subscription reconciliation', () => {
+  it('ignores an unsolicited sibling even when it has a larger quantity', async () => {
+    const { db, update } = fakeDb()
+    expect(await applyStripeSubscriptionToOrg(db, fakeSubscription('sub_other'), prices, 'org_1')).toBeNull()
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('counts only the configured Struct price item', async () => {
+    const { db, update } = fakeDb()
+    const result = await applyStripeSubscriptionToOrg(db, fakeSubscription('sub_linked'), prices, 'org_1')
+    expect(result?.stripeQuantity).toBe(150)
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({
+      stripe_item_id: 'si_pro', stripe_quantity: 150, subscription_tier: 'pro',
+    }))
+  })
+
+  it('rejects a different Stripe customer', async () => {
+    const { db, update } = fakeDb()
+    await expect(applyStripeSubscriptionToOrg(db, fakeSubscription('sub_linked', 'cus_other'), prices, 'org_1'))
+      .rejects.toThrow('customer does not match')
+    expect(update).not.toHaveBeenCalled()
+  })
+})

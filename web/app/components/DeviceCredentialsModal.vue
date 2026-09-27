@@ -2,7 +2,7 @@
   <div class="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 sm:items-center">
     <div
       ref="dialogEl"
-      class="relative w-full max-w-lg rounded-lg border border-[#2A3140] bg-[#161922] p-5 shadow-xl outline-none"
+      class="relative w-full max-w-lg rounded-xl border border-white/10 bg-[#101012] p-5 shadow-xl outline-none"
       role="dialog"
       aria-modal="true"
       aria-labelledby="device-creds-title"

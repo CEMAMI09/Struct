@@ -1,6 +1,8 @@
 import hashlib
 import json
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -67,6 +69,31 @@ class ParityTests(unittest.TestCase):
                         queue.enqueue(1, b'x')
                 with self.assertRaises(RuntimeError):
                     queue.enqueue(1, b'y')
+
+    def test_queue_reopens_after_crash_but_rejects_live_writer(self):
+        key = '0123456789abcdef'
+        with tempfile.TemporaryDirectory() as directory:
+            file = Path(directory) / 'queue.json'
+            create_and_crash = (
+                "import os,sys; from struct_persistent import PersistentQueue; "
+                "q=PersistentQueue(sys.argv[1], '0123456789abcdef'); "
+                "q.enqueue(1, b'x'); os._exit(0)"
+            )
+            subprocess.run([sys.executable, '-c', create_and_crash, str(file)],
+                           cwd=Path(__file__).parent, check=True, timeout=10)
+            with PersistentQueue(file, key) as queue:
+                self.assertEqual(len(queue.records), 1)
+                self.assertEqual(queue.records[0]['payload'], b'x'.hex())
+                try_open = (
+                    "import sys; from struct_persistent import PersistentQueue; "
+                    "\ntry: PersistentQueue(sys.argv[1], '0123456789abcdef')"
+                    "\nexcept RuntimeError: sys.exit(0)"
+                    "\nsys.exit(1)"
+                )
+                subprocess.run([sys.executable, '-c', try_open, str(file)],
+                               cwd=Path(__file__).parent, check=True, timeout=10)
+            with PersistentQueue(file, key) as queue:
+                self.assertEqual(len(queue.records), 1)
 
 
 if __name__ == '__main__':

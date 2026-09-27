@@ -1,8 +1,8 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 import type { PaidTier, SubscriptionTier } from '../../utils/billing'
 import { requireOrgWriter } from '../../utils/auth'
-import { getOrganizationBilling } from '../../utils/organizations'
 import { useStripeClient } from '../../utils/stripe'
+import { applyStripeSubscriptionToOrg } from '../../utils/syncStripeSubscription'
 
 const PAID_TIERS = new Set<PaidTier>(['flexible', 'pro', 'scale'])
 
@@ -44,77 +44,35 @@ export default defineEventHandler(async (event) => {
   await requireOrgWriter(event, orgId)
 
   const serviceSupabase = await serverSupabaseServiceRole(event)
-  const previousOrg = await getOrganizationBilling(serviceSupabase, orgId)
-
-  const customerId =
-    typeof session.customer === 'string' ? session.customer : session.customer?.id || null
   const subscriptionId =
     typeof session.subscription === 'string'
       ? session.subscription
       : session.subscription?.id || null
 
-  const patch: Record<string, unknown> = {
-    stripe_customer_id: customerId,
-    stripe_subscription_id: subscriptionId,
-    subscription_tier: targetTier,
+  if (!subscriptionId) {
+    throw createError({ statusCode: 500, message: 'Checkout session has no subscription' })
   }
 
-  if (subscriptionId) {
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId)
-    const item = subscription.items.data[0]
-    if (item) {
-      patch.stripe_item_id = item.id
-      patch.stripe_quantity = item.quantity ?? 0
-    }
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+  const sessionCustomer = typeof session.customer === 'string'
+    ? session.customer : session.customer?.id || null
+  const subscriptionCustomer = typeof subscription.customer === 'string'
+    ? subscription.customer : subscription.customer?.id || null
+  if (!sessionCustomer || sessionCustomer !== subscriptionCustomer) {
+    throw createError({ statusCode: 500, message: 'Checkout customer mismatch' })
   }
-
-  const { error } = await serviceSupabase.from('organizations').update(patch).eq('id', orgId)
-
-  if (error) {
-    throw createError({ statusCode: 500, message: error.message })
-  }
-
-  // Cancel the previous subscription if Checkout created a replacement.
-  const previousSubscriptionId =
-    session.metadata?.previousSubscriptionId || previousOrg.stripe_subscription_id
-  if (
-    previousSubscriptionId &&
-    subscriptionId &&
-    previousSubscriptionId !== subscriptionId
-  ) {
-    try {
-      await stripe.subscriptions.cancel(previousSubscriptionId, { prorate: true })
-    } catch (err: any) {
-      console.error(
-        `[stripe] failed to cancel previous subscription ${previousSubscriptionId}:`,
-        err?.message || err,
-      )
-    }
-  }
-
-  if (customerId && subscriptionId) {
-    const siblings = await stripe.subscriptions.list({
-      customer: customerId,
-      status: 'active',
-      limit: 20,
-    })
-    await Promise.all(
-      siblings.data
-        .filter((sub) => sub.id !== subscriptionId)
-        .map((sub) =>
-          stripe.subscriptions.cancel(sub.id, { prorate: true }).catch((err: any) => {
-            console.error(
-              `[stripe] failed to cancel orphan subscription ${sub.id}:`,
-              err?.message || err,
-            )
-          }),
-        ),
-    )
+  const result = await applyStripeSubscriptionToOrg(serviceSupabase, subscription, {
+    flexible: useRuntimeConfig().stripePriceFlexible,
+    pro: useRuntimeConfig().stripePricePro,
+    scale: useRuntimeConfig().stripePriceScale,
+  }, orgId, true)
+  if (!result || result.subscriptionTier !== targetTier) {
+    throw createError({ statusCode: 500, message: 'Checkout plan could not be reconciled' })
   }
 
   return {
     ok: true,
-    subscriptionTier: targetTier,
-    stripeQuantity: patch.stripe_quantity ?? 0,
+    subscriptionTier: result.subscriptionTier,
+    stripeQuantity: result.stripeQuantity,
   }
 })
