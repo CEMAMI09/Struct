@@ -44,6 +44,7 @@ export default defineNuxtConfig({
     stripePriceFlexible: process.env.STRIPE_PRICE_FLEXIBLE,
     stripePricePro: process.env.STRIPE_PRICE_PRO,
     stripePriceScale: process.env.STRIPE_PRICE_SCALE || process.env.STRIPE_PRICE_STUDIO,
+    resendApiKey: process.env.RESEND_API_KEY,
     public: {
       tcpHost: process.env.NUXT_PUBLIC_TCP_HOST || '127.0.0.1',
       tcpPort: Number(process.env.NUXT_PUBLIC_TCP_PORT || 8080),
