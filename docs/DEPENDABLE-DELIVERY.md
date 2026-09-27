@@ -14,7 +14,12 @@ Do not roll back to an old gateway that still directly dispatches telemetry
 webhooks: it would send an extra copy in addition to the outbox. Replace gateways
 together or disable old direct fan-out before starting the worker.
 
-The main gateway starts its outbox worker automatically. The new dashboard route
+The main gateway starts its outbox worker automatically. For separate scaling,
+set `OUTBOX_EMBEDDED=false` on gateway instances and run `npm --prefix tcp-server
+run start:worker` as a distinct process. Workers refill available concurrency
+without pausing after each batch; database leases still coordinate multiple workers.
+Set `OUTBOX_CONCURRENCY` and monitor queue age and destination failures before
+raising it. The new dashboard route
 `/dashboard/deliveries` shows the latest 100 jobs and per-job history, and allows
 organization writers to replay dead jobs up to three times. Deploy these
 migrations on staging and rehearse upgrade/rollback before production.
@@ -100,8 +105,9 @@ full rejects the new reading. Default local TTL is one day, configurable to
 30 days. TTL is a client queue policy, not server-enforced data expiry.
 
 The queue uses a checksummed snapshot, synced temporary file and atomic rename.
-Only one writer owns the file. After a dead process leaves a lock, explicit
-`recover:true` checks the recorded PID is no longer alive before acquiring it.
+Only one writer owns the file. Node uses explicit `recover:true` after checking
+that a recorded PID is dead; Python uses an OS file lock that is released on
+process death and reopens normally. The Python `.lock` sidecar remains in place.
 Corrupt files or changed key ID fail closed. POSIX directory fsync is used;
 Windows power-loss durability depends on the filesystem. Do not claim equivalent
 physical power-loss guarantees without testing the target storage.

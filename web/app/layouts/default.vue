@@ -240,9 +240,9 @@ async function signOut() {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  border-bottom: 1px solid #252830;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding: 0 1rem;
-  background: #0c0d10;
+  background: #000;
 }
 
 @media (min-width: 768px) {
@@ -256,8 +256,8 @@ async function signOut() {
   min-width: 0;
   align-items: center;
   gap: 0.5rem;
-  border: 1px solid #252830;
-  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
   padding: 0.3rem 0.55rem 0.3rem 0.7rem;
   font-size: 0.75rem;
   color: #e8eaef;
@@ -271,12 +271,12 @@ async function signOut() {
 }
 
 .app-org:hover {
-  border-color: #3a4050;
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .app-org-role {
   flex-shrink: 0;
-  border: 1px solid #252830;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 4px;
   padding: 0.1rem 0.4rem;
   font-size: 0.65rem;
@@ -291,9 +291,9 @@ async function signOut() {
 .app-org-select {
   max-width: 14rem;
   min-height: 2rem;
-  border: 1px solid #252830;
-  border-radius: 8px;
-  background: #0c0d10;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: #000;
   color: #e8eaef;
   padding: 0.2rem 0.45rem;
   font-size: 0.75rem;

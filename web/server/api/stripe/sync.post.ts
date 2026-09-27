@@ -2,10 +2,7 @@ import { serverSupabaseServiceRole } from '#supabase/server'
 import { requireOrgWriter } from '../../utils/auth'
 import { getOrganizationBilling } from '../../utils/organizations'
 import { useStripeClient } from '../../utils/stripe'
-import {
-  applyStripeSubscriptionToOrg,
-  pickBestSubscription,
-} from '../../utils/syncStripeSubscription'
+import { applyStripeSubscriptionToOrg } from '../../utils/syncStripeSubscription'
 
 /**
  * Pull live Stripe subscription quantity/tier into organizations.
@@ -43,34 +40,7 @@ export default defineEventHandler(async (event) => {
     scale: config.stripePriceScale,
   }
 
-  let subscriptionId = org.stripe_subscription_id
-
-  // Prefer the active subscription with the highest quantity for this customer.
-  if (org.stripe_customer_id) {
-    const list = await stripe.subscriptions.list({
-      customer: org.stripe_customer_id,
-      status: 'active',
-      limit: 20,
-    })
-    const best = pickBestSubscription(list.data)
-    if (best) {
-      subscriptionId = best.id
-
-      // Cancel lower-quantity duplicates left over from stacked checkouts.
-      await Promise.all(
-        list.data
-          .filter((sub) => sub.id !== best.id)
-          .map((sub) =>
-            stripe.subscriptions.cancel(sub.id, { prorate: true }).catch((err: any) => {
-              console.error(
-                `[stripe sync] failed to cancel orphan ${sub.id}:`,
-                err?.message || err,
-              )
-            }),
-          ),
-      )
-    }
-  }
+  const subscriptionId = org.stripe_subscription_id
 
   if (!subscriptionId) {
     return {

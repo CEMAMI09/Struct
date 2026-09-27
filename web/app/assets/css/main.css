@@ -30,16 +30,16 @@
 @tailwind utilities;
 
 :root {
-  --struct-bg: #0f1115;
-  --struct-surface: #161922;
-  --struct-elevated: #1c212b;
+  --struct-bg: #000;
+  --struct-surface: #101012;
+  --struct-elevated: #161618;
   --struct-text: #e8eaef;
   --struct-text-secondary: #c5cad3;
   --struct-muted: #9aa3b2;
-  --struct-border: #2a3140;
-  --struct-border-strong: #3c4558;
-  --struct-hover: rgba(255, 255, 255, 0.045);
-  --struct-selected: #1c2430;
+  --struct-border: rgba(255, 255, 255, 0.08);
+  --struct-border-strong: rgba(255, 255, 255, 0.14);
+  --struct-hover: rgba(255, 255, 255, 0.05);
+  --struct-selected: rgba(255, 255, 255, 0.06);
   --struct-accent: #5617fc;
   --struct-accent-hover: #6d3cfc;
   --struct-focus: #8b6cff;
@@ -47,7 +47,7 @@
   --struct-warning: #e6c27a;
   --struct-success: #8fd4ae;
   --struct-info: #b79bff;
-  --struct-radius: 8px;
+  --struct-radius: 12px;
   --struct-space-1: 0.25rem;
   --struct-space-2: 0.5rem;
   --struct-space-3: 0.75rem;

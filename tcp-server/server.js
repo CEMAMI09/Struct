@@ -89,18 +89,11 @@ const server = net.createServer((socket) => {
         const frame = buffer.subarray(0, frameLen)
         buffer = buffer.subarray(frameLen)
 
-        const rate = checkPayloadRateLimit(header.keyId)
-        if (!rate.allowed) {
-          console.warn(
-            `[struct] payload rate-limited ${remote} key=${header.keyId} retry~${rate.retryAfterMs}ms`,
-          )
-          continue
-        }
-
         if (boundKeyId && header.keyId !== boundKeyId) throw new Error('One key per TCP connection')
         const result = await processFrame(frame, {
           transport: 'tcp',
           supabase,
+          authorizeRate: checkPayloadRateLimit,
           onTelemetryDeliver: async (deviceId) => {
             if (!socket.destroyed) {
               liveSockets.set(deviceId, socket)
@@ -204,7 +197,7 @@ function start() {
     startRateLimitCleanup()
     subscribeDownlinkRealtime()
     startUdpServer(supabase)
-    require('./outbox').startOutbox(supabase)
+    if (process.env.OUTBOX_EMBEDDED !== 'false') require('./outbox').startOutbox(supabase)
   })
 }
 

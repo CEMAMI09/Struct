@@ -2,8 +2,9 @@ import type Stripe from 'stripe'
 import { serverSupabaseServiceRole } from '#supabase/server'
 import type { PaidTier, SubscriptionTier } from '../../utils/billing'
 import { useStripeClient } from '../../utils/stripe'
+import { customerIdFromInvoice, subscriptionIdFromInvoice } from '../../utils/stripeInvoice'
 import { applyStripeSubscriptionToOrg } from '../../utils/syncStripeSubscription'
-import { processPeriodTrueUp, syncUsagePeriodFromSubscription } from '../../utils/trueUpBilling'
+import { processClosedUsagePeriods } from '../../utils/trueUpBilling'
 
 const PAID_TIERS = new Set<PaidTier>(['flexible', 'pro', 'scale'])
 
@@ -64,8 +65,6 @@ export default defineEventHandler(async (event) => {
 
       if (!orgId || !targetTier || targetTier === 'free') break
 
-      const customerId =
-        typeof session.customer === 'string' ? session.customer : session.customer?.id || null
       const subscriptionId =
         typeof session.subscription === 'string'
           ? session.subscription
@@ -73,67 +72,17 @@ export default defineEventHandler(async (event) => {
 
       if (!subscriptionId) break
 
-      const { data: previousOrg } = await serviceSupabase
-        .from('organizations')
-        .select('stripe_subscription_id')
-        .eq('id', orgId)
-        .maybeSingle()
-
       const subscription = await stripe.subscriptions.retrieve(subscriptionId)
-      try {
-        await applyStripeSubscriptionToOrg(serviceSupabase, subscription, prices, orgId)
-        await serviceSupabase
-          .from('organizations')
-          .update({ subscription_tier: targetTier })
-          .eq('id', orgId)
-      } catch (err: any) {
-        console.error('[stripe webhook] checkout.session.completed failed:', err?.message || err)
+      const sessionCustomer = typeof session.customer === 'string'
+        ? session.customer : session.customer?.id || null
+      const subscriptionCustomer = typeof subscription.customer === 'string'
+        ? subscription.customer : subscription.customer?.id || null
+      if (!sessionCustomer || sessionCustomer !== subscriptionCustomer) {
+        throw createError({ statusCode: 500, message: 'Checkout customer mismatch' })
       }
-
-      const previousSubscriptionId =
-        session.metadata?.previousSubscriptionId || previousOrg?.stripe_subscription_id || null
-      if (
-        previousSubscriptionId &&
-        subscriptionId &&
-        previousSubscriptionId !== subscriptionId
-      ) {
-        try {
-          await stripe.subscriptions.cancel(previousSubscriptionId, { prorate: true })
-        } catch (err: any) {
-          console.error(
-            `[stripe webhook] failed to cancel previous subscription ${previousSubscriptionId}:`,
-            err?.message || err,
-          )
-        }
-      }
-
-      if (customerId && subscriptionId) {
-        try {
-          const siblings = await stripe.subscriptions.list({
-            customer: customerId,
-            status: 'active',
-            limit: 20,
-          })
-          await Promise.all(
-            siblings.data
-              .filter((sub) => sub.id !== subscriptionId)
-              .map((sub) =>
-                stripe.subscriptions
-                  .cancel(sub.id, { prorate: true })
-                  .catch((err: any) => {
-                    console.error(
-                      `[stripe webhook] failed to cancel orphan ${sub.id}:`,
-                      err?.message || err,
-                    )
-                  }),
-              ),
-          )
-        } catch (err: any) {
-          console.error(
-            '[stripe webhook] failed listing sibling subscriptions:',
-            err?.message || err,
-          )
-        }
+      const result = await applyStripeSubscriptionToOrg(serviceSupabase, subscription, prices, orgId, true)
+      if (!result || result.subscriptionTier !== targetTier) {
+        throw createError({ statusCode: 500, message: 'Checkout plan could not be reconciled' })
       }
       break
     }
@@ -142,36 +91,34 @@ export default defineEventHandler(async (event) => {
     case 'customer.subscription.updated': {
       const subscription = stripeEvent.data.object as Stripe.Subscription
       const orgId = subscription.metadata?.orgId || null
-      try {
-        await applyStripeSubscriptionToOrg(serviceSupabase, subscription, prices, orgId)
-        if (orgId) {
-          await syncUsagePeriodFromSubscription(serviceSupabase, subscription, orgId)
-        }
-      } catch (err: any) {
-        console.error('[stripe webhook] failed to sync subscription:', err?.message || err)
-      }
+      await applyStripeSubscriptionToOrg(serviceSupabase, subscription, prices, orgId)
       break
     }
 
     case 'invoice.created': {
       const invoice = stripeEvent.data.object as Stripe.Invoice
-      const subscriptionId =
-        typeof invoice.subscription === 'string'
-          ? invoice.subscription
-          : invoice.subscription?.id || null
+      if (invoice.status !== 'draft') break
+      const subscriptionId = subscriptionIdFromInvoice(invoice)
       if (!subscriptionId) break
 
       const subscription = await stripe.subscriptions.retrieve(subscriptionId)
       const orgId = subscription.metadata?.orgId
       if (!orgId) break
 
-      const periodStart = new Date(subscription.current_period_start * 1000)
-      try {
-        await processPeriodTrueUp(serviceSupabase, orgId, periodStart)
-        await syncUsagePeriodFromSubscription(serviceSupabase, subscription, orgId)
-      } catch (err: any) {
-        console.error('[stripe webhook] true-up failed:', err?.message || err)
+      const { data: org, error: orgError } = await serviceSupabase
+        .from('organizations')
+        .select('stripe_customer_id, stripe_subscription_id')
+        .eq('id', orgId)
+        .maybeSingle()
+      if (orgError) throw createError({ statusCode: 500, message: orgError.message })
+      if (
+        !org ||
+        org.stripe_subscription_id !== subscriptionId ||
+        org.stripe_customer_id !== customerIdFromInvoice(invoice)
+      ) {
+        throw createError({ statusCode: 500, message: 'Invoice does not match organization billing' })
       }
+      await processClosedUsagePeriods(serviceSupabase, stripe, orgId, invoice.id)
       break
     }
 
@@ -198,7 +145,7 @@ export default defineEventHandler(async (event) => {
 
       const { error } = await query
       if (error) {
-        console.error('[stripe webhook] subscription.deleted failed:', error.message)
+        throw createError({ statusCode: 500, message: error.message })
       }
       break
     }

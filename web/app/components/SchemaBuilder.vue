@@ -65,11 +65,14 @@
           </button>
         </div>
 
-        <div v-if="encryptionOn && selectedDevice?.encryption_key" class="mt-4">
+        <div v-if="encryptionOn && canWrite" class="mt-4">
           <div class="mb-1.5 flex items-center justify-between">
-            <p class="label mb-0">Device secret key (paste into ESP32)</p>
+            <p class="label mb-0">Device encryption key</p>
             <div class="flex gap-2">
-              <button type="button" class="btn-ghost py-1 text-[10px]" @click="copyKey">
+              <button type="button" class="btn-ghost py-1 text-[10px]" :disabled="revealingKey" @click="onRevealKey">
+                {{ revealingKey ? 'Loading…' : encryptionKey ? 'Hide key' : 'Reveal key' }}
+              </button>
+              <button v-if="encryptionKey" type="button" class="btn-ghost py-1 text-[10px]" @click="copyKey">
                 {{ keyCopied ? 'Copied' : 'Copy' }}
               </button>
               <button
@@ -82,7 +85,8 @@
               </button>
             </div>
           </div>
-          <pre class="mono overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-[#0F1115] p-3 text-xs text-[#b79bff]">{{ selectedDevice.encryption_key }}</pre>
+          <pre v-if="encryptionKey" class="mono overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-[#0F1115] p-3 text-xs text-[#b79bff]">{{ encryptionKey }}</pre>
+          <p v-else class="text-xs text-[#9AA3B2]">Only workspace owners and admins can reveal this key when configuring firmware.</p>
           <p class="mt-2 font-mono text-[10px] text-[#8B93A7]">
             Wire: [protocol][16B key_id][schema][4B ts][12B nonce][12B encryption nonce][4B ts + struct ciphertext][16B tag][32B HMAC]
           </p>
@@ -315,7 +319,7 @@ const props = defineProps<{
   schemaVersions?: Record<string, SchemaVersion[]>
 }>()
 
-const { saveSchema, setDeviceEncryption, rotateEncryptionKey } = useDevices()
+const { saveSchema, fetchSchemaVersions, setDeviceEncryption, rotateEncryptionKey, getDeviceEncryptionKey } = useDevices()
 const { canWrite } = useOrganization()
 const { hasEntitlement } = useEntitlements()
 const canUseEncryption = computed(() => hasEntitlement('chacha20'))
@@ -329,6 +333,8 @@ const error = ref(false)
 
 const togglingEnc = ref(false)
 const rotating = ref(false)
+const revealingKey = ref(false)
+const encryptionKey = ref('')
 const keyCopied = ref(false)
 const encMsg = ref('')
 const encErr = ref(false)
@@ -402,14 +408,26 @@ function ensureSelection() {
   const stillValid = props.devices.some((d) => d.id === selectedDeviceId.value)
   if (!stillValid) {
     selectedDeviceId.value = props.devices[0]!.id
+  } else {
+    void fetchSchemaVersions(selectedDeviceId.value).catch((e: any) => {
+      error.value = true
+      message.value = e.message || 'Unable to load schema history'
+    })
   }
   loadFields(selectedDeviceId.value, false)
 }
 
 watch(selectedDeviceId, (id) => {
+  encryptionKey.value = ''
+  keyCopied.value = false
   if (id) {
     loadFields(id)
     encMsg.value = ''
+    void fetchSchemaVersions(id).catch((e: any) => {
+      if (selectedDeviceId.value !== id) return
+      error.value = true
+      message.value = e.message || 'Unable to load schema history'
+    })
   } else {
     fields.value = []
     message.value = ''
@@ -621,7 +639,7 @@ async function onToggleEncryption() {
   encErr.value = false
   try {
     const next = !encryptionOn.value
-    await setDeviceEncryption(selectedDeviceId.value, next)
+    encryptionKey.value = (await setDeviceEncryption(selectedDeviceId.value, next)) || ''
     encMsg.value = next
       ? 'ChaCha20 enabled — include a unix timestamp in the plaintext and paste the key into firmware.'
       : 'ChaCha20 disabled — payloads expected plaintext.'
@@ -639,7 +657,7 @@ async function onRotate() {
   rotating.value = true
   encErr.value = false
   try {
-    await rotateEncryptionKey(selectedDeviceId.value)
+    encryptionKey.value = await rotateEncryptionKey(selectedDeviceId.value)
     encMsg.value = 'New key generated.'
   } catch (e: any) {
     encErr.value = true
@@ -650,12 +668,31 @@ async function onRotate() {
 }
 
 async function copyKey() {
-  const key = selectedDevice.value?.encryption_key
+  const key = encryptionKey.value
   if (!key) return
   await navigator.clipboard.writeText(key)
   keyCopied.value = true
   setTimeout(() => {
     keyCopied.value = false
   }, 1500)
+}
+
+async function onRevealKey() {
+  if (encryptionKey.value) {
+    encryptionKey.value = ''
+    return
+  }
+  if (!selectedDeviceId.value || !canWrite.value) return
+  revealingKey.value = true
+  encMsg.value = ''
+  encErr.value = false
+  try {
+    encryptionKey.value = await getDeviceEncryptionKey(selectedDeviceId.value)
+  } catch (e: any) {
+    encErr.value = true
+    encMsg.value = e.message || 'Unable to reveal encryption key'
+  } finally {
+    revealingKey.value = false
+  }
 }
 </script>

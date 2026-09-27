@@ -6,9 +6,11 @@
 const assert = require('assert')
 const {
   checkIpConnection,
+  checkUdpDatagram,
   checkPayloadRateLimit,
   resetRateLimits,
   IP_CONN_LIMIT,
+  UDP_IP_DATAGRAM_LIMIT,
   PAYLOAD_LIMIT,
 } = require('./rateLimit')
 
@@ -24,6 +26,11 @@ assert.strictEqual(blockedIp.allowed, false, '11th IP conn in 1s should be block
 
 const otherIp = checkIpConnection('203.0.113.51')
 assert.strictEqual(otherIp.allowed, true, 'other IP should be independent')
+
+for (let i = 0; i < UDP_IP_DATAGRAM_LIMIT; i++) {
+  assert.strictEqual(checkUdpDatagram(ip).allowed, true, `UDP datagram ${i + 1} should be allowed`)
+}
+assert.strictEqual(checkUdpDatagram(ip).allowed, false, 'UDP gate has its own burst allowance')
 
 resetRateLimits()
 

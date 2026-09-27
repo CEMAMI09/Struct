@@ -70,7 +70,13 @@
             <template v-for="job in jobs" :key="job.id">
               <tr>
                 <td><span class="status-pill" :data-tone="deliveryTone(job.status, job.attempts)">{{ deliveryLabel(job.status, job.attempts) }}</span></td>
-                <td class="max-w-[16rem] break-all">{{ job.destination_url }}</td>
+                <td class="max-w-[16rem] break-all">
+                  <span>{{ destinationLabel(job.destination_id) }}</span>
+                  <p v-if="revealedUrls[job.id]" class="mt-1 font-mono text-xs text-[#9AA3B2]">{{ revealedUrls[job.id] }}</p>
+                  <button v-if="canWrite" type="button" class="mt-1 block text-xs underline" :disabled="revealingUrlId === job.id" @click="toggleUrl(job.id)">
+                    {{ revealingUrlId === job.id ? 'Loading…' : revealedUrls[job.id] ? 'Hide URL' : 'View URL' }}
+                  </button>
+                </td>
                 <td class="max-w-[10rem] break-all font-mono text-xs">{{ job.event_id }}</td>
                 <td>{{ job.attempts }}</td>
                 <td>{{ formatTime(job.created_at) }}</td>
@@ -113,13 +119,48 @@ definePageMeta({ middleware: 'auth' })
 
 const supabase = useSupabaseClient()
 const { currentOrgId, ensureOrganization, canWrite } = useOrganization()
+const { destinations, fetchDestinations } = useDestinations()
 const jobs = ref<any[]>([])
 const attempts = ref<any[]>([])
 const selected = ref('')
 const loading = ref(false)
 const error = ref('')
 const commands = ref<any[]>([])
+const revealedUrls = ref<Record<string, string>>({})
+const revealingUrlId = ref<string | null>(null)
 let generation = 0
+
+function destinationLabel(id: string | null) {
+  if (!id) return 'Removed endpoint'
+  return destinations.value.find(destination => destination.id === id)?.name || `Endpoint ${id.slice(0, 8)}`
+}
+
+async function toggleUrl(id: string) {
+  if (revealedUrls.value[id]) {
+    const next = { ...revealedUrls.value }
+    delete next[id]
+    revealedUrls.value = next
+    return
+  }
+  if (!canWrite.value) return
+  const run = generation
+  revealingUrlId.value = id
+  error.value = ''
+  try {
+    const { data, error: err } = await supabase.rpc('get_webhook_delivery_destination_url', {
+      p_delivery_id: id,
+    })
+    if (err) throw err
+    if (typeof data !== 'string') throw new Error('Endpoint URL is not available')
+    if (run === generation && revealingUrlId.value === id) {
+      revealedUrls.value = { ...revealedUrls.value, [id]: data }
+    }
+  } catch (e: any) {
+    if (run === generation) error.value = e.message || 'Unable to reveal endpoint URL'
+  } finally {
+    if (revealingUrlId.value === id) revealingUrlId.value = null
+  }
+}
 
 function formatTime(value?: string) {
   if (!value) return '—'
@@ -161,13 +202,16 @@ async function load() {
   commands.value = []
   attempts.value = []
   selected.value = ''
+  revealedUrls.value = {}
+  revealingUrlId.value = null
   try {
     await ensureOrganization()
+    await fetchDestinations()
     const org = currentOrgId.value
     if (!org) return
     const { data, error: err } = await supabase
       .from('webhook_deliveries')
-      .select('id,event_id,destination_url,status,attempts,replay_count,created_at,last_error')
+      .select('id,event_id,destination_id,status,attempts,replay_count,created_at,last_error')
       .eq('organization_id', org)
       .order('created_at', { ascending: false })
       .limit(100)

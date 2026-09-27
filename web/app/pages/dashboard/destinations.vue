@@ -123,7 +123,7 @@
               </span>
               <p class="font-medium text-[#E8EAEF]">{{ dest.name }}</p>
             </div>
-            <p class="mt-1 break-all font-mono text-xs text-[#8B93A7]">{{ dest.url }}</p>
+            <p class="mt-1 break-all font-mono text-xs text-[#9AA3B2]">{{ revealedUrls[dest.id] || 'Endpoint URL hidden' }}</p>
             <p class="mt-1 text-[10px] text-[#8B93A7]">
               {{ dest.device_id ? deviceName(dest.device_id) : 'All devices' }}
               · {{ (dest.event_types || ['telemetry.received']).join(', ') }}
@@ -131,9 +131,7 @@
             <p class="mt-2 break-all font-mono text-[11px] text-[#9AA3B2]">
               Signing secret:
               {{
-                revealedSecrets.has(dest.id)
-                  ? dest.signing_secret || 'Not stored for this endpoint'
-                  : maskSecret(dest.signing_secret)
+                revealedSecrets[dest.id] || 'Hidden from the destination list'
               }}
             </p>
             <p v-if="dest.routing_rule" class="mt-1 font-mono text-[10px] text-[#b79bff]">
@@ -142,8 +140,11 @@
             </p>
           </div>
           <div v-if="canWrite" class="flex shrink-0 gap-2">
-            <button type="button" class="btn-ghost text-xs" @click="toggleSecret(dest.id)">
-              {{ revealedSecrets.has(dest.id) ? 'Hide secret' : 'View secret' }}
+            <button type="button" class="btn-ghost text-xs" :disabled="revealingUrlId === dest.id" @click="toggleUrl(dest.id)">
+              {{ revealingUrlId === dest.id ? 'Loading…' : revealedUrls[dest.id] ? 'Hide URL' : 'View URL' }}
+            </button>
+            <button type="button" class="btn-ghost text-xs" :disabled="revealingSecretId === dest.id" @click="toggleSecret(dest.id)">
+              {{ revealingSecretId === dest.id ? 'Loading…' : revealedSecrets[dest.id] ? 'Hide secret' : 'View secret' }}
             </button>
             <button
               v-if="canUseRouting || dest.routing_rule"
@@ -237,7 +238,7 @@ definePageMeta({ middleware: 'auth' })
 import type { Destination, RoutingOperator, RoutingRule, WebhookEventType } from '~/types'
 
 const { devices, fetchDevices } = useDevices()
-const { canWrite } = useOrganization()
+const { canWrite, currentOrgId } = useOrganization()
 const { hasEntitlement } = useEntitlements()
 const canUseRouting = computed(() => hasEntitlement('logical_routing'))
 const {
@@ -247,12 +248,17 @@ const {
   createDestination,
   toggleDestination,
   updateDestinationRoutingRule,
+  getDestinationSigningSecret,
+  getDestinationUrl,
   deleteDestination,
 } = useDestinations()
 
 const showForm = ref(false)
 const eventTypes = ref<WebhookEventType[]>(['telemetry.received'])
-const revealedSecrets = ref(new Set<string>())
+const revealedSecrets = ref<Record<string, string>>({})
+const revealingSecretId = ref<string | null>(null)
+const revealedUrls = ref<Record<string, string>>({})
+const revealingUrlId = ref<string | null>(null)
 const eventOptions: { id: WebhookEventType; name: string }[] = [
   { id: 'telemetry.received', name: 'Telemetry received' },
   { id: 'device.connected', name: 'Device connected' },
@@ -289,17 +295,58 @@ onMounted(async () => {
   await Promise.all([fetchDevices(), fetchDestinations()])
 })
 
-function maskSecret(secret?: string) {
-  if (!secret) return 'Not stored for this endpoint'
-  return `${secret.slice(0, 6)}${'•'.repeat(12)}${secret.slice(-4)}`
+async function toggleSecret(id: string) {
+  if (revealedSecrets.value[id]) {
+    const next = { ...revealedSecrets.value }
+    delete next[id]
+    revealedSecrets.value = next
+    return
+  }
+  revealingSecretId.value = id
+  error.value = null
+  try {
+    const secret = await getDestinationSigningSecret(id)
+    if (revealingSecretId.value === id) {
+      revealedSecrets.value = { ...revealedSecrets.value, [id]: secret }
+    }
+  } catch (e: any) {
+    error.value = e.message || 'Unable to reveal signing secret'
+  } finally {
+    if (revealingSecretId.value === id) revealingSecretId.value = null
+  }
 }
 
-function toggleSecret(id: string) {
-  const next = new Set(revealedSecrets.value)
-  if (next.has(id)) next.delete(id)
-  else next.add(id)
-  revealedSecrets.value = next
+async function toggleUrl(id: string) {
+  if (revealedUrls.value[id]) {
+    const next = { ...revealedUrls.value }
+    delete next[id]
+    revealedUrls.value = next
+    return
+  }
+  revealingUrlId.value = id
+  error.value = null
+  try {
+    const url = await getDestinationUrl(id)
+    if (revealingUrlId.value === id) {
+      revealedUrls.value = { ...revealedUrls.value, [id]: url }
+    }
+  } catch (e: any) {
+    error.value = e.message || 'Unable to reveal endpoint URL'
+  } finally {
+    if (revealingUrlId.value === id) revealingUrlId.value = null
+  }
 }
+
+watch(currentOrgId, () => {
+  revealedSecrets.value = {}
+  revealedUrls.value = {}
+  revealingSecretId.value = null
+  revealingUrlId.value = null
+})
+onBeforeUnmount(() => {
+  revealedSecrets.value = {}
+  revealedUrls.value = {}
+})
 
 function deviceName(id: string) {
   return devices.value.find((d) => d.id === id)?.name || id.slice(0, 8)
@@ -410,6 +457,12 @@ async function onDelete(id: string) {
   if (!confirm('Remove this destination?')) return
   try {
     await deleteDestination(id)
+    const next = { ...revealedSecrets.value }
+    delete next[id]
+    revealedSecrets.value = next
+    const nextUrls = { ...revealedUrls.value }
+    delete nextUrls[id]
+    revealedUrls.value = nextUrls
   } catch (e: any) {
     error.value = e.message
   }

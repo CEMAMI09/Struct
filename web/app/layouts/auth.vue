@@ -21,6 +21,7 @@
   justify-content: center;
   padding: 2rem 1rem;
   box-sizing: border-box;
+  background: #000;
 }
 
 .auth-shell-inner {
@@ -33,8 +34,8 @@
   width: 100%;
   min-height: 44px;
   padding: 0.65rem 0.75rem;
-  border: 1px solid #3d4452;
-  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
   background: transparent;
   color: #e8eaef;
   font-size: 0.875rem;
@@ -46,7 +47,7 @@
 }
 
 .auth-field:hover {
-  border-color: #5c6578;
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .auth-field:focus {

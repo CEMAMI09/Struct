@@ -36,8 +36,6 @@
           ]"
           :aria-current="isActive(link.to) ? 'page' : undefined"
           :title="collapsed ? link.label : undefined"
-          @mouseenter="prefetch(link.to)"
-          @focus="prefetch(link.to)"
           @click="emit('close')"
         >
           <span class="app-nav-icon" aria-hidden="true" v-html="link.icon" />
@@ -49,7 +47,7 @@
     <div class="app-side-foot" :class="collapsed ? 'p-2 md:px-2' : 'p-3'">
       <button
         type="button"
-        class="btn-ghost hidden w-full items-center justify-center gap-2 px-2 py-1.5 text-xs md:flex"
+        class="app-side-collapse"
         :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
         :aria-expanded="!collapsed"
         @click="emit('toggle-collapse')"
@@ -57,9 +55,6 @@
         <span aria-hidden="true">{{ collapsed ? '→' : '←' }}</span>
         <span :class="collapsed ? 'md:hidden' : ''">Collapse</span>
       </button>
-      <p :class="collapsed ? 'md:hidden' : ''" class="app-side-meta">
-        TCP :{{ tcpPort }}
-      </p>
     </div>
   </aside>
 </template>
@@ -76,8 +71,6 @@ const emit = defineEmits<{
 }>()
 
 const route = useRoute()
-const config = useRuntimeConfig()
-const tcpPort = computed(() => config.public.tcpPort)
 const { isEnterprise } = useOrganization()
 
 const icon = {
@@ -146,23 +139,6 @@ function isActive(path: string) {
   return route.path.startsWith(path)
 }
 
-function prefetch(path: string) {
-  if (!import.meta.client) return
-  if (
-    path === '/dashboard' ||
-    path === '/dashboard/devices' ||
-    path === '/dashboard/schema' ||
-    path === '/dashboard/debugger'
-  ) {
-    void useDevices().fetchDevices()
-  } else if (path === '/dashboard/profiles') {
-    void useProfiles().fetchProfiles()
-  } else if (path === '/dashboard/destinations') {
-    void Promise.all([useDevices().fetchDevices(), useDestinations().fetchDestinations()])
-  } else if (path === '/dashboard/audit-logs') {
-    void useAuditLogs().fetchAuditLogs()
-  }
-}
 </script>
 
 <style scoped>
@@ -173,8 +149,8 @@ function prefetch(path: string) {
   display: flex;
   flex-shrink: 0;
   flex-direction: column;
-  border-right: 1px solid #252830;
-  background: #0c0d10;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: #000;
   transition: width 0.28s ease, transform 0.28s ease;
 }
 
@@ -193,7 +169,7 @@ function prefetch(path: string) {
   display: flex;
   height: 3.5rem;
   align-items: center;
-  border-bottom: 1px solid #252830;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding: 0 0.85rem;
 }
 
@@ -232,19 +208,24 @@ function prefetch(path: string) {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.5rem;
   overflow-y: auto;
-  padding: 0.65rem 0.5rem;
+  padding: 0.5rem 0.5rem;
 }
 
 .app-nav-group {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.08rem;
+}
+
+.app-nav-group + .app-nav-group {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 0.45rem;
 }
 
 .app-nav-label {
-  margin: 0 0.55rem 0.15rem;
+  margin: 0 0.5rem 0.1rem;
   font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -254,9 +235,9 @@ function prefetch(path: string) {
 
 .app-nav-link {
   display: flex;
-  min-height: 2.5rem;
+  min-height: 2.15rem;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.55rem;
   border-radius: 8px;
   font-size: 0.875rem;
   color: #9aa3b2;
@@ -269,8 +250,8 @@ function prefetch(path: string) {
 }
 
 .app-nav-link.is-active {
-  background: rgba(86, 23, 252, 0.16);
-  color: #f4f1ff;
+  background: rgba(255, 255, 255, 0.06);
+  color: #e8eaef;
 }
 
 .app-nav-icon {
@@ -287,12 +268,36 @@ function prefetch(path: string) {
 }
 
 .app-side-foot {
-  border-top: 1px solid #252830;
+  display: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.app-side-meta {
-  margin: 0.65rem 0.15rem 0;
+.app-side-collapse {
+  display: none;
+  width: 100%;
+  min-height: 2rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #9aa3b2;
   font-size: 0.75rem;
-  color: #6b7380;
+}
+
+.app-side-collapse:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e8eaef;
+}
+
+@media (min-width: 768px) {
+  .app-side-foot {
+    display: block;
+  }
+
+  .app-side-collapse {
+    display: flex;
+  }
 }
 </style>

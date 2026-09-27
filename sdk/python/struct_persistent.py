@@ -8,6 +8,11 @@ import secrets
 import threading
 import time
 
+if os.name == 'nt':
+    import msvcrt
+else:
+    import fcntl
+
 
 class PersistentQueue:
     def __init__(self, file, key_id, capacity=32, *, kind='telemetry'):
@@ -17,9 +22,12 @@ class PersistentQueue:
         self.file.parent.mkdir(parents=True, exist_ok=True)
         self.lock_path = self.file.with_name(self.file.name + '.lock')
         self._guard, self.failed, self.closed = threading.Lock(), False, False
-        self._fd = os.open(self.lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        self._has_lock = False
+        # Keep the lock file as a stable inode. An OS lock is released when a
+        # process dies, so a crash cannot permanently strand the queue.
+        self._fd = os.open(self.lock_path, os.O_CREAT | os.O_RDWR | getattr(os, 'O_NOFOLLOW', 0), 0o600)
         try:
-            os.write(self._fd, str(os.getpid()).encode())
+            self._lock_file()
             self.records = []
             if self.file.exists():
                 if self.file.stat().st_size > 1_000_000:
@@ -35,9 +43,33 @@ class PersistentQueue:
                 if not isinstance(self.records, list) or len(self.records) > capacity:
                     raise ValueError('Queue capacity mismatch')
         except BaseException:
+            self._unlock_file()
             os.close(self._fd)
-            self.lock_path.unlink()
             raise
+
+    def _lock_file(self):
+        try:
+            if os.name == 'nt':
+                # msvcrt locks a byte range; the sidecar must contain a byte.
+                if os.fstat(self._fd).st_size == 0:
+                    os.write(self._fd, b'\0')
+                os.lseek(self._fd, 0, os.SEEK_SET)
+                msvcrt.locking(self._fd, msvcrt.LK_NBLCK, 1)
+            else:
+                fcntl.flock(self._fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            self._has_lock = True
+        except OSError as error:
+            raise RuntimeError('Queue is already open by another process') from error
+
+    def _unlock_file(self):
+        if not self._has_lock:
+            return
+        if os.name == 'nt':
+            os.lseek(self._fd, 0, os.SEEK_SET)
+            msvcrt.locking(self._fd, msvcrt.LK_UNLCK, 1)
+        else:
+            fcntl.flock(self._fd, fcntl.LOCK_UN)
+        self._has_lock = False
 
     @contextlib.contextmanager
     def owned(self):
@@ -110,8 +142,10 @@ class PersistentQueue:
         try:
             if not self.closed:
                 self.closed = True
-                os.close(self._fd)
-                self.lock_path.unlink()
+                try:
+                    self._unlock_file()
+                finally:
+                    os.close(self._fd)
         finally:
             self._guard.release()
 

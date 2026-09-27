@@ -1,9 +1,9 @@
 <template>
   <div>
     <div class="my-6 flex items-center gap-3">
-      <div class="h-px flex-1 bg-[#252830]" />
+      <div class="h-px flex-1 bg-white/10" />
       <span class="text-xs text-[#8B93A7]">or</span>
-      <div class="h-px flex-1 bg-[#252830]" />
+      <div class="h-px flex-1 bg-white/10" />
     </div>
 
     <p v-if="error" class="mb-3 text-sm text-red-400">{{ error }}</p>

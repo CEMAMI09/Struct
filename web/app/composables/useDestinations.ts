@@ -1,10 +1,31 @@
 import type { Destination, RoutingRule, WebhookEventType } from '~/types'
 
-const destinationsInflightByApp = new WeakMap<object, { promise: Promise<void> | null }>()
+const DESTINATION_FIELDS = 'id,user_id,organization_id,name,device_id,routing_rule,event_types,enabled,created_at'
+
+function normalizeDestination(row: any): Destination {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    organization_id: row.organization_id,
+    name: row.name,
+    url: null,
+    device_id: row.device_id ?? null,
+    routing_rule: row.routing_rule ?? null,
+    event_types: row.event_types || ['telemetry.received'],
+    enabled: !!row.enabled,
+    created_at: row.created_at,
+  }
+}
+
+const destinationsInflightByApp = new WeakMap<object, {
+  promise: Promise<void> | null
+  orgId: string | null
+  generation: number
+}>()
 
 export function useDestinations() {
   const app = useNuxtApp()
-  if (!destinationsInflightByApp.has(app)) destinationsInflightByApp.set(app, { promise: null })
+  if (!destinationsInflightByApp.has(app)) destinationsInflightByApp.set(app, { promise: null, orgId: null, generation: 0 })
   const inflight = destinationsInflightByApp.get(app)!
   const supabase = useSupabaseClient()
   const user = useSupabaseUser()
@@ -24,17 +45,26 @@ export function useDestinations() {
   async function fetchDestinations(opts?: { force?: boolean }) {
     if (!(await hasAuth())) return
 
-    if (inflight.promise && !opts?.force) {
-      return inflight.promise
+    try {
+      await ensureOrganization()
+    } catch (e: any) {
+      error.value = e.message || 'Failed to load destinations'
+      return
+    }
+    const orgId = currentOrgId.value
+    if (inflight.promise && inflight.orgId === orgId && !opts?.force) return inflight.promise
+    const generation = ++inflight.generation
+
+    if (loadedForOrg.value !== orgId) {
+      destinations.value = []
+      loadedForOrg.value = null
     }
 
     const run = async () => {
-      const cacheHit = !!loadedForOrg.value && loadedForOrg.value === currentOrgId.value
+      const cacheHit = !!loadedForOrg.value && loadedForOrg.value === orgId
       if (!cacheHit) loading.value = true
       error.value = null
       try {
-        await ensureOrganization()
-        const orgId = currentOrgId.value
         if (!orgId) {
           destinations.value = []
           loadedForOrg.value = null
@@ -43,17 +73,20 @@ export function useDestinations() {
 
         const { data, error: err } = await supabase
           .from('destinations')
-          .select('*')
+          .select(DESTINATION_FIELDS)
           .eq('organization_id', orgId)
           .order('created_at', { ascending: false })
 
         if (err) throw err
-        destinations.value = (data || []) as Destination[]
+        if (generation !== inflight.generation || currentOrgId.value !== orgId) return
+        destinations.value = (data || []).map(normalizeDestination)
         loadedForOrg.value = orgId
       } catch (e: any) {
-        error.value = e.message || 'Failed to load destinations'
+        if (generation === inflight.generation && currentOrgId.value === orgId) {
+          error.value = e.message || 'Failed to load destinations'
+        }
       } finally {
-        loading.value = false
+        if (generation === inflight.generation) loading.value = false
       }
     }
 
@@ -61,6 +94,7 @@ export function useDestinations() {
       if (inflight.promise === promise) inflight.promise = null
     })
     inflight.promise = promise
+    inflight.orgId = orgId
     return inflight.promise
   }
 
@@ -98,12 +132,13 @@ export function useDestinations() {
         organization_id,
         enabled: true,
       })
-      .select()
+      .select(DESTINATION_FIELDS)
       .single()
 
     if (err) throw err
-    destinations.value = [data as Destination, ...destinations.value]
-    return data as Destination
+    const destination = normalizeDestination(data)
+    destinations.value = [destination, ...destinations.value]
+    return destination
   }
 
   async function updateDestinationEvents(
@@ -119,14 +154,15 @@ export function useDestinations() {
       .update({ event_types: eventTypes })
       .eq('id', id)
       .eq('organization_id', organizationId)
-      .select()
+      .select(DESTINATION_FIELDS)
       .single()
 
     if (err) throw err
+    const updated = normalizeDestination(data)
     destinations.value = destinations.value.map((destination) =>
-      destination.id === id ? (data as Destination) : destination,
+      destination.id === id ? updated : destination,
     )
-    return data as Destination
+    return updated
   }
 
   async function toggleDestination(id: string, enabled: boolean) {
@@ -135,12 +171,11 @@ export function useDestinations() {
       .from('destinations')
       .update({ enabled })
       .eq('id', id)
-      .select()
+      .select(DESTINATION_FIELDS)
       .single()
     if (err) throw err
-    destinations.value = destinations.value.map((d) =>
-      d.id === id ? (data as Destination) : d,
-    )
+    const updated = normalizeDestination(data)
+    destinations.value = destinations.value.map((d) => d.id === id ? updated : d)
   }
 
   async function updateDestinationRoutingRule(id: string, routingRule: RoutingRule | null) {
@@ -151,14 +186,35 @@ export function useDestinations() {
       .update({ routing_rule: routingRule })
       .eq('id', id)
       .eq('organization_id', organizationId)
-      .select()
+      .select(DESTINATION_FIELDS)
       .single()
 
     if (err) throw err
+    const updated = normalizeDestination(data)
     destinations.value = destinations.value.map((destination) =>
-      destination.id === id ? (data as Destination) : destination,
+      destination.id === id ? updated : destination,
     )
-    return data as Destination
+    return updated
+  }
+
+  async function getDestinationSigningSecret(id: string): Promise<string> {
+    requireWrite()
+    const { data, error: err } = await supabase.rpc('get_destination_signing_secret', {
+      p_destination_id: id,
+    })
+    if (err) throw err
+    if (typeof data !== 'string') throw new Error('Signing secret is not available')
+    return data
+  }
+
+  async function getDestinationUrl(id: string): Promise<string> {
+    requireWrite()
+    const { data, error: err } = await supabase.rpc('get_destination_url', {
+      p_destination_id: id,
+    })
+    if (err) throw err
+    if (typeof data !== 'string') throw new Error('Endpoint URL is not available')
+    return data
   }
 
   async function deleteDestination(id: string) {
@@ -178,6 +234,8 @@ export function useDestinations() {
     updateDestinationEvents,
     toggleDestination,
     updateDestinationRoutingRule,
+    getDestinationSigningSecret,
+    getDestinationUrl,
     deleteDestination,
   }
 }

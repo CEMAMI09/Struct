@@ -48,7 +48,6 @@ defineEmits<{ select: [id: string] }>()
 }
 
 .device-row--selected {
-  background: #181b22;
-  box-shadow: inset 0 0 0 1px #2a2f38;
+  background: rgba(255, 255, 255, 0.06);
 }
 </style>
