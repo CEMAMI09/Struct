@@ -1,7 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { OrganizationBillingRow } from './billing'
 import {
-  estimateTrueUpCents,
   getActiveDeviceLimit,
   getOpenUsagePeriod,
   persistUsagePeak,
@@ -35,20 +34,6 @@ export async function recordCapacityUsage(
   activeDeviceCount: number,
 ) {
   return persistUsagePeak(supabase, orgId, activeDeviceCount)
-}
-
-export async function estimateProrationCents(
-  org: OrganizationBillingRow,
-  projectedPeakPaidQuantity: number,
-  openPeriod: Awaited<ReturnType<typeof getOpenUsagePeriod>> = null,
-): Promise<{ amount: number; currency: string }> {
-  const included = openPeriod?.included_paid_quantity ?? 0
-  const amount = estimateTrueUpCents(
-    org.subscription_tier,
-    included,
-    projectedPeakPaidQuantity,
-  )
-  return { amount, currency: 'usd' }
 }
 
 export function getProjectedDeviceLimit(

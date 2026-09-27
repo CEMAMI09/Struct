@@ -1,6 +1,6 @@
 # Struct deployment and recovery runbook
 
-This is a release checklist for the current Nuxt application, TCP/UDP gateway, Supabase database, and outbox worker. The repository does not declare the present production host or automatic deployment trigger. Record those facts, the on-call owner, and the staging project before a commercial pilot. Do not assume a Git push deploys every component.
+This is a release checklist for the current Nuxt application, TCP/UDP gateway, Supabase database, and outbox worker. The observed production web host is `https://struct-six-opal.vercel.app/`; pushes to `master` produced successful Vercel production deployments on 2026-09-27. Confirm the project configuration in Vercel before relying on this behavior. The gateway and worker hosts, their deployment triggers, the on-call owner, and the staging project still need to be recorded before a commercial pilot. A web deployment does not establish that the gateway or worker was deployed.
 
 ## Component contract
 
@@ -28,5 +28,7 @@ Watch ingestion error rate and authentication rejection codes separately, receip
 On gateway failure, restart the process and send the same event identities; confirm that duplicate retries return the original receipt without duplicate telemetry. On worker failure, restart a worker and verify expired leases are reclaimed and delivered once per destination. On a destination outage, keep accepting/storing events within capacity, observe retry age, and coordinate any customer replays through the delivery log. On a database outage, do not report a storage receipt for an uncommitted event.
 
 If a web deploy must be rolled back across a security migration, roll forward a compatible safe-projection build. Do not restore broad browser grants to make an old app work. If a billing migration fails, stop paid upgrades and true-up processing, preserve webhook delivery for retry, and reconcile periods against Stripe invoice items before resuming. Acknowledging a failed billing webhook loses the provider retry.
+
+Migration 027 marks preexisting open usage periods as `true_up_baseline_verified = false`. The webhook logs `USAGE_BASELINE_RECONCILIATION_REQUIRED` and leaves those periods open instead of guessing how many devices were already paid for. Before marking a period verified, compare its dates, tier, paid quantity history, and any existing true-up invoice items with the matching Stripe subscription and invoices. Record the evidence and reviewer; resolve overlapping periods explicitly. Do not set the verification flag from today's subscription quantity alone, since it cannot prove the maximum already paid during an earlier month. New verified periods continue processing independently.
 
 Production readiness still requires a documented backup/restore drill, actual host and deployment ownership, reference hardware qualification, load measurements, and an incident contact. Track dates and evidence for these gates in `docs/RELEASE-GATES.md` rather than marking them complete based on this document.

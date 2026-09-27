@@ -152,6 +152,54 @@ async function run() {
     )
     assert.equal((await db.query('select count(*)::integer from devices where organization_id=$1', [deviceOrg])).rows[0].count, 3)
     assert.equal(await peakCount(), 3, 'free capacity failure rolls back the entire bulk insert')
+
+    const bulkImport = '30000000-0000-0000-0000-000000000008'
+    const profileImport = '30000000-0000-0000-0000-000000000009'
+    const createImport = async (id, hash, quotedDevices, currentCount) => db.query(`
+      insert into bulk_device_imports (
+        id, organization_id, user_id, payload_hash, devices, status,
+        current_device_count, projected_device_count, previous_stripe_quantity,
+        target_stripe_quantity, stripe_idempotency_key, expires_at
+      ) values ($1,$2,$3,$4,$5,'processing',$6,$7,0,0,$8,now()+interval '10 minutes')
+    `, [id, deviceOrg, deviceUser, hash, JSON.stringify(quotedDevices), currentCount,
+      currentCount + quotedDevices.length, `test:${id}`])
+    const finalized = async (id, profileId, payload, currentCount) => db.query(
+      'select id,key_id from finalize_bulk_device_import($1,$2,$3,$4,$5,$6)',
+      [id, deviceOrg, deviceUser, profileId, JSON.stringify(payload), currentCount],
+    )
+    const receipt = async (id) => (await db.query(
+      'select status,created_device_ids from bulk_device_imports where id=$1', [id],
+    )).rows[0]
+
+    const atomicBulk = [{ name: 'Atomic bulk', mac_address: '001122334470', key_id: 'atomic-bulk-key', api_secret_encrypted: 'ciphertext' }]
+    await createImport(bulkImport, 'bulk-hash', atomicBulk, 3)
+    await db.exec('reset role')
+    await db.exec("create function fail_import_completion_test() returns trigger language plpgsql as $$ begin if new.status = 'completed' then raise exception 'receipt storage outage'; end if; return new; end $$; create trigger fail_import_completion_test before update on bulk_device_imports for each row execute function fail_import_completion_test();")
+    await db.exec('set role service_role')
+    await assert.rejects(finalized(bulkImport, null, atomicBulk, 3), /receipt storage outage/)
+    assert.equal((await db.query('select count(*)::integer from devices where organization_id=$1', [deviceOrg])).rows[0].count, 3,
+      'failed receipt update rolls back devices')
+    assert.equal(await peakCount(), 3, 'failed receipt update rolls back usage peak')
+    assert.deepEqual(await receipt(bulkImport), { status: 'processing', created_device_ids: [] })
+    await db.exec('reset role')
+    await db.exec('drop trigger fail_import_completion_test on bulk_device_imports')
+    await db.exec('set role service_role')
+
+    const bulkCreated = (await finalized(bulkImport, null, atomicBulk, 3)).rows
+    assert.equal(bulkCreated.length, 1)
+    assert.deepEqual(await receipt(bulkImport), { status: 'completed', created_device_ids: [bulkCreated[0].id] },
+      'device insert and recoverable receipt commit together')
+    await assert.rejects(finalized(bulkImport, null, atomicBulk, 3), /IMPORT_NOT_PROCESSING/)
+    assert.equal((await db.query('select count(*)::integer from devices where organization_id=$1', [deviceOrg])).rows[0].count, 4,
+      'retry cannot duplicate devices')
+
+    const atomicProfile = [{ name: 'Atomic profile', hardware_id: 'unit-2', key_id: 'atomic-profile-key', api_secret_encrypted: 'ciphertext' }]
+    await createImport(profileImport, `profile:${profile}:hash`, atomicProfile, 4)
+    await assert.rejects(finalized(profileImport, null, atomicProfile, 4), /IMPORT_PROFILE_MISMATCH/)
+    const profileCreated = (await finalized(profileImport, profile, atomicProfile, 4)).rows
+    assert.equal(profileCreated.length, 1)
+    assert.deepEqual(await receipt(profileImport), { status: 'completed', created_device_ids: [profileCreated[0].id] })
+    assert.equal(await peakCount(), 5)
     await db.exec('reset role')
 
     for (const role of ['anon', 'authenticated']) {
@@ -163,6 +211,7 @@ async function run() {
         'claim_org_usage_true_up(uuid,uuid)',
         'complete_org_usage_true_up(uuid,uuid,text,integer,public.usage_period_status)',
         'release_org_usage_true_up(uuid,uuid)',
+        'finalize_bulk_device_import(uuid,uuid,uuid,uuid,jsonb,integer)',
       ]) {
         const allowed = (await db.query("select has_function_privilege($1,$2,'EXECUTE') as allowed", [role, `public.${signature}`])).rows[0].allowed
         assert.equal(allowed, false, `${role} can execute ${signature}`)

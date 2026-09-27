@@ -24,6 +24,7 @@ export interface UsagePlan {
   projectedCount: number
   includedPaidQuantity: number
   currentPeakDeviceCount: number
+  currentPeakPaidQuantity: number
   projectedPeakDeviceCount: number
   projectedPeakPaidQuantity: number
   overageDelta: number
@@ -94,14 +95,23 @@ export function planUsageForProjectedCount(
   openPeriod: UsagePeriodRow | null,
 ): UsagePlan {
   const projectedCount = currentCount + newDeviceCount
-  const includedPaidQuantity = getIncludedPaidQuantity(org.subscription_tier)
+  // A tier floor is not the paid baseline when Checkout sold a larger Stripe
+  // quantity. The ledger also retains the highest paid quantity after changes.
+  const includedPaidQuantity = Math.max(
+    getIncludedPaidQuantity(org.subscription_tier),
+    org.stripe_quantity,
+    openPeriod?.included_paid_quantity ?? 0,
+  )
   const currentPeakDeviceCount = openPeriod?.peak_device_count ?? currentCount
   const projectedPeakDeviceCount = Math.max(currentPeakDeviceCount, projectedCount)
   const projectedPeakPaidQuantity = Math.max(
     includedPaidQuantity,
     projectedPeakDeviceCount - 5,
   )
-  const currentPeakPaidQuantity = openPeriod?.peak_paid_quantity ?? includedPaidQuantity
+  const currentPeakPaidQuantity = Math.max(
+    openPeriod?.peak_paid_quantity ?? 0,
+    includedPaidQuantity,
+  )
   const overageDelta = Math.max(0, projectedPeakPaidQuantity - currentPeakPaidQuantity)
   const rate = TIER_OVERAGE_RATE_CENTS[org.subscription_tier]
   const estimatedTrueUpCents = Math.max(
@@ -115,6 +125,7 @@ export function planUsageForProjectedCount(
     projectedCount,
     includedPaidQuantity,
     currentPeakDeviceCount,
+    currentPeakPaidQuantity,
     projectedPeakDeviceCount,
     projectedPeakPaidQuantity,
     overageDelta,

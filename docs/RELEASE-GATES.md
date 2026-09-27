@@ -14,8 +14,10 @@ Status: preview. Passing local tests does not satisfy production release gates.
 - Storage: ingest_device_telemetry SQL RPC owns atomic commit and deduplication.
 - Device management: profiles, provisioning and command lifecycle are separate
   operations. Provisioning is not atomic with telemetry today.
-- Delivery integrations: webhooks run after commit, currently without durable
-  handoff. Outbox work must strengthen this boundary before promising delivery.
+- Delivery integrations: migration 022 atomically enqueues telemetry webhook
+  jobs with the telemetry commit; the worker delivers them with leases and bounded
+  retries. Deployment, monitoring, and receiver-side deduplication still need
+  qualification before promising dependable delivery.
 
 These are current module boundaries, not claims of complete architectural
 decoupling. Avoid wholesale rewrites; extract interfaces where a tested new
@@ -53,8 +55,9 @@ transport/storage implementation requires them.
 - Declare target devices, messages/second, retention and deployment resources.
   Load-test that target plus 2x bursts; publish p50/p95/p99 latency, error rate,
   memory and cost. Throughput/SLO targets remain unset until workload sizing.
-- Signed downlinks and durable webhook retries are prerequisites for advertising
-  dependable command execution or webhook delivery.
+- Signed downlinks and durable webhook retries have preview implementations;
+  test their gateway deployment, failure recovery, and receiver-side deduplication
+  before advertising dependable command execution or webhook delivery.
 - Restore a backup successfully; test tenant isolation and revocation on staging.
 - Publish support duration, compatibility matrix, incident process and rollback
   procedure before advertising lifetime support or an availability SLA.

@@ -15,6 +15,7 @@ const ids = {
   otherDevice: '20000000-0000-0000-0000-000000000008',
   destination: '20000000-0000-0000-0000-000000000009',
   profile: '20000000-0000-0000-0000-000000000010',
+  freeOrg: '20000000-0000-0000-0000-000000000011',
 }
 
 async function run() {
@@ -31,7 +32,9 @@ async function run() {
     await asUser(ids.owner)
     await db.query("insert into organizations(id,name,subscription_tier,stripe_customer_id) values($1,'Tenant','scale','cus_sensitive')", [ids.org])
     await db.query("insert into organizations(id,name,subscription_tier) values($1,'Other','pro')", [ids.otherOrg])
+    await db.query("insert into organizations(id,name,subscription_tier) values($1,'Free','free')", [ids.freeOrg])
     await db.query("insert into organization_members(organization_id,user_id,role) values($1,$2,'owner')", [ids.org, ids.owner])
+    await db.query("insert into organization_members(organization_id,user_id,role) values($1,$2,'owner')", [ids.freeOrg, ids.owner])
     await db.query("insert into organization_members(organization_id,user_id,role) values($1,$2,'admin')", [ids.org, ids.admin])
     await db.query("insert into organization_members(organization_id,user_id,role) values($1,$2,'viewer')", [ids.org, ids.viewer])
     await db.query("insert into organization_members(organization_id,user_id,role) values($1,$2,'owner')", [ids.otherOrg, ids.outsider])
@@ -47,6 +50,66 @@ async function run() {
 
     const migration = fs.readFileSync(path.join(__dirname, '../supabase/migrations/026_authorization_and_retention.sql'), 'utf8')
     await db.exec(migration)
+    // Match the Supabase postgres defaults that would otherwise reopen access
+    // to every future public object.
+    await db.exec(`
+      alter default privileges for role postgres in schema public grant all on tables to anon, authenticated;
+      alter default privileges for role postgres in schema public grant all on sequences to anon, authenticated;
+      alter default privileges for role postgres in schema public grant all on functions to anon, authenticated;
+      grant all on all tables in schema public to anon;
+      grant truncate, references, trigger on all tables in schema public to authenticated;
+      grant insert, update, delete on public.bulk_device_imports, public.device_event_ids,
+        public.device_replay_nonces, public.organization_device_usage_periods,
+        public.packet_traces, public.telemetry, public.trace_event_links,
+        public.webhook_attempts, public.webhook_deliveries to authenticated;
+    `)
+    await db.exec(fs.readFileSync(path.join(__dirname, '../supabase/migrations/029_telemetry_policy_cleanup.sql'), 'utf8'))
+    await db.exec(`
+      create table public.future_privilege_probe(id integer);
+      create function public.future_privilege_probe() returns integer language sql as $$ select 1 $$;
+    `)
+    for (const role of ['anon', 'authenticated']) {
+      assert.equal(await scalar("select has_table_privilege($1,'public.future_privilege_probe','SELECT')", [role]), false)
+      assert.equal(await scalar("select has_function_privilege($1,'public.future_privilege_probe()','EXECUTE')", [role]), false)
+    }
+    await db.exec('drop function public.future_privilege_probe(); drop table public.future_privilege_probe;')
+
+    const clientTablePrivileges = await db.query(`
+      select c.relname as table_name,
+        has_table_privilege('anon',c.oid,'SELECT') as anon_select,
+        has_table_privilege('anon',c.oid,'INSERT') as anon_insert,
+        has_table_privilege('anon',c.oid,'UPDATE') as anon_update,
+        has_table_privilege('anon',c.oid,'DELETE') as anon_delete,
+        has_table_privilege('anon',c.oid,'TRUNCATE') as anon_truncate,
+        has_table_privilege('anon',c.oid,'TRIGGER') as anon_trigger,
+        has_table_privilege('anon',c.oid,'REFERENCES') as anon_references,
+        has_table_privilege('authenticated',c.oid,'TRUNCATE') as auth_truncate,
+        has_table_privilege('authenticated',c.oid,'TRIGGER') as auth_trigger,
+        has_table_privilege('authenticated',c.oid,'REFERENCES') as auth_references
+      from pg_class c join pg_namespace n on n.oid=c.relnamespace
+      where n.nspname='public' and c.relkind in ('r','p')
+    `)
+    for (const table of clientTablePrivileges.rows) {
+      assert.equal(table.anon_select, false, `${table.table_name} readable by anon`)
+      assert.equal(table.anon_insert, false, `${table.table_name} writable by anon`)
+      assert.equal(table.anon_update, false, `${table.table_name} updateable by anon`)
+      assert.equal(table.anon_delete, false, `${table.table_name} deletable by anon`)
+      assert.equal(table.anon_truncate, false, `${table.table_name} truncatable by anon`)
+      assert.equal(table.anon_trigger, false, `${table.table_name} triggerable by anon`)
+      assert.equal(table.anon_references, false, `${table.table_name} referenceable by anon`)
+      assert.equal(table.auth_truncate, false, `${table.table_name} truncatable by authenticated`)
+      assert.equal(table.auth_trigger, false, `${table.table_name} triggerable by authenticated`)
+      assert.equal(table.auth_references, false, `${table.table_name} referenceable by authenticated`)
+    }
+    for (const table of ['bulk_device_imports', 'device_event_ids', 'device_replay_nonces',
+      'organization_device_usage_periods', 'packet_traces', 'telemetry', 'trace_event_links',
+      'webhook_attempts', 'webhook_deliveries']) {
+      for (const privilege of ['INSERT', 'UPDATE', 'DELETE']) {
+        assert.equal(await scalar(`select has_table_privilege('authenticated','public.${table}',$1)`, [privilege]), false)
+      }
+    }
+    assert.equal(await scalar("select count(*)::integer from pg_policies where tablename='telemetry' and policyname like 'Users % telemetry of own devices'"), 0)
+    assert.equal(await scalar("select count(*)::integer from pg_policies where tablename='telemetry' and cmd='SELECT'"), 1)
 
     for (const field of ['encryption_key', 'api_secret_encrypted']) {
       assert.equal(await scalar("select has_column_privilege('authenticated','public.devices',$1,'SELECT')", [field]), false)
@@ -76,6 +139,10 @@ async function run() {
 
     await db.exec('set role authenticated')
     await asUser(ids.owner)
+    await assert.rejects(db.exec('truncate public.telemetry'), /permission denied/)
+    assert.equal((await db.query('select id from telemetry where id=$1', [firstEvent.id])).rows.length, 1)
+    assert.equal((await db.query('delete from organizations where id=$1 returning id', [ids.org])).rows.length, 0)
+    assert.equal((await db.query('delete from organizations where id=$1 returning id', [ids.freeOrg])).rows.length, 1)
     await assert.rejects(db.query("update organizations set stripe_customer_id='cus_other' where id=$1", [ids.org]), /permission denied/)
     await assert.rejects(db.query("update organizations set subscription_tier='free' where id=$1", [ids.org]), /permission denied/)
     await assert.rejects(db.query("insert into organizations(name,subscription_tier) values('Unclaimed','scale')"), /permission denied/)
@@ -110,6 +177,7 @@ async function run() {
     assert.equal(await scalar('select get_destination_signing_secret($1)', [ids.destination]), 'webhook-secret')
 
     await asUser(ids.viewer)
+    assert.equal((await db.query('select id from telemetry where id=$1', [firstEvent.id])).rows.length, 1)
     assert.equal((await db.query('select id,name from devices where id=$1', [ids.device])).rows.length, 1)
     assert.equal((await db.query('select id,name,fleet_key_id,fleet_secret_preview from device_profiles where id=$1', [ids.profile])).rows.length, 1)
     assert.equal(JSON.stringify((await db.query("select previous_data,new_data from audit_logs where table_name='devices'")).rows).includes(newKey), false)

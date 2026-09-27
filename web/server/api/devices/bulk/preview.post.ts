@@ -6,7 +6,7 @@ import {
   normalizeAndValidateBulkPayload,
   QUOTE_TTL_MS,
 } from '../../../utils/bulkDevices'
-import { estimateProrationCents, resolveCapacityPlan } from '../../../utils/deviceCapacity'
+import { resolveCapacityPlan } from '../../../utils/deviceCapacity'
 import { asDatabaseJson } from '../../../utils/databaseJson'
 
 export default defineEventHandler(async (event) => {
@@ -32,9 +32,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const plan = await resolveCapacityPlan(supabase, orgId, devices.length)
-  const estimate = plan.needsUsageUpdate
-    ? await estimateProrationCents(plan.org, plan.projectedPeakPaidQuantity)
-    : { amount: plan.estimatedTrueUpCents, currency: 'usd' }
+  const estimate = { amount: plan.estimatedTrueUpCents, currency: 'usd' }
 
   const expiresAt = new Date(Date.now() + QUOTE_TTL_MS).toISOString()
   const stripeIdempotencyKey = `bulk-import:${orgId}:${payloadHash}`
@@ -49,7 +47,7 @@ export default defineEventHandler(async (event) => {
       status: 'quoted',
       current_device_count: plan.currentCount,
       projected_device_count: plan.projectedCount,
-      previous_stripe_quantity: plan.currentPeakDeviceCount,
+      previous_stripe_quantity: plan.currentPeakPaidQuantity,
       target_stripe_quantity: plan.projectedPeakPaidQuantity,
       estimated_proration_amount: estimate.amount,
       currency: estimate.currency,

@@ -376,8 +376,21 @@ export function useOrganization() {
       throw new Error('Only owners can delete a workspace')
     }
 
-    const { error: err } = await supabase.from('organizations').delete().eq('id', orgId)
+    const organization = membership.organization
+    if (
+      organization.subscription_tier !== 'free' ||
+      organization.stripe_customer_id ||
+      organization.stripe_subscription_id ||
+      organization.stripe_item_id
+    ) {
+      throw new Error('This workspace cannot be deleted here. Cancel any active subscription and contact support for deletion.')
+    }
+
+    const { data: deleted, error: err } = await supabase.from('organizations').delete().eq('id', orgId).select('id')
     if (err) throw err
+    if (!deleted?.length) {
+      throw new Error('Workspace deletion was not allowed. Refresh and contact support if this continues.')
+    }
 
     if (import.meta.client && localStorage.getItem(STORAGE_KEY) === orgId) {
       localStorage.removeItem(STORAGE_KEY)

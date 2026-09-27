@@ -1143,6 +1143,42 @@ export type Database = {
         Returns: undefined
       }
       expire_pending_commands: { Args: never; Returns: undefined }
+      finalize_bulk_device_import: {
+        Args: {
+          p_devices: Json
+          p_expected_current_count: number
+          p_import_id: string
+          p_org_id: string
+          p_profile_id: string
+          p_user_id: string
+        }
+        Returns: {
+          api_key: string
+          api_secret_encrypted: string | null
+          api_secret_preview: string | null
+          created_at: string
+          debug_trace_until: string | null
+          encryption_enabled: boolean
+          encryption_key: string | null
+          hardware_id: string | null
+          id: string
+          key_id: string
+          last_seen: string | null
+          mac_address: string | null
+          name: string
+          organization_id: string | null
+          profile_id: string | null
+          protocol_version: number
+          tags: Json
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "devices"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       finish_webhook_delivery: {
         Args: {
           p_detail?: string

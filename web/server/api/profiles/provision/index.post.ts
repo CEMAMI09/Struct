@@ -162,9 +162,11 @@ export default defineEventHandler(async (event) => {
       api_secret_preview: creds.apiSecretPreview,
     }))
 
+    // The RPC commits the quote receipt and devices in one transaction.
     const { data: inserted, error: rpcError } = await supabase.rpc(
-      'bulk_provision_profile_devices',
+      'finalize_bulk_device_import',
       {
+        p_import_id: importId,
         p_org_id: orgId,
         p_user_id: claimed.user_id,
         p_profile_id: profileId,
@@ -191,7 +193,6 @@ export default defineEventHandler(async (event) => {
     }
 
     const created = (inserted || []) as Array<Record<string, unknown>>
-    const createdIds = created.map((d) => String(d.id))
     const createdIdByKey = new Map(created.map((d) => [String(d.key_id), String(d.id)]))
     const credentials = generated.map(({ device, creds }) => ({
       deviceId: createdIdByKey.get(creds.keyId) || '',
@@ -199,16 +200,6 @@ export default defineEventHandler(async (event) => {
       keyId: creds.keyId,
       apiSecret: creds.apiSecret,
     }))
-
-    await supabase
-      .from('bulk_device_imports')
-      .update({
-        status: 'completed',
-        completed_at: new Date().toISOString(),
-        created_device_ids: createdIds,
-        error_message: null,
-      })
-      .eq('id', importId)
 
     return {
       importId,
