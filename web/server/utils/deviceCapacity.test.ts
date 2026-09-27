@@ -35,6 +35,7 @@ describe('planCapacityForProjectedCount', () => {
       peak_paid_quantity: 195,
       true_up_amount_cents: null,
       true_up_invoice_item_id: null,
+      true_up_baseline_verified: true,
       status: 'open' as const,
     }
     const plan = planCapacityForProjectedCount(org({ subscription_tier: 'pro' }), 180, -5, openPeriod)

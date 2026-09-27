@@ -167,7 +167,7 @@ describe('usage true-up', () => {
     expect(rpc.mock.calls.filter(([name]) => name === 'complete_org_usage_true_up')).toHaveLength(100)
   })
 
-  it('charges a verified month before surfacing unresolved historical periods', async () => {
+  it('charges a verified month while leaving unresolved historical periods for manual reconciliation', async () => {
     const { db, stripe, rpc, create } = harness()
     const historical = [
       { ...period, id: 'period_old_1', true_up_baseline_verified: false },
@@ -176,8 +176,7 @@ describe('usage true-up', () => {
     mockDuePeriods(db, [period], historical)
     const log = vi.spyOn(console, 'error').mockImplementation(() => {})
     try {
-      await expect(processClosedUsagePeriods(db, stripe, 'org_1', 'in_1'))
-        .rejects.toThrow('USAGE_BASELINE_RECONCILIATION_REQUIRED')
+      await expect(processClosedUsagePeriods(db, stripe, 'org_1', 'in_1')).resolves.toBe(1)
       expect(create).toHaveBeenCalledOnce()
       expect(rpc).toHaveBeenCalledWith('complete_org_usage_true_up', expect.anything())
       expect(log).toHaveBeenCalledWith(

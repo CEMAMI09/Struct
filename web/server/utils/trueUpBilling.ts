@@ -89,14 +89,11 @@ export async function processClosedUsagePeriods(
     await processPeriodTrueUp(supabase, stripe, period, invoiceId)
   }
 
-  // Stripe retries a non-2xx invoice.created webhook. Process a bounded batch
-  // per delivery, then require another delivery until every due period closes.
-  if (unresolvedIds.length) {
-    throw createError({
-      statusCode: 503,
-      message: `USAGE_BASELINE_RECONCILIATION_REQUIRED for organization ${orgId}, invoice ${invoiceId}, periods ${unresolvedIds.join(', ')}`,
-    })
-  }
+  // An old unverified period is never charged automatically. It must not block
+  // unrelated subscription invoices indefinitely; the structured error above
+  // leaves a concrete reconciliation queue for operators.
+  // Stripe retries a non-2xx invoice.created webhook when verified periods
+  // exceed this bounded batch, so that recoverable work is not dropped.
   if (duePeriods.length > batch.length) {
     throw createError({ statusCode: 503, message: 'More usage periods require true-up processing' })
   }
