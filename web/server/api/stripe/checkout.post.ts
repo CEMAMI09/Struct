@@ -19,7 +19,7 @@ import { ensureOrganizationStripeCustomer } from '../../utils/stripeCustomer'
 
 const PAID_TIERS: PaidTier[] = ['flexible', 'pro', 'scale']
 type CheckoutClaim = {
-  status: 'claimed' | 'busy' | 'subscribed' | 'session'
+  status: 'claimed' | 'busy' | 'subscribed' | 'session' | 'different_plan'
   claimToken?: string
   sessionId?: string
 }
@@ -180,6 +180,7 @@ export default defineEventHandler(async (event) => {
     const { data: rawClaim, error: claimError } = await serviceSupabase.rpc('claim_org_checkout_session', {
       p_org_id: orgId,
       p_claim_token: randomUUID(),
+      p_target_tier: targetTier,
     })
     if (claimError) throw createError({ statusCode: 500, message: claimError.message })
     const claim = rawClaim as CheckoutClaim | null
@@ -189,6 +190,9 @@ export default defineEventHandler(async (event) => {
     }
     if (claim?.status === 'busy') {
       throw createError({ statusCode: 409, message: 'Checkout is starting. Please retry in a moment.' })
+    }
+    if (claim?.status === 'different_plan') {
+      throw createError({ statusCode: 409, message: 'A checkout for another plan is in progress. Complete or cancel it first.' })
     }
     if (claim?.status === 'subscribed') {
       throw createError({ statusCode: 409, message: 'Billing changed. Refresh before choosing a plan.' })
@@ -224,7 +228,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 503, message: 'Checkout could not be reserved. Please retry.' })
   }
 
-  const session = await stripe.checkout.sessions.create({
+  let session: Awaited<ReturnType<typeof stripe.checkout.sessions.create>>
+  try {
+    session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: customerId,
     client_reference_id: orgId,
@@ -253,7 +259,20 @@ export default defineEventHandler(async (event) => {
         targetTier,
       },
     },
-  }, { idempotencyKey: `struct:checkout:v1:${claimToken}` })
+    }, { idempotencyKey: `struct:checkout:v1:${claimToken}` })
+  } catch (error: any) {
+    // 4xx validation/auth errors mean Stripe did not create a session. A
+    // timeout or 5xx is ambiguous: keep the claim/token for a safe retry.
+    if ([400, 401, 402, 403, 404].includes(error?.statusCode)) {
+      const { error: releaseError } = await serviceSupabase.rpc('release_org_checkout_claim', {
+        p_org_id: orgId, p_claim_token: claimToken,
+      })
+      if (releaseError) console.error('[stripe] failed to release rejected Checkout claim', { orgId, error: releaseError.message })
+    } else {
+      console.error('[stripe] ambiguous Checkout creation; claim retained for reconciliation', { orgId, error: error?.message })
+    }
+    throw error
+  }
 
   if (!session.url) {
     throw createError({ statusCode: 500, message: 'Failed to create checkout session' })
