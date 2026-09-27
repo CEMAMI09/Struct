@@ -100,10 +100,10 @@
           </div>
           <div ref="heroFrame" class="hero-frame">
             <img
-              src="/landing/dashboard.webp"
+              src="/minimized%20dash.svg"
               alt="Struct dashboard"
-              width="2560"
-              height="1434"
+              width="1893"
+              height="910"
               decoding="async"
               fetchpriority="high"
             />
