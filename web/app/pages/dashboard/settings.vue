@@ -1,7 +1,7 @@
 <template>
   <div class="mx-auto max-w-5xl">
     <div class="mb-6">
-      <p class="text-sm text-[#8B93A7]">Billing, credentials, routing, and account preferences.</p>
+      <p class="text-sm text-[#8B93A7]">Billing, credentials, routing, account preferences, and support.</p>
     </div>
 
       <div class="mb-6 overflow-x-auto border-b border-[#2A2F3A]">
@@ -246,6 +246,20 @@
       </div>
     </section>
 
+    <!-- Support -->
+    <section v-else-if="activeTab === 'support'" class="space-y-4">
+      <div class="card p-5">
+        <p class="label">Contact support</p>
+        <p class="mt-2 text-sm text-[#9AA3B2]">
+          Contact support at
+          <a
+            href="mailto:support@usestruct.com"
+            class="text-[#E8EAEF] underline decoration-[#5617fc] underline-offset-2"
+          >support@usestruct.com</a>.
+        </p>
+      </div>
+    </section>
+
     <!-- Account -->
     <section v-else class="space-y-4">
       <div class="card p-5">
@@ -287,7 +301,7 @@ definePageMeta({ middleware: 'auth' })
 
 import type { DeviceCredentials, SubscriptionTier } from '~/types'
 
-type SettingsTab = 'billing' | 'api-keys' | 'webhooks' | 'account' | 'appearance'
+type SettingsTab = 'billing' | 'api-keys' | 'webhooks' | 'account' | 'appearance' | 'support'
 type PaidTier = Exclude<SubscriptionTier, 'free'>
 
 const route = useRoute()
@@ -356,6 +370,7 @@ const tabs: { id: SettingsTab; name: string }[] = [
   { id: 'webhooks', name: 'Webhooks' },
   { id: 'account', name: 'Account' },
   { id: 'appearance', name: 'Appearance' },
+  { id: 'support', name: 'Support' },
 ]
 const activeTab = ref<SettingsTab>('billing')
 
