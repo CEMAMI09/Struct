@@ -10,7 +10,7 @@ export default defineNuxtConfig({
   // Design prototype only. It is not a public page.
   ignore: ['**/pages/test.vue'],
 
-  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/supabase'],
+  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/supabase', '@vercel/analytics'],
 
   css: ['~/assets/css/main.css'],
 

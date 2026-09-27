@@ -15,6 +15,7 @@
   "dependencies": {
     "@nuxtjs/supabase": "^2.0.9",
     "@nuxtjs/tailwindcss": "^6.14.0",
+    "@vercel/analytics": "^2.0.1",
     "@vueuse/core": "^14.3.0",
     "echarts": "^6.1.0",
     "fflate": "^0.8.3",
