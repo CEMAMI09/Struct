@@ -396,6 +396,9 @@ export type Database = {
           stripe_subscription_id: string | null
           tier: string
           true_up_amount_cents: number | null
+          true_up_baseline_verified: boolean
+          true_up_claim_expires_at: string | null
+          true_up_claim_token: string | null
           true_up_invoice_item_id: string | null
           updated_at: string
         }
@@ -412,6 +415,9 @@ export type Database = {
           stripe_subscription_id?: string | null
           tier: string
           true_up_amount_cents?: number | null
+          true_up_baseline_verified?: boolean
+          true_up_claim_expires_at?: string | null
+          true_up_claim_token?: string | null
           true_up_invoice_item_id?: string | null
           updated_at?: string
         }
@@ -428,6 +434,9 @@ export type Database = {
           stripe_subscription_id?: string | null
           tier?: string
           true_up_amount_cents?: number | null
+          true_up_baseline_verified?: boolean
+          true_up_claim_expires_at?: string | null
+          true_up_claim_token?: string | null
           true_up_invoice_item_id?: string | null
           updated_at?: string
         }
@@ -864,28 +873,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      // Pending migrations 026/027; regenerate from Supabase after rollout.
-      configure_device_encryption: {
-        Args: { p_device_id: string; p_enabled: boolean; p_rotate?: boolean }
-        Returns: string | null
-      }
-      create_device_with_usage: {
-        Args: {
-          p_org_id: string
-          p_user_id: string
-          p_name: string
-          p_key_id: string
-          p_api_secret_encrypted: string
-          p_api_secret_preview: string
-          p_mac_address: string | null
-          p_expected_current_count: number
-        }
-        Returns: Database["public"]["Tables"]["devices"]["Row"]
-      }
-      get_destination_signing_secret: { Args: { p_destination_id: string }; Returns: string }
-      get_destination_url: { Args: { p_destination_id: string }; Returns: string }
-      get_device_encryption_key: { Args: { p_device_id: string }; Returns: string | null }
-      get_webhook_delivery_destination_url: { Args: { p_delivery_id: string }; Returns: string }
       acknowledge_pending_command: {
         Args: {
           p_command_id: string
@@ -971,6 +958,34 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_org_usage_true_up: {
+        Args: { p_claim_token: string; p_period_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          included_paid_quantity: number
+          organization_id: string
+          peak_device_count: number
+          peak_paid_quantity: number
+          status: Database["public"]["Enums"]["usage_period_status"]
+          stripe_period_end: string
+          stripe_period_start: string
+          stripe_subscription_id: string | null
+          tier: string
+          true_up_amount_cents: number | null
+          true_up_baseline_verified: boolean
+          true_up_claim_expires_at: string | null
+          true_up_claim_token: string | null
+          true_up_invoice_item_id: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "organization_device_usage_periods"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       claim_pending_downlinks: {
         Args: { p_device_id: string; p_gateway_id: string; p_limit?: number }
         Returns: {
@@ -1028,6 +1043,82 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      complete_org_usage_true_up: {
+        Args: {
+          p_amount_cents: number
+          p_claim_token: string
+          p_invoice_item_id: string
+          p_period_id: string
+          p_status?: Database["public"]["Enums"]["usage_period_status"]
+        }
+        Returns: {
+          created_at: string
+          id: string
+          included_paid_quantity: number
+          organization_id: string
+          peak_device_count: number
+          peak_paid_quantity: number
+          status: Database["public"]["Enums"]["usage_period_status"]
+          stripe_period_end: string
+          stripe_period_start: string
+          stripe_subscription_id: string | null
+          tier: string
+          true_up_amount_cents: number | null
+          true_up_baseline_verified: boolean
+          true_up_claim_expires_at: string | null
+          true_up_claim_token: string | null
+          true_up_invoice_item_id: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "organization_device_usage_periods"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      configure_device_encryption: {
+        Args: { p_device_id: string; p_enabled: boolean; p_rotate?: boolean }
+        Returns: string
+      }
+      create_device_with_usage: {
+        Args: {
+          p_api_secret_encrypted: string
+          p_api_secret_preview: string
+          p_expected_current_count: number
+          p_key_id: string
+          p_mac_address: string
+          p_name: string
+          p_org_id: string
+          p_user_id: string
+        }
+        Returns: {
+          api_key: string
+          api_secret_encrypted: string | null
+          api_secret_preview: string | null
+          created_at: string
+          debug_trace_until: string | null
+          encryption_enabled: boolean
+          encryption_key: string | null
+          hardware_id: string | null
+          id: string
+          key_id: string
+          last_seen: string | null
+          mac_address: string | null
+          name: string
+          organization_id: string | null
+          profile_id: string | null
+          protocol_version: number
+          tags: Json
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "devices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_organization: {
         Args: { p_name: string }
         Returns: {
@@ -1062,7 +1153,23 @@ export type Database = {
         Returns: boolean
       }
       generate_device_api_key: { Args: never; Returns: string }
+      get_destination_signing_secret: {
+        Args: { p_destination_id: string }
+        Returns: string
+      }
+      get_destination_url: {
+        Args: { p_destination_id: string }
+        Returns: string
+      }
+      get_device_encryption_key: {
+        Args: { p_device_id: string }
+        Returns: string
+      }
       get_org_device_limit: { Args: { p_org_id: string }; Returns: number }
+      get_webhook_delivery_destination_url: {
+        Args: { p_delivery_id: string }
+        Returns: string
+      }
       ingest_device_telemetry: {
         Args: {
           p_device_id: string
@@ -1154,6 +1261,9 @@ export type Database = {
           stripe_subscription_id: string | null
           tier: string
           true_up_amount_cents: number | null
+          true_up_baseline_verified: boolean
+          true_up_claim_expires_at: string | null
+          true_up_claim_token: string | null
           true_up_invoice_item_id: string | null
           updated_at: string
         }
@@ -1167,6 +1277,14 @@ export type Database = {
       record_packet_trace: {
         Args: { p_device_id: string; p_trace: Json }
         Returns: undefined
+      }
+      redact_infrastructure_audit_data: {
+        Args: { p_data: Json; p_table_name: string }
+        Returns: Json
+      }
+      release_org_usage_true_up: {
+        Args: { p_claim_token: string; p_period_id: string }
+        Returns: boolean
       }
       remove_org_member: { Args: { p_member_id: string }; Returns: undefined }
       replay_webhook_delivery: { Args: { p_id: string }; Returns: undefined }

@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
       p_key_id: creds.keyId,
       p_api_secret_encrypted: creds.apiSecretEncrypted,
       p_api_secret_preview: creds.apiSecretPreview,
-      p_mac_address: macAddress,
+      p_mac_address: macAddress ?? '',
       p_expected_current_count: plan.currentCount,
     },
   )
