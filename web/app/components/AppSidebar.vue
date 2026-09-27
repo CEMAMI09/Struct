@@ -46,6 +46,11 @@
     </nav>
 
     <div class="app-side-foot" :class="collapsed ? 'p-2 md:px-2' : 'p-3'">
+      <p class="app-side-meta" :class="collapsed ? 'md:hidden' : ''">
+        <span>Beta</span>
+        <span class="app-side-meta-mark" aria-hidden="true">·</span>
+        <span>v1.01</span>
+      </p>
       <button
         type="button"
         class="app-side-collapse"
@@ -269,8 +274,24 @@ function isActive(path: string) {
 }
 
 .app-side-foot {
-  display: none;
   border-top: 1px solid var(--struct-border);
+}
+
+.app-side-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--struct-muted);
+}
+
+.app-side-meta-mark {
+  color: var(--struct-text);
+  font-weight: 500;
 }
 
 .app-side-collapse {
@@ -293,6 +314,10 @@ function isActive(path: string) {
 }
 
 @media (min-width: 768px) {
+  .app-side:not(.is-collapsed) .app-side-meta {
+    margin-bottom: 0.35rem;
+  }
+
   .app-side-foot {
     display: block;
   }

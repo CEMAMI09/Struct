@@ -20,17 +20,15 @@
       </div>
       <div>
         <label class="label" for="password">Password</label>
-        <input
+        <PasswordField
           id="password"
-          ref="passwordEl"
+          ref="passwordField"
           v-model="password"
           name="password"
-          type="password"
-          class="auth-field"
-          required
-          minlength="6"
           autocomplete="current-password"
-          @keydown.enter.prevent="onSubmit"
+          required
+          :minlength="6"
+          @enter="onSubmit"
         />
         <NuxtLink to="/forgot-password" class="mt-2 block text-right text-xs text-[#b79bff] hover:underline">
           Forgot password?
@@ -58,7 +56,7 @@ const route = useRoute()
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const emailEl = ref<HTMLInputElement | null>(null)
-const passwordEl = ref<HTMLInputElement | null>(null)
+const passwordField = ref<{ currentValue: () => string } | null>(null)
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
@@ -83,7 +81,7 @@ async function waitForUser(timeoutMs = 3000) {
 function readCredentials() {
   // DOM values first — autofill often doesn't sync into v-model until blur/click
   const emailVal = (emailEl.value?.value || email.value).trim()
-  const passwordVal = passwordEl.value?.value || password.value
+  const passwordVal = passwordField.value?.currentValue() || password.value
   email.value = emailVal
   password.value = passwordVal
   return { emailVal, passwordVal }

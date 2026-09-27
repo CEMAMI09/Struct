@@ -16,15 +16,14 @@ function tierForPrice(
   return null
 }
 
-/** Apply only the subscription linked to the organization, unless a verified
- * Checkout explicitly replaces it. A larger sibling is not automatically the
- * customer's intended plan. */
+/** A verified Checkout may adopt a subscription for an unlinked organization.
+ * Once linked, only that subscription may update its entitlements. */
 export async function applyStripeSubscriptionToOrg(
   supabase: SupabaseClient,
   subscription: Stripe.Subscription,
   prices: { flexible: string; pro: string; scale: string },
   orgIdHint?: string | null,
-  allowReplacement = false,
+  allowCheckoutAdoption = false,
 ) {
   if (orgIdHint && subscription.metadata?.orgId && subscription.metadata.orgId !== orgIdHint) {
     throw createError({ statusCode: 500, message: 'Subscription belongs to another organization' })
@@ -59,21 +58,28 @@ export async function applyStripeSubscriptionToOrg(
     throw createError({ statusCode: 500, message: 'Subscription customer does not match organization' })
   }
 
-  // Checkout can create a subscription before its first payment succeeds.
-  // Do not grant paid capacity until Stripe has activated it.
+  // A checkout.session.completed event can precede payment for delayed
+  // methods. Never grant a new or upgraded tier on an unsettled subscription.
   if (subscription.status === 'incomplete') return null
+  if (existing.stripe_subscription_id && existing.stripe_subscription_id !== subscription.id) return null
+  if (!existing.stripe_subscription_id && !allowCheckoutAdoption) return null
 
-  if (
-    existing?.stripe_subscription_id &&
-    existing.stripe_subscription_id !== subscription.id
-  ) {
-    // Only an explicitly completed Checkout can replace the linked
-    // subscription. Unrelated events must never choose a plan by quantity.
-    if (!allowReplacement) return null
-    if (subscription.status === 'canceled' || subscription.status === 'incomplete_expired') {
-      return null
-    }
+  // In dunning, Stripe can show a new price before an invoice is paid. Keep
+  // the previous entitlement until the subscription returns to active.
+  if (subscription.status === 'past_due') return null
+  if (subscription.status === 'unpaid' || subscription.status === 'paused') {
+    // Keep the subscription link so a later successful payment can restore it.
+    // Do not grant device capacity or paid-only features while unpaid.
+    const { error } = await supabase.from('organizations').update({
+      subscription_tier: 'free',
+      stripe_quantity: 0,
+    }).eq('id', existing.id).eq('stripe_subscription_id', subscription.id)
+    if (error) throw createError({ statusCode: 500, message: error.message })
+    return { orgId: existing.id, subscriptionTier: 'free' as const, stripeQuantity: 0, deviceLimit: 5 }
   }
+
+  if (subscription.status !== 'active' && subscription.status !== 'trialing' &&
+      subscription.status !== 'canceled' && subscription.status !== 'incomplete_expired') return null
 
   const patch: Record<string, unknown> = {
     stripe_subscription_id: subscription.id,
@@ -95,19 +101,16 @@ export async function applyStripeSubscriptionToOrg(
     patch.subscription_tier = tier
   }
 
-  let query = supabase.from('organizations').update(patch)
-  if (orgId) {
-    query = query.eq('id', orgId)
-  } else if (existing?.id) {
-    query = query.eq('id', existing.id)
-  } else {
-    query = query.eq('stripe_subscription_id', subscription.id)
-  }
+  let query = supabase.from('organizations').update(patch).eq('id', existing.id)
+  query = existing.stripe_subscription_id
+    ? query.eq('stripe_subscription_id', existing.stripe_subscription_id)
+    : query.is('stripe_subscription_id', null)
 
-  const { error } = await query
+  const { data: updated, error } = await query.select('id').maybeSingle()
   if (error) {
     throw createError({ statusCode: 500, message: error.message })
   }
+  if (!updated) return null // Another checkout or webhook won the race.
 
   return {
     orgId: orgId || existing?.id || null,

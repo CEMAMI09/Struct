@@ -90,6 +90,9 @@ export function useDevices() {
   const error = useState<string | null>('devices-error', () => null)
   /** Org id for which devices/schemas were last successfully loaded (incl. empty). */
   const loadedForOrg = useState<string | null>('devices-loaded-org', () => null)
+  const devicesLoaded = computed(() =>
+    !!loadedForOrg.value && loadedForOrg.value === currentOrgId.value && !loading.value,
+  )
 
   async function hasAuth(): Promise<boolean> {
     if (user.value) return true
@@ -476,6 +479,7 @@ export function useDevices() {
     schemaVersions,
     loading,
     error,
+    devicesLoaded,
     fetchDevices,
     invalidateDeviceCache,
     createDevice,

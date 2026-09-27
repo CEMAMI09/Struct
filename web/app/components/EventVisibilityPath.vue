@@ -42,6 +42,13 @@
       <p class="evp-micro">Edge telemetry</p>
     </article>
 
+    <div class="evp-join" aria-hidden="true">
+      <span class="evp-join-line" />
+      <svg viewBox="0 0 16 16" width="14" height="14">
+        <path d="M3.2 5.6 8 10.4l4.8-4.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </div>
+
     <article ref="codeEl" class="evp-card evp-card--code" :style="cardStyle(1)">
       <span :ref="(el) => setAnchor(el, 1)" class="evp-anchor" />
       <div class="evp-window">
@@ -67,6 +74,13 @@
       </div>
     </article>
 
+    <div class="evp-join" aria-hidden="true">
+      <span class="evp-join-line" />
+      <svg viewBox="0 0 16 16" width="14" height="14">
+        <path d="M3.2 5.6 8 10.4l4.8-4.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </div>
+
     <article class="evp-card evp-card--log" :style="cardStyle(2)">
       <span :ref="(el) => setAnchor(el, 2)" class="evp-anchor" />
       <p class="evp-kicker">Event inspection</p>
@@ -78,6 +92,13 @@
         </li>
       </ul>
     </article>
+
+    <div class="evp-join" aria-hidden="true">
+      <span class="evp-join-line" />
+      <svg viewBox="0 0 16 16" width="14" height="14">
+        <path d="M3.2 5.6 8 10.4l4.8-4.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </div>
 
     <article ref="graphEl" class="evp-card evp-card--graph" :style="cardStyle(3)">
       <span :ref="(el) => setAnchor(el, 3)" class="evp-anchor" />
@@ -502,6 +523,10 @@ onUnmounted(() => {
   width: 100%;
 }
 
+.evp-join {
+  display: none;
+}
+
 .evp-track {
   position: relative;
   display: flex;
@@ -847,6 +872,25 @@ onUnmounted(() => {
 }
 
 @media (max-width: 899px) {
+  .evp-track {
+    gap: 0.15rem;
+  }
+
+  .evp-join {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+    margin: 0.15rem 0;
+    color: #c4b5fd;
+  }
+
+  .evp-join-line {
+    width: 1px;
+    height: 0.7rem;
+    background: linear-gradient(to bottom, transparent, currentColor);
+  }
+
   .evp-card {
     animation: evp-in 0.7s ease both;
   }
@@ -854,6 +898,10 @@ onUnmounted(() => {
   .evp-card--code { animation-delay: 0.08s; }
   .evp-card--log { animation-delay: 0.16s; }
   .evp-card--graph { animation-delay: 0.24s; }
+
+  .evp-code {
+    overflow-x: auto;
+  }
 }
 
 @media (min-width: 900px) and (prefers-reduced-motion: reduce) {

@@ -39,7 +39,7 @@
       v-if="!hasData"
       class="flex flex-1 items-center justify-center px-4 text-center text-sm text-[#9AA3B2]"
     >
-      No events received yet. The chart appears after a numeric field is stored.
+      {{ loading ? 'Loading stored events…' : (emptyLabel || 'No events received yet. The chart appears after a numeric field is stored.') }}
     </div>
     <p v-else class="mt-2 text-xs text-[#9AA3B2]">
       Points are stored samples. The line only joins those samples. No unit is shown unless the field name includes one.
@@ -83,6 +83,8 @@ const FIELD_KEY = 'struct-telemetry-field'
 const props = defineProps<{
   rows: TelemetryRow[]
   field?: string | null
+  loading?: boolean
+  emptyLabel?: string
 }>()
 
 const { mode } = useTheme()

@@ -58,8 +58,11 @@ export default defineEventHandler(async (event) => {
   }
 
   switch (stripeEvent.type) {
-    case 'checkout.session.completed': {
+    case 'checkout.session.completed':
+    case 'checkout.session.async_payment_succeeded': {
       const session = stripeEvent.data.object as Stripe.Checkout.Session
+      if (session.mode !== 'subscription' || session.status !== 'complete') break
+      if (session.payment_status !== 'paid' && session.payment_status !== 'no_payment_required') break
       const orgId = session.metadata?.orgId
       const targetTier = parseTier(session.metadata?.targetTier)
 
@@ -73,6 +76,7 @@ export default defineEventHandler(async (event) => {
       if (!subscriptionId) break
 
       const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+      if (subscription.status !== 'active' && subscription.status !== 'trialing') break
       const sessionCustomer = typeof session.customer === 'string'
         ? session.customer : session.customer?.id || null
       const subscriptionCustomer = typeof subscription.customer === 'string'
@@ -89,7 +93,10 @@ export default defineEventHandler(async (event) => {
 
     case 'customer.subscription.created':
     case 'customer.subscription.updated': {
-      const subscription = stripeEvent.data.object as Stripe.Subscription
+      // Events can be delivered out of order. Reconcile the current Stripe
+      // object, not a stale event snapshot that could roll a paid plan back.
+      const eventSubscription = stripeEvent.data.object as Stripe.Subscription
+      const subscription = await stripe.subscriptions.retrieve(eventSubscription.id)
       const orgId = subscription.metadata?.orgId || null
       await applyStripeSubscriptionToOrg(serviceSupabase, subscription, prices, orgId)
       break

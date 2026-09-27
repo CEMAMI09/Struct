@@ -79,12 +79,12 @@
       </NuxtLink>
     </div>
 
-    <p v-if="loading && !devices.length" class="card p-8 text-center text-sm text-[#9AA3B2]">Loading devices…</p>
-    <div v-else-if="!filtered.length" class="card p-8 text-center text-sm text-[#9AA3B2]">
+    <p v-if="!error && !devicesLoaded && !devices.length" class="card p-8 text-center text-sm text-[#9AA3B2]">Loading devices…</p>
+    <div v-else-if="devicesLoaded && !filtered.length" class="card p-8 text-center text-sm text-[#9AA3B2]">
       {{ devices.length ? 'No devices match this filter.' : 'No devices yet. Create one to get a key ID and API secret.' }}
     </div>
 
-    <div v-else class="space-y-3 p-0.5">
+    <div v-else-if="devices.length" class="space-y-3 p-0.5">
       <div
         v-for="device in filtered"
         :key="device.id"
@@ -242,8 +242,8 @@ import type { Device, DeviceCredentials } from '~/types'
 
 const {
   devices,
-  loading,
   error,
+  devicesLoaded,
   fetchDevices,
   createDevice,
   deleteDevice,

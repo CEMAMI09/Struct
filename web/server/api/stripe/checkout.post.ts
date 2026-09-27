@@ -12,6 +12,8 @@ import {
   getOrganizationBilling,
 } from '../../utils/organizations'
 import { useStripeClient } from '../../utils/stripe'
+import { applyStripeSubscriptionToOrg } from '../../utils/syncStripeSubscription'
+import { assertStripePriceMatchesPlan } from '../../utils/stripePriceContract'
 
 const PAID_TIERS: PaidTier[] = ['flexible', 'pro', 'scale']
 
@@ -49,25 +51,16 @@ export default defineEventHandler(async (event) => {
   }
 
   const serviceSupabase = await serverSupabaseServiceRole(event)
-  const org = await getOrganizationBilling(serviceSupabase, orgId)
+  let org = await getOrganizationBilling(serviceSupabase, orgId)
   const stripe = useStripeClient()
+  await assertStripePriceMatchesPlan(stripe, targetTier as PaidTier, priceId)
   const origin = getRequestURL(event).origin
   const deviceCount = await countOrganizationDevices(serviceSupabase, orgId)
   const targetQuantity = getRequiredQuantity(targetTier, deviceCount)
 
   // Already subscribed: swap price on the existing subscription instead of
   // opening a second Checkout session (which left Flexible + Scale both active).
-  if (org.stripe_subscription_id && !org.stripe_item_id) {
-    throw createError({ statusCode: 409, message: 'Billing needs to be synchronized before changing plans.' })
-  }
-  if (org.stripe_subscription_id && org.stripe_item_id) {
-    if (org.subscription_tier === targetTier) {
-      throw createError({
-        statusCode: 400,
-        message: `Already on the ${targetTier} plan.`,
-      })
-    }
-
+  if (org.stripe_subscription_id) {
     const subscription = await stripe.subscriptions.retrieve(org.stripe_subscription_id)
     const subscriptionCustomer = typeof subscription.customer === 'string'
       ? subscription.customer : subscription.customer?.id || null
@@ -75,8 +68,23 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 409, message: 'Billing customer mismatch. Contact support.' })
     }
     if (subscription.status === 'canceled' || subscription.status === 'incomplete_expired') {
-      // Fall through to Checkout for a fresh subscription.
+      // Clear a stale ended subscription before opening a new Checkout. A
+      // completed session must never replace an active linked subscription.
+      await applyStripeSubscriptionToOrg(serviceSupabase, subscription, prices, orgId)
+      org = await getOrganizationBilling(serviceSupabase, orgId)
+      if (org.stripe_subscription_id) {
+        throw createError({ statusCode: 409, message: 'Billing is being synchronized. Please retry.' })
+      }
     } else {
+      if (subscription.status !== 'active') {
+        throw createError({ statusCode: 409, message: 'Resolve the subscription payment in Manage billing before changing plans.' })
+      }
+      if (!org.stripe_item_id) {
+        throw createError({ statusCode: 409, message: 'Billing needs to be synchronized before changing plans.' })
+      }
+      if (org.subscription_tier === targetTier) {
+        throw createError({ statusCode: 400, message: `Already on the ${targetTier} plan.` })
+      }
       const currentItem = subscription.items.data.find((item) => item.id === org.stripe_item_id)
       if (!currentItem) {
         throw createError({ statusCode: 409, message: 'Billing item mismatch. Synchronize billing and retry.' })
@@ -109,12 +117,20 @@ export default defineEventHandler(async (event) => {
             quantity: upgradeQuantity,
           },
         ],
-        proration_behavior: 'create_prorations',
+        // Collect an upgrade charge now. If the card declines or requires
+        // customer action, Stripe leaves the old plan in force and we do not
+        // grant the new capacity in Supabase.
+        proration_behavior: 'always_invoice',
+        payment_behavior: 'error_if_incomplete',
         metadata: {
           orgId,
           targetTier,
         },
       }, { idempotencyKey: `struct:plan:v1:${org.stripe_subscription_id}:${targetTier}:${upgradeQuantity}` })
+
+      if (updated.status !== 'active' || updated.pending_update) {
+        throw createError({ statusCode: 409, message: 'Upgrade payment is not complete. Refresh billing before retrying.' })
+      }
 
       const item = updated.items.data.find((candidate) => candidate.id === org.stripe_item_id)
       const { error } = await serviceSupabase

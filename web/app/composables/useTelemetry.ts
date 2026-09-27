@@ -138,6 +138,7 @@ export function useTelemetry() {
     live,
     connectionStatus,
     selectedDeviceId,
+    rowsDeviceId,
     fetchTelemetry,
     subscribe,
     clearTelemetry,

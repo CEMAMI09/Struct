@@ -22,19 +22,25 @@ function fakeSubscription(id: string, customer = 'cus_1') {
   } as unknown as Stripe.Subscription
 }
 
-function fakeDb() {
-  const update = vi.fn(() => ({ eq: vi.fn(async () => ({ error: null })) }))
+function fakeDb(linkedSubscriptionId: string | null = 'sub_linked', updateWon = true) {
+  const updatedQuery: any = {
+    eq: vi.fn(() => updatedQuery),
+    is: vi.fn(() => updatedQuery),
+    select: vi.fn(() => updatedQuery),
+    maybeSingle: vi.fn(async () => ({ data: updateWon ? { id: 'org_1' } : null, error: null })),
+  }
+  const update = vi.fn(() => updatedQuery)
   const query: any = {
     select: () => query,
     eq: () => query,
     maybeSingle: async () => ({ data: {
-      id: 'org_1', stripe_customer_id: 'cus_1', stripe_subscription_id: 'sub_linked',
+      id: 'org_1', stripe_customer_id: 'cus_1', stripe_subscription_id: linkedSubscriptionId,
       stripe_quantity: 5, subscription_tier: 'flexible',
     }, error: null }),
     update,
   }
   const db = { from: vi.fn(() => query) } as unknown as SupabaseClient
-  return { db, update }
+  return { db, update, updatedQuery }
 }
 
 describe('subscription reconciliation', () => {
@@ -66,6 +72,34 @@ describe('subscription reconciliation', () => {
     subscription.status = 'incomplete'
     expect(await applyStripeSubscriptionToOrg(db, subscription, prices, 'org_1')).toBeNull()
     expect(update).not.toHaveBeenCalled()
+  })
+
+  it('adopts a paid Checkout only for an unlinked organization', async () => {
+    const { db, update, updatedQuery } = fakeDb(null)
+    expect(await applyStripeSubscriptionToOrg(db, fakeSubscription('sub_new'), prices, 'org_1')).toBeNull()
+    expect(update).not.toHaveBeenCalled()
+    const result = await applyStripeSubscriptionToOrg(db, fakeSubscription('sub_new'), prices, 'org_1', true)
+    expect(result?.subscriptionTier).toBe('pro')
+    expect(updatedQuery.is).toHaveBeenCalledWith('stripe_subscription_id', null)
+  })
+
+  it('does not let another completed Checkout replace a linked paid subscription', async () => {
+    const { db, update } = fakeDb()
+    expect(await applyStripeSubscriptionToOrg(db, fakeSubscription('sub_other'), prices, 'org_1', true)).toBeNull()
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('does not grant an upgraded price while payment is past due', async () => {
+    const { db, update } = fakeDb()
+    const subscription = fakeSubscription('sub_linked')
+    subscription.status = 'past_due'
+    expect(await applyStripeSubscriptionToOrg(db, subscription, prices, 'org_1')).toBeNull()
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('does not report success when another billing update won the database race', async () => {
+    const { db } = fakeDb(null, false)
+    expect(await applyStripeSubscriptionToOrg(db, fakeSubscription('sub_new'), prices, 'org_1', true)).toBeNull()
   })
 
   it('flags subscriptions containing two Struct plan prices for review', async () => {

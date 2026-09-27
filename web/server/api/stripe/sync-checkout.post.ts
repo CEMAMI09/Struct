@@ -30,6 +30,9 @@ export default defineEventHandler(async (event) => {
       message: 'Checkout session is not a completed subscription',
     })
   }
+  if (session.payment_status !== 'paid' && session.payment_status !== 'no_payment_required') {
+    throw createError({ statusCode: 409, message: 'Checkout payment has not completed yet.' })
+  }
 
   const orgId = session.metadata?.orgId
   const targetTier = parseTier(session.metadata?.targetTier)
@@ -54,6 +57,9 @@ export default defineEventHandler(async (event) => {
   }
 
   const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+  if (subscription.status !== 'active' && subscription.status !== 'trialing') {
+    throw createError({ statusCode: 409, message: 'Subscription payment has not completed yet.' })
+  }
   const sessionCustomer = typeof session.customer === 'string'
     ? session.customer : session.customer?.id || null
   const subscriptionCustomer = typeof subscription.customer === 'string'

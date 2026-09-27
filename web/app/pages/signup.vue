@@ -20,17 +20,15 @@
       </div>
       <div>
         <label class="label" for="password">Password</label>
-        <input
+        <PasswordField
           id="password"
-          ref="passwordEl"
+          ref="passwordField"
           v-model="password"
           name="password"
-          type="password"
-          class="auth-field"
-          required
-          minlength="6"
           autocomplete="new-password"
-          @keydown.enter.prevent="onSubmit"
+          required
+          :minlength="6"
+          @enter="onSubmit"
         />
       </div>
       <p v-if="error" class="text-sm text-red-300" role="alert">{{ error }}</p>
@@ -62,7 +60,7 @@ const route = useRoute()
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const emailEl = ref<HTMLInputElement | null>(null)
-const passwordEl = ref<HTMLInputElement | null>(null)
+const passwordField = ref<{ currentValue: () => string } | null>(null)
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
@@ -87,7 +85,7 @@ async function waitForUser(timeoutMs = 3000) {
 
 function readCredentials() {
   const emailVal = (emailEl.value?.value || email.value).trim()
-  const passwordVal = passwordEl.value?.value || password.value
+  const passwordVal = passwordField.value?.currentValue() || password.value
   email.value = emailVal
   password.value = passwordVal
   return { emailVal, passwordVal }

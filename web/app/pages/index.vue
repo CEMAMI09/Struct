@@ -318,6 +318,15 @@ const faqs = [
   },
 ]
 
+const HERO_COMPACT_QUERY = '(max-width: 899px)'
+let compactHero = false
+let compactHeroQuery: MediaQueryList | null = null
+
+function syncCompactHero() {
+  compactHero = reduceMotion || (compactHeroQuery?.matches ?? false)
+  if (compactHero && heroFrame.value) heroFrame.value.style.transform = ''
+}
+
 function readHeroMetrics() {
   const stage = heroStage.value
   heroMetrics.top = stage?.offsetTop ?? 0
@@ -329,13 +338,15 @@ function applyScroll() {
   scrollRaf = 0
   const y = window.scrollY
   const { top, height, viewH } = heroMetrics
-  const sticky = y > top + height - viewH
+  const sticky = compactHero
+    ? y > top + Math.max(0, height - Math.min(viewH * 0.35, 140))
+    : y > top + height - viewH
   if (isHeaderSticky.value !== sticky) {
     isHeaderSticky.value = sticky
     if (!sticky) floatMenuOpen.value = false
   }
   const frame = heroFrame.value
-  if (!frame || reduceMotion) return
+  if (!frame || compactHero) return
   const travel = height - viewH
   const progress = travel <= 0 ? 1 : Math.min(1, Math.max(0, (y - top) / travel))
   frame.style.transform = `translate3d(-50%, ${(1 - progress) * 100}%, 0)`
@@ -347,6 +358,7 @@ function onScroll() {
 }
 
 function onResize() {
+  syncCompactHero()
   readHeroMetrics()
   applyScroll()
 }
@@ -405,9 +417,11 @@ function scrollToSection(id: string) {
 
 onMounted(() => {
   reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  compactHeroQuery = window.matchMedia(HERO_COMPACT_QUERY)
+  compactHeroQuery.addEventListener('change', onResize)
+  syncCompactHero()
   readHeroMetrics()
-  if (reduceMotion && heroFrame.value) heroFrame.value.style.transform = ''
-  else applyScroll()
+  applyScroll()
   window.addEventListener('scroll', onScroll, { passive: true })
   window.addEventListener('resize', onResize)
   const ticker = tickerEl.value
@@ -420,6 +434,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  compactHeroQuery?.removeEventListener('change', onResize)
   window.removeEventListener('scroll', onScroll)
   window.removeEventListener('resize', onResize)
   if (scrollRaf) cancelAnimationFrame(scrollRaf)
@@ -765,6 +780,35 @@ onUnmounted(() => {
 .hero-art-right {
   top: 11.5rem;
   right: max(1rem, calc(50% - 28rem));
+}
+
+@media (max-width: 899px) {
+  .hero-stage {
+    height: auto;
+  }
+
+  .hero-pin {
+    position: relative;
+    display: flex;
+    height: auto;
+    min-height: 100svh;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: calc(5rem + env(safe-area-inset-top)) 0 2.75rem;
+  }
+
+  .hero-copy {
+    padding-inline: 0.25rem;
+  }
+
+  .hero-title {
+    font-size: clamp(2.5rem, 12vw, 3.4rem);
+  }
+
+  .hero-frame {
+    display: none;
+  }
 }
 
 .product-scroll {
