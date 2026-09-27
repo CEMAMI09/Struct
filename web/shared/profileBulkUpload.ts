@@ -60,14 +60,10 @@ export function normalizeProfileHeader(value: unknown): ProfileBulkHeader | null
   return HEADER_ALIASES[key] ?? null
 }
 
-/** Canonical hardware id: lowercase alnum / hex, stripped of separators. */
+/** Preserve the exact decoded device identity, including case and separators. */
 export function normalizeHardwareId(value: unknown): string | null {
   if (typeof value !== 'string') return null
-  const raw = value.trim().toLowerCase()
-  if (!raw) return null
-  const cleaned = raw.replace(/[^0-9a-z]/g, '')
-  if (cleaned.length < 2 || cleaned.length > 64) return null
-  return cleaned
+  return /^[\x20-\x7e]{1,128}$/.test(value) && value.trim() ? value : null
 }
 
 export function buildProfileCsvTemplate(): string {
@@ -148,7 +144,7 @@ export function mapRecordsToProfileBulkRows(
 
   records.forEach((record, index) => {
     const row = index + 2
-    const serialRaw = String(record[serialKey] ?? '').trim()
+    const serialRaw = String(record[serialKey] ?? '')
     const serial = normalizeHardwareId(serialRaw)
     const nameRaw = nameKey ? String(record[nameKey] ?? '').trim() : ''
     const macRaw = macKey ? String(record[macKey] ?? '').trim() : ''
@@ -156,7 +152,7 @@ export function mapRecordsToProfileBulkRows(
 
     const rowErrors: string[] = []
     if (!serial) {
-      rowErrors.push('Serial Number must be 2–64 alphanumeric characters')
+      rowErrors.push('Serial Number must be 1–128 printable ASCII characters')
     }
 
     let mac = ''

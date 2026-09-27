@@ -27,11 +27,12 @@ function secretPreview(secret) {
 function hardwareIdFromIdentityValue(value) {
   if (value == null) return null
   if (typeof value === 'string') {
-    const cleaned = value.trim().toLowerCase().replace(/[^0-9a-z]/g, '')
-    return cleaned.length >= 2 && cleaned.length <= 64 ? cleaned : null
+    // The decoded identity is opaque. Folding case or stripping separators
+    // merges distinct physical units (for example AB-CD and ABCD).
+    return /^[\x20-\x7e]{1,128}$/.test(value) && value.trim() ? value : null
   }
   if (typeof value === 'number' && Number.isFinite(value)) {
-    return String(Math.trunc(value))
+    return String(value)
   }
   return null
 }

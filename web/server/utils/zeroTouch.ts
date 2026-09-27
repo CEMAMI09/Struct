@@ -8,9 +8,9 @@ import { createDeviceCredentials, sanitizeDeviceForClient } from './deviceCreden
 export function hardwareIdFromIdentityValue(value: unknown): string | null {
   if (value == null) return null
   if (typeof value === 'string') {
-    // Char-array identities are opaque values. Case folding, trimming, or
-    // removing punctuation can alias two distinct hardware IDs.
-    return /^[\x20-\x7e]{2,64}$/.test(value) && value.trim() ? value : null
+    // Char-array identities are opaque values. Printable binary identities
+    // are returned as hex, reaching 128 characters for a 64-byte field.
+    return /^[\x20-\x7e]{1,128}$/.test(value) && value.trim() ? value : null
   }
   if (typeof value === 'number' && Number.isFinite(value)) {
     return String(value)

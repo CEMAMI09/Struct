@@ -122,7 +122,7 @@
             </span>
           </li>
           <li>
-            Estimated month-end overage:
+            Estimated total month-end overage:
             <span class="text-amber-200">{{ quote.estimatedTrueUpFormatted }}</span>
           </li>
         </ul>
@@ -132,11 +132,8 @@
         <label class="mt-3 flex cursor-pointer items-start gap-2 text-xs text-[#E8EAEF]">
           <input v-model="confirmed" type="checkbox" class="mt-0.5 accent-[#5617fc]" />
           <span>
-            I understand adding
-            {{ quote.deviceCount }}
-            devices             may add
-            {{ quote.estimatedTrueUpFormatted }}
-            to my next monthly true-up invoice.
+            I understand the estimated total month-end overage after this import is
+            {{ quote.estimatedTrueUpFormatted }}.
           </span>
         </label>
       </div>

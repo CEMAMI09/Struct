@@ -82,9 +82,45 @@ async function run() {
     await db.exec('set role authenticated')
     await assert.rejects(db.exec("update schema_versions set schema_definition = '[]'"), /permission denied/)
     await db.exec('reset role')
+
+    // A profile identity is the exact decoded value. Case or separators must
+    // never cause two physical units to share a row (or a billing count).
+    const profile = '00000000-0000-0000-0000-000000000004'
+    await db.query("update organizations set subscription_tier = 'flexible', stripe_quantity = 5 where id = $1", [org])
+    await db.query(
+      `insert into device_profiles
+        (id, organization_id, user_id, name, schema_definition, identity_field,
+         fleet_key_id, fleet_secret_encrypted)
+       values ($1, $2, $3, 'Profile', $4::jsonb, 'device_id', $5, 'encrypted')`,
+      [profile, org, user, JSON.stringify([{ name: 'device_id', type: 'char', length: 8 }]), 'fleetkey00000001'],
+    )
+    const register = (hardwareId, key) => scalar(
+      'select (zero_touch_register_device($1,$2,null::text,$3,$4,null::text)).id',
+      [profile, hardwareId, key, 'encrypted'],
+    )
+    const first = await register('AB-CD', '0000000000000001')
+    const second = await register('ABCD', '0000000000000002')
+    const third = await register('AB', '0000000000000003')
+    const fourth = await register('ab', '0000000000000004')
+    assert.equal(new Set([first, second, third, fourth]).size, 4)
+    assert.equal(await register('AB-CD', '0000000000000005'), first)
+    await assert.rejects(register('A\tB', '0000000000000005'), /hardware_id/)
+
+    const beforeBulk = await scalar('select count(*)::integer from devices where organization_id = $1', [org])
+    const bulkRows = [
+      { name: 'Unit Q-Q', hardware_id: 'Q-Q', key_id: '0000000000000006', api_secret_encrypted: 'encrypted' },
+      { name: 'Unit QQ', hardware_id: 'QQ', key_id: '0000000000000007', api_secret_encrypted: 'encrypted' },
+    ]
+    const provisioned = await db.query(
+      'select hardware_id from bulk_provision_profile_devices($1,$2,$3,$4::jsonb,$5)',
+      [org, user, profile, JSON.stringify(bulkRows), beforeBulk],
+    )
+    assert.deepEqual(provisioned.rows.map((row) => row.hardware_id).sort(), ['Q-Q', 'QQ'])
+    assert.equal(await scalar('select count(*)::integer from devices where organization_id = $1', [org]), beforeBulk + 2)
+
     await db.query("select set_config('request.jwt.claim.sub', $1, false)", ['00000000-0000-0000-0000-000000000099'])
     await assert.rejects(publish(schema, 2), /Not authorized/)
-    console.log('database: migrations, immutable schemas, commit/duplicate/conflict, rollback and RPC permissions passed')
+    console.log('database: migrations, immutable schemas, receipts, opaque fleet IDs and RPC permissions passed')
   } finally { await db.close() }
 }
 module.exports = { createDatabase }

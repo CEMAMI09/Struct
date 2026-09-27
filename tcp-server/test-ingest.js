@@ -4,7 +4,8 @@ process.env.TCP_CREDENTIAL_KEY = '11'.repeat(32)
 const { encryptSecret } = require('./auth')
 const { processFrame, getDeviceSecret, expectedFrameLength } = require('./ingest')
 const { buildFrame, verifyTelemetryReceipt } = require('../sdk/js/index.cjs')
-const { getProfileSecret } = require('./zeroTouch')
+const { getProfileSecret, resolveDeviceFromFleetPayload } = require('./zeroTouch')
+const { encodePayload } = require('./parser')
 
 const secret = 'aa'.repeat(32), keyId = '0123456789abcdef'
 const device = { id: 'test-device', name: 'test', key_id: keyId,
@@ -98,6 +99,23 @@ async function run() {
   }
   const fleetFrame = buildFrame({ keyId, apiSecret: rotated, schemaVersion: 1, payload: Buffer.from([42]) })
   await assert.rejects(processFrame(fleetFrame, { ...ctx, supabase: fleetDb }), /Encrypted devices require/)
+
+  const identitySchema = [{ name: 'device_id', type: 'char', length: 8 }]
+  const identityProfile = { ...fleetProfile, identity_field: 'device_id', schema_definition: identitySchema }
+  const registeredIds = []
+  const identityDb = {
+    async rpc(name, params) {
+      assert.equal(name, 'zero_touch_register_device')
+      registeredIds.push(params.p_hardware_id)
+      return { data: { ...device, id: `profile-device-${registeredIds.length}`, key_id: params.p_key_id } }
+    },
+  }
+  for (const identity of ['AB-CD', 'ABCD', 'AB', 'ab']) {
+    const payload = encodePayload({ device_id: identity }, identitySchema)
+    const result = await resolveDeviceFromFleetPayload(identityDb, identityProfile, payload)
+    assert.equal(result.hardwareId, identity)
+  }
+  assert.deepEqual(registeredIds, ['AB-CD', 'ABCD', 'AB', 'ab'])
   console.log('ingest: storage failure, authenticated receipts, duplicate suppression, rotation, exact lengths and encryption passed')
 }
 run().catch(e => { console.error(e); process.exitCode = 1 })
