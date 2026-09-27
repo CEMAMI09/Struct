@@ -63,6 +63,8 @@ export async function applyStripeSubscriptionToOrg(
   if (subscription.status === 'incomplete') return null
   if (existing.stripe_subscription_id && existing.stripe_subscription_id !== subscription.id) return null
   if (!existing.stripe_subscription_id && !allowCheckoutAdoption) return null
+  if (!existing.stripe_subscription_id &&
+      subscription.status !== 'active' && subscription.status !== 'trialing') return null
 
   // In dunning, Stripe can show a new price before an invoice is paid. Keep
   // the previous entitlement until the subscription returns to active.
@@ -70,11 +72,12 @@ export async function applyStripeSubscriptionToOrg(
   if (subscription.status === 'unpaid' || subscription.status === 'paused') {
     // Keep the subscription link so a later successful payment can restore it.
     // Do not grant device capacity or paid-only features while unpaid.
-    const { error } = await supabase.from('organizations').update({
+    const { data: updated, error } = await supabase.from('organizations').update({
       subscription_tier: 'free',
       stripe_quantity: 0,
-    }).eq('id', existing.id).eq('stripe_subscription_id', subscription.id)
+    }).eq('id', existing.id).eq('stripe_subscription_id', subscription.id).select('id').maybeSingle()
     if (error) throw createError({ statusCode: 500, message: error.message })
+    if (!updated) return null
     return { orgId: existing.id, subscriptionTier: 'free' as const, stripeQuantity: 0, deviceLimit: 5 }
   }
 
