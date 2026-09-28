@@ -46,6 +46,20 @@ describe('switching an unpaid Checkout plan', () => {
     expect(expire).not.toHaveBeenCalled()
   })
 
+  it('preserves a concurrent replacement when the caller has no creation attempts left', async () => {
+    const { stripe, expire } = mockStripe()
+    await expect(reuseOrExpireCheckoutSession(stripe, openSession.id, owner, false))
+      .rejects.toMatchObject({ statusCode: 409, message: 'Checkout changed in another request. Please retry your chosen plan.' })
+    expect(expire).not.toHaveBeenCalled()
+  })
+
+  it('still reuses the winning plan without another creation attempt', async () => {
+    const prior = { ...openSession, metadata: { ...openSession.metadata, targetTier: 'pro' } }
+    const { stripe, expire } = mockStripe(prior)
+    expect(await reuseOrExpireCheckoutSession(stripe, prior.id, owner, false)).toBe(prior)
+    expect(expire).not.toHaveBeenCalled()
+  })
+
   it.each([
     ['other customer', { customer: 'cus_other' }],
     ['other organization metadata', { metadata: { orgId: 'org_other', targetTier: 'flexible' } }],

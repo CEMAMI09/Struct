@@ -26,6 +26,7 @@ export async function reuseOrExpireCheckoutSession(
   stripe: Stripe,
   sessionId: string,
   owner: CheckoutOwner,
+  allowReplacement = true,
 ): Promise<Stripe.Checkout.Session> {
   let session = await stripe.checkout.sessions.retrieve(sessionId)
   assertCheckoutOwner(session, owner)
@@ -39,6 +40,9 @@ export async function reuseOrExpireCheckoutSession(
     if (session.metadata?.targetTier === owner.targetTier) {
       if (!session.url) throw unknownCheckout()
       return session
+    }
+    if (!allowReplacement) {
+      throw createError({ statusCode: 409, message: 'Checkout changed in another request. Please retry your chosen plan.' })
     }
 
     try {

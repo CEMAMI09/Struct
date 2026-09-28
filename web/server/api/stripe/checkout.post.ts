@@ -208,7 +208,7 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 409, message: 'Checkout is starting. Please retry in a moment.' })
     }
     if (claim?.status === 'different_plan') {
-      throw createError({ statusCode: 409, message: 'A checkout for another plan is in progress. Complete or cancel it first.' })
+      throw createError({ statusCode: 409, message: 'Another plan checkout is still starting. Please retry in a moment.' })
     }
     if (claim?.status === 'subscribed') {
       throw createError({ statusCode: 409, message: 'Billing changed. Refresh before choosing a plan.' })
@@ -234,7 +234,7 @@ export default defineEventHandler(async (event) => {
     if (typeof sessionId === 'string') {
       const prior = await reuseOrExpireCheckoutSession(stripe, sessionId, {
         orgId, customerId, targetTier: targetTier as PaidTier,
-      })
+      }, attempt === 0)
       if (prior.status === 'open') {
         return { url: prior.url, upgraded: false }
       }
