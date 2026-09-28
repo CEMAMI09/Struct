@@ -17,6 +17,7 @@ import { applyStripeSubscriptionToOrg } from '../../utils/syncStripeSubscription
 import { assertStripePriceMatchesPlan, resolveStripePriceIds, tierForStripePrice } from '../../utils/stripePriceContract'
 import { ensureOrganizationStripeCustomer } from '../../utils/stripeCustomer'
 import { isDefinitiveStripeFailure, withOrgBillingLock } from '../../utils/stripeBillingLock'
+import { reuseOrExpireCheckoutSession } from '../../utils/checkoutSession'
 
 const PAID_TIERS: PaidTier[] = ['flexible', 'pro', 'scale']
 type CheckoutClaim = {
@@ -231,23 +232,16 @@ export default defineEventHandler(async (event) => {
       sessionId = recovered.id
     }
     if (typeof sessionId === 'string') {
-      const prior = await stripe.checkout.sessions.retrieve(sessionId)
-      if (prior.status === 'open' && prior.url) {
-        if (prior.metadata?.targetTier !== targetTier) {
-          throw createError({
-            statusCode: 409,
-            message: 'A different plan checkout is already open. Complete or cancel that checkout first.',
-          })
-        }
+      const prior = await reuseOrExpireCheckoutSession(stripe, sessionId, {
+        orgId, customerId, targetTier: targetTier as PaidTier,
+      })
+      if (prior.status === 'open') {
         return { url: prior.url, upgraded: false }
       }
-      if (prior.status === 'complete') {
-        throw createError({
-          statusCode: 409,
-          message: 'A prior Checkout completed. Refresh billing before starting another payment.',
-        })
-      }
       if (prior.status === 'expired') {
+        // Stripe has confirmed the old link cannot accept payment. Exact-ID
+        // release keeps concurrent switches and delayed webhooks from clearing
+        // a replacement claim; the next claim still serializes new creation.
         const { error: releaseError } = await serviceSupabase.rpc('release_org_checkout_session', {
           p_org_id: orgId, p_session_id: prior.id,
         })
