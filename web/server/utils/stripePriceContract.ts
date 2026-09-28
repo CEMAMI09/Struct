@@ -13,6 +13,19 @@ const EXPECTED: Record<PaidTier, { floor: number; baseCents: number; extraCents:
 const ARCHIVED_LIVE_PRO_PRICE = 'price_1TtJ9NRu9PxBJUvyU8TsUSvX'
 const CORRECTED_LIVE_PRO_PRICE = 'price_1UKPCFRu9PxBJUvyd5HMupyP'
 
+/** Recognize legacy subscriptions without ever creating a new one on that price. */
+export function tierForStripePrice(
+  priceId: string | undefined,
+  prices: { flexible: string; pro: string; scale: string },
+): PaidTier | null {
+  if (!priceId) return null
+  if (priceId === prices.flexible) return 'flexible'
+  if (priceId === prices.pro ||
+    (prices.pro === CORRECTED_LIVE_PRO_PRICE && priceId === ARCHIVED_LIVE_PRO_PRICE)) return 'pro'
+  if (priceId === prices.scale) return 'scale'
+  return null
+}
+
 export function resolveStripePriceIds(config: {
   stripePriceFlexible: string
   stripePricePro: string

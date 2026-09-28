@@ -2,7 +2,7 @@ import { serverSupabaseServiceRole } from '#supabase/server'
 import type { PaidTier, SubscriptionTier } from '../../utils/billing'
 import { requireOrgWriter } from '../../utils/auth'
 import { useStripeClient } from '../../utils/stripe'
-import { applyStripeSubscriptionToOrg } from '../../utils/syncStripeSubscription'
+import { reconcileStripeSubscription } from '../../utils/reconcileStripeSubscription'
 import { resolveStripePriceIds } from '../../utils/stripePriceContract'
 
 const PAID_TIERS = new Set<PaidTier>(['flexible', 'pro', 'scale'])
@@ -68,8 +68,8 @@ export default defineEventHandler(async (event) => {
   if (!sessionCustomer || sessionCustomer !== subscriptionCustomer) {
     throw createError({ statusCode: 500, message: 'Checkout customer mismatch' })
   }
-  const result = await applyStripeSubscriptionToOrg(
-    serviceSupabase, subscription, resolveStripePriceIds(useRuntimeConfig()), orgId, true,
+  const result = await reconcileStripeSubscription(
+    serviceSupabase, stripe, subscriptionId, resolveStripePriceIds(useRuntimeConfig()), orgId, true,
   )
   if (!result || result.subscriptionTier !== targetTier) {
     throw createError({ statusCode: 500, message: 'Checkout plan could not be reconciled' })

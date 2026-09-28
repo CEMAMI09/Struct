@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type Stripe from 'stripe'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { applyStripeSubscriptionToOrg } from './syncStripeSubscription'
+import { applyStripeSubscriptionToOrg as applyLocked } from './syncStripeSubscription'
+
+const applyStripeSubscriptionToOrg = (db: SupabaseClient, subscription: Stripe.Subscription,
+  prices: { flexible: string; pro: string; scale: string }, org?: string, adopt = false) =>
+  applyLocked(db, subscription, prices, org, adopt, 'claim_1')
 
 const prices = { flexible: 'price_flex', pro: 'price_pro', scale: 'price_scale' }
 
@@ -23,13 +27,7 @@ function fakeSubscription(id: string, customer = 'cus_1') {
 }
 
 function fakeDb(linkedSubscriptionId: string | null = 'sub_linked', updateWon = true) {
-  const updatedQuery: any = {
-    eq: vi.fn(() => updatedQuery),
-    is: vi.fn(() => updatedQuery),
-    select: vi.fn(() => updatedQuery),
-    maybeSingle: vi.fn(async () => ({ data: updateWon ? { id: 'org_1' } : null, error: null })),
-  }
-  const update = vi.fn(() => updatedQuery)
+  const update = vi.fn(async (_name: string, _args: unknown) => ({ data: updateWon, error: null }))
   const query: any = {
     select: () => query,
     eq: () => query,
@@ -37,10 +35,9 @@ function fakeDb(linkedSubscriptionId: string | null = 'sub_linked', updateWon = 
       id: 'org_1', stripe_customer_id: 'cus_1', stripe_subscription_id: linkedSubscriptionId,
       stripe_quantity: 5, subscription_tier: 'flexible',
     }, error: null }),
-    update,
   }
-  const db = { from: vi.fn(() => query) } as unknown as SupabaseClient
-  return { db, update, updatedQuery }
+  const db = { from: vi.fn(() => query), rpc: update } as unknown as SupabaseClient
+  return { db, update }
 }
 
 describe('subscription reconciliation', () => {
@@ -54,8 +51,8 @@ describe('subscription reconciliation', () => {
     const { db, update } = fakeDb()
     const result = await applyStripeSubscriptionToOrg(db, fakeSubscription('sub_linked'), prices, 'org_1')
     expect(result?.stripeQuantity).toBe(150)
-    expect(update).toHaveBeenCalledWith(expect.objectContaining({
-      stripe_item_id: 'si_pro', stripe_quantity: 150, subscription_tier: 'pro',
+    expect(update).toHaveBeenCalledWith('apply_org_billing_state', expect.objectContaining({
+      p_item_id: 'si_pro', p_quantity: 150, p_tier: 'pro',
     }))
   })
 
@@ -75,12 +72,12 @@ describe('subscription reconciliation', () => {
   })
 
   it('adopts a paid Checkout only for an unlinked organization', async () => {
-    const { db, update, updatedQuery } = fakeDb(null)
+    const { db, update } = fakeDb(null)
     expect(await applyStripeSubscriptionToOrg(db, fakeSubscription('sub_new'), prices, 'org_1')).toBeNull()
     expect(update).not.toHaveBeenCalled()
     const result = await applyStripeSubscriptionToOrg(db, fakeSubscription('sub_new'), prices, 'org_1', true)
     expect(result?.subscriptionTier).toBe('pro')
-    expect(updatedQuery.is).toHaveBeenCalledWith('stripe_subscription_id', null)
+    expect(update).toHaveBeenCalledWith('apply_org_billing_state', expect.objectContaining({ p_expected_subscription_id: null }))
   })
 
   it('does not let another completed Checkout replace a linked paid subscription', async () => {
@@ -109,5 +106,16 @@ describe('subscription reconciliation', () => {
     await expect(applyStripeSubscriptionToOrg(db, subscription, prices, 'org_1'))
       .rejects.toThrow('exactly one configured Struct price')
     expect(update).not.toHaveBeenCalled()
+  })
+
+  it('revokes a canceled linked subscription even when its price is retired', async () => {
+    const { db, update } = fakeDb()
+    const subscription = fakeSubscription('sub_linked')
+    subscription.status = 'canceled'
+    subscription.items.data = []
+    expect((await applyStripeSubscriptionToOrg(db, subscription, prices, 'org_1'))?.subscriptionTier).toBe('free')
+    expect(update).toHaveBeenCalledWith('apply_org_billing_state', expect.objectContaining({
+      p_subscription_id: null, p_item_id: null, p_tier: 'free', p_quantity: 0,
+    }))
   })
 })

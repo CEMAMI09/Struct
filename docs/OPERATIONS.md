@@ -21,7 +21,11 @@ Environment variable templates are in `web/.env.example` and `tcp-server/.env.ex
 4. Apply the production permission and billing migrations in order after confirming the new app is serving. Check that scheduled retention jobs are installed, expired payload copies and replay nonces are removed, and permanent event IDs remain. Examine Supabase security/performance advisors and database errors.
 5. Check Stripe webhook endpoint API version, secret, event delivery, subscription linkage, and the active Struct billing portal configuration. Use test mode for an end-to-end invoice and duplicate-webhook exercise before enabling paid self-service in live mode.
 
-Migration 031 (`031_single_checkout_session.sql`) must be applied **before** deploying the Checkout code that calls its service-only claim/session RPCs. Test that a second simultaneous Checkout request returns the first open session instead of creating another subscription, and that completed, expired, and failed sessions release their claim. If migration 031 is absent, the upgraded Checkout endpoint fails rather than falling back to unprotected duplicate sessions.
+Migrations 031 (`031_single_checkout_session.sql`) and 032 (`032_billing_operation_guards.sql`) must be applied **before** deploying the billing code that calls their service-only RPCs. Migration 032 retains the older two-argument Checkout RPC during rollout. Test that simultaneous Checkout requests reuse one open session, a different-tier retry cannot reuse an uncertain creation request, and expired sessions release their exact session claim. Also test two simultaneous plan upgrades plus an out-of-order webhook: one billing operation must hold the organization guard while reading Stripe and committing entitlements.
+
+Migration 032 gives read-only billing operations a five-minute lease. An expired read lease can be taken over, but `apply_org_billing_state` checks the current claim token and expected subscription in the same transaction as the entitlement update. This fences a slow reader after takeover. A retained `mutation_token` permits read reconciliation after expiry while keeping another plan mutation blocked until an operator reviews the original Stripe outcome. A successful refresh therefore does not mean an uncertain upgrade hold has been cleared.
+
+Migration 032 was applied to the production Supabase project on 2026-09-27 (migration history version `20260928022827`, recorded in UTC). Verification confirmed RLS on `organization_billing_operation_claims`, the Checkout `target_tier` column, and service-role-only execution for all four new billing-operation RPCs: `claim_org_billing_operation`, `mark_org_billing_mutation`, `release_org_billing_operation`, and `apply_org_billing_state`. Both `anon` and `authenticated` lack execute permission. This confirms database rollout; the application deployment and end-to-end paid billing verification remain separate gates.
 
 The live Pro price `price_1TtJ9NRu9PxBJUvyU8TsUSvX` was archived because its marginal tier charged $50 per device instead of the advertised $0.50. Its corrected replacement is `price_1UKPCFRu9PxBJUvyd5HMupyP` ($49 flat through 150 paid devices, then $0.50 each). The server temporarily maps only that exact archived ID to the corrected ID, so a deployment with the old Pro environment value cannot use the mispriced price. Set `STRIPE_PRICE_PRO` to the corrected ID in every deployment and remove the compatibility alias after verification. Checkout also reads the live Stripe Price and rejects any tier whose economics differ from Struct's advertised plan.
 
@@ -34,6 +38,34 @@ Watch ingestion error rate and authentication rejection codes separately, receip
 On gateway failure, restart the process and send the same event identities; confirm that duplicate retries return the original receipt without duplicate telemetry. On worker failure, restart a worker and verify expired leases are reclaimed and delivered once per destination. On a destination outage, keep accepting/storing events within capacity, observe retry age, and coordinate any customer replays through the delivery log. On a database outage, do not report a storage receipt for an uncommitted event.
 
 If a web deploy must be rolled back across a security migration, roll forward a compatible safe-projection build. Do not restore broad browser grants to make an old app work. If a billing migration fails, stop paid upgrades and true-up processing, preserve webhook delivery for retry, and reconcile periods against Stripe invoice items before resuming. Acknowledging a failed billing webhook loses the provider retry.
+
+### Interrupted Checkout recovery
+
+Definitive Stripe validation or payment failures release an unrecorded Checkout claim. A timeout, idempotency conflict, or server error retains the original token because a session may already exist. After its lease expires, the app searches for a session with matching `metadata.checkoutClaimToken`; it does not blindly repeat an unknown creation request. If recovery cannot establish the outcome, paid Checkout stays on hold for support.
+
+1. Record the organization ID, Stripe account and mode, customer ID, `organization_checkout_claims.claim_token`, `target_tier`, session ID, and timestamps. Confirm that the worker is no longer active. Inspect Stripe request logs and retrieve the actual customer, subscriptions, and Checkout sessions; paginate beyond the app's first 100 sessions when necessary. Match the exact claim token and organization metadata rather than customer email alone.
+2. If a matching session exists but was not recorded, use the service-only `complete_org_checkout_session` RPC with the exact organization/token, session ID, and Stripe `expires_at`. Reuse an open session. For a completed paid session, reconcile the existing subscription through the normal Checkout sync/webhook path and release the recorded session afterward. For a confirmed expired session, call `release_org_checkout_session` with its exact session ID. Do not create another payment to repair local state.
+3. If Stripe request logs prove that no session was created and the customer has no related nonterminal subscription, call `release_org_checkout_claim` with the exact organization and claim token. A `false` result means state changed; reread it before taking another action. If Stripe's outcome is still unknown, retain the claim and escalate. Do not delete the row merely because its lease is old.
+
+### Interrupted plan-change recovery
+
+Plan upgrades hold the same billing-operation guard used by webhook and manual read reconciliation. Definitive rejected updates can release it. An uncertain Stripe update, or a successful update followed by failed local reconciliation, retains the mutation hold; another plan change remains support-only until its outcome is established.
+
+1. Read `organization_billing_operation_claims` and the organization's linked customer/subscription. Preserve the current `claim_token`, original `mutation_token`, and timestamps in the incident record. Confirm the original request has stopped. Retrieve Stripe's current subscription items, status, latest invoice, payment result, and request/event history in the correct account and mode. Establish whether the requested update succeeded, was rejected, or is still pending. Do not infer payment success from a local tier or from `status=active` alone.
+2. Run the normal read-only billing sync to reconcile the verified live subscription through the fenced entitlement RPC. A read may take over an expired lease while preserving the mutation hold. If payment remains pending or the request outcome is unknown, keep the hold and investigate; do not retry the upgrade, issue another invoice, cancel a subscription, or refund a payment as an automatic repair.
+3. After the outcome and entitlements are documented, reread the claim row because read reconciliation may have changed its current token. Clear only that exact row with the service-only RPC below. `p_clear_mutation=true` is an explicit operator decision after reviewing the original mutation, not a scheduled expiry cleanup. If the RPC returns `false`, reread and coordinate with the current worker instead of broadening the deletion.
+
+```sql
+-- Run with service-role authority after the Stripe outcome has been reviewed.
+-- Replace placeholders with the organization and CURRENT claim token read above.
+select public.release_org_billing_operation(
+  p_org_id := '<organization_uuid>'::uuid,
+  p_claim_token := '<current_claim_uuid>'::uuid,
+  p_clear_mutation := true
+);
+```
+
+These recovery steps reconcile existing objects and clear exact claims. Any new charge, refund, cancellation, or plan change is a separate reviewed billing action. Keep unresolved outcomes and their tokens intact.
 
 Migration 027 marks preexisting open usage periods as `true_up_baseline_verified = false`. The webhook logs `USAGE_BASELINE_RECONCILIATION_REQUIRED` and leaves those periods open instead of guessing how many devices were already paid for. Before marking a period verified, compare its dates, tier, paid quantity history, and any existing true-up invoice items with the matching Stripe subscription and invoices. Record the evidence and reviewer; resolve overlapping periods explicitly. Do not set the verification flag from today's subscription quantity alone, since it cannot prove the maximum already paid during an earlier month. New verified periods continue processing independently.
 

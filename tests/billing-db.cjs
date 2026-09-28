@@ -229,6 +229,39 @@ async function run() {
     assert.equal((await db.query(
       'select release_org_checkout_claim($1,$2) as released', [deviceOrg, checkoutToken2],
     )).rows[0].released, true)
+    const boundClaim = async (token, tier) => (await db.query(
+      'select claim_org_checkout_session($1,$2,$3) as result', [deviceOrg, token, tier],
+    )).rows[0].result
+    assert.deepEqual(await boundClaim(checkoutToken1, 'pro'), { status: 'claimed', claimToken: checkoutToken1 })
+    assert.deepEqual(await boundClaim(checkoutToken2, 'scale'), { status: 'different_plan' })
+    await db.query("update organization_checkout_claims set claim_expires_at=now()-interval '1 second' where organization_id=$1", [deviceOrg])
+    assert.deepEqual(await boundClaim(checkoutToken2, 'pro'), { status: 'reconcile', claimToken: checkoutToken1 },
+      'ambiguous payment creation must be reconciled, not blindly repeated')
+    await db.query('select release_org_checkout_claim($1,$2)', [deviceOrg, checkoutToken1])
+    const billingLock = async (token) => (await db.query(
+      'select claim_org_billing_operation($1,$2) as acquired', [deviceOrg, token],
+    )).rows[0].acquired
+    assert.equal(await billingLock(checkoutToken1), true)
+    assert.equal(await billingLock(checkoutToken2), false, 'upgrades and webhook sync share one organization guard')
+    assert.equal((await db.query('select release_org_billing_operation($1,$2) as released', [deviceOrg, checkoutToken2])).rows[0].released, false)
+    assert.equal((await db.query('select release_org_billing_operation($1,$2) as released', [deviceOrg, checkoutToken1])).rows[0].released, true)
+    assert.equal(await billingLock(checkoutToken2), true)
+    await db.query('select release_org_billing_operation($1,$2)', [deviceOrg, checkoutToken2])
+    assert.equal(await billingLock(checkoutToken1), true)
+    assert.equal((await db.query('select mark_org_billing_mutation($1,$2) as marked', [deviceOrg, checkoutToken1])).rows[0].marked, true)
+    await db.query("update organization_billing_operation_claims set claim_expires_at=now()-interval '1 second' where organization_id=$1", [deviceOrg])
+    assert.equal((await db.query('select claim_org_billing_operation($1,$2,false) as acquired', [deviceOrg, checkoutToken2])).rows[0].acquired, false,
+      'ambiguous mutation blocks another charge even after the read lease expires')
+    assert.equal(await billingLock(checkoutToken2), true, 'read-only reconciliation can restore or revoke paid access')
+    const commitBilling = async token => (await db.query(
+      "select apply_org_billing_state($1,$2,null,'sub_paid','cus_paid','si_paid','pro',150) as committed", [deviceOrg, token],
+    )).rows[0].committed
+    assert.equal(await commitBilling(checkoutToken1), false, 'expired worker cannot overwrite the newer snapshot')
+    assert.equal(await commitBilling(checkoutToken2), true)
+    await db.query('select release_org_billing_operation($1,$2)', [deviceOrg, checkoutToken2])
+    assert.equal((await db.query('select mutation_token from organization_billing_operation_claims where organization_id=$1', [deviceOrg])).rows[0].mutation_token, checkoutToken1,
+      'read-only reconciliation cannot silently clear an ambiguous mutation')
+    await db.query('select release_org_billing_operation($1,$2,true)', [deviceOrg, checkoutToken2])
     await db.query("update organizations set stripe_subscription_id='sub_paid' where id=$1", [deviceOrg])
     assert.deepEqual(await checkoutClaim(checkoutToken2), { status: 'subscribed' })
     await db.exec('reset role')
@@ -244,6 +277,11 @@ async function run() {
         'release_org_usage_true_up(uuid,uuid)',
         'finalize_bulk_device_import(uuid,uuid,uuid,uuid,jsonb,integer)',
         'claim_org_checkout_session(uuid,uuid)',
+        'claim_org_checkout_session(uuid,uuid,text)',
+        'claim_org_billing_operation(uuid,uuid,boolean)',
+        'mark_org_billing_mutation(uuid,uuid)',
+        'release_org_billing_operation(uuid,uuid,boolean)',
+        'apply_org_billing_state(uuid,uuid,text,text,text,text,text,integer)',
         'complete_org_checkout_session(uuid,uuid,text,timestamptz)',
         'release_org_checkout_session(uuid,text)',
         'release_org_checkout_claim(uuid,uuid)',

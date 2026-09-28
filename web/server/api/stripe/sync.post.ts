@@ -2,7 +2,7 @@ import { serverSupabaseServiceRole } from '#supabase/server'
 import { requireOrgWriter } from '../../utils/auth'
 import { getOrganizationBilling } from '../../utils/organizations'
 import { useStripeClient } from '../../utils/stripe'
-import { applyStripeSubscriptionToOrg } from '../../utils/syncStripeSubscription'
+import { reconcileStripeSubscription } from '../../utils/reconcileStripeSubscription'
 import { resolveStripePriceIds } from '../../utils/stripePriceContract'
 
 /**
@@ -49,10 +49,10 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId)
-  const result = await applyStripeSubscriptionToOrg(
+  const result = await reconcileStripeSubscription(
     serviceSupabase,
-    subscription,
+    stripe,
+    subscriptionId,
     prices,
     orgId,
   )

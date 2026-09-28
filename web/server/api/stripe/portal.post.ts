@@ -3,7 +3,7 @@ import { requireOrgWriter } from '../../utils/auth'
 import { getOrganizationBilling } from '../../utils/organizations'
 import { getBillingPortalConfiguration } from '../../utils/portal'
 import { useStripeClient } from '../../utils/stripe'
-import { applyStripeSubscriptionToOrg } from '../../utils/syncStripeSubscription'
+import { reconcileStripeSubscription } from '../../utils/reconcileStripeSubscription'
 import { resolveStripePriceIds } from '../../utils/stripePriceContract'
 import { ensureOrganizationStripeCustomer } from '../../utils/stripeCustomer'
 
@@ -38,8 +38,7 @@ export default defineEventHandler(async (event) => {
   // already linked to this organization; investigate other active subscriptions
   // separately, with an explicit customer-approved billing action.
   if (org.stripe_subscription_id) {
-    const subscription = await stripe.subscriptions.retrieve(org.stripe_subscription_id)
-    await applyStripeSubscriptionToOrg(serviceSupabase, subscription, prices, orgId)
+    await reconcileStripeSubscription(serviceSupabase, stripe, org.stripe_subscription_id, prices, orgId)
   }
 
   const session = await stripe.billingPortal.sessions.create({

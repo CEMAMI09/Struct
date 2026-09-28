@@ -382,6 +382,38 @@ export type Database = {
           },
         ]
       }
+      organization_billing_operation_claims: {
+        Row: {
+          claim_expires_at: string
+          claim_token: string
+          claimed_at: string
+          mutation_token: string | null
+          organization_id: string
+        }
+        Insert: {
+          claim_expires_at?: string
+          claim_token: string
+          claimed_at?: string
+          mutation_token?: string | null
+          organization_id: string
+        }
+        Update: {
+          claim_expires_at?: string
+          claim_token?: string
+          claimed_at?: string
+          mutation_token?: string | null
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_billing_operation_claims_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_checkout_claims: {
         Row: {
           claim_expires_at: string
@@ -390,6 +422,7 @@ export type Database = {
           organization_id: string
           session_expires_at: string | null
           stripe_session_id: string | null
+          target_tier: string | null
           updated_at: string
         }
         Insert: {
@@ -399,6 +432,7 @@ export type Database = {
           organization_id: string
           session_expires_at?: string | null
           stripe_session_id?: string | null
+          target_tier?: string | null
           updated_at?: string
         }
         Update: {
@@ -408,6 +442,7 @@ export type Database = {
           organization_id?: string
           session_expires_at?: string | null
           stripe_session_id?: string | null
+          target_tier?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -997,8 +1032,20 @@ export type Database = {
         }
       }
       claim_org_checkout_session: {
-        Args: { p_claim_token: string; p_org_id: string }
+        Args: { p_claim_token: string; p_org_id: string; p_target_tier?: string }
         Returns: Json
+      }
+      claim_org_billing_operation: {
+        Args: { p_claim_token: string; p_org_id: string; p_read_only?: boolean }
+        Returns: boolean
+      }
+      mark_org_billing_mutation: {
+        Args: { p_claim_token: string; p_org_id: string }
+        Returns: boolean
+      }
+      apply_org_billing_state: {
+        Args: { p_org_id: string; p_claim_token: string; p_expected_subscription_id: string | null; p_subscription_id: string | null; p_customer_id: string | null; p_item_id: string | null; p_tier: string; p_quantity: number }
+        Returns: boolean
       }
       claim_org_usage_true_up: {
         Args: { p_claim_token: string; p_period_id: string }
@@ -1371,6 +1418,10 @@ export type Database = {
       }
       release_org_checkout_claim: {
         Args: { p_claim_token: string; p_org_id: string }
+        Returns: boolean
+      }
+      release_org_billing_operation: {
+        Args: { p_claim_token: string; p_org_id: string; p_clear_mutation?: boolean }
         Returns: boolean
       }
       release_org_checkout_session: {

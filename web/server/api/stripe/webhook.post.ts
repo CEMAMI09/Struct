@@ -3,7 +3,7 @@ import { serverSupabaseServiceRole } from '#supabase/server'
 import type { PaidTier, SubscriptionTier } from '../../utils/billing'
 import { useStripeClient } from '../../utils/stripe'
 import { customerIdFromInvoice, subscriptionIdFromInvoice } from '../../utils/stripeInvoice'
-import { applyStripeSubscriptionToOrg } from '../../utils/syncStripeSubscription'
+import { reconcileStripeSubscription } from '../../utils/reconcileStripeSubscription'
 import { processClosedUsagePeriods } from '../../utils/trueUpBilling'
 import { resolveStripePriceIds } from '../../utils/stripePriceContract'
 
@@ -81,7 +81,7 @@ export default defineEventHandler(async (event) => {
       if (!sessionCustomer || sessionCustomer !== subscriptionCustomer) {
         throw createError({ statusCode: 500, message: 'Checkout customer mismatch' })
       }
-      const result = await applyStripeSubscriptionToOrg(serviceSupabase, subscription, prices, orgId, true)
+      const result = await reconcileStripeSubscription(serviceSupabase, stripe, subscriptionId, prices, orgId, true)
       if (!result || result.subscriptionTier !== targetTier) {
         throw createError({ statusCode: 500, message: 'Checkout plan could not be reconciled' })
       }
@@ -111,9 +111,8 @@ export default defineEventHandler(async (event) => {
       // Events can be delivered out of order. Reconcile the current Stripe
       // object, not a stale event snapshot that could roll a paid plan back.
       const eventSubscription = stripeEvent.data.object as Stripe.Subscription
-      const subscription = await stripe.subscriptions.retrieve(eventSubscription.id)
-      const orgId = subscription.metadata?.orgId || null
-      await applyStripeSubscriptionToOrg(serviceSupabase, subscription, prices, orgId)
+      const orgId = eventSubscription.metadata?.orgId || null
+      await reconcileStripeSubscription(serviceSupabase, stripe, eventSubscription.id, prices, orgId)
       break
     }
 
@@ -150,29 +149,7 @@ export default defineEventHandler(async (event) => {
 
     case 'customer.subscription.deleted': {
       const subscription = stripeEvent.data.object as Stripe.Subscription
-      const orgId = subscription.metadata?.orgId
-
-      const patch = {
-        subscription_tier: 'free' as const,
-        stripe_subscription_id: null,
-        stripe_item_id: null,
-        stripe_quantity: 0,
-      }
-
-      // Only clear billing when THIS subscription is the one currently linked.
-      // Orphan cancellations share metadata.orgId and must not wipe a paid plan.
-      let query = serviceSupabase
-        .from('organizations')
-        .update(patch)
-        .eq('stripe_subscription_id', subscription.id)
-      if (orgId) {
-        query = query.eq('id', orgId)
-      }
-
-      const { error } = await query
-      if (error) {
-        throw createError({ statusCode: 500, message: error.message })
-      }
+      await reconcileStripeSubscription(serviceSupabase, stripe, subscription.id, prices, subscription.metadata?.orgId)
       break
     }
 
