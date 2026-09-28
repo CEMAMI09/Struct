@@ -9,5 +9,12 @@ export function useStripeClient() {
     })
   }
 
+  if (process.env.VERCEL_ENV === 'production' && /^(sk|rk)_test_/.test(config.stripeSecretKey)) {
+    throw createError({
+      statusCode: 500,
+      message: 'Stripe is not configured for production (live STRIPE_SECRET_KEY is required)',
+    })
+  }
+
   return new Stripe(config.stripeSecretKey)
 }
