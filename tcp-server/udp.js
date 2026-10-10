@@ -11,6 +11,7 @@ const {
   processFrame,
 } = require('./ingest')
 const { parseV2Header } = require('./protocol')
+const { isSecureV2 } = require('../sdk/js/secure-v2.cjs')
 
 const UDP_ENDPOINT_TTL_MS = Number(process.env.UDP_ENDPOINT_TTL_MS || 5 * 60_000)
 const UDP_MAX_IN_FLIGHT = Number(process.env.UDP_MAX_IN_FLIGHT || 128)
@@ -75,8 +76,8 @@ function startUdpServer(supabase, opts = {}) {
       }
 
       const header = parseV2Header(msg)
-      if (!header) {
-        console.warn(`[struct] UDP drop ${remote}: not Protocol v2`)
+      if (!header && !isSecureV2(msg)) {
+        console.warn(`[struct] UDP drop ${remote}: unsupported protocol`)
         return
       }
 
@@ -127,7 +128,7 @@ function startUdpServer(supabase, opts = {}) {
 
   socket.bind(port, () => {
     console.log(`[struct] UDP ingestion listening on :${port}`)
-    console.log('[struct] UDP: one Protocol v2 frame per datagram')
+    console.log('[struct] UDP: one legacy or Secure V2 frame per datagram')
   })
 
   return { socket, getEndpoint, endpoints, getInFlight: () => inFlight }

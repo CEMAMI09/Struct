@@ -1,9 +1,9 @@
 {
  "name":"StructDevice",
- "version":"0.2.0",
- "description":"Authenticated telemetry and bounded UDP receipts",
+ "version":"0.3.0",
+ "description":"Legacy and Secure V2 telemetry with durable counters and bounded UDP receipts",
  "frameworks":["arduino","espidf"],
  "platforms":["espressif32"],
- "headers":["struct_sdk.h","StructEsp32.h"],
+ "headers":["struct_sdk.h","StructEsp32.h","struct_secure_v2.h","StructSecureV2Esp32.h"],
  "build":{"srcFilter":["+<*.c>"]}
 }

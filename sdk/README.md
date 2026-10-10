@@ -1,5 +1,13 @@
 # Struct device SDK (preview)
 
+Version 0.3.0 adds [Struct Secure V2](../docs/protocol-secure-v2.md) to C/ESP32
+and Node: a 25-byte encrypted envelope, 21-byte authenticated receipts, durable
+counter reservation, immutable schema slots and explicit bit packing. Generated
+ESP32/ESP32-C3 PlatformIO projects contain the entire SDK and private configuration;
+enter Wi-Fi credentials and build. Enable V2 only after migration 033 and the
+[rollout checks](../docs/SECURE-V2-ROLLOUT.md). Physical qualification remains open.
+Legacy device credentials and protocols 2/3/4 remain supported.
+
 The new [dependable delivery guide](../docs/DEPENDABLE-DELIVERY.md) covers C/Node
 persistent queues (v4), the ESP32 NVS adapter, authenticated command helpers and
 durable telemetry webhooks. Hardware qualification is still outstanding.
@@ -16,17 +24,19 @@ sent over the network. Use it with the updated gateway and migration 020.
   `c/examples/Telemetry`. Other Arduino boards need a transport/crypto adapter.
 - **JavaScript:** Node.js UDP client, signing, optional encryption and retries.
   Browser JavaScript can generate payloads but cannot open a UDP socket.
-- **Python:** standard-library UDP client, signing and retries. This initial client
-  does **not** implement ChaCha20 encryption; do not use it for an encrypted device.
-- **Rust:** the web app exports dependency-free payload encoders. A Rust transport
-  and crypto SDK is **not included** in this release.
+- **Python:** legacy UDP telemetry, receipts, queue and command journal; optional
+  encryption through the cryptography extra. Secure V2 is not yet implemented.
+- **Rust:** legacy telemetry/receipts, encryption, queue and command journal with
+  cooperative polling on a std host. Secure V2 is not yet implemented.
 
 All six encoder targets are available in Schema and the public schema sandbox.
 The dashboard only downloads saved schemas. Encoders explicitly write little-endian
 bytes; never send `sizeof(native_struct)` bytes and assume its layout matches.
 `char[N]` takes exactly N raw bytes. C/Rust members use `f_` prefixes so language
 keywords in schema names don't break compilation. Flags use masks in C/Rust and
-named booleans in JavaScript/Python. Secrets are deliberately absent from downloads.
+named booleans in JavaScript/Python. Generic SDK archives contain no credentials.
+Explicit private Secure V2 firmware exports contain the selected device's root
+and one-use token; keep their `include/struct_config.h` out of source control.
 
 ## Delivery and battery budget
 

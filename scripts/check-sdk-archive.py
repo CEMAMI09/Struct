@@ -15,6 +15,16 @@ required = {
     "docs/SDK-SUPPORT.md",
     "docs/PROTOCOL.md",
     "docs/CONTRACT.md",
+    "docs/protocol-secure-v2.md",
+    "docs/SECURE-V2-ROLLOUT.md",
+    "struct-sdk/c/src/struct_secure_v2.c",
+    "struct-sdk/c/src/StructSecureV2Esp32.h",
+    "struct-sdk/c/src/third_party/mbedtls/provenance.json",
+    "struct-sdk/c/src/third_party/mbedtls/LICENSE.txt",
+    "struct-sdk/c/src/third_party/mbedtls3/provenance.json",
+    "struct-sdk/c/src/third_party/mbedtls3/LICENSE.txt",
+    "struct-sdk/js/secure-v2.cjs",
+    "struct-sdk/tests/secure-v2-vectors.json",
 }
 
 with zipfile.ZipFile(archive) as sdk_zip:

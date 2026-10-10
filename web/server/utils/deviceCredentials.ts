@@ -82,6 +82,11 @@ export function sanitizeDeviceForClient<T extends Record<string, unknown>>(devic
   delete copy.api_secret_encrypted
   delete copy.encryption_key
   delete copy.fleet_secret_encrypted
+  delete copy.root_secret_encrypted
+  delete copy.bootstrap_token_encrypted
+  delete copy.bootstrap_token_hash
+  delete copy.rootSecret
+  delete copy.bootstrapToken
   return copy
 }
 

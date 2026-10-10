@@ -314,6 +314,10 @@ async function processFrameInner(buf, ctx) {
     throw new Error(`Frame too large: ${buf.length}B (max ${MAX_FRAME_BYTES})`)
   }
 
+  if (require('../sdk/js/secure-v2.cjs').isSecureV2(buf)) {
+    return require('./secure-v2').processSecureV2(buf, ctx)
+  }
+
   const header = parseV2Header(buf)
   if (!header) {
     throw new Error('Unsupported protocol version — Protocol v2 required')

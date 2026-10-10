@@ -7,7 +7,7 @@ extern "C" {
 #endif
 
 #define STRUCT_MAX_FRAME 1400u
-#define STRUCT_SDK_VERSION "0.2.0"
+#define STRUCT_SDK_VERSION "0.3.0"
 #define STRUCT_API_VERSION 1u
 #define STRUCT_MAX_PAYLOAD (STRUCT_MAX_FRAME - 66u)
 #define STRUCT_RECEIPT_SIZE 69u

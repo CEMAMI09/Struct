@@ -8,10 +8,19 @@ and sends signed JSON webhooks to configured destinations.
 The web app generates payload encoders for **C, C++, JavaScript, Python, Rust and
 Arduino**. The new [device SDK](sdk/README.md) bundles signing, frame construction,
 UDP transport and bounded receipt retries for C/ESP32, Node and Python. Rust is
-currently an encoder target, not a full transport SDK. Python currently supports
-authenticated plaintext only; C and Node also support payload encryption.
+also has a legacy host transport SDK. Python supports legacy payload encryption
+through its cryptography extra; C and Node additionally implement Secure V2.
 
 ## Current features
+
+[Struct Secure V2](docs/protocol-secure-v2.md) is an additive, disabled-by-default
+UDP protocol with a 25-byte ChaCha20-Poly1305 envelope, 21-byte receipts, durable
+counter reservation, atomic replay/batch storage, and explicit bit-packed schemas.
+The dashboard exports complete ESP32-C3/ESP32 PlatformIO projects. C/ESP32 and Node
+implement Secure V2; Python and Rust retain the legacy protocols. Apply migration
+033 and follow the [rollout guide](docs/SECURE-V2-ROLLOUT.md) before enabling it.
+Run `npm run test:secure-v2` and `npm run benchmark:secure-v2` for conformance and
+exact byte accounting. Legacy protocols 2/3/4 remain supported unchanged.
 
 Task 2 adds [dependable delivery](docs/DEPENDABLE-DELIVERY.md): transactional
 telemetry webhook jobs, delivery history/replay, signed TCP commands, and C/Node

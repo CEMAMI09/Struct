@@ -82,6 +82,8 @@ export interface Device {
   key_id: string
   api_secret_preview: string | null
   protocol_version: number
+  secure_v2_enabled?: boolean
+  wire_device_id?: number | null
   mac_address: string | null
   last_seen: string | null
   created_at: string

@@ -19,6 +19,13 @@ export default defineNuxtConfig({
     '#shared': sharedDir,
   },
 
+  vite: {
+    build: {
+      // The dependency-free packed codec is shared with the CommonJS gateway.
+      commonjsOptions: { include: [/node_modules/, /protocol[\\/]schema/] },
+    },
+  },
+
   nitro: {
     alias: {
       '#shared': sharedDir,
@@ -39,6 +46,7 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    secureV2Enabled: process.env.STRUCT_SECURE_V2_ENABLED === 'true',
     stripeSecretKey: process.env.STRIPE_SECRET_KEY,
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
     stripePriceFlexible: process.env.STRIPE_PRICE_FLEXIBLE,

@@ -4,6 +4,14 @@ Struct's downloadable SDK is a **release candidate**. Host protocol tests cover 
 
 ## Use a generated starter
 
+For **Secure V2**, use Dashboard → Schema → Secure V2 after its rollout is enabled.
+Its private ESP32/ESP32-C3 ZIP includes all SDK sources, configuration, generated
+encoder, `platformio.ini`, and a first-run README. There is no sibling SDK folder
+to reconstruct. New V2 projects pin Arduino 3.3.12 / ESP-IDF 5.5.5 via pioarduino
+55.03.312-1. See [Secure V2 rollout](SECURE-V2-ROLLOUT.md) for provisioning and
+counter safety. C/ESP32 and Node support V2; Python/Rust currently support legacy.
+The steps below describe the existing legacy schema starters.
+
 1. Download the schema starter from the device's schema editor and the `struct-sdk.zip` SDK archive. Extract both into the same parent directory, so the starter folder, `struct-sdk/`, and `docs/` are siblings. The SDK archive contains `struct-sdk/` and `docs/` at its root.
 2. Create a device and copy its credential ID and API secret when they are displayed. The API secret is shown once. Store it outside the project; never commit it. If it is lost, rotate the device credentials in the dashboard and update the device before sending again.
 3. Set `STRUCT_HOST`, `STRUCT_PORT`, `STRUCT_KEY_ID`, and `STRUCT_API_SECRET` as described by the starter README. `STRUCT_PORT` defaults to UDP 8081. Use a gateway address reachable from the device, not `127.0.0.1` on remote hardware. If encryption is enabled, also set the separate `STRUCT_ENCRYPTION_KEY`.

@@ -1,15 +1,15 @@
 # Struct XDP UDP Prefilter
 
-Linux-only eBPF/XDP program that drops obviously malformed Protocol v2 UDP
+Linux-only eBPF/XDP program that drops obviously malformed legacy and Secure V2 UDP
 datagrams before they reach the Node gateway.
 
 ## What it checks
 
 - IPv4 UDP destined to the configured `UDP_PORT`
 - Non-fragmented packets only
-- UDP payload length between 66 bytes (minimum Protocol v2) and `MAX_FRAME_BYTES`
-- First payload byte is protocol version `2`
-- Schema byte is present (any `0..255`)
+- UDP payload at most `MAX_FRAME_BYTES`
+- Legacy first byte `2`, `3`, or `4` and at least 66 payload bytes
+- Secure V2 generation bits `10` and at least 25 payload bytes
 
 ## What it does **not** do
 
@@ -18,7 +18,8 @@ datagrams before they reach the Node gateway.
 - Supabase lookups or schema layout validation
 - Replay / nonce checks
 
-Node (`tcp-server`) remains the source of truth for authentication and parsing.
+Node (`tcp-server`) authenticates and parses frames; PostgreSQL atomically owns
+durable replay and event identity. The prefilter does not enable Secure V2.
 
 ## Requirements
 
@@ -38,4 +39,6 @@ sudo ./load.sh
 sudo ./unload.sh
 ```
 
-Match `UDP_PORT` / `MAX_FRAME_BYTES` with `tcp-server/.env`.
+Match `UDP_PORT` / `MAX_FRAME_BYTES` with `tcp-server/.env`. Secure V2 additionally
+uses `STRUCT_SECURE_V2_ENABLED` and `STRUCT_SECURE_V2_MAX_FRAME_BYTES` in Node;
+the XDP maximum must accommodate both protocols.

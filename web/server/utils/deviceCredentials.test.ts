@@ -9,6 +9,11 @@ describe('device response sanitization', () => {
       api_secret_encrypted: 'ciphertext',
       encryption_key: 'private-key',
       fleet_secret_encrypted: 'fleet-ciphertext',
+      root_secret_encrypted: 'root-ciphertext',
+      bootstrap_token_encrypted: 'token-ciphertext',
+      bootstrap_token_hash: 'token-hash',
+      rootSecret: 'private-root',
+      bootstrapToken: 'private-token',
     }
     expect(sanitizeDeviceForClient(row)).toEqual({ id: 'device-1', key_id: 'public-id' })
     expect(row.api_secret_encrypted).toBe('ciphertext')

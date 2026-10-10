@@ -6,7 +6,7 @@ root = Path(__file__).resolve().parents[1]
 sdk = root / 'sdk'
 target = root / 'web/public/sdk'
 target.mkdir(parents=True, exist_ok=True)
-allowed = {'.h', '.c', '.cpp', '.ino', '.md', '.cjs', '.json', '.py', '.properties', '.txt', '.rs', '.toml', '.lock', '.yml', '.yaml', '.ts', '.cmake'}
+allowed = {'.h', '.c', '.cpp', '.inc', '.ino', '.ini', '.md', '.cjs', '.json', '.py', '.properties', '.txt', '.rs', '.toml', '.lock', '.yml', '.yaml', '.ts', '.cmake'}
 def archive(path, entries):
     with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as output:
         for source, name in sorted(entries, key=lambda pair: pair[1]):

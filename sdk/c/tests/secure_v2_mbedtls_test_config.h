@@ -1,0 +1,11 @@
+#define MBEDTLS_PLATFORM_C
+#define MBEDTLS_MD_C
+#define MBEDTLS_SHA256_C
+#define MBEDTLS_CHACHA20_C
+#define MBEDTLS_POLY1305_C
+#define MBEDTLS_CHACHAPOLY_C
+#define MBEDTLS_HKDF_C
+#define MBEDTLS_SELF_TEST
+#if !defined(MBEDTLS_VERSION_MAJOR) || MBEDTLS_VERSION_MAJOR < 3
+#include "mbedtls/check_config.h"
+#endif

@@ -21,6 +21,7 @@ class Trace {
  fail(){if(this.current){this.current.status='failed';this.current.explanation=explanations[this.current.stage]||'Inspect gateway configuration and retry safely.'}this.data.outcome='failed'}
  complete(){this.finish();this.data.outcome='processed';this.data.elapsed_ms=Math.round(performance.now()-this.start)}
  bytes(payload,encrypted,queued,confirmed){this.data.bytes={payload,protocol:66,event_identity:queued?16:0,encryption:encrypted?32:0,acknowledgment:confirmed?69:0,transport_per_datagram_ipv4:28,transport_per_datagram_ipv6:48,transport_note:this.data.transport==='udp'?'IP + UDP headers; excludes link layer, radio attach, retransmissions and fragmentation':'TCP overhead depends on segmentation, options and handshake; UDP estimates do not apply'}}
+ secureV2Bytes(payload,batch,confirmed){this.data.bytes={payload,protocol:9,event_identity:0,encryption:16,batch_metadata:batch?1:0,security_overhead:25,acknowledgment:confirmed?21:0,frame:this.data.frame_bytes,ipv4_udp:this.data.frame_bytes+28,ipv6_udp:this.data.frame_bytes+48,transport_per_datagram_ipv4:28,transport_per_datagram_ipv6:48,transport_note:'IP + UDP headers; excludes link layer, radio attach, retransmissions and fragmentation'}}
 }
 // Allowlisted values only. Never serialize an exception, device object or frame.
 let pending=0

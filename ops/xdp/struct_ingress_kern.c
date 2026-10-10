@@ -33,6 +33,7 @@
 /* Protocol v2 minimum: proto + key_id + schema + ts + nonce + hmac = 66 */
 #define STRUCT_V2_MIN_LEN 66
 #define STRUCT_PROTOCOL_V2 2
+#define STRUCT_SECURE_V2_MIN_LEN 25
 
 char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
@@ -110,17 +111,21 @@ int struct_ingress(struct xdp_md *ctx)
   if (udp->dest != bpf_htons(STRUCT_UDP_PORT))
     return XDP_PASS;
 
-  if (payload_len < STRUCT_V2_MIN_LEN)
+  if (payload_len < STRUCT_SECURE_V2_MIN_LEN)
     return XDP_DROP;
 
   if (payload_len > STRUCT_MAX_FRAME_BYTES)
     return XDP_DROP;
 
-  /* Need at least protocol + key_id + schema before further Node validation. */
-  if (payload + 18 > data_end)
+  if (payload + 1 > data_end)
     return XDP_DROP;
 
   __u8 *bytes = payload;
+  /* Compact Secure V2 uses its own minimum; crypto/schema validation stays in Node. */
+  if ((bytes[0] & 0xC0) == 0x80)
+    return XDP_PASS;
+  if (payload_len < STRUCT_V2_MIN_LEN || payload + 18 > data_end)
+    return XDP_DROP;
   if (bytes[0] != STRUCT_PROTOCOL_V2 && bytes[0] != 3 && bytes[0] != 4)
     return XDP_DROP;
 

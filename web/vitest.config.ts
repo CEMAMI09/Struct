@@ -6,6 +6,7 @@ export default defineConfig({
     alias: {
       '~': fileURLToPath(new URL('./app', import.meta.url)),
       '#shared': fileURLToPath(new URL('./shared', import.meta.url)),
+      '#supabase/server': fileURLToPath(new URL('./test/supabaseServer.ts', import.meta.url)),
     },
   },
   test: {

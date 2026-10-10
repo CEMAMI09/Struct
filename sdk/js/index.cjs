@@ -78,4 +78,7 @@ class StructClient {
     } finally { this.busy = false }
   }
 }
-module.exports = { StructClient, buildFrame, verifyTelemetryReceipt }
+module.exports = { StructClient, buildFrame, verifyTelemetryReceipt,
+  SecureV2Client: require('./secure-v2-client.cjs').SecureV2Client,
+  PersistentSequenceCounter: require('./secure-v2-counter.cjs').PersistentSequenceCounter,
+}

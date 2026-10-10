@@ -1,6 +1,6 @@
 {
   "name": "@struct/device",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Struct Node.js device SDK",
   "main": "index.cjs",
@@ -8,6 +8,7 @@
   "exports": {
     ".": { "types": "./index.d.ts", "require": "./index.cjs", "default": "./index.cjs" },
     "./persistent": { "types": "./persistent.d.ts", "default": "./persistent.cjs" },
+    "./secure-v2": { "types": "./secure-v2.d.ts", "default": "./secure-v2.cjs" },
     "./commands": "./commands.cjs",
     "./command-receiver": { "types": "./command-receiver.d.ts", "default": "./command-receiver.cjs" }
   },

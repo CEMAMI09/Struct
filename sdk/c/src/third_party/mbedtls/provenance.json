@@ -1,0 +1,32 @@
+{
+  "project": "Mbed TLS",
+  "version": "2.28.10",
+  "source": "https://github.com/Mbed-TLS/mbedtls/tree/v2.28.10",
+  "files": [
+    {
+      "upstreamPath": "library/chacha20.c",
+      "packagedPath": "chacha20.inc",
+      "sha256": "02dd577461922b442735a55a549ae14b3a4d371c9627ebe92dfa11a67f31ecb2"
+    },
+    {
+      "upstreamPath": "library/poly1305.c",
+      "packagedPath": "poly1305.inc",
+      "sha256": "a948edf300dfd96383b5633a13449ac3b86f535fabea09eb5f3df6fe96ccf5ea"
+    },
+    {
+      "upstreamPath": "library/chachapoly.c",
+      "packagedPath": "chachapoly.inc",
+      "sha256": "f2c5f640b8dc6c75dd3d8c8df0fe12adeb1703eef75bd3c4d7c7b92021a793e3"
+    },
+    {
+      "upstreamPath": "library/hkdf.c",
+      "packagedPath": "hkdf.inc",
+      "sha256": "c23ddf951e5037cf279a8974a6b228711ecdc0e7ada33b0eb3937f540079391c"
+    },
+    {
+      "upstreamPath": "library/common.h",
+      "packagedPath": "common.h",
+      "sha256": "dc64b7334fb329a5c6c3859575c90f739082d00709a67b774024a00d0135f6f0"
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 const fs=require('node:fs'),{execFileSync}=require('node:child_process')
 const required=['authentication','encryption','receipt-loss','duplicate','offline-queue','power-cut','credential-rotation','reconnect','queue-full','command-dedup','command-power-cut']
 function check(evidence,commit){
- if(evidence.commit!==commit||evidence.version!=='0.2.0')throw new Error('Evidence must match exact release commit/version')
+ if(evidence.commit!==commit||evidence.version!==require('../sdk/compatibility.json').version)throw new Error('Evidence must match exact release commit/version')
  if(!Array.isArray(evidence.rigs)||!evidence.rigs.length)throw new Error('Physical hardware evidence is required')
  for(const rig of evidence.rigs){
   if(!rig.board||!rig.compiler||!rig.platformSdk||!rig.firmwareSha256?.match(/^[a-f0-9]{64}$/)||!rig.report||rig.physical!==true)throw new Error('Incomplete rig identity')

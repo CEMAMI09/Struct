@@ -19,7 +19,7 @@
    <div class="card space-y-2 p-4">
     <p class="text-sm">{{mode==='local'?'Reproduce with generated local credentials:':'Send a real encoded payload; configure credentials through environment variables:'}}</p>
     <code class="block break-all text-xs">{{command}}</code><button class="btn-ghost" @click="copyCommand">Copy command</button>
-    <p v-if="mode==='production'" class="text-xs text-[#8B93A7]">Set STRUCT_HOST, STRUCT_KEY_ID, STRUCT_API_SECRET, and STRUCT_ENCRYPTION_KEY for encrypted devices. Never put credentials in shared commands.</p>
+    <p v-if="mode==='production'" class="text-xs text-[#8B93A7]">Legacy: set STRUCT_HOST, STRUCT_KEY_ID, STRUCT_API_SECRET, and STRUCT_ENCRYPTION_KEY for encrypted devices. Secure V2: use --v2 with STRUCT_WIRE_DEVICE_ID, STRUCT_DEVICE_SECRET, and STRUCT_COUNTER_FILE. First provisioning also needs STRUCT_BOOTSTRAP_TOKEN and --bootstrap. Never put credentials in shared commands.</p>
     <label class="label">{{mode==='local'?'Open local diagnostic JSON':'Attach SDK outcome JSON to match a packet fingerprint'}}<input type="file" accept=".json" @change="importFile" /></label>
    </div>
    <p v-if="error" role="alert" class="text-red-400">{{error}}</p><p v-if="notice" role="status" class="text-sm">{{notice}}</p>
@@ -29,8 +29,14 @@
     <p class="break-all font-mono text-xs">Packet fingerprint: {{trace.packet_id||'unavailable'}}</p>
     <p class="text-sm">Device: {{deviceOutcome(trace)}} · Gateway acknowledgment: {{trace.acknowledgment||'none observed'}}</p>
     <p v-if="trace.replay" class="text-sm">Replay check: {{trace.replay}}</p>
+    <div v-if="trace.protocol==='Struct Secure V2'" class="rounded-lg border border-white/10 p-3 space-y-1 text-sm">
+     <p><strong>Struct Secure V2</strong> · encrypted · {{trace.cipher||'ChaCha20-Poly1305'}} · AEAD {{trace.aead||'not observed'}}</p>
+     <p>Sequence {{trace.sequence??'unknown'}} · schema slot {{trace.schema_slot??'unknown'}} · {{trace.batch_count??1}} reading(s) · {{trace.duplicate?'authenticated duplicate':'first acceptance or not yet stored'}}</p>
+     <p>Receipt {{trace.receipt_requested?'requested':'disabled'}} · {{trace.receipt_generated?'generated':'not generated'}}</p>
+    </div>
     <ul class="space-y-1 text-sm"><li v-for="stage in trace.stages" :key="stage.stage" :class="stage.status==='failed'?'text-red-300':'text-emerald-200'"><strong>{{stage.stage}}: {{stage.status}}</strong> · {{stage.at_ms}} ms <span v-if="stage.explanation">— {{stage.explanation}}</span></li></ul>
-    <p v-if="trace.bytes" class="text-sm">Payload {{trace.bytes.payload}} B · protocol {{trace.bytes.protocol}} B · stable event ID {{trace.bytes.event_identity}} B · encryption {{trace.bytes.encryption}} B · receipt {{trace.bytes.acknowledgment}} B</p>
+    <p v-if="trace.bytes && trace.protocol==='Struct Secure V2'" class="text-sm">Payload {{trace.bytes.payload}} B · security envelope {{trace.bytes.security_overhead??25}} B<span v-if="trace.bytes.batch_metadata"> · batch count {{trace.bytes.batch_metadata}} B</span> · complete Struct frame {{trace.frame_bytes}} B · estimated IPv4 + UDP {{trace.bytes.ipv4_udp??trace.frame_bytes+28}} B · receipt {{trace.bytes.acknowledgment}} B separately</p>
+    <p v-else-if="trace.bytes" class="text-sm">Payload {{trace.bytes.payload}} B · protocol {{trace.bytes.protocol}} B · stable event ID {{trace.bytes.event_identity}} B · encryption {{trace.bytes.encryption}} B · complete Struct frame {{trace.frame_bytes}} B · receipt {{trace.bytes.acknowledgment}} B separately</p>
     <p v-if="trace.bytes" class="text-xs text-[#8B93A7]">{{trace.bytes.transport_note}}. UDP transport: 28 B IPv4 or 48 B IPv6 per datagram. Receipt bytes are separate from the uplink.</p>
     <p class="text-sm">Webhooks: {{webhookSummary(trace.event_id)}} <NuxtLink class="underline" to="/dashboard/deliveries">Delivery history</NuxtLink></p>
    </article>
@@ -49,12 +55,17 @@ watch(() => [props.devices, route.query.device] as const, () => {
  const requested = route.query.device
  if (!deviceId.value && typeof requested === 'string' && props.devices.some((device) => device.id === requested)) deviceId.value = requested
 }, { immediate: true })
-const traces=ref<any[]>([]),webhooks=ref<any[]>([]),outcomes=ref<any[]>([])
+const traces=ref<any[]>([]),webhooks=ref<any[]>([]),outcomes=ref<any[]>([]),secureDevice=ref(false)
 const scenarios=['success','encrypted','malformed','authentication','duplicate','packet-loss','timeout','retry','schema','storage','webhook-retry']
-const command=computed(()=>mode.value==='local'?`node scripts/debug-local.cjs --scenario ${scenario.value} --output struct-diagnostic.json`:'node scripts/debug-send.cjs payload.bin 1 struct-device-outcome.json')
+const command=computed(()=>mode.value==='local'?`node scripts/debug-local.cjs --scenario ${scenario.value} --output struct-diagnostic.json`:secureDevice.value?'node scripts/debug-send.cjs --v2 payload.bin --slot 0 --confirmed --output struct-device-outcome.json':'node scripts/debug-send.cjs payload.bin 1 struct-device-outcome.json')
 let generation=0
 function clear(){generation++;traces.value=[];webhooks.value=[];outcomes.value=[];error.value='';notice.value='';busy.value=false}
 watch([mode,deviceId,currentOrgId],clear)
+watch([deviceId,currentOrgId],async()=>{
+ const run=generation;secureDevice.value=false
+ if(!deviceId.value||!currentOrgId.value)return
+ try{const config=await $fetch<{enabled:boolean}>(`/api/devices/${deviceId.value}/secure-v2`,{query:{orgId:currentOrgId.value}});if(run===generation)secureDevice.value=config.enabled}catch{/* Legacy diagnostics remain available during rollout. */}
+})
 async function enable(){try{busy.value=true;const {error:e}=await db.rpc('enable_packet_tracing',{p_device_id:deviceId.value});if(e)throw e;notice.value='Capture enabled. Send an SDK packet, then refresh.'}catch{error.value='Could not enable capture. You may not have permission, or packet tracing is not set up for this project (diagnostic code 025).'}finally{busy.value=false}}
 async function refresh(){
  const run=++generation;busy.value=true;error.value=''
@@ -84,7 +95,7 @@ async function copyCommand(){try{await navigator.clipboard.writeText(command.val
 function download(){
  // Explicit allowlist even for imported files. Never re-export arbitrary JSON.
  const clean=traces.value.map(sanitizeTrace)
- const blob=new Blob([JSON.stringify({format:'struct-diagnostic-v1',mode:mode.value,scenario:mode.value==='local'?scenario.value:undefined,traces:clean,webhooks:webhooks.value.map(j=>({event_id:j.event_id,status:j.status,attempts:j.attempts})),device_outcomes:outcomes.value.map(o=>({packet_id:o.packet_id,status:o.status,attempts:o.attempts,elapsedMs:o.elapsedMs})),reproduction:command.value},null,2)],{type:'application/json'})
+ const blob=new Blob([JSON.stringify({format:'struct-diagnostic-v1',mode:mode.value,scenario:mode.value==='local'?scenario.value:undefined,traces:clean,webhooks:webhooks.value.map(j=>({event_id:j.event_id,status:j.status,attempts:j.attempts})),device_outcomes:outcomes.value.map(sanitizeOutcome),reproduction:command.value},null,2)],{type:'application/json'})
  const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='struct-diagnostic.json';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)
  notice.value='Diagnostic download requested. Your browser may ask where to save it.'
 }

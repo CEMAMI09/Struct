@@ -9,6 +9,29 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+type SecureV2CredentialRow = {
+  wire_device_id: number
+  device_id: string
+  root_secret_encrypted: string
+  secret_preview: string
+  bootstrap_token_encrypted: string
+  bootstrap_token_hash: string
+  bootstrap_consumed_at: string | null
+  created_at: string
+  expires_at: string | null
+  revoked_at: string | null
+}
+type SecureV2SchemaSlotRow = {
+  device_id: string
+  slot: number
+  encoding: string
+  schema_definition: Json
+  record_bytes: number
+  legacy_schema_version: number | null
+  sample_interval_ms: number | null
+  created_at: string
+}
+
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
@@ -17,6 +40,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      secure_v2_credentials: {
+        Row: SecureV2CredentialRow
+        Insert: Partial<SecureV2CredentialRow> & Pick<SecureV2CredentialRow, 'device_id' | 'root_secret_encrypted' | 'secret_preview' | 'bootstrap_token_encrypted' | 'bootstrap_token_hash'>
+        Update: Partial<SecureV2CredentialRow>
+        Relationships: []
+      }
+      secure_v2_schema_slots: {
+        Row: SecureV2SchemaSlotRow
+        Insert: Partial<SecureV2SchemaSlotRow> & Pick<SecureV2SchemaSlotRow, 'device_id' | 'slot' | 'encoding' | 'schema_definition' | 'record_bytes'>
+        Update: Partial<SecureV2SchemaSlotRow>
+        Relationships: []
+      }
+      secure_v2_replay_state: {
+        Row: { wire_device_id: number; highest_sequence: number | null; recent_bitmap: string; updated_at: string }
+        Insert: { wire_device_id: number; highest_sequence?: number | null; recent_bitmap?: string; updated_at?: string }
+        Update: { highest_sequence?: number | null; recent_bitmap?: string; updated_at?: string }
+        Relationships: []
+      }
+      secure_v2_packets: {
+        Row: { wire_device_id: number; sequence: number; frame_digest: string; event_ids: string[] }
+        Insert: { wire_device_id: number; sequence: number; frame_digest: string; event_ids: string[] }
+        Update: { frame_digest?: string; event_ids?: string[] }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -306,6 +353,8 @@ export type Database = {
       }
       devices: {
         Row: {
+          secure_v2_enabled: boolean
+          wire_device_id: number | null
           api_key: string
           api_secret_encrypted: string | null
           api_secret_preview: string | null
@@ -326,6 +375,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          secure_v2_enabled?: boolean
+          wire_device_id?: number | null
           api_key: string
           api_secret_encrypted?: string | null
           api_secret_preview?: string | null
@@ -346,6 +397,8 @@ export type Database = {
           user_id?: string
         }
         Update: {
+          secure_v2_enabled?: boolean
+          wire_device_id?: number | null
           api_key?: string
           api_secret_encrypted?: string | null
           api_secret_preview?: string | null
@@ -777,18 +830,27 @@ export type Database = {
       }
       telemetry: {
         Row: {
+          secure_v2_wire_device_id: number | null
+          secure_v2_sequence: number | null
+          secure_v2_record_index: number | null
           device_id: string
           id: string
           parsed_json: Json
           timestamp: string
         }
         Insert: {
+          secure_v2_wire_device_id?: number | null
+          secure_v2_sequence?: number | null
+          secure_v2_record_index?: number | null
           device_id: string
           id?: string
           parsed_json: Json
           timestamp?: string
         }
         Update: {
+          secure_v2_wire_device_id?: number | null
+          secure_v2_sequence?: number | null
+          secure_v2_record_index?: number | null
           device_id?: string
           id?: string
           parsed_json?: Json
@@ -946,6 +1008,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      enroll_device_secure_v2: {
+        Args: { p_device_id: string; p_org_id: string; p_root_secret_encrypted: string; p_secret_preview: string; p_bootstrap_token_encrypted: string; p_bootstrap_token_hash: string; p_rotate?: boolean; p_grace_seconds?: number }
+        Returns: SecureV2CredentialRow
+      }
+      bootstrap_secure_v2_counter: {
+        Args: { p_wire_device_id: number; p_token_hash: string }
+        Returns: Json
+      }
+      publish_secure_v2_schema_slot: {
+        Args: { p_device_id: string; p_org_id: string; p_slot: number; p_encoding: string; p_definition: Json; p_record_bytes: number; p_legacy_schema_version?: number | null; p_sample_interval_ms?: number | null }
+        Returns: SecureV2SchemaSlotRow
+      }
+      ingest_secure_v2_telemetry: {
+        Args: { p_wire_device_id: number; p_sequence: number; p_frame_digest: string; p_schema_slot: number; p_records: Json }
+        Returns: Json
+      }
       acknowledge_pending_command: {
         Args: {
           p_command_id: string

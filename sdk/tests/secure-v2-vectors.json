@@ -1,0 +1,194 @@
+{
+  "format": "struct-secure-v2-vectors-v1",
+  "warning": "TEST ONLY credentials. Never use for a real device.",
+  "vectors": [
+    {
+      "name": "normal-legacy-nine",
+      "sequence": 42,
+      "slot": 0,
+      "payloadHex": "000090420000274201",
+      "rootSecret": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "wireDeviceId": 305419896,
+      "control": 128,
+      "keys": {
+        "uplinkKey": "d22253c3036246fbebee257c57ac89750959be5c5e0d7acd21851ba949e6959b",
+        "downlinkKey": "b7dc0602980c183bf844acca5e47574c58b05c228effd0a0bd55fd5d765bdda7",
+        "uplinkPrefix": "584546f9a70fcc30",
+        "downlinkPrefix": "a19a72ec5885bd61"
+      },
+      "nonce": "584546f9a70fcc300000002a",
+      "downlinkNonce": "a19a72ec5885bd610000002a",
+      "aad": "80123456780000002a",
+      "plaintext": "000090420000274201",
+      "ciphertext": "2d35799c6cf8c0f4d7",
+      "tag": "00736ab5bbeb5956bec920d7aad606f8",
+      "frame": "80123456780000002a2d35799c6cf8c0f4d700736ab5bbeb5956bec920d7aad606f8",
+      "receipt": "c00000002a81f529696bae2fbf4e7fe8be1a082afa"
+    },
+    {
+      "name": "minimum-sequence",
+      "sequence": 0,
+      "slot": 1,
+      "payloadHex": "00",
+      "rootSecret": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "wireDeviceId": 305419896,
+      "control": 132,
+      "keys": {
+        "uplinkKey": "d22253c3036246fbebee257c57ac89750959be5c5e0d7acd21851ba949e6959b",
+        "downlinkKey": "b7dc0602980c183bf844acca5e47574c58b05c228effd0a0bd55fd5d765bdda7",
+        "uplinkPrefix": "584546f9a70fcc30",
+        "downlinkPrefix": "a19a72ec5885bd61"
+      },
+      "nonce": "584546f9a70fcc3000000000",
+      "downlinkNonce": "a19a72ec5885bd6100000000",
+      "aad": "841234567800000000",
+      "plaintext": "00",
+      "ciphertext": "f8",
+      "tag": "c2b6cdaf00217061d609a3800e0cd97a",
+      "frame": "841234567800000000f8c2b6cdaf00217061d609a3800e0cd97a",
+      "receipt": "c0000000002900aaa2ce666b0fc19183e72272b341"
+    },
+    {
+      "name": "maximum-sequence",
+      "sequence": 4294967295,
+      "slot": 15,
+      "payloadHex": "ff",
+      "rootSecret": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "wireDeviceId": 305419896,
+      "control": 188,
+      "keys": {
+        "uplinkKey": "d22253c3036246fbebee257c57ac89750959be5c5e0d7acd21851ba949e6959b",
+        "downlinkKey": "b7dc0602980c183bf844acca5e47574c58b05c228effd0a0bd55fd5d765bdda7",
+        "uplinkPrefix": "584546f9a70fcc30",
+        "downlinkPrefix": "a19a72ec5885bd61"
+      },
+      "nonce": "584546f9a70fcc30ffffffff",
+      "downlinkNonce": "a19a72ec5885bd61ffffffff",
+      "aad": "bc12345678ffffffff",
+      "plaintext": "ff",
+      "ciphertext": "07",
+      "tag": "516b5d1e51d6a612a588efa4446bcce2",
+      "frame": "bc12345678ffffffff07516b5d1e51d6a612a588efa4446bcce2",
+      "receipt": "c0ffffffff94558639f754873a2b7c978319a52b65"
+    },
+    {
+      "name": "empty-crypto-only",
+      "sequence": 7,
+      "slot": 0,
+      "payloadHex": "",
+      "rootSecret": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "wireDeviceId": 305419896,
+      "control": 128,
+      "keys": {
+        "uplinkKey": "d22253c3036246fbebee257c57ac89750959be5c5e0d7acd21851ba949e6959b",
+        "downlinkKey": "b7dc0602980c183bf844acca5e47574c58b05c228effd0a0bd55fd5d765bdda7",
+        "uplinkPrefix": "584546f9a70fcc30",
+        "downlinkPrefix": "a19a72ec5885bd61"
+      },
+      "nonce": "584546f9a70fcc3000000007",
+      "downlinkNonce": "a19a72ec5885bd6100000007",
+      "aad": "801234567800000007",
+      "plaintext": "",
+      "ciphertext": "",
+      "tag": "375d06bd0e801a11a210ef97e880ef6c",
+      "frame": "801234567800000007375d06bd0e801a11a210ef97e880ef6c",
+      "receipt": "c00000000784ec9e02f725b391533d1059028f7547"
+    },
+    {
+      "name": "packed-environmental-three",
+      "sequence": 43,
+      "slot": 2,
+      "payloadHex": "8c8d14",
+      "values": {
+        "temperature": 72.4,
+        "humidity": 41.8,
+        "active": true
+      },
+      "schema": [
+        {
+          "name": "temperature",
+          "type": "fixed",
+          "min": -40,
+          "max": 125,
+          "precision": 0.1
+        },
+        {
+          "name": "humidity",
+          "type": "fixed",
+          "min": 0,
+          "max": 100,
+          "precision": 0.1
+        },
+        {
+          "name": "active",
+          "type": "boolean"
+        }
+      ],
+      "rootSecret": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "wireDeviceId": 305419896,
+      "control": 136,
+      "keys": {
+        "uplinkKey": "d22253c3036246fbebee257c57ac89750959be5c5e0d7acd21851ba949e6959b",
+        "downlinkKey": "b7dc0602980c183bf844acca5e47574c58b05c228effd0a0bd55fd5d765bdda7",
+        "uplinkPrefix": "584546f9a70fcc30",
+        "downlinkPrefix": "a19a72ec5885bd61"
+      },
+      "nonce": "584546f9a70fcc300000002b",
+      "downlinkNonce": "a19a72ec5885bd610000002b",
+      "aad": "88123456780000002b",
+      "plaintext": "8c8d14",
+      "ciphertext": "76f80c",
+      "tag": "ce53579a1bedec1aa3a56d53ac6bca6f",
+      "frame": "88123456780000002b76f80cce53579a1bedec1aa3a56d53ac6bca6f",
+      "receipt": "c00000002b9987ed4a7dba6de33ffbd888ab32a65f"
+    },
+    {
+      "name": "batch-two",
+      "sequence": 44,
+      "slot": 0,
+      "batch": true,
+      "payloadHex": "02000090420000274201000092420000294200",
+      "rootSecret": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "wireDeviceId": 305419896,
+      "control": 129,
+      "keys": {
+        "uplinkKey": "d22253c3036246fbebee257c57ac89750959be5c5e0d7acd21851ba949e6959b",
+        "downlinkKey": "b7dc0602980c183bf844acca5e47574c58b05c228effd0a0bd55fd5d765bdda7",
+        "uplinkPrefix": "584546f9a70fcc30",
+        "downlinkPrefix": "a19a72ec5885bd61"
+      },
+      "nonce": "584546f9a70fcc300000002c",
+      "downlinkNonce": "a19a72ec5885bd610000002c",
+      "aad": "81123456780000002c",
+      "plaintext": "02000090420000274201000092420000294200",
+      "ciphertext": "d68bbeb56c664b4d955c49453f4750c2e9512c",
+      "tag": "ba987ea9d23a7fb6b1dfcd18cebd9e03",
+      "frame": "81123456780000002cd68bbeb56c664b4d955c49453f4750c2e9512cba987ea9d23a7fb6b1dfcd18cebd9e03",
+      "receipt": "c00000002cccb1d533b503661c544dd63d819542f2"
+    },
+    {
+      "name": "confirmed",
+      "sequence": 45,
+      "slot": 0,
+      "confirmed": true,
+      "payloadHex": "000090420000274201",
+      "rootSecret": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "wireDeviceId": 305419896,
+      "control": 130,
+      "keys": {
+        "uplinkKey": "d22253c3036246fbebee257c57ac89750959be5c5e0d7acd21851ba949e6959b",
+        "downlinkKey": "b7dc0602980c183bf844acca5e47574c58b05c228effd0a0bd55fd5d765bdda7",
+        "uplinkPrefix": "584546f9a70fcc30",
+        "downlinkPrefix": "a19a72ec5885bd61"
+      },
+      "nonce": "584546f9a70fcc300000002d",
+      "downlinkNonce": "a19a72ec5885bd610000002d",
+      "aad": "82123456780000002d",
+      "plaintext": "000090420000274201",
+      "ciphertext": "d8d0b8c3b79b3f2273",
+      "tag": "12de0d1afdde032908815cd4e9130169",
+      "frame": "82123456780000002dd8d0b8c3b79b3f227312de0d1afdde032908815cd4e9130169",
+      "receipt": "c00000002d67af76b4bc6e734bf62f9d0bfdd07fe2"
+    }
+  ]
+}

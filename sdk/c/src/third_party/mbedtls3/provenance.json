@@ -1,0 +1,42 @@
+{
+  "project": "Mbed TLS",
+  "version": "3.6.7",
+  "source": "https://github.com/Mbed-TLS/mbedtls/tree/mbedtls-3.6.7",
+  "files": [
+    {
+      "upstreamPath": "library/chacha20.c",
+      "packagedPath": "chacha20.inc",
+      "sha256": "b97789595e2afc19d0d492f43415296598e83292f0cc962489e03a9deca1049e"
+    },
+    {
+      "upstreamPath": "library/poly1305.c",
+      "packagedPath": "poly1305.inc",
+      "sha256": "0b75e7bad92aef2248529d89c1e2bcec1b62058e02b29e49232a244b063d8d86"
+    },
+    {
+      "upstreamPath": "library/chachapoly.c",
+      "packagedPath": "chachapoly.inc",
+      "sha256": "8f10bdc6b1aa537485ba095853848bf8e9ef525c5283a9d04e7658aef99ee07e"
+    },
+    {
+      "upstreamPath": "library/common.h",
+      "packagedPath": "common.h",
+      "sha256": "adfd493f8ecb11f87f7e75f270a97cbd05d1902345ef32db51d39c076e4f8fde"
+    },
+    {
+      "upstreamPath": "library/alignment.h",
+      "packagedPath": "alignment.h",
+      "sha256": "e97b8844abfadc4cc2fecce5b040d58cd53f549c42712205a267e00e372efd3d"
+    },
+    {
+      "upstreamPath": "LICENSE",
+      "packagedPath": "LICENSE.txt",
+      "sha256": "9b405ef4c89342f5eae1dd828882f931747f71001cfba7d114801039b52ad09b"
+    },
+    {
+      "upstreamPath": "library/chacha20_internal.h",
+      "packagedPath": "chacha20_internal.h",
+      "sha256": "394d1780badf2a7caa10487395964d2a70804bb65cc286326806f78244f86312"
+    }
+  ]
+}

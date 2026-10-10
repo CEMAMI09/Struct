@@ -1,23 +1,120 @@
 {
- "version":"0.2.0",
- "apiVersion":1,
- "releaseStatus":"candidate",
- "platforms":[
-  {"id":"portable-c","integration":"C99 callbacks","tested":"Zig 0.16 wasm32-wasi, mbedTLS 2.28.10","hardware":"not tested"},
-  {"id":"arduino-esp32","integration":"StructEsp32 + NVS queue","target":"ESP32, Arduino core 3.x","hardware":"not tested","compile":"pending target qualification"},
-  {"id":"esp-idf","integration":"component + nonblocking lwIP","target":"ESP-IDF 5.2–5.x","hardware":"not tested","compile":"pending target qualification"},
-  {"id":"freertos","integration":"owner task + socket adapter","target":"FreeRTOS with lwIP or board-supplied struct_port","hardware":"not tested"},
-  {"id":"zephyr","integration":"module + BSD sockets + PSA crypto","target":"Zephyr networking + CSPRNG + PSA provider","hardware":"not tested","compile":"pending target qualification"},
-  {"id":"stm32","integration":"STM32Cube + FreeRTOS + lwIP + mbedTLS","target":"no board selected","hardware":"not tested"},
-  {"id":"node","tested":"Node 24.18.1 Windows; UDP, crypto, queue, commands","minimum":"20; CI qualification pending"},
-  {"id":"python","tested":"CPython 3.11 Windows, cryptography 50.0.1","minimum":"3.10; CI qualification pending"},
-  {"id":"rust","tested":"Rust 1.98.1 x86_64-pc-windows-gnu","minimum":"1.98.1"}
- ],
- "cellular":{"status":"deferred until a customer modem/network target is selected","interface":"UDP socket or struct_port callbacks; modem power/attach remains board-owned"},
- "parity":{
-  "c":{"v2":true,"v3":true,"v4":true,"encryption":true,"persistentQueue":true,"commandJournal":"durable callbacks","cooperative":true},
-  "node":{"v2":true,"v3":true,"v4":true,"encryption":true,"persistentQueue":true,"commandJournal":true,"async":"Promise"},
-  "python":{"v2":true,"v3":true,"v4":true,"encryption":"cryptography extra","persistentQueue":true,"commandJournal":true,"async":"bounded worker thread"},
-  "rust":{"v2":true,"v3":true,"v4":true,"encryption":true,"persistentQueue":true,"commandJournal":true,"async":"cooperative start/poll, std host only"}
- }
+  "version": "0.3.0",
+  "apiVersion": 1,
+  "releaseStatus": "candidate",
+  "platforms": [
+    {
+      "id": "portable-c",
+      "integration": "C99 callbacks",
+      "tested": "Zig 0.16 wasm32-wasi, mbedTLS 2.28.10 and 3.6.7",
+      "hardware": "not tested"
+    },
+    {
+      "id": "arduino-esp32",
+      "integration": "StructEsp32 legacy; StructSecureV2Esp32 + NVS reservation",
+      "target": "Secure V2 starter: ESP32-C3/ESP32, Arduino 3.3.12 via pinned pioarduino 55.03.312-1",
+      "hardware": "not tested",
+      "compile": "Generated ESP32-C3 DevKitM-1 and ESP32 Dev Module projects built with GCC 14.2.0; physical hardware not tested"
+    },
+    {
+      "id": "esp-idf",
+      "integration": "component + nonblocking lwIP",
+      "target": "ESP-IDF 5.2-5.x",
+      "hardware": "not tested",
+      "compile": "pending target qualification"
+    },
+    {
+      "id": "freertos",
+      "integration": "owner task + socket adapter",
+      "target": "FreeRTOS with lwIP or board-supplied struct_port",
+      "hardware": "not tested"
+    },
+    {
+      "id": "zephyr",
+      "integration": "module + BSD sockets + PSA crypto",
+      "target": "Zephyr networking + CSPRNG + PSA provider",
+      "hardware": "not tested",
+      "compile": "pending target qualification"
+    },
+    {
+      "id": "stm32",
+      "integration": "STM32Cube + FreeRTOS + lwIP + mbedTLS",
+      "target": "no board selected",
+      "hardware": "not tested"
+    },
+    {
+      "id": "node",
+      "tested": "Node 24.18.1 Windows; UDP, crypto, queue, commands",
+      "minimum": "20; CI qualification pending"
+    },
+    {
+      "id": "python",
+      "tested": "CPython 3.11 Windows, cryptography 50.0.1",
+      "minimum": "3.10; CI qualification pending"
+    },
+    {
+      "id": "rust",
+      "tested": "Rust 1.98.1 x86_64-pc-windows-gnu",
+      "minimum": "1.98.1"
+    }
+  ],
+  "cellular": {
+    "status": "deferred until a customer modem/network target is selected",
+    "interface": "UDP socket or struct_port callbacks; modem power/attach remains board-owned"
+  },
+  "parity": {
+    "c": {
+      "v2": true,
+      "v3": true,
+      "v4": true,
+      "encryption": true,
+      "persistentQueue": true,
+      "commandJournal": "durable callbacks",
+      "cooperative": true
+    },
+    "node": {
+      "v2": true,
+      "v3": true,
+      "v4": true,
+      "encryption": true,
+      "persistentQueue": true,
+      "commandJournal": true,
+      "async": "Promise"
+    },
+    "python": {
+      "v2": true,
+      "v3": true,
+      "v4": true,
+      "encryption": "cryptography extra",
+      "persistentQueue": true,
+      "commandJournal": true,
+      "async": "bounded worker thread"
+    },
+    "rust": {
+      "v2": true,
+      "v3": true,
+      "v4": true,
+      "encryption": true,
+      "persistentQueue": true,
+      "commandJournal": true,
+      "async": "cooperative start/poll, std host only"
+    }
+  },
+  "secureV2": {
+    "protocol": "Struct Secure V2",
+    "transport": "UDP",
+    "clients": [
+      "C99 callbacks",
+      "Arduino ESP32",
+      "Node"
+    ],
+    "legacyProtocols": [
+      2,
+      3,
+      4
+    ],
+    "hardware": "not tested",
+    "defaultEnabled": false,
+    "pythonAndRust": "legacy only"
+  }
 }
