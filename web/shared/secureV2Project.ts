@@ -4,6 +4,7 @@ export interface SecureV2ProjectCredentials {wireDeviceId:number,rootSecret:stri
 export const SECURE_V2_BOARDS:SecureV2Board[]=['esp32-c3-devkitm-1','esp32dev']
 function cExample(slot:SecureV2Slot):string {
  return slot.schema_definition.map(f=>{
+  if(f.type==='string'||f.type==='bytes')return `  packet.f_${f.name}.length = 0; // Fill .data and set UTF-8/raw byte length, max ${f.maxBytes}`
   if(f.type==='char')return `  memcpy(packet.f_${f.name}, "${'A'.repeat(Math.min(f.length,4))}", ${Math.min(f.length,4)});`
   if(f.type==='fixed')return `  packet.f_${f.name} = ${f.min}; // Range ${f.min}..${f.max}, step ${f.precision}`
   if(f.type==='enum')return `  packet.f_${f.name} = 0; // First configured enum value`

@@ -4,10 +4,11 @@ const {createHash,randomInt}=require('node:crypto')
 const {performance}=require('node:perf_hooks')
 const v2=require('./secure-v2.cjs')
 class SecureV2Client {
-  constructor({wireDeviceId,rootSecret,counter,host=v2.DEFAULT_INGEST_HOST,port=v2.DEFAULT_UDP_PORT,maximum=v2.DEFAULT_MAX_FRAME_BYTES}={}) {
+  constructor({wireDeviceId,rootSecret,counter,host=v2.DEFAULT_INGEST_HOST,port=v2.DEFAULT_UDP_PORT,family='udp4',maximum=v2.DEFAULT_MAX_FRAME_BYTES}={}) {
+    if(!['udp4','udp6'].includes(family))throw new Error('Invalid UDP family')
     v2.wireId(wireDeviceId);v2.rootBytes(rootSecret);v2.maxFrameBytes(maximum)
     if(typeof host!=='string'||!host||!Number.isInteger(port)||port<1||port>65535||!counter||typeof counter.next!=='function'||(counter.wireDeviceId!==undefined&&counter.wireDeviceId!==wireDeviceId))throw new Error('Invalid Secure V2 client configuration')
-    this.options=Object.freeze({wireDeviceId,rootSecret:Buffer.from(v2.rootBytes(rootSecret)),host,port,maximum});this.counter=counter;this.busy=false
+    this.options=Object.freeze({wireDeviceId,rootSecret:Buffer.from(v2.rootBytes(rootSecret)),host,port,family,maximum});this.counter=counter;this.busy=false
   }
   async send(slot,payload,options={}) {
     if(!Buffer.isBuffer(payload)||payload.length<1)throw new Error('Telemetry payload must be nonempty')
@@ -29,9 +30,9 @@ class SecureV2Client {
     this.busy=true
     try {
       const sequence=await this.counter.next(),frame=v2.buildFrame({...this.options,sequence,slot,confirmed,batch,payload})
-      const details={protocol:'Struct Secure V2',cipher:'ChaCha20-Poly1305',sequence,schema_slot:slot,payload_bytes:payload.length,frame_bytes:frame.length,ipv4_udp_bytes:frame.length+28,receipt_requested:confirmed,receipt_bytes:confirmed?v2.RECEIPT_BYTES:0,batch_count:batch?payload[0]:1,packet_id:createHash('sha256').update(frame).digest('hex')}
+      const details={protocol:'Struct Secure V2',cipher:'ChaCha20-Poly1305',sequence,schema_slot:slot,payload_bytes:payload.length,frame_bytes:frame.length,ipv4_udp_bytes:frame.length+28,network_type:this.options.family==='udp6'?'IPv6':'IPv4',estimated_ip_udp_bytes:frame.length+(this.options.family==='udp6'?48:28),receipt_requested:confirmed,receipt_bytes:confirmed?v2.RECEIPT_BYTES:0,batch_count:batch?payload[0]:1,packet_id:createHash('sha256').update(frame).digest('hex')}
       return await new Promise((resolve,reject)=>{
-        const socket=dgram.createSocket('udp4'),start=performance.now();let done=false,attempts=0,retryTimer
+        const socket=dgram.createSocket(this.options.family),start=performance.now();let done=false,attempts=0,retryTimer
         const finish=(status,error)=>{
           if(done)return;done=true;clearTimeout(budgetTimer);clearTimeout(retryTimer)
           try{socket.close()}catch{}

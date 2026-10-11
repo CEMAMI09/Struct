@@ -48,6 +48,7 @@ export function validateConfig(input: unknown): asserts input is LabConfig {
     if (typeof value !== 'number' || !Number.isInteger(value) || value < min || value > max)
       fail(`${label} must be ${min}..${max}.`)
   }
+  choice(s.structGeneration ?? 'v2', ['v1', 'v2'], 'Struct generation')
   choice(s.security, [true, false], 'security')
   choice(s.delivery, ['confirmed', 'unconfirmed'], 'delivery')
   choice(s.precision, ['original', 'optimized'], 'precision')
@@ -59,6 +60,7 @@ export function validateConfig(input: unknown): asserts input is LabConfig {
   choice(s.mqttVersion, [4, 5], 'MQTT version')
   choice(s.qos, ['auto', 0, 1, 2], 'QoS')
   choice(s.oscore, ['AES-CCM-16-64-128', 'AES-CCM-16-128-128', 'ChaCha20/Poly1305'], 'OSCORE profile')
+  choice(s.coapSecurity ?? 'oscore', ['oscore','dtls-ccm8','dtls-ccm16'], 'CoAP security transport')
   choice(s.coapEncoding, ['cbor-array', 'cbor-canonical', 'json-compact', 'protobuf'], 'CoAP serialization')
   choice(s.jsonEncoding, ['json-compact', 'json-standard', 'json-array'], 'JSON layout')
   choice(s.cborEncoding, ['cbor-array', 'cbor-canonical', 'cbor-integer-keys'], 'CBOR layout')
@@ -300,8 +302,9 @@ function restoreTagged(value: unknown): unknown {
   }
   return value
 }
-class CborFloat {
-  constructor(readonly value: number) {}
+export class CborFloat {
+  readonly value: number
+  constructor(value: number) { this.value = value }
   encodeCBOR(encoder: { push: (value: Buffer) => boolean }) {
     let half: number | undefined
     try {
@@ -516,27 +519,27 @@ export function serialize(codec: string, p: Prepared, s: LabSettings): Buffer {
   if (output.length > 65536) fail('Encoded message exceeds the calculator limit of 64 KiB.')
   return output
 }
-export function structEncode(p: Prepared, s: LabSettings): { payload: Buffer; sample: string } {
+export function structEncode(p: Prepared, s: LabSettings): { payload: Buffer; sample: string; definition: unknown[]; encoding: 'legacy-le-v1'|'bitpacked-v1' } {
   if (p.fields.some((f) => f.optional || f.repeated || f.absent))
     fail('Struct codecs do not support optional or repeated fields.')
   const usePacked =
     s.precision === 'optimized' ||
-    p.fields.some((f) => ['fixed', 'enum', 'bitset', 'float16'].includes(f.type))
+    p.fields.some((f) => ['fixed', 'enum', 'bitset', 'float16', 'float64', 'timestamp', 'sint', 'string', 'bytes'].includes(f.type) || ['int','uint'].includes(f.type) && !((f.type === 'int' && f.width === 32) || (f.type === 'uint' && f.width === 8)))
   if (usePacked) {
     const definition = p.fields.map((f) => {
       if (
-        ['string', 'bytes', 'nested', 'null', 'timestamp', 'float64', 'sint'].includes(f.type) ||
-        (['int', 'uint', 'bitset'].includes(f.type) && f.width > 32)
+        ['nested', 'null'].includes(f.type)
       )
         fail(`Struct packed encoding does not support ${f.type}${f.width > 32 ? ' at this width' : ''}.`)
       return {
         name: f.name,
-        type: f.type === 'bool' ? 'boolean' : f.type,
-        width: f.width,
+        type: f.type === 'bool' ? 'boolean' : f.type === 'timestamp' ? 'uint' : f.type === 'sint' ? 'int' : f.type,
+        width: f.type === 'timestamp' ? 64 : f.width,
         min: f.min,
         max: f.max,
         precision: f.step,
         values: f.labels,
+        maxBytes: f.maxBytes,
       } as PackedField
     })
     const payload = Buffer.from(packed.encodePayload(p.values, definition)),
@@ -548,7 +551,7 @@ export function structEncode(p: Prepared, s: LabSettings): { payload: Buffer; sa
           fail('Struct packed round trip failed.')
       } else verifyDecoded(actual, value)
     }
-    return { payload, sample: packed.generateCHeader(definition, { slot: 1 }) }
+    return { payload, sample: packed.generateCHeader(definition, { slot: 1 }), definition, encoding: 'bitpacked-v1' }
   }
   const definition: SchemaField[] = p.fields.map((f) => {
     const type =
@@ -582,5 +585,5 @@ export function structEncode(p: Prepared, s: LabSettings): { payload: Buffer; sa
       offset += 4
     } else payload[offset++] = f.type === 'boolean' ? (v ? 1 : 0) : Number(v)
   }
-  return { payload, sample }
+  return { payload, sample, definition, encoding: 'legacy-le-v1' }
 }

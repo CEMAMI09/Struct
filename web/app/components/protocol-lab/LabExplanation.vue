@@ -71,10 +71,11 @@ const readable = (value: unknown) => JSON.stringify(value, null, 2)
         <dd>
           {{
             result.notComparable.join(' ') ||
-            'Eligible within the matching security, delivery and measurement group.'
+            'Same data and measurement boundary; inspect security and delivery dimensions independently.'
           }}
         </dd>
       </dl>
+      <dl v-if="result.comparison" class="lab-detail-list"><dt>Data</dt><dd>{{result.comparison.data}}</dd><dt>Security</dt><dd>{{result.comparison.security}}</dd><dt>Delivery</dt><dd>{{result.comparison.delivery}}</dd><dt>Measurement</dt><dd>{{result.comparison.measurement}}</dd></dl>
       <h3>Byte accounting</h3>
       <dl class="lab-byte-list">
         <template v-for="(value, key) in result.parts" :key="key"

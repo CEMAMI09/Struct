@@ -17,8 +17,8 @@ export class PersistentSequenceCounter {
  close():void;
  static provision(file:string,options:Omit<SequenceCounterOptions,'trustedProvisioning'|'initialSequence'|'recover'>&{bootstrapToken:string;bootstrapOrigin?:string}):Promise<PersistentSequenceCounter>;
 }
-export interface SecureV2ClientOptions {wireDeviceId:number;rootSecret:string|Buffer;counter:{next:()=>number|Promise<number>;wireDeviceId?:number};host?:string;port?:number;maximum?:number}
-export interface SecureV2Outcome extends Outcome {protocol:'Struct Secure V2';cipher:'ChaCha20-Poly1305';sequence:number;schema_slot:number;payload_bytes:number;frame_bytes:number;ipv4_udp_bytes:number;receipt_requested:boolean;receipt_bytes:number;batch_count:number}
+export interface SecureV2ClientOptions {wireDeviceId:number;rootSecret:string|Buffer;counter:{next:()=>number|Promise<number>;wireDeviceId?:number};host?:string;port?:number;family?:'udp4'|'udp6';maximum?:number}
+export interface SecureV2Outcome extends Outcome {protocol:'Struct Secure V2';cipher:'ChaCha20-Poly1305';sequence:number;schema_slot:number;payload_bytes:number;frame_bytes:number;ipv4_udp_bytes:number;network_type:'IPv4'|'IPv6';estimated_ip_udp_bytes:number;receipt_requested:boolean;receipt_bytes:number;batch_count:number}
 export class SecureV2Client {
  constructor(options:SecureV2ClientOptions);
  send(slot:number,payload:Buffer,delivery?:Omit<Delivery,'eventId'>):Promise<SecureV2Outcome>;

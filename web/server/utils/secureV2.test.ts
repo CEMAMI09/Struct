@@ -82,7 +82,7 @@ describe('Secure V2 control plane', () => {
   it.each([
     { slot: 16, encoding: 'bitpacked-v1', schemaDefinition: [{ name: 'active', type: 'boolean' }] },
     { slot: 0, encoding: 'bitpacked-v1', schemaDefinition: [{ name: 'n', type: 'fixed', min: 0, max: 1, precision: 0 }] },
-    { slot: 0, encoding: 'bitpacked-v1', schemaDefinition: [{ name: 'n', type: 'uint', width: 33 }] },
+    { slot: 0, encoding: 'bitpacked-v1', schemaDefinition: [{ name: 'n', type: 'uint', width: 65 }] },
     { slot: 0, encoding: 'bitpacked-v1', schemaDefinition: [] },
     { slot: 0, encoding: 'unknown', schemaDefinition: [] },
     { slot: 0, encoding: 'bitpacked-v1', schemaDefinition: [{ name: '__proto__', type: 'boolean' }] },

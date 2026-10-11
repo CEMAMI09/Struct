@@ -1,5 +1,5 @@
-export type PackedField = {name:string,type:'boolean'|'uint'|'int'|'enum'|'bitset'|'fixed'|'float16'|'float32',width?:number,min?:number,max?:number,precision?:number,clamp?:boolean,values?:string[]}
-export type CompiledSchema = {fields:(PackedField & {width:number,bitOffset:number,levels?:number})[],bits:number,bytes:number,encoding:'bitpacked-v1'}
+export type PackedField = {name:string,type:'boolean'|'uint'|'int'|'enum'|'bitset'|'fixed'|'float16'|'float32'|'float64'|'string'|'bytes',maxBytes?:number,width?:number,min?:number|string,max?:number|string,precision?:number,clamp?:boolean,values?:string[]}
+export type CompiledSchema = {fields:(Omit<PackedField,'min'|'max'> & {min?:number|bigint,max?:number|bigint,width:number,bitOffset:number,levels?:number})[],bits:number,bytes:number,encoding:'bitpacked-v1'}
 export function compileSchema(fields:unknown):CompiledSchema
 export function fieldBitWidth(field:PackedField):number
 export function schemaByteLength(fields:PackedField[]|CompiledSchema):number

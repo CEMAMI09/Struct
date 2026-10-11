@@ -1,0 +1,34 @@
+{
+  "version": "2.0.0-lab-coverage",
+  "total": 6340,
+  "statuses": {
+    "passed": 6340
+  },
+  "stacks": {
+    "protobuf+MQTT+TCP": 252,
+    "json-compact+MQTT+TCP": 252,
+    "cbor-canonical+MQTT+TCP": 252,
+    "cbor-array+MQTT+TCP": 252,
+    "json-array+MQTT+TCP": 252,
+    "protobuf+MQTT+TLS": 504,
+    "json-compact+MQTT+TLS": 504,
+    "cbor-canonical+MQTT+TLS": 504,
+    "cbor-array+MQTT+TLS": 504,
+    "json-array+MQTT+TLS": 504,
+    "cbor-canonical+CoAP+UDP": 92,
+    "cbor-canonical+CoAP+OSCORE+UDP": 276,
+    "cbor-array+CoAP+UDP": 92,
+    "cbor-array+CoAP+OSCORE+UDP": 276,
+    "cbor-integer-keys+CoAP+UDP": 92,
+    "cbor-integer-keys+CoAP+OSCORE+UDP": 276,
+    "json-compact+CoAP+UDP": 92,
+    "json-compact+CoAP+OSCORE+UDP": 276,
+    "json-array+CoAP+UDP": 92,
+    "json-array+CoAP+OSCORE+UDP": 276,
+    "protobuf+CoAP+UDP": 92,
+    "protobuf+CoAP+OSCORE+UDP": 276,
+    "Secure V2": 176,
+    "V2-compatible plaintext LAB ONLY": 176
+  },
+  "raw_size_bytes": 2584978
+}

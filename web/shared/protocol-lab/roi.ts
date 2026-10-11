@@ -39,7 +39,7 @@ export function calculateRoi(input: RoiInput, results: LabResult[]): RoiRow[] {
       : Math.max(mb * input.costPerMB, input.devices * input.minimumPerDevice * 12)
   return results.map((r) => {
     const bytes = r.boundary === 'network' ? (r.metrics.effective?.value ?? null) : null
-    const eligible = baseline && baseline.id !== r.id ? r.eligibilityKey === baseline.eligibilityKey : true
+    const eligible = baseline && baseline.id !== r.id ? r.boundary === baseline.boundary && r.eligibilityKey === baseline.eligibilityKey : true
     const userBaseline = input.measuredBytesPerEvent !== null || input.measuredMBPerMonth !== null
     if (bytes === null)
       return {
@@ -88,8 +88,8 @@ export function calculateRoi(input: RoiInput, results: LabResult[]): RoiRow[] {
         input.billing === 'flat'
           ? 'Flat-rate cost stays unchanged as traffic falls.'
           : !comparable
-            ? 'Savings withheld: security/delivery profiles differ.'
-            : 'Modeled metered cost; decimal MB. Provisioning, unmeasured retries, and carrier-specific session rounding excluded.',
+            ? 'Savings withheld: measurement/accounting differs.'
+            : 'Modeled metered cost; decimal MB. Security/delivery guarantees can differ; network model assumptions apply. Provisioning, unmeasured retries, and carrier-specific session rounding excluded.',
     }
   })
 }

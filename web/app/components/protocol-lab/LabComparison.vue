@@ -2,7 +2,8 @@
 import type { LabResult, LabSettings } from '#shared/protocol-lab/types'
 defineProps<{ results: LabResult[]; settings: LabSettings; pending: boolean }>()
 const emit = defineEmits<{ inspect: [LabResult, string] }>()
-const rows = [
+const view = defineModel<'simple'|'advanced'>('view', {default:'simple'})
+const allRows = [
   ['payload', 'Encoded batch data'],
   ['framing', 'Uplink protocol framing'],
   ['security', 'Uplink security overhead'],
@@ -15,14 +16,16 @@ const rows = [
   ['setup', 'Connection setup reference'],
   ['stream', 'Selected TCP/TLS stream'],
   ['exchange', 'Network exchange'],
-  ['effective', 'Selected bytes / reading'],
+  ['effective', 'Total data / reading'],
 ] as const
+const rows = computed(() => view.value === 'simple' ? allRows.filter(([key]) => key === 'effective') : allRows)
+const integration: Record<string,string> = {struct:'Generated C/Node SDK; managed ingestion; plaintext profile is local lab only',protobuf:'Generate message types; configure MQTT broker and TLS',coap:'CoAP library plus server resource; OSCORE context provisioning',lwm2m:'LwM2M client/server, object model and provisioning',json:'JSON encoder plus MQTT broker or HTTP endpoint',cbor:'CBOR serializer plus MQTT broker'}
 const bytes = (v: number | null | undefined) =>
   v === null || v === undefined
     ? '—'
     : new Intl.NumberFormat('en', { maximumFractionDigits: 2 }).format(v) + ' B'
 const signed = (v: number | null) =>
-  v === null ? 'Not comparable' : v === 0 ? '0.00%' : `${Math.abs(v).toFixed(2)}% ${v > 0 ? 'less' : 'more'}`
+  v === null ? 'Unavailable at this boundary' : v === 0 ? '0.00%' : `${Math.abs(v).toFixed(2)}% ${v > 0 ? 'less' : 'more'}`
 const securityRows = [
   ['encryption', 'Encryption'],
   ['authentication', 'Authentication'],
@@ -52,13 +55,14 @@ function isMinimum(result: LabResult, results: LabResult[]) {
     <div class="lab-panel-heading">
       <div>
         <p class="lab-eyebrow">LIVE COMPARISON</p>
-        <h2 id="comparison-heading">Every byte, accounted for.</h2>
+        <h2 id="comparison-heading">Compare your telemetry.</h2>
+        <div class="lab-result-mode" role="group" aria-label="Results view"><button v-for="mode in (['simple','advanced'] as const)" :key="mode" class="lab-button" type="button" :aria-pressed="view === mode" @click="view = mode">{{ mode === 'simple' ? 'Simple results' : 'Advanced results' }}</button></div>
       </div>
       <span class="lab-status" :class="{ updating: pending }">{{
         pending
           ? 'Recalculating…'
           : settings.boundary === 'network'
-            ? 'UDP/IP estimate'
+            ? 'Network estimates / models'
             : settings.boundary === 'stream'
               ? 'TCP/TLS stream'
               : 'Application bytes'
@@ -132,7 +136,7 @@ function isMinimum(result: LabResult, results: LabResult[]) {
             >
               {{
                 result.difference === null
-                  ? 'Not comparable'
+                  ? 'Unavailable at this boundary'
                   : result.difference === 0
                     ? '0 B'
                     : `${bytes(Math.abs(result.difference))} ${result.difference > 0 ? 'less' : 'more'}`
@@ -147,17 +151,20 @@ function isMinimum(result: LabResult, results: LabResult[]) {
               :class="{ 'lab-struct-column': result.id === 'struct' }"
             >
               <span :class="{ 'lab-muted': result.reduction === null }">{{ signed(result.reduction) }}</span
-              ><small v-if="result.reduction === null">{{ result.notComparable[0] }}</small>
+              ><button v-if="result.notComparable.length" class="lab-evidence" type="button" @click="emit('inspect',result,'selected')">Size comparison · differences disclosed (i)</button>
             </td>
           </tr>
+          <tr v-if="view === 'simple'"><th scope="row" class="lab-row-label">Security</th><td v-for="r in results" :key="r.id">{{!r.implementation ? 'Unavailable for this configuration' : r.security.encryption !== 'None' ? 'Encrypted and authenticated' : r.security.authentication !== 'None' ? 'Authenticated only' : 'Unsecured'}}<small v-if="r.id === 'struct' &amp;&amp; !settings.security &amp;&amp; settings.structGeneration !== 'v1'">Benchmark only · not a production transport</small></td></tr>
+          <tr v-if="view === 'simple'"><th scope="row" class="lab-row-label">Delivery</th><td v-for="r in results" :key="r.id">{{r.reliability.guarantee || r.reason}}</td></tr>
+          <tr v-if="view === 'simple'"><th scope="row" class="lab-row-label">Integration</th><td v-for="r in results" :key="r.id">{{integration[r.id]}}</td></tr>
         </tbody>
       </table>
     </div>
     <p class="lab-table-footnote">
       — means unavailable, never zero. Minimum highlighting applies only within a matching comparison group.
-      Header info opens methodology, sources and exact configuration.
+      Network totals include explicit TCP/custom-DTLS models; open info for assumptions. Size differences do not imply equivalent security or delivery.
     </p>
-    <details class="lab-table-group">
+    <details v-if="view === 'advanced'" class="lab-table-group">
       <summary>Security specifications <span>No numerical scores</span></summary>
       <div class="lab-table-scroll" tabindex="0">
         <table class="lab-table">
@@ -176,7 +183,7 @@ function isMinimum(result: LabResult, results: LabResult[]) {
         </table>
       </div>
     </details>
-    <details class="lab-table-group">
+    <details v-if="view === 'advanced'" class="lab-table-group">
       <summary>
         Delivery &amp; reliability <span>Different acknowledgments mean different guarantees</span>
       </summary>

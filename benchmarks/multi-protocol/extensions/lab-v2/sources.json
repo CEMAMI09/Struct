@@ -1,0 +1,5 @@
+[
+  {"id":"lab-senml-validation","url":"https://www.rfc-editor.org/rfc/rfc8428","sections":"4 (semantics), 5 (JSON), 6 (CBOR)","retrieved_date":"2026-10-11","claims":["SenML typed value labels, base resource path, binary data representation and relative timestamps"],"validation":"40 generated payloads independently decoded with Eclipse Leshan 2.0.0-M18; not new native Send network observations"},
+  {"id":"lab-tls-model","url":"https://www.rfc-editor.org/rfc/rfc8446","sections":"5.1, 5.2, 5.4","retrieved_date":"2026-10-11","claims":["TLS 1.3 record header, inner content type, AEAD expansion, record size limits"],"assumptions":"No padding; 16-byte tag; one record per modeled application flight up to 16 KiB; TLS 1.2 AES-GCM alternative uses 29 bytes, not this RFC's TLS 1.3 profile"},
+  {"id":"lab-dtls-model","url":"https://www.rfc-editor.org/rfc/rfc9146","sections":"4 (DTLSInnerPlaintext and CID record)","retrieved_date":"2026-10-11","claims":["Connection identifier and inner content type framing"],"assumptions":"Chosen archived Scandium CID6/GCM profile: 19-byte record header + 8-byte explicit nonce + 1 inner type + 16-byte tag; not universal DTLS overhead"}
+]

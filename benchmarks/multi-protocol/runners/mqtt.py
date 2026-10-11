@@ -9,11 +9,11 @@ from serializers import Codec
 from local_network import Proxy,certificates,free_port,wait_port,tls_records
 import paho.mqtt.client as mqtt
 
-def main():
-    cases=restore(json.loads((BASE/'schemas/library.json').read_text(encoding='utf8')))
+def main(cases_override=None, writer_factory=Writer, batch_sizes=None):
+    cases=cases_override if cases_override is not None else restore(json.loads((BASE/'schemas/library.json').read_text(encoding='utf8')))
     # All payload-size cases + representative boundaries/field counts/presets.
     selected=[c for c in cases if c.get('family') in ['reference','preset','payload-size','field-count','unicode','nested','array','optional'] or c['id'].startswith('random-00')]
-    writer=Writer('mqtt',reset='--reset' in sys.argv);start=time.perf_counter()
+    writer=writer_factory('mqtt',reset='--reset' in sys.argv);start=time.perf_counter()
     broker=ROOT/'work/multi-protocol/tools/nanomq/bin/nanomq.exe'
     with tempfile.TemporaryDirectory(prefix='struct-local-mqtt-') as tmp:
         tmp=pathlib.Path(tmp);port=free_port()
@@ -52,7 +52,7 @@ def main():
                                 for name in ['protobuf','json-compact','cbor-canonical','cbor-array','json-array']:
                                     try: codec=Codec(name,case)
                                     except NotImplementedError: continue
-                                    for batch in ([1,2,5,10,25,50,100] if case.get('family')=='reference' else [1]):
+                                    for batch in (batch_sizes if batch_sizes is not None else [1,2,5,10,25,50,100] if case.get('family')=='reference' else [1]):
                                         variations=[('telemetry/t',False)]
                                         if case['id']=='esp32-original' and batch==1:
                                             variations += [('telemetry/device-0000000000000000000000000001/environment',True)]

@@ -1,0 +1,3 @@
+[
+  {"mode":"Struct SLB0 plaintext LAB ONLY","confidentiality":false,"integrity":"None","tag_bytes":0,"identity":"None; device ID is unauthenticated metadata","replay":"None","forward_secrecy":false,"scope":"isolated benchmark only","negative_tests":"All plaintext benchmark frames rejected by production processFrame; secured tampered packets rejected separately","limitations":"Not deployable production V2; decode receipt has no authentication or storage guarantee"}
+]

@@ -39,7 +39,15 @@ async function run(){
   assert.equal(outcome.sequence,500);assert.equal(outcome.status,'committed');assert.equal(outcome.frame_bytes,26);assert.equal(outcome.protocol,'Struct Secure V2')
   assert(!debug.stdout.includes(rootSecret));assert(!JSON.stringify(outcome).includes(rootSecret))
   assert.equal(outcome.receipt_bytes,21);assert.match(debug.stdout,/payload 1 B.*frame 26 B.*IPv4\/UDP 54 B.*receipt 21 B/)
-  console.log('Secure V2 Node UDP SDK: exact retry, forged receipt rejection, timeout, send-once, MTU splitting and sanitized debug sender passed')
+  const ipv6=dgram.createSocket('udp6');ipv6.bind(0,'::1');await once(ipv6,'listening')
+  try {
+   ipv6.on('message',(frame,remote)=>{const parsed=wire.decryptFrame(frame,rootSecret);assert.equal(parsed.plaintext.toString('hex'),'2a');ipv6.send(wire.buildReceipt(rootSecret,wireDeviceId,parsed.sequence),remote.port,remote.address)})
+   const six=new SecureV2Client({wireDeviceId,rootSecret,counter,host:'::1',family:'udp6',port:ipv6.address().port})
+   const outcome=await six.send(0,Buffer.from([42]),{confirmed:true,maxRetries:0,budgetMs:1000})
+   assert.equal(outcome.status,'committed');assert.equal(outcome.network_type,'IPv6');assert.equal(outcome.estimated_ip_udp_bytes,74);assert.equal(six.options.family,'udp6');assert.equal(client.options.family,'udp4')
+   assert.throws(()=>new SecureV2Client({wireDeviceId,rootSecret,counter,family:'invalid'}),/family/)
+  }finally{await new Promise(resolve=>ipv6.close(resolve))}
+  console.log('Secure V2 Node UDP SDK: IPv4/IPv6 confirmed delivery, exact retry, forged receipt rejection, timeout, send-once, MTU splitting and sanitized debug sender passed')
  }finally{await new Promise(resolve=>server.close(resolve));fs.rmSync(dir,{recursive:true,force:true})}
 }
 run().catch(error=>{console.error(error);process.exitCode=1})

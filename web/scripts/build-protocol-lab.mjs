@@ -1,5 +1,5 @@
 // Build a sanitized, server-only index. Never publish raw packets or credentials.
-import { createReadStream, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { createReadStream, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { createGunzip, gzipSync } from 'node:zlib'
 import { createInterface } from 'node:readline'
 import { fileURLToPath } from 'node:url'
@@ -66,6 +66,8 @@ const valueKeys = [
   'raw_line',
   'tamper_rejected',
   'replay_rejected',
+  'source_hashes',
+  'production_parser_rejected',
   'delivery_success_rate',
   'unique_readings_received',
   'actual_retransmitted_datagrams',
@@ -73,8 +75,10 @@ const valueKeys = [
   'host_exchange_latency_ns',
   'host_exchange_latency_ms',
 ]
-for await (const line of createInterface({
-  input: createReadStream(new URL('results/normalized/records.ndjson.gz', research)).pipe(createGunzip()),
+const extensionFile='extensions/lab-v2/records.ndjson.gz'
+const inputFiles=['results/normalized/records.ndjson.gz', ...(existsSync(new URL(extensionFile,research))?[extensionFile]:[])]
+for (const inputFile of inputFiles) for await (const line of createInterface({
+  input: createReadStream(new URL(inputFile, research)).pipe(createGunzip()),
   crlfDelay: Infinity,
 })) {
   const source = JSON.parse(line)
@@ -92,6 +96,8 @@ for await (const line of createInterface({
     'packet_capture',
     'seed',
     'git_commit',
+    'git',
+    'arch',
   ]
   profile.environment_metadata = Object.fromEntries(
     environmentKeys
@@ -128,10 +134,23 @@ for await (const line of createInterface({
     ),
   })
 }
-const schemas = read('schemas/library.json')
+const schemas = [...read('schemas/library.json'), ...(existsSync(new URL('extensions/lab-v2/schemas.json',research))?read('extensions/lab-v2/schemas.json'):[])]
 const coverage = read('results/summaries/coverage.json')
-if (records.length !== coverage.total_configurations) throw Error('Research coverage/index count mismatch')
-const data = { version: '1.0.0', profiles, records, schemas, coverage }
+const extensionCount=existsSync(new URL('extensions/lab-v2/measurement-summary.json',research))?read('extensions/lab-v2/measurement-summary.json').total:0
+if (records.length !== coverage.total_configurations + extensionCount) throw Error('Research coverage/index count mismatch')
+coverage.original_configurations=coverage.total_configurations
+coverage.extension_configurations=extensionCount
+coverage.total_configurations=records.length
+coverage.dataset_version='2.0.0'
+coverage.test_status_counts=Object.fromEntries([...new Set(records.map(r=>r.test_status))].map(status=>[status,records.filter(r=>r.test_status===status).length]))
+coverage.unique_schema_value_cases=new Set(records.map(r=>r.schema)).size
+coverage.library_cases=schemas.length
+const canonical=value=>Array.isArray(value)?value.map(canonical):value && typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(k=>[k,canonical(value[k])])):value
+coverage.distinct_schema_definitions=new Set(schemas.map(s=>JSON.stringify(canonical(s.fields)))).size
+coverage.successful_stacks={}
+for(const r of records)if(r.test_status==='passed'){const stack=profiles[r.profile].protocol_stack;coverage.successful_stacks[stack]=(coverage.successful_stacks[stack]??0)+1}
+const extensionRead = name => existsSync(new URL('extensions/lab-v2/'+name,research)) ? read('extensions/lab-v2/'+name) : []
+const data = { version: '2.0.0', profiles, records, schemas, coverage }
 const target = new URL('../server/assets/protocol-lab/', import.meta.url)
 mkdirSync(target, { recursive: true })
 // JSON.stringify normally erases -0, changing Python JSON reference lengths.
@@ -152,9 +171,9 @@ writeFileSync(
   JSON.stringify({
     version: data.version,
     coverage,
-    sources: read('references/sources.json'),
-    security: read('references/security-matrix.json'),
-    compatibility: read('config/compatibility.json'),
+    sources: [...read('references/sources.json'), ...extensionRead('sources.json')],
+    security: [...read('references/security-matrix.json'), ...extensionRead('security-matrix.json')],
+    compatibility: [...read('config/compatibility.json').filter(p=>p.protocol !== 'Struct JS SDK'), ...extensionRead('compatibility.json')],
     implementations: read('references/implementations.json'),
     presets: schemas.filter((s) => s.family === 'preset' || s.family === 'reference'),
     indexSha256: createHash('sha256').update(compressed).digest('hex'),

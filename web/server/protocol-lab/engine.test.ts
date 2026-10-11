@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { gunzipSync } from 'node:zlib'
-import { defaults, makeField, shareConfig, restoreConfig, defaultRoi } from '../../shared/protocol-lab/config'
+import { defaults as currentDefaults, makeField, shareConfig, restoreConfig, defaultRoi } from '../../shared/protocol-lab/config'
 import { calculateRoi } from '../../shared/protocol-lab/roi'
 import type { ResearchIndex, LabConfig, ProtocolId } from '../../shared/protocol-lab/types'
 import { calculate } from './engine'
 import { prepare, serialize, validateConfig } from './encoding'
+const defaults = () => { const c=currentDefaults(); c.settings.precision='original'; return c }
 const data = JSON.parse(
   gunzipSync(readFileSync(new URL('../assets/protocol-lab/index.json.gz', import.meta.url))).toString(),
 ) as ResearchIndex
@@ -13,9 +14,9 @@ const run = (config = defaults(), id: ProtocolId = 'struct') =>
   calculate(config, data, false).results.find((r) => r.id === id)!
 describe('Protocol Lab real benchmark regression', () => {
   it('preserves all source IDs, profiles and schema cases', () => {
-    expect(data.records).toHaveLength(65019)
-    expect(new Set(data.records.map((r) => r.id)).size).toBe(65019)
-    expect(data.schemas).toHaveLength(367)
+    expect(data.records).toHaveLength(data.coverage.total_configurations)
+    expect(new Set(data.records.map((r) => r.id)).size).toBe(data.coverage.total_configurations)
+    expect(data.schemas).toHaveLength(389)
   })
   it('matches original V2 payload and wire measurements', () => {
     const r = run()
@@ -45,15 +46,15 @@ describe('Protocol Lab real benchmark regression', () => {
     expect(r.metrics.exchange?.value).toBe(1003)
     expect(r.metrics.effective?.value).toBe(10.03)
   })
-  it('uses authenticated legacy plaintext when security is off', () => {
+  it('isolates plaintext lab mode from production V2 and keeps payload precision', () => {
     const c = defaults()
     c.settings.security = false
     c.settings.delivery = 'confirmed'
     const r = run(c)
-    expect(r.metrics.applicationUp?.value).toBe(75)
-    expect(r.metrics.exchange?.value).toBe(200)
+    expect(r.metrics.applicationUp?.value).toBe(22)
+    expect(r.metrics.exchange?.value).toBe(87)
     c.settings.batch = 2
-    expect(run(c).status).toBe('unsupported')
+    expect(run(c).status).toBe('calculated')
   })
   it('matches reference original serializers', () => {
     const c = defaults(),
@@ -77,7 +78,7 @@ describe('Protocol Lab real benchmark regression', () => {
     expect(run(c, 'coap').metrics.networkUp?.value).toBe(61)
     c.settings.network = 'IPv6'
     expect(run(c, 'coap').metrics.networkUp?.value).toBe(81)
-    expect(run(c).status).toBe('unsupported')
+    expect(run(c).metrics.networkUp?.value).toBe(82)
   })
   it('matches actual MQTT plaintext and only uses matching TLS streams', () => {
     const c = defaults()
@@ -85,18 +86,18 @@ describe('Protocol Lab real benchmark regression', () => {
     let r = run(c, 'protobuf')
     expect(r.metrics.applicationUp?.value).toBe(30)
     expect(r.metrics.stream?.value).toBe(78)
-    expect(r.metrics.networkUp?.value).toBeNull()
+    expect(r.metrics.networkUp?.evidence).toBe('estimated')
     c.fields.push(makeField('extra', 'float32', '1.5'))
     r = run(c, 'protobuf')
     expect(r.metrics.applicationUp?.value).toBe(35)
-    expect(r.metrics.stream?.value).toBeNull()
+    expect(r.metrics.stream?.evidence).toBe('estimated')
   })
   it('uses LwM2M Send references without custom-schema fallback', () => {
     const c = defaults()
     expect(run(c, 'lwm2m').metrics.applicationUp?.value).toBe(96)
     expect(run(c, 'lwm2m').metrics.setup?.value).toBeNull()
     c.fields[0]!.value = '24'
-    expect(run(c, 'lwm2m').status).toBe('not_tested')
+    expect(run(c, 'lwm2m').status).toBe('estimated')
   })
 })
 describe('Schema, eligibility and ROI', () => {
@@ -147,9 +148,12 @@ describe('Schema, eligibility and ROI', () => {
   it('withholds incompatible percentages and missing-network costs', () => {
     const c = defaults(),
       response = calculate(c, data, false)
-    expect(response.results.find((r) => r.id === 'protobuf')!.reduction).toBeNull()
+    expect(response.results.find((r) => r.id === 'protobuf')!.reduction).not.toBeNull()
+    expect(response.results.find((r) => r.id === 'protobuf')!.comparison?.category).toBe('disclosed_differences')
     const roi = calculateRoi({ ...defaultRoi, enabled: true }, response.results)
-    expect(roi.find((r) => r.id === 'protobuf')!.annualCost).toBeNull()
+    expect(roi.find((r) => r.id === 'protobuf')!.annualCost).toBeGreaterThan(0)
+    c.settings.boundary='stream'
+    expect(calculateRoi({...defaultRoi,enabled:true},calculate(c,data,false).results).find(r=>r.id==='protobuf')!.annualCost).toBeNull()
   })
   it('calculates decimal MB, cellular fraction, minimums and flat rates', () => {
     const response = calculate(defaults(), data, false)
@@ -203,7 +207,8 @@ it('only ranks compatible uplinks and equivalent MQTT streams', () => {
   c.settings.traffic = 'uplink'
   expect(run(c, 'coap').reduction).toBeCloseTo(((62 - 69) / 62) * 100)
   c.settings.oscore = 'AES-CCM-16-64-128'
-  expect(run(c, 'coap').reduction).toBeNull()
+  expect(run(c, 'coap').reduction).not.toBeNull()
+  expect(run(c,'coap').comparison?.category).toBe('disclosed_differences')
   c.settings.boundary = 'stream'
   c.settings.baseline = 'json'
   expect(run(c, 'protobuf').reduction).toBeGreaterThan(0)

@@ -12,7 +12,7 @@ export interface SecureV2Slot {
   legacy_schema_version?:number|null
   sample_interval_ms?:number|null
 }
-export const PACKED_TYPES = ['boolean','uint','int','enum','bitset','fixed','float16','float32'] as const
+export const PACKED_TYPES = ['boolean','uint','int','enum','bitset','fixed','float16','float32','float64','string','bytes'] as const
 export const ENVIRONMENTAL_PACKED:PackedField[] = [
   {name:'temperature',type:'fixed',min:-40,max:125,precision:0.1},
   {name:'humidity',type:'fixed',min:0,max:100,precision:0.1},
@@ -20,6 +20,7 @@ export const ENVIRONMENTAL_PACKED:PackedField[] = [
 ]
 export function compilePacked(fields:PackedField[]) { return packed.compileSchema(fields) }
 export function packedFieldDefault(name:string,type:PackedField['type']):PackedField {
+  if(type==='string'||type==='bytes')return {name,type,maxBytes:64}
   if(type==='fixed')return {name,type,min:0,max:100,precision:0.1}
   if(type==='enum')return {name,type,values:['off','on']}
   if(type==='int'||type==='uint'||type==='bitset')return {name,type,width:8}

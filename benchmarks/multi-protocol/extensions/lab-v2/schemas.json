@@ -1,0 +1,1121 @@
+[
+  {
+    "id": "esp32-original-lab-original",
+    "fields": [
+      {
+        "name": "temp",
+        "type": "float32"
+      },
+      {
+        "name": "humidity",
+        "type": "float32"
+      },
+      {
+        "name": "is_active",
+        "type": "boolean"
+      }
+    ],
+    "values": {
+      "temp": 23.5,
+      "humidity": 61.25,
+      "is_active": true
+    },
+    "precision_policy": "original",
+    "family": "extension"
+  },
+  {
+    "id": "esp32-original-lab-optimized",
+    "fields": [
+      {
+        "name": "temp",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "humidity",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "is_active",
+        "type": "boolean",
+        "width": 32
+      }
+    ],
+    "values": {
+      "temp": 23.5,
+      "humidity": 61.25,
+      "is_active": true
+    },
+    "precision_policy": "optimized",
+    "family": "extension"
+  },
+  {
+    "id": "esp32-optimized-lab-original",
+    "fields": [
+      {
+        "name": "temp",
+        "type": "fixed",
+        "width": 32,
+        "min": -40,
+        "max": 125,
+        "precision": 0.1
+      },
+      {
+        "name": "humidity",
+        "type": "fixed",
+        "width": 32,
+        "min": 0,
+        "max": 100,
+        "precision": 0.1
+      },
+      {
+        "name": "is_active",
+        "type": "boolean",
+        "width": 32
+      }
+    ],
+    "values": {
+      "temp": 23.5,
+      "humidity": 61.25,
+      "is_active": true
+    },
+    "precision_policy": "original",
+    "family": "extension"
+  },
+  {
+    "id": "esp32-optimized-lab-optimized",
+    "fields": [
+      {
+        "name": "temp",
+        "type": "fixed",
+        "width": 32,
+        "min": -40,
+        "max": 125,
+        "precision": 0.1
+      },
+      {
+        "name": "humidity",
+        "type": "fixed",
+        "width": 32,
+        "min": 0,
+        "max": 100,
+        "precision": 0.1
+      },
+      {
+        "name": "is_active",
+        "type": "boolean",
+        "width": 32
+      }
+    ],
+    "values": {
+      "temp": 23.5,
+      "humidity": 61.25,
+      "is_active": true
+    },
+    "precision_policy": "optimized",
+    "family": "extension"
+  },
+  {
+    "id": "preset-environment-lab-original",
+    "fields": [
+      {
+        "name": "temp",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "humidity",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "pressure",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "width": 32
+      },
+      {
+        "name": "battery",
+        "type": "uint",
+        "width": 32
+      }
+    ],
+    "values": {
+      "temp": 23.5,
+      "humidity": 61.25,
+      "pressure": 1013.25,
+      "active": true,
+      "battery": 87
+    },
+    "precision_policy": "original",
+    "family": "extension"
+  },
+  {
+    "id": "preset-environment-lab-optimized",
+    "fields": [
+      {
+        "name": "temp",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "humidity",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "pressure",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "width": 32
+      },
+      {
+        "name": "battery",
+        "type": "uint",
+        "width": 32
+      }
+    ],
+    "values": {
+      "temp": 23.5,
+      "humidity": 61.25,
+      "pressure": 1013.25,
+      "active": true,
+      "battery": 87
+    },
+    "precision_policy": "optimized",
+    "family": "extension"
+  },
+  {
+    "id": "preset-gps-lab-original",
+    "fields": [
+      {
+        "name": "lat",
+        "type": "float64",
+        "width": 32
+      },
+      {
+        "name": "lon",
+        "type": "float64",
+        "width": 32
+      },
+      {
+        "name": "speed",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "heading",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "altitude",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "timestamp",
+        "type": "uint",
+        "width": 32
+      },
+      {
+        "name": "battery",
+        "type": "uint",
+        "width": 32
+      }
+    ],
+    "values": {
+      "lat": 37.7749,
+      "lon": -122.4194,
+      "speed": 12.5,
+      "heading": 90,
+      "altitude": 35,
+      "timestamp": 1791676800,
+      "battery": 80
+    },
+    "precision_policy": "original",
+    "family": "extension"
+  },
+  {
+    "id": "preset-gps-lab-optimized",
+    "fields": [
+      {
+        "name": "lat",
+        "type": "float64",
+        "width": 32
+      },
+      {
+        "name": "lon",
+        "type": "float64",
+        "width": 32
+      },
+      {
+        "name": "speed",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "heading",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "altitude",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "timestamp",
+        "type": "uint",
+        "width": 32
+      },
+      {
+        "name": "battery",
+        "type": "uint",
+        "width": 32
+      }
+    ],
+    "values": {
+      "lat": 37.7749,
+      "lon": -122.4194,
+      "speed": 12.5,
+      "heading": 90,
+      "altitude": 35,
+      "timestamp": 1791676800,
+      "battery": 80
+    },
+    "precision_policy": "optimized",
+    "family": "extension"
+  },
+  {
+    "id": "preset-vehicle-lab-original",
+    "fields": [
+      {
+        "name": "lat",
+        "type": "float64",
+        "width": 32
+      },
+      {
+        "name": "lon",
+        "type": "float64",
+        "width": 32
+      },
+      {
+        "name": "speed",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "rpm",
+        "type": "uint",
+        "width": 32
+      },
+      {
+        "name": "fuel",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "temp",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "odometer",
+        "type": "uint",
+        "width": 32
+      },
+      {
+        "name": "engine",
+        "type": "boolean",
+        "width": 32
+      },
+      {
+        "name": "fault",
+        "type": "uint",
+        "width": 32
+      }
+    ],
+    "values": {
+      "lat": 37.7749,
+      "lon": -122.4194,
+      "speed": 65,
+      "rpm": 2300,
+      "fuel": 0.75,
+      "temp": 90,
+      "odometer": 123456,
+      "engine": true,
+      "fault": 0
+    },
+    "precision_policy": "original",
+    "family": "extension"
+  },
+  {
+    "id": "preset-vehicle-lab-optimized",
+    "fields": [
+      {
+        "name": "lat",
+        "type": "float64",
+        "width": 32
+      },
+      {
+        "name": "lon",
+        "type": "float64",
+        "width": 32
+      },
+      {
+        "name": "speed",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "rpm",
+        "type": "uint",
+        "width": 32
+      },
+      {
+        "name": "fuel",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "temp",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "odometer",
+        "type": "uint",
+        "width": 32
+      },
+      {
+        "name": "engine",
+        "type": "boolean",
+        "width": 32
+      },
+      {
+        "name": "fault",
+        "type": "uint",
+        "width": 32
+      }
+    ],
+    "values": {
+      "lat": 37.7749,
+      "lon": -122.4194,
+      "speed": 65,
+      "rpm": 2300,
+      "fuel": 0.75,
+      "temp": 90,
+      "odometer": 123456,
+      "engine": true,
+      "fault": 0
+    },
+    "precision_policy": "optimized",
+    "family": "extension"
+  },
+  {
+    "id": "preset-industrial-lab-original",
+    "fields": [
+      {
+        "name": "voltage",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "current",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "temp",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "vibration",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "pressure",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "state",
+        "type": "uint",
+        "width": 32
+      }
+    ],
+    "values": {
+      "voltage": 230.5,
+      "current": 12.25,
+      "temp": 45.5,
+      "vibration": 0.125,
+      "pressure": 5.25,
+      "state": 2
+    },
+    "precision_policy": "original",
+    "family": "extension"
+  },
+  {
+    "id": "preset-industrial-lab-optimized",
+    "fields": [
+      {
+        "name": "voltage",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "current",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "temp",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "vibration",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "pressure",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "state",
+        "type": "uint",
+        "width": 32
+      }
+    ],
+    "values": {
+      "voltage": 230.5,
+      "current": 12.25,
+      "temp": 45.5,
+      "vibration": 0.125,
+      "pressure": 5.25,
+      "state": 2
+    },
+    "precision_policy": "optimized",
+    "family": "extension"
+  },
+  {
+    "id": "preset-smart-home-lab-original",
+    "fields": [
+      {
+        "name": "door",
+        "type": "boolean",
+        "width": 32
+      },
+      {
+        "name": "motion",
+        "type": "boolean",
+        "width": 32
+      },
+      {
+        "name": "temp",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "humidity",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "battery",
+        "type": "uint",
+        "width": 32
+      },
+      {
+        "name": "timestamp",
+        "type": "uint",
+        "width": 32
+      }
+    ],
+    "values": {
+      "door": false,
+      "motion": true,
+      "temp": 21.5,
+      "humidity": 45,
+      "battery": 95,
+      "timestamp": 1791676800
+    },
+    "precision_policy": "original",
+    "family": "extension"
+  },
+  {
+    "id": "preset-smart-home-lab-optimized",
+    "fields": [
+      {
+        "name": "door",
+        "type": "boolean",
+        "width": 32
+      },
+      {
+        "name": "motion",
+        "type": "boolean",
+        "width": 32
+      },
+      {
+        "name": "temp",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "humidity",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "battery",
+        "type": "uint",
+        "width": 32
+      },
+      {
+        "name": "timestamp",
+        "type": "uint",
+        "width": 32
+      }
+    ],
+    "values": {
+      "door": false,
+      "motion": true,
+      "temp": 21.5,
+      "humidity": 45,
+      "battery": 95,
+      "timestamp": 1791676800
+    },
+    "precision_policy": "optimized",
+    "family": "extension"
+  },
+  {
+    "id": "preset-energy-lab-original",
+    "fields": [
+      {
+        "name": "voltage",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "current",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "power",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "energy",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "frequency",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "status",
+        "type": "uint",
+        "width": 32
+      }
+    ],
+    "values": {
+      "voltage": 230,
+      "current": 10.5,
+      "power": 2415,
+      "energy": 12345.5,
+      "frequency": 50,
+      "status": 1
+    },
+    "precision_policy": "original",
+    "family": "extension"
+  },
+  {
+    "id": "preset-energy-lab-optimized",
+    "fields": [
+      {
+        "name": "voltage",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "current",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "power",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "energy",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "frequency",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "status",
+        "type": "uint",
+        "width": 32
+      }
+    ],
+    "values": {
+      "voltage": 230,
+      "current": 10.5,
+      "power": 2415,
+      "energy": 12345.5,
+      "frequency": 50,
+      "status": 1
+    },
+    "precision_policy": "optimized",
+    "family": "extension"
+  },
+  {
+    "id": "preset-air-quality-lab-original",
+    "fields": [
+      {
+        "name": "co2",
+        "type": "uint",
+        "width": 32
+      },
+      {
+        "name": "pm25",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "temp",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "humidity",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "alarm",
+        "type": "boolean",
+        "width": 32
+      }
+    ],
+    "values": {
+      "co2": 650,
+      "pm25": 12.5,
+      "temp": 23.5,
+      "humidity": 61.25,
+      "alarm": false
+    },
+    "precision_policy": "original",
+    "family": "extension"
+  },
+  {
+    "id": "preset-air-quality-lab-optimized",
+    "fields": [
+      {
+        "name": "co2",
+        "type": "uint",
+        "width": 32
+      },
+      {
+        "name": "pm25",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "temp",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "humidity",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "alarm",
+        "type": "boolean",
+        "width": 32
+      }
+    ],
+    "values": {
+      "co2": 650,
+      "pm25": 12.5,
+      "temp": 23.5,
+      "humidity": 61.25,
+      "alarm": false
+    },
+    "precision_policy": "optimized",
+    "family": "extension"
+  },
+  {
+    "id": "preset-water-meter-lab-original",
+    "fields": [
+      {
+        "name": "liters",
+        "type": "uint",
+        "width": 32
+      },
+      {
+        "name": "flow",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "pressure",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "leak",
+        "type": "boolean",
+        "width": 32
+      },
+      {
+        "name": "battery",
+        "type": "uint",
+        "width": 32
+      }
+    ],
+    "values": {
+      "liters": 12345,
+      "flow": 1.25,
+      "pressure": 4.5,
+      "leak": false,
+      "battery": 90
+    },
+    "precision_policy": "original",
+    "family": "extension"
+  },
+  {
+    "id": "preset-water-meter-lab-optimized",
+    "fields": [
+      {
+        "name": "liters",
+        "type": "uint",
+        "width": 32
+      },
+      {
+        "name": "flow",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "pressure",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "leak",
+        "type": "boolean",
+        "width": 32
+      },
+      {
+        "name": "battery",
+        "type": "uint",
+        "width": 32
+      }
+    ],
+    "values": {
+      "liters": 12345,
+      "flow": 1.25,
+      "pressure": 4.5,
+      "leak": false,
+      "battery": 90
+    },
+    "precision_policy": "optimized",
+    "family": "extension"
+  },
+  {
+    "id": "core-types-lab-original",
+    "fields": [
+      {
+        "name": "flag",
+        "type": "boolean",
+        "width": 1
+      },
+      {
+        "name": "int8",
+        "type": "int",
+        "width": 8
+      },
+      {
+        "name": "int16",
+        "type": "int",
+        "width": 16
+      },
+      {
+        "name": "int32",
+        "type": "int",
+        "width": 32
+      },
+      {
+        "name": "int64",
+        "type": "int",
+        "width": 64
+      },
+      {
+        "name": "uint8",
+        "type": "uint",
+        "width": 8
+      },
+      {
+        "name": "uint16",
+        "type": "uint",
+        "width": 16
+      },
+      {
+        "name": "uint32",
+        "type": "uint",
+        "width": 32
+      },
+      {
+        "name": "uint64",
+        "type": "uint",
+        "width": 64
+      },
+      {
+        "name": "double",
+        "type": "float64",
+        "width": 64
+      },
+      {
+        "name": "single",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "half",
+        "type": "float16",
+        "width": 16
+      },
+      {
+        "name": "time",
+        "type": "uint",
+        "width": 64
+      },
+      {
+        "name": "bits",
+        "type": "bitset",
+        "width": 8
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "width": 32,
+        "maxBytes": 64
+      },
+      {
+        "name": "raw",
+        "type": "bytes",
+        "width": 32,
+        "maxBytes": 64
+      },
+      {
+        "name": "state",
+        "type": "enum",
+        "width": 32,
+        "values": [
+          "off",
+          "on",
+          "idle"
+        ]
+      },
+      {
+        "name": "decimal",
+        "type": "fixed",
+        "width": 32,
+        "min": 0,
+        "max": 10,
+        "precision": 0.01
+      }
+    ],
+    "values": {
+      "flag": true,
+      "int8": -128,
+      "int16": -32768,
+      "int32": -2147483648,
+      "int64": {
+        "$integer": "-9223372036854775808"
+      },
+      "uint8": 255,
+      "uint16": 65535,
+      "uint32": 4294967295,
+      "uint64": {
+        "$integer": "18446744073709551615"
+      },
+      "double": 1.0000000000000002,
+      "single": 23.5,
+      "half": 1.5,
+      "time": {
+        "$integer": "18446744073709551615"
+      },
+      "bits": 255,
+      "label": "\u6e29\u5ea6\u03b1",
+      "raw": {
+        "$bytes": "00ff8053"
+      },
+      "state": "on",
+      "decimal": 1.23
+    },
+    "precision_policy": "original",
+    "family": "extension"
+  },
+  {
+    "id": "core-types-lab-optimized",
+    "fields": [
+      {
+        "name": "flag",
+        "type": "boolean",
+        "width": 1
+      },
+      {
+        "name": "int8",
+        "type": "int",
+        "width": 8
+      },
+      {
+        "name": "int16",
+        "type": "int",
+        "width": 16
+      },
+      {
+        "name": "int32",
+        "type": "int",
+        "width": 32
+      },
+      {
+        "name": "int64",
+        "type": "int",
+        "width": 64
+      },
+      {
+        "name": "uint8",
+        "type": "uint",
+        "width": 8
+      },
+      {
+        "name": "uint16",
+        "type": "uint",
+        "width": 16
+      },
+      {
+        "name": "uint32",
+        "type": "uint",
+        "width": 32
+      },
+      {
+        "name": "uint64",
+        "type": "uint",
+        "width": 64
+      },
+      {
+        "name": "double",
+        "type": "float64",
+        "width": 64
+      },
+      {
+        "name": "single",
+        "type": "float32",
+        "width": 32
+      },
+      {
+        "name": "half",
+        "type": "float16",
+        "width": 16
+      },
+      {
+        "name": "time",
+        "type": "uint",
+        "width": 64
+      },
+      {
+        "name": "bits",
+        "type": "bitset",
+        "width": 8
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "width": 32,
+        "maxBytes": 64
+      },
+      {
+        "name": "raw",
+        "type": "bytes",
+        "width": 32,
+        "maxBytes": 64
+      },
+      {
+        "name": "state",
+        "type": "enum",
+        "width": 32,
+        "values": [
+          "off",
+          "on",
+          "idle"
+        ]
+      },
+      {
+        "name": "decimal",
+        "type": "fixed",
+        "width": 32,
+        "min": 0,
+        "max": 10,
+        "precision": 0.01
+      }
+    ],
+    "values": {
+      "flag": true,
+      "int8": -128,
+      "int16": -32768,
+      "int32": -2147483648,
+      "int64": {
+        "$integer": "-9223372036854775808"
+      },
+      "uint8": 255,
+      "uint16": 65535,
+      "uint32": 4294967295,
+      "uint64": {
+        "$integer": "18446744073709551615"
+      },
+      "double": 1.0000000000000002,
+      "single": 23.5,
+      "half": 1.5,
+      "time": {
+        "$integer": "18446744073709551615"
+      },
+      "bits": 255,
+      "label": "\u6e29\u5ea6\u03b1",
+      "raw": {
+        "$bytes": "00ff8053"
+      },
+      "state": "on",
+      "decimal": 1.23
+    },
+    "precision_policy": "optimized",
+    "family": "extension"
+  }
+]

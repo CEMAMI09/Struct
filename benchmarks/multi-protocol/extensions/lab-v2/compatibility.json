@@ -1,0 +1,122 @@
+[
+  {
+    "protocol": "Struct Secure V2 schema extension",
+    "security_mode": "mandatory ChaCha20-Poly1305",
+    "delivery_mode": "unconfirmed / authenticated database-commit receipt",
+    "supported_serialization": [
+      "legacy-le-v1",
+      "bitpacked-v1"
+    ],
+    "status": "measured",
+    "network_type": [
+      "IPv4",
+      "IPv6 local"
+    ],
+    "implementation": "Generated C encoder parity, Node SecureV2Client, production gateway + isolated PGlite",
+    "batching": "native count + fixed-size records; SDK frame splitting",
+    "connection_behavior": [
+      "preprovisioned steady state"
+    ],
+    "limitations": "Gateway production binding remains unchanged. Publish new types only into unused immutable slots after rolling out decoder; existing schemas/wire bytes unchanged. No nested/optional/repeated/null fields."
+  },
+  {
+    "protocol": "Struct JS SDK",
+    "security_mode": "mandatory AEAD",
+    "delivery_mode": "confirmed / unconfirmed",
+    "supported_serialization": [
+      "legacy-le-v1",
+      "bitpacked-v1"
+    ],
+    "status": "measured",
+    "network_type": [
+      "IPv4",
+      "IPv6 local"
+    ],
+    "implementation": "SecureV2Client family udp4 default / explicit udp6",
+    "batching": "native splitting",
+    "connection_behavior": [],
+    "limitations": "udp6 confirmed SDK loopback test passed; this does not change or qualify a production IPv6 listener or ESP32 IPv6 transport."
+  },
+  {
+    "protocol": "Struct SLB0 plaintext LAB ONLY",
+    "security_mode": "none",
+    "delivery_mode": "unconfirmed / unauthenticated decode receipt",
+    "supported_serialization": [
+      "legacy-le-v1",
+      "bitpacked-v1"
+    ],
+    "status": "measured",
+    "network_type": [
+      "IPv4",
+      "IPv6"
+    ],
+    "implementation": "Separate local benchmark encoder/decoder",
+    "batching": "same fixed-record semantics and count framing as V2",
+    "connection_behavior": [
+      "loopback only"
+    ],
+    "limitations": "Not production-supported Secure V2. 13-byte domain-separated header. Production parser rejects this generation. No confidentiality/integrity/replay/device authentication."
+  },
+  {
+    "protocol": "Calculator TCP/IP scenario model",
+    "security_mode": "plaintext / TLS 1.2 / TLS 1.3",
+    "delivery_mode": "MQTT QoS 0/1/2 or HTTP response",
+    "supported_serialization": [
+      "protobuf",
+      "JSON",
+      "CBOR"
+    ],
+    "status": "modeled",
+    "network_type": [
+      "IPv4",
+      "IPv6"
+    ],
+    "implementation": "network-model.ts; independent real MQTT application/stream regressions",
+    "batching": "application envelopes",
+    "connection_behavior": [
+      "steady state",
+      "matching measured lifecycle stream amortization"
+    ],
+    "limitations": "No packet captures. Assumes minimum IP/TCP headers, MSS segmentation, flushed TLS flights and standalone ACK for every data segment. Keepalives/options/retries excluded."
+  },
+  {
+    "protocol": "Calculator LwM2M custom Send",
+    "security_mode": "CoAP plaintext / DTLS 1.2 CID6 GCM envelope model",
+    "delivery_mode": "CON/NON with 2.04 example response",
+    "supported_serialization": [
+      "SENML_JSON",
+      "SENML_CBOR"
+    ],
+    "status": "calculated / modeled",
+    "network_type": [
+      "IPv4",
+      "IPv6"
+    ],
+    "implementation": "Real SenML serializer, independent Leshan decoder, coap-packet framing",
+    "batching": "relative-time SenML records; explicit custom object /33000/0",
+    "connection_behavior": [
+      "steady state"
+    ],
+    "limitations": "Custom native Send interoperability/lifecycle not captured. TLV Read is separate. Oversized UDP network totals withheld. Nested/repeated/null mappings not implemented."
+  },
+  {
+    "protocol": "Calculator CoAP/DTLS references",
+    "security_mode": "DTLS 1.2 PSK AES-128-CCM-8 / CCM-16",
+    "delivery_mode": "CON/NON with echoed 2.04 response",
+    "supported_serialization": [
+      "protobuf",
+      "json-compact",
+      "cbor-canonical"
+    ],
+    "status": "measured references only",
+    "network_type": [
+      "IPv4"
+    ],
+    "implementation": "Californium/Scandium 4.0.0-M6",
+    "batching": "matching archived cases",
+    "connection_behavior": [
+      "established association"
+    ],
+    "limitations": "No custom DTLS model; pinned /t and library-generated token, no inferred lifecycle. Unmatched schema/encoding/batch/IPv6 returns an explicit explanation."
+  }
+]

@@ -24,10 +24,10 @@ def contexts(directory,algorithm):
         (path/'secret.json').write_text(json.dumps(data))
     return [oscore.FilesystemSecurityContext(str(path)) for path in result]
 
-def main():
+def main(cases_override=None, writer_factory=Writer, batch_sizes=None):
     import importlib.metadata as md
-    cases=restore(json.loads((BASE/'schemas/library.json').read_text(encoding='utf8')))
-    writer=Writer('coap',reset='--reset' in sys.argv);start=time.perf_counter()
+    cases=cases_override if cases_override is not None else restore(json.loads((BASE/'schemas/library.json').read_text(encoding='utf8')))
+    writer=writer_factory('coap',reset='--reset' in sys.argv);start=time.perf_counter()
     security_modes=[None,'AES-CCM-16-64-128','AES-CCM-16-128-128','ChaCha20/Poly1305']
     with tempfile.TemporaryDirectory(prefix='struct-local-oscore-') as tmp:
         pairs={alg:contexts(pathlib.Path(tmp)/str(i),alg) for i,alg in enumerate(security_modes[1:])}
@@ -42,7 +42,7 @@ def main():
                 for algorithm in modes:
                     for net in ['IPv4','IPv6']:
                         for confirmed in [False,True]:
-                            batches=[1,2,5,10,25,50,100] if case['id'] in ['esp32-original','esp32-optimized'] else [1]
+                            batches=batch_sizes if batch_sizes is not None else [1,2,5,10,25,50,100] if case['id'] in ['esp32-original','esp32-optimized'] else [1]
                             for batch in batches:
                                 # Short vs 8-byte tokens and longer URI affect the critical reference.
                                 variations=[(2,('t',))]

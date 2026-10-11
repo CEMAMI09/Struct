@@ -23,7 +23,7 @@ for(const width of [1,2,7,8,9,16,31,32]){
  const s=[{name:'u',type:'uint',width},{name:'i',type:'int',width}]
  for(const u of [0,2**width-1])for(const i of [-(2**(width-1)),2**(width-1)-1]) assert.deepEqual(p.decodePayload(p.encodePayload({u,i},s),s),{u,i})
 }
-for(const definition of [[],[{name:'x',type:'uint',width:33}],[{name:'x',type:'fixed',min:0,max:1,precision:0}],[{name:'x',type:'fixed',min:0,max:1,precision:1e-12}],[{name:'__proto__',type:'boolean'}],[{name:'e',type:'enum',values:['a','a']}],Array.from({length:129},(_,i)=>({name:`x${i}`,type:'uint',width:1}))]) assert.throws(()=>p.compileSchema(definition))
+for(const definition of [[],[{name:'x',type:'uint',width:65}],[{name:'x',type:'fixed',min:0,max:1,precision:0}],[{name:'x',type:'fixed',min:0,max:1,precision:1e-12}],[{name:'__proto__',type:'boolean'}],[{name:'e',type:'enum',values:['a','a']}],Array.from({length:129},(_,i)=>({name:`x${i}`,type:'uint',width:1}))]) assert.throws(()=>p.compileSchema(definition))
 assert.equal(hex({x:9},[{name:'x',type:'fixed',min:0,max:1,precision:0.1,clamp:true}]),'a0')
 assert.equal(hex({x:0.3},[{name:'x',type:'fixed',min:0,max:0.3,precision:0.1}]),'c0')
 const floats=[{name:'flag',type:'boolean'},{name:'half',type:'float16'},{name:'full',type:'float32'}]

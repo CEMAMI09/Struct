@@ -1,0 +1,167 @@
+{
+  "strict_eligibility_rejections_fixed": 64,
+  "previously_available_unranked_fixed": 324,
+  "version": "2.0.0-lab-coverage",
+  "before": {
+    "total": 1920,
+    "available": 384,
+    "available_percent": 20.0,
+    "size_comparisons": 60,
+    "comparison_percent": 3.125,
+    "missing": 1536
+  },
+  "after": {
+    "total": 1920,
+    "available": 1920,
+    "available_percent": 100.0,
+    "size_comparisons": 1920,
+    "comparison_percent": 100.0,
+    "missing": 0
+  },
+  "previously_missing_fixed": 1536,
+  "additional_numeric_comparisons": 1860,
+  "main_categories": {
+    "supported_specification_calculated": 802,
+    "supported_modeled": 1118
+  },
+  "comparison_categories": {
+    "direct": 320,
+    "disclosed_differences": 1600
+  },
+  "presets": {
+    "esp32-optimized": {
+      "total": 192,
+      "available": 192,
+      "available_percent": 100.0,
+      "size_comparisons": 192,
+      "comparison_percent": 100.0,
+      "missing": 0
+    },
+    "esp32-original": {
+      "total": 192,
+      "available": 192,
+      "available_percent": 100.0,
+      "size_comparisons": 192,
+      "comparison_percent": 100.0,
+      "missing": 0
+    },
+    "preset-air-quality": {
+      "total": 192,
+      "available": 192,
+      "available_percent": 100.0,
+      "size_comparisons": 192,
+      "comparison_percent": 100.0,
+      "missing": 0
+    },
+    "preset-energy": {
+      "total": 192,
+      "available": 192,
+      "available_percent": 100.0,
+      "size_comparisons": 192,
+      "comparison_percent": 100.0,
+      "missing": 0
+    },
+    "preset-environment": {
+      "total": 192,
+      "available": 192,
+      "available_percent": 100.0,
+      "size_comparisons": 192,
+      "comparison_percent": 100.0,
+      "missing": 0
+    },
+    "preset-gps": {
+      "total": 192,
+      "available": 192,
+      "available_percent": 100.0,
+      "size_comparisons": 192,
+      "comparison_percent": 100.0,
+      "missing": 0
+    },
+    "preset-industrial": {
+      "total": 192,
+      "available": 192,
+      "available_percent": 100.0,
+      "size_comparisons": 192,
+      "comparison_percent": 100.0,
+      "missing": 0
+    },
+    "preset-smart-home": {
+      "total": 192,
+      "available": 192,
+      "available_percent": 100.0,
+      "size_comparisons": 192,
+      "comparison_percent": 100.0,
+      "missing": 0
+    },
+    "preset-vehicle": {
+      "total": 192,
+      "available": 192,
+      "available_percent": 100.0,
+      "size_comparisons": 192,
+      "comparison_percent": 100.0,
+      "missing": 0
+    },
+    "preset-water-meter": {
+      "total": 192,
+      "available": 192,
+      "available_percent": 100.0,
+      "size_comparisons": 192,
+      "comparison_percent": 100.0,
+      "missing": 0
+    }
+  },
+  "advanced": {
+    "total": 1140,
+    "available": 1078,
+    "available_percent": 94.56140350877193,
+    "size_comparisons": 1033,
+    "comparison_percent": 90.6140350877193,
+    "missing": 62
+  },
+  "advanced_categories": {
+    "supported_specification_calculated": 385,
+    "supported_modeled": 693,
+    "genuinely_unsupported": 42,
+    "missing_data": 20
+  },
+  "advanced_missing_reasons": {
+    "MTU exceeded.": 33,
+    "Custom LwM2M registration/DTLS lifecycle accounting remains unmeasured. Disable setup to inspect steady state.": 20,
+    "Legacy V1 requires the original legacy schema codec. Packed/new field types are Secure V2 capabilities, not a legacy transport option.": 9
+  },
+  "measurements": {
+    "version": "2.0.0-lab-coverage",
+    "total": 6340,
+    "statuses": {
+      "passed": 6340
+    },
+    "stacks": {
+      "protobuf+MQTT+TCP": 252,
+      "json-compact+MQTT+TCP": 252,
+      "cbor-canonical+MQTT+TCP": 252,
+      "cbor-array+MQTT+TCP": 252,
+      "json-array+MQTT+TCP": 252,
+      "protobuf+MQTT+TLS": 504,
+      "json-compact+MQTT+TLS": 504,
+      "cbor-canonical+MQTT+TLS": 504,
+      "cbor-array+MQTT+TLS": 504,
+      "json-array+MQTT+TLS": 504,
+      "cbor-canonical+CoAP+UDP": 92,
+      "cbor-canonical+CoAP+OSCORE+UDP": 276,
+      "cbor-array+CoAP+UDP": 92,
+      "cbor-array+CoAP+OSCORE+UDP": 276,
+      "cbor-integer-keys+CoAP+UDP": 92,
+      "cbor-integer-keys+CoAP+OSCORE+UDP": 276,
+      "json-compact+CoAP+UDP": 92,
+      "json-compact+CoAP+OSCORE+UDP": 276,
+      "json-array+CoAP+UDP": 92,
+      "json-array+CoAP+OSCORE+UDP": 276,
+      "protobuf+CoAP+UDP": 92,
+      "protobuf+CoAP+OSCORE+UDP": 276,
+      "Secure V2": 176,
+      "V2-compatible plaintext LAB ONLY": 176
+    },
+    "raw_size_bytes": 2584978
+  },
+  "scope": "Finite calculator matrix, not all possible custom schemas/options; UDP/IP specification calculations and explicit TCP/DTLS models are not packet captures."
+}

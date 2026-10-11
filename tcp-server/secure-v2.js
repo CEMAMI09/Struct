@@ -61,7 +61,8 @@ async function processSecureV2(frame,ctx) {
   const recordBytes=codec.schemaByteLength(slot.schema_definition)
   ctx.trace?.begin('decoding')
   const payloads=wire.splitRecords(authenticated.plaintext,{batch:header.batch,recordBytes})
-  const records=payloads.map(payload=>slot.encoding==='bitpacked-v1'?packed.decodePayload(payload,slot.schema_definition):legacy.parsePayload(payload,slot.schema_definition))
+  const jsonSafe=value=>value instanceof Uint8Array?{$bytes:Buffer.from(value).toString('hex')}:typeof value==='bigint'?{$integer:value.toString()}:Array.isArray(value)?value.map(jsonSafe):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([k,v])=>[k,jsonSafe(v)])):value
+  const records=payloads.map(payload=>jsonSafe(slot.encoding==='bitpacked-v1'?packed.decodePayload(payload,slot.schema_definition):legacy.parsePayload(payload,slot.schema_definition)))
   if(ctx.trace){ctx.trace.secureV2Bytes(recordBytes*records.length,header.batch,header.confirmed);ctx.trace.data.batch_count=records.length;ctx.trace.data.aead='verified'}
   ctx.trace?.begin('storage')
   const store=ctx.replayStore||new PostgresReplayStore(ctx.supabase),result=await store.accept({header,frame,records})

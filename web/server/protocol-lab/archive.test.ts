@@ -1,9 +1,10 @@
 import { it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { gunzipSync } from 'node:zlib'
-import { defaults, presetFields } from '../../shared/protocol-lab/config'
+import { defaults as currentDefaults, presetFields } from '../../shared/protocol-lab/config'
 import type { ResearchIndex } from '../../shared/protocol-lab/types'
 import { prepare, serialize } from './encoding'
+const defaults = () => { const c=currentDefaults(); c.settings.precision='original'; return c }
 const data = JSON.parse(
   gunzipSync(readFileSync(new URL('../assets/protocol-lab/index.json.gz', import.meta.url))).toString(),
 ) as ResearchIndex

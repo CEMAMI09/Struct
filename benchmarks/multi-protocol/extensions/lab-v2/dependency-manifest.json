@@ -1,0 +1,41 @@
+{
+  "python": "3.11.9",
+  "python_packages": [
+    {
+      "package": "protobuf",
+      "version": "7.36.2",
+      "license": "3-Clause BSD License",
+      "license_classifiers": []
+    },
+    {
+      "package": "cbor2",
+      "version": "6.1.5",
+      "license": "MIT",
+      "license_classifiers": []
+    },
+    {
+      "package": "paho-mqtt",
+      "version": "2.1.0",
+      "license": "EPL-2.0 OR BSD-3-Clause",
+      "license_classifiers": [
+        "License :: OSI Approved"
+      ]
+    },
+    {
+      "package": "aiocoap",
+      "version": "0.4.17",
+      "license": "MIT AND BSD-3-Clause",
+      "license_classifiers": []
+    },
+    {
+      "package": "cryptography",
+      "version": "50.0.2",
+      "license": "Apache-2.0 OR BSD-3-Clause",
+      "license_classifiers": []
+    }
+  ],
+  "tools_registry": "benchmarks/multi-protocol/references/tool-downloads.json",
+  "implementation_registry": "benchmarks/multi-protocol/references/implementations.json",
+  "runtime_package_lock": "web/package-lock.json",
+  "license_note": "Missing metadata is unknown, not permission to redistribute. Struct has no top-level redistribution license identified."
+}

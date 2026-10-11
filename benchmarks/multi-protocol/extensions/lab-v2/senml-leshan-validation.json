@@ -1,0 +1,501 @@
+[ {
+  "test_status" : "passed",
+  "payload_hex" : "83a300613002f94de021692f33333030302f302fa200613102f953a8a200613204f5",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "esp32-original-original-SENML_CBOR",
+  "decoded" : {
+    "temp" : 23.5,
+    "humidity" : 61.25,
+    "is_active" : true
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c2276223a32332e352c22626e223a222f33333030302f302f227d2c7b226e223a2231222c2276223a36312e32357d2c7b226e223a2232222c227662223a747275657d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "esp32-original-original-SENML_JSON",
+  "decoded" : {
+    "temp" : 23.5,
+    "humidity" : 61.25,
+    "is_active" : true
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "83a300613002f94de021692f33333030302f302fa200613102f953a8a200613204f5",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "esp32-original-optimized-SENML_CBOR",
+  "decoded" : {
+    "temp" : 23.5,
+    "humidity" : 61.25,
+    "is_active" : true
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c2276223a32332e352c22626e223a222f33333030302f302f227d2c7b226e223a2231222c2276223a36312e32357d2c7b226e223a2232222c227662223a747275657d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "esp32-original-optimized-SENML_JSON",
+  "decoded" : {
+    "temp" : 23.5,
+    "humidity" : 61.25,
+    "is_active" : true
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "83a30061300219027b21692f33333030302f302fa200613102190265a200613204f5",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "esp32-optimized-original-SENML_CBOR",
+  "decoded" : {
+    "temp" : 635,
+    "humidity" : 613,
+    "is_active" : true
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c2276223a3633352c22626e223a222f33333030302f302f227d2c7b226e223a2231222c2276223a3631337d2c7b226e223a2232222c227662223a747275657d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "esp32-optimized-original-SENML_JSON",
+  "decoded" : {
+    "temp" : 635,
+    "humidity" : 613,
+    "is_active" : true
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "83a30061300219027b21692f33333030302f302fa200613102190265a200613204f5",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "esp32-optimized-optimized-SENML_CBOR",
+  "decoded" : {
+    "temp" : 635,
+    "humidity" : 613,
+    "is_active" : true
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c2276223a3633352c22626e223a222f33333030302f302f227d2c7b226e223a2231222c2276223a3631337d2c7b226e223a2232222c227662223a747275657d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "esp32-optimized-optimized-SENML_JSON",
+  "decoded" : {
+    "temp" : 635,
+    "humidity" : 613,
+    "is_active" : true
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "85a300613002f94de021692f33333030302f302fa200613102f953a8a200613202fa447d5000a200613304f5a2006134021857",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-environment-original-SENML_CBOR",
+  "decoded" : {
+    "temp" : 23.5,
+    "humidity" : 61.25,
+    "pressure" : 1013.25,
+    "active" : true,
+    "battery" : 87
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c2276223a32332e352c22626e223a222f33333030302f302f227d2c7b226e223a2231222c2276223a36312e32357d2c7b226e223a2232222c2276223a313031332e32357d2c7b226e223a2233222c227662223a747275657d2c7b226e223a2234222c2276223a38377d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-environment-original-SENML_JSON",
+  "decoded" : {
+    "temp" : 23.5,
+    "humidity" : 61.25,
+    "pressure" : 1013.25,
+    "active" : true,
+    "battery" : 87
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "85a300613002f94de021692f33333030302f302fa200613102f953a8a200613202fa447d5000a200613304f5a2006134021857",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-environment-optimized-SENML_CBOR",
+  "decoded" : {
+    "temp" : 23.5,
+    "humidity" : 61.25,
+    "pressure" : 1013.25,
+    "active" : true,
+    "battery" : 87
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c2276223a32332e352c22626e223a222f33333030302f302f227d2c7b226e223a2231222c2276223a36312e32357d2c7b226e223a2232222c2276223a313031332e32357d2c7b226e223a2233222c227662223a747275657d2c7b226e223a2234222c2276223a38377d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-environment-optimized-SENML_JSON",
+  "decoded" : {
+    "temp" : 23.5,
+    "humidity" : 61.25,
+    "pressure" : 1013.25,
+    "active" : true,
+    "battery" : 87
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "87a300613002fb4042e32fec56d5d021692f33333030302f302fa200613102fbc05e9ad77318fc50a200613202f94a40a200613302f955a0a200613402f95060a2006135021a6acad180a2006136021850",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-gps-original-SENML_CBOR",
+  "decoded" : {
+    "lat" : 37.7749,
+    "lon" : -122.4194,
+    "speed" : 12.5,
+    "heading" : 90.0,
+    "altitude" : 35.0,
+    "timestamp" : 1791676800,
+    "battery" : 80
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c2276223a33372e373734392c22626e223a222f33333030302f302f227d2c7b226e223a2231222c2276223a2d3132322e343139347d2c7b226e223a2232222c2276223a31322e357d2c7b226e223a2233222c2276223a39302e307d2c7b226e223a2234222c2276223a33352e307d2c7b226e223a2235222c2276223a313739313637363830307d2c7b226e223a2236222c2276223a38307d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-gps-original-SENML_JSON",
+  "decoded" : {
+    "lat" : 37.7749,
+    "lon" : -122.4194,
+    "speed" : 12.5,
+    "heading" : 90.0,
+    "altitude" : 35.0,
+    "timestamp" : 1791676800,
+    "battery" : 80
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "87a300613002fb4042e32fec56d5d021692f33333030302f302fa200613102fbc05e9ad77318fc50a200613202f94a40a200613302f955a0a200613402f95060a2006135021a6acad180a2006136021850",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-gps-optimized-SENML_CBOR",
+  "decoded" : {
+    "lat" : 37.7749,
+    "lon" : -122.4194,
+    "speed" : 12.5,
+    "heading" : 90.0,
+    "altitude" : 35.0,
+    "timestamp" : 1791676800,
+    "battery" : 80
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c2276223a33372e373734392c22626e223a222f33333030302f302f227d2c7b226e223a2231222c2276223a2d3132322e343139347d2c7b226e223a2232222c2276223a31322e357d2c7b226e223a2233222c2276223a39302e307d2c7b226e223a2234222c2276223a33352e307d2c7b226e223a2235222c2276223a313739313637363830307d2c7b226e223a2236222c2276223a38307d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-gps-optimized-SENML_JSON",
+  "decoded" : {
+    "lat" : 37.7749,
+    "lon" : -122.4194,
+    "speed" : 12.5,
+    "heading" : 90.0,
+    "altitude" : 35.0,
+    "timestamp" : 1791676800,
+    "battery" : 80
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "89a300613002fb4042e32fec56d5d021692f33333030302f302fa200613102fbc05e9ad77318fc50a200613202f95410a2006133021908fca200613402f93a00a200613502f955a0a2006136021a0001e240a200613704f5a20061380200",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-vehicle-original-SENML_CBOR",
+  "decoded" : {
+    "lat" : 37.7749,
+    "lon" : -122.4194,
+    "speed" : 65.0,
+    "rpm" : 2300,
+    "fuel" : 0.75,
+    "temp" : 90.0,
+    "odometer" : 123456,
+    "engine" : true,
+    "fault" : 0
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c2276223a33372e373734392c22626e223a222f33333030302f302f227d2c7b226e223a2231222c2276223a2d3132322e343139347d2c7b226e223a2232222c2276223a36352e307d2c7b226e223a2233222c2276223a323330307d2c7b226e223a2234222c2276223a302e37357d2c7b226e223a2235222c2276223a39302e307d2c7b226e223a2236222c2276223a3132333435367d2c7b226e223a2237222c227662223a747275657d2c7b226e223a2238222c2276223a307d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-vehicle-original-SENML_JSON",
+  "decoded" : {
+    "lat" : 37.7749,
+    "lon" : -122.4194,
+    "speed" : 65.0,
+    "rpm" : 2300,
+    "fuel" : 0.75,
+    "temp" : 90.0,
+    "odometer" : 123456,
+    "engine" : true,
+    "fault" : 0
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "89a300613002fb4042e32fec56d5d021692f33333030302f302fa200613102fbc05e9ad77318fc50a200613202f95410a2006133021908fca200613402f93a00a200613502f955a0a2006136021a0001e240a200613704f5a20061380200",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-vehicle-optimized-SENML_CBOR",
+  "decoded" : {
+    "lat" : 37.7749,
+    "lon" : -122.4194,
+    "speed" : 65.0,
+    "rpm" : 2300,
+    "fuel" : 0.75,
+    "temp" : 90.0,
+    "odometer" : 123456,
+    "engine" : true,
+    "fault" : 0
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c2276223a33372e373734392c22626e223a222f33333030302f302f227d2c7b226e223a2231222c2276223a2d3132322e343139347d2c7b226e223a2232222c2276223a36352e307d2c7b226e223a2233222c2276223a323330307d2c7b226e223a2234222c2276223a302e37357d2c7b226e223a2235222c2276223a39302e307d2c7b226e223a2236222c2276223a3132333435367d2c7b226e223a2237222c227662223a747275657d2c7b226e223a2238222c2276223a307d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-vehicle-optimized-SENML_JSON",
+  "decoded" : {
+    "lat" : 37.7749,
+    "lon" : -122.4194,
+    "speed" : 65.0,
+    "rpm" : 2300,
+    "fuel" : 0.75,
+    "temp" : 90.0,
+    "odometer" : 123456,
+    "engine" : true,
+    "fault" : 0
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "86a300613002f95b3421692f33333030302f302fa200613102f94a20a200613202f951b0a200613302f93000a200613402f94540a20061350202",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-industrial-original-SENML_CBOR",
+  "decoded" : {
+    "voltage" : 230.5,
+    "current" : 12.25,
+    "temp" : 45.5,
+    "vibration" : 0.125,
+    "pressure" : 5.25,
+    "state" : 2
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c2276223a3233302e352c22626e223a222f33333030302f302f227d2c7b226e223a2231222c2276223a31322e32357d2c7b226e223a2232222c2276223a34352e357d2c7b226e223a2233222c2276223a302e3132357d2c7b226e223a2234222c2276223a352e32357d2c7b226e223a2235222c2276223a327d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-industrial-original-SENML_JSON",
+  "decoded" : {
+    "voltage" : 230.5,
+    "current" : 12.25,
+    "temp" : 45.5,
+    "vibration" : 0.125,
+    "pressure" : 5.25,
+    "state" : 2
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "86a300613002f95b3421692f33333030302f302fa200613102f94a20a200613202f951b0a200613302f93000a200613402f94540a20061350202",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-industrial-optimized-SENML_CBOR",
+  "decoded" : {
+    "voltage" : 230.5,
+    "current" : 12.25,
+    "temp" : 45.5,
+    "vibration" : 0.125,
+    "pressure" : 5.25,
+    "state" : 2
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c2276223a3233302e352c22626e223a222f33333030302f302f227d2c7b226e223a2231222c2276223a31322e32357d2c7b226e223a2232222c2276223a34352e357d2c7b226e223a2233222c2276223a302e3132357d2c7b226e223a2234222c2276223a352e32357d2c7b226e223a2235222c2276223a327d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-industrial-optimized-SENML_JSON",
+  "decoded" : {
+    "voltage" : 230.5,
+    "current" : 12.25,
+    "temp" : 45.5,
+    "vibration" : 0.125,
+    "pressure" : 5.25,
+    "state" : 2
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "86a300613004f421692f33333030302f302fa200613104f5a200613202f94d60a200613302f951a0a200613402185fa2006135021a6acad180",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-smart-home-original-SENML_CBOR",
+  "decoded" : {
+    "door" : false,
+    "motion" : true,
+    "temp" : 21.5,
+    "humidity" : 45.0,
+    "battery" : 95,
+    "timestamp" : 1791676800
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c227662223a66616c73652c22626e223a222f33333030302f302f227d2c7b226e223a2231222c227662223a747275657d2c7b226e223a2232222c2276223a32312e357d2c7b226e223a2233222c2276223a34352e307d2c7b226e223a2234222c2276223a39357d2c7b226e223a2235222c2276223a313739313637363830307d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-smart-home-original-SENML_JSON",
+  "decoded" : {
+    "door" : false,
+    "motion" : true,
+    "temp" : 21.5,
+    "humidity" : 45.0,
+    "battery" : 95,
+    "timestamp" : 1791676800
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "86a300613004f421692f33333030302f302fa200613104f5a200613202f94d60a200613302f951a0a200613402185fa2006135021a6acad180",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-smart-home-optimized-SENML_CBOR",
+  "decoded" : {
+    "door" : false,
+    "motion" : true,
+    "temp" : 21.5,
+    "humidity" : 45.0,
+    "battery" : 95,
+    "timestamp" : 1791676800
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c227662223a66616c73652c22626e223a222f33333030302f302f227d2c7b226e223a2231222c227662223a747275657d2c7b226e223a2232222c2276223a32312e357d2c7b226e223a2233222c2276223a34352e307d2c7b226e223a2234222c2276223a39357d2c7b226e223a2235222c2276223a313739313637363830307d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-smart-home-optimized-SENML_JSON",
+  "decoded" : {
+    "door" : false,
+    "motion" : true,
+    "temp" : 21.5,
+    "humidity" : 45.0,
+    "battery" : 95,
+    "timestamp" : 1791676800
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "86a300613002f95b3021692f33333030302f302fa200613102f94940a200613202fa4516f000a200613302fa4640e600a200613402f95240a20061350201",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-energy-original-SENML_CBOR",
+  "decoded" : {
+    "voltage" : 230.0,
+    "current" : 10.5,
+    "power" : 2415.0,
+    "energy" : 12345.5,
+    "frequency" : 50.0,
+    "status" : 1
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c2276223a3233302e302c22626e223a222f33333030302f302f227d2c7b226e223a2231222c2276223a31302e357d2c7b226e223a2232222c2276223a323431352e307d2c7b226e223a2233222c2276223a31323334352e357d2c7b226e223a2234222c2276223a35302e307d2c7b226e223a2235222c2276223a317d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-energy-original-SENML_JSON",
+  "decoded" : {
+    "voltage" : 230.0,
+    "current" : 10.5,
+    "power" : 2415.0,
+    "energy" : 12345.5,
+    "frequency" : 50.0,
+    "status" : 1
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "86a300613002f95b3021692f33333030302f302fa200613102f94940a200613202fa4516f000a200613302fa4640e600a200613402f95240a20061350201",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-energy-optimized-SENML_CBOR",
+  "decoded" : {
+    "voltage" : 230.0,
+    "current" : 10.5,
+    "power" : 2415.0,
+    "energy" : 12345.5,
+    "frequency" : 50.0,
+    "status" : 1
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c2276223a3233302e302c22626e223a222f33333030302f302f227d2c7b226e223a2231222c2276223a31302e357d2c7b226e223a2232222c2276223a323431352e307d2c7b226e223a2233222c2276223a31323334352e357d2c7b226e223a2234222c2276223a35302e307d2c7b226e223a2235222c2276223a317d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-energy-optimized-SENML_JSON",
+  "decoded" : {
+    "voltage" : 230.0,
+    "current" : 10.5,
+    "power" : 2415.0,
+    "energy" : 12345.5,
+    "frequency" : 50.0,
+    "status" : 1
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "85a30061300219028a21692f33333030302f302fa200613102f94a40a200613202f94de0a200613302f953a8a200613404f4",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-air-quality-original-SENML_CBOR",
+  "decoded" : {
+    "co2" : 650,
+    "pm25" : 12.5,
+    "temp" : 23.5,
+    "humidity" : 61.25,
+    "alarm" : false
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c2276223a3635302c22626e223a222f33333030302f302f227d2c7b226e223a2231222c2276223a31322e357d2c7b226e223a2232222c2276223a32332e357d2c7b226e223a2233222c2276223a36312e32357d2c7b226e223a2234222c227662223a66616c73657d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-air-quality-original-SENML_JSON",
+  "decoded" : {
+    "co2" : 650,
+    "pm25" : 12.5,
+    "temp" : 23.5,
+    "humidity" : 61.25,
+    "alarm" : false
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "85a30061300219028a21692f33333030302f302fa200613102f94a40a200613202f94de0a200613302f953a8a200613404f4",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-air-quality-optimized-SENML_CBOR",
+  "decoded" : {
+    "co2" : 650,
+    "pm25" : 12.5,
+    "temp" : 23.5,
+    "humidity" : 61.25,
+    "alarm" : false
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c2276223a3635302c22626e223a222f33333030302f302f227d2c7b226e223a2231222c2276223a31322e357d2c7b226e223a2232222c2276223a32332e357d2c7b226e223a2233222c2276223a36312e32357d2c7b226e223a2234222c227662223a66616c73657d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-air-quality-optimized-SENML_JSON",
+  "decoded" : {
+    "co2" : 650,
+    "pm25" : 12.5,
+    "temp" : 23.5,
+    "humidity" : 61.25,
+    "alarm" : false
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "85a30061300219303921692f33333030302f302fa200613102f93d00a200613202f94480a200613304f4a200613402185a",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-water-meter-original-SENML_CBOR",
+  "decoded" : {
+    "liters" : 12345,
+    "flow" : 1.25,
+    "pressure" : 4.5,
+    "leak" : false,
+    "battery" : 90
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c2276223a31323334352c22626e223a222f33333030302f302f227d2c7b226e223a2231222c2276223a312e32357d2c7b226e223a2232222c2276223a342e357d2c7b226e223a2233222c227662223a66616c73657d2c7b226e223a2234222c2276223a39307d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-water-meter-original-SENML_JSON",
+  "decoded" : {
+    "liters" : 12345,
+    "flow" : 1.25,
+    "pressure" : 4.5,
+    "leak" : false,
+    "battery" : 90
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "85a30061300219303921692f33333030302f302fa200613102f93d00a200613202f94480a200613304f4a200613402185a",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-water-meter-optimized-SENML_CBOR",
+  "decoded" : {
+    "liters" : 12345,
+    "flow" : 1.25,
+    "pressure" : 4.5,
+    "leak" : false,
+    "battery" : 90
+  }
+}, {
+  "test_status" : "passed",
+  "payload_hex" : "5b7b226e223a2230222c2276223a31323334352c22626e223a222f33333030302f302f227d2c7b226e223a2231222c2276223a312e32357d2c7b226e223a2232222c2276223a342e357d2c7b226e223a2233222c227662223a66616c73657d2c7b226e223a2234222c2276223a39307d5d",
+  "implementation" : "Eclipse Leshan 2.0.0-M18",
+  "id" : "preset-water-meter-optimized-SENML_JSON",
+  "decoded" : {
+    "liters" : 12345,
+    "flow" : 1.25,
+    "pressure" : 4.5,
+    "leak" : false,
+    "battery" : 90
+  }
+} ]

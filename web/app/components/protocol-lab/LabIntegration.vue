@@ -65,7 +65,7 @@ const rows = [
         </tbody>
       </table>
     </div>
-    <details v-if="result?.sample">
+    <details v-if="result?.sample && settings.security && settings.structGeneration !== 'v1'">
       <summary>Inspect the real generated C header for this schema</summary>
       <pre class="lab-code">{{ result.sample }}</pre>
       <p class="lab-help">

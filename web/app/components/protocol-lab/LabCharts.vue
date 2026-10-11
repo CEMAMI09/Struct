@@ -16,7 +16,7 @@ function segments(r: LabResult) {
   ]
   if (props.settings.boundary === 'network')
     pieces.push({
-      label: 'UDP/IP',
+      label: 'Transport/IP',
       value: (r.parts.transport ?? 0) + (r.parts.network ?? 0),
       color: colors[3],
     })
@@ -36,14 +36,11 @@ function segments(r: LabResult) {
   const sum = pieces.reduce((a, b) => a + b.value, 0)
   if (sum > total)
     return [{ label: 'Selected total (breakdown unavailable)', value: total, color: colors[1] }]
-  if (sum < total) pieces.push({ label: 'Unattributed measured bytes', value: total - sum, color: colors[5] })
+  if (sum < total) pieces.push({ label: 'Other calculated/modeled bytes', value: total - sum, color: colors[5] })
   return pieces.filter((x) => x.value > 0)
 }
-function settingsSecurity(r: LabResult) {
-  return props.settings.boundary === 'application' && !['struct', 'coap', 'lwm2m'].includes(r.id)
-    ? 0
-    : (r.parts.security ?? 0)
-}
+function settingsSecurity(r: LabResult) { return r.parts.security ?? 0 }
+
 const ymax = computed(() =>
   Math.max(1, ...props.scaling.flatMap((p) => props.results.map((r) => p.values[r.id] ?? 0))),
 )
@@ -102,7 +99,7 @@ const axisLabel = computed(() =>
       </div>
       <div class="lab-chart-legend">
         <span
-          v-for="(label, i) in ['Data', 'Protocol', 'Security', 'UDP/IP', 'Response', 'Other']"
+          v-for="(label, i) in ['Data', 'Protocol', 'Security', 'Transport/IP', 'Response', 'Other']"
           :key="label"
           ><i :style="{ background: colors[i] }" />{{ label }}</span
         >

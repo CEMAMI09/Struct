@@ -1,3 +1,7 @@
+import * as plaintext from '../../../protocol/schema/lab-plaintext.cjs'
+import * as legacyWire from '../../../sdk/js/protocol.cjs'
+import { modelTcp } from './network-model'
+import { encodeSenml } from './lwm2m'
 import { createHash } from 'node:crypto'
 import { gzipSync } from 'node:zlib'
 import * as coap from 'coap-packet'
@@ -127,8 +131,11 @@ function finalMetric(r: LabResult, s: LabSettings) {
       'Application protocol bytes only; transport/IP headers excluded.',
       r.metrics.applicationUp?.evidence,
     )
-  if (s.boundary === 'application')
-    selected = s.traffic === 'uplink' ? r.metrics.applicationUp : r.metrics.applicationExchange
+  if (s.boundary === 'application') {
+    selected = ['protobuf','json','cbor'].includes(r.id) ? r.metrics.stream : s.traffic === 'uplink' ? r.metrics.applicationUp : r.metrics.applicationExchange
+    if (['protobuf','json','cbor'].includes(r.id) && selected) selected = {...selected,note:'Normalized application wire boundary includes TLS records when enabled, just as UDP datagrams include their own security. TCP/IP excluded. '+selected.note}
+  }
+  if (s.boundary === 'network' && selected?.value !== null && selected) selected.evidence = 'estimated'
   r.metrics.selected = selected ?? unknown('Selected measurement boundary unavailable for this stack.')
   r.metrics.effective = metric(
     r.metrics.selected.value === null ? null : r.metrics.selected.value / s.batch,
@@ -141,7 +148,7 @@ function finalMetric(r: LabResult, s: LabSettings) {
     r.metrics.networkUp.value > s.mtu
   ) {
     // Struct can split a batch into small frames; its caller checks each frame separately.
-    if (r.id !== 'struct') {
+    if (['coap', 'lwm2m'].includes(r.id)) {
       r.notes.push(
         `Message exceeds the selected ${s.mtu}-byte MTU. IP fragmentation/blockwise traffic is not inferred.`,
       )
@@ -159,32 +166,14 @@ function finalMetric(r: LabResult, s: LabSettings) {
   )
   r.metrics.security = metric(
     r.parts.security,
-    'Uplink cryptographic record/tag overhead; TLS record bytes are outside the application boundary. Key provisioning is separate.',
+    'Uplink cryptographic record/tag overhead; TLS record bytes are included in the normalized application wire boundary, while raw MQTT/HTTP rows exclude TLS. Key provisioning is separate.',
   )
-  const guarantee =
-    s.traffic === 'uplink' && s.delivery === 'unconfirmed' && ['struct', 'coap'].includes(r.id)
-      ? 'best effort'
-      : r.reliability.guarantee
-  r.eligibilityKey = [
-    s.boundary,
-    s.traffic,
-    s.precision,
-    s.batch,
-    s.connection,
-    s.includeSetup,
-    r.security.encryption,
-    r.security.tagBytes,
-    r.reliability.identity,
-    r.security.forwardSecrecy,
-    guarantee,
-    s.traffic === 'exchange' ? r.notes.find((n) => n.startsWith('Response policy:')) : 'uplink',
-  ].join('|')
+  r.eligibilityKey=[s.boundary,s.traffic,s.precision,s.batch,s.connection,s.includeSetup].join('|')
+
 }
 function referenceSchema(config: LabConfig, data: ResearchIndex): string | undefined {
   const p = prepare(config.fields, config.settings)
   const candidate = data.schemas.find((c) => {
-    if (config.settings.precision === 'optimized' && c.precision_policy === 'lossless') return false
-    if (config.settings.precision === 'original' && c.precision_policy !== 'lossless') return false
     if (c.fields.length !== p.fields.length) return false
     return c.fields.every((f, i) => {
       const field = p.fields[i]!,
@@ -196,7 +185,8 @@ function referenceSchema(config: LabConfig, data: ResearchIndex): string | undef
       return (
         f.name === field.name &&
         sameType &&
-        JSON.stringify(c.values[field.name]) === JSON.stringify(safeJson(p.values[field.name])) &&
+        (JSON.stringify(c.values[field.name]) === JSON.stringify(safeJson(p.values[field.name])) || type==='float32' && Math.fround(Number(c.values[field.name])) === p.values[field.name]) &&
+        (!['int','uint','sint','bitset'].includes(field.type) || typeof f.width !== 'number' || f.width===field.width) &&
         (!('precision' in f) || (f.precision === field.step && f.min === field.min && f.max === field.max)) &&
         !!f.repeated === field.repeated &&
         !!f.optional === field.optional
@@ -216,84 +206,45 @@ function find(
   )
 }
 function struct(r: LabResult, p: Prepared, s: LabSettings) {
-  const { payload, sample } = structEncode(p, s)
+  const { payload, sample, encoding } = structEncode(p, s)
   r.sample = sample
   r.sampleLanguage = 'Generated C payload header'
-  if (s.network === 'IPv6')
-    throw Error('The current Struct SDK uses udp4. IPv6 is not supported by this implementation.')
-  if (!s.security && s.batch > 1) throw Error('Legacy Struct has no native batching. Secure V2 is required.')
   const confirmed = s.delivery === 'confirmed'
+  const legacy = s.structGeneration === 'v1'
+  if (legacy && s.batch > 1) throw Error('Legacy V1 has no native batching. Choose V2.')
   let lengths: number[]
-  if (s.security) {
-    const batches =
-      s.batch === 1 ? [payload] : wire.splitBatch(Array.from({ length: s.batch }, () => payload))
-    lengths = batches.map((b, i) => {
-      const frame = wire.buildFrame({
-        rootSecret: cryptoRoot,
-        wireDeviceId: 1,
-        sequence: i + 1,
-        slot: 1,
-        confirmed,
-        batch: s.batch > 1,
-        payload: b,
-      })
-      if (!wire.decryptFrame(frame, cryptoRoot).plaintext.equals(b))
-        throw Error('Secure V2 authentication/decryption validation failed.')
-      if (confirmed && !wire.verifyReceipt(wire.buildReceipt(cryptoRoot, 1, i + 1), cryptoRoot, 1, i + 1))
-        throw Error('Secure V2 receipt validation failed.')
+  const batches = s.batch === 1 ? [payload] : wire.splitBatch(Array.from({length:s.batch},()=>payload))
+  if (legacy) {
+    if(encoding !== 'legacy-le-v1') throw Error('Legacy V1 requires the original legacy schema codec. Packed/new field types are Secure V2 capabilities, not a legacy transport option.')
+    if (s.security) throw Error('Legacy authenticated plaintext is not encrypted. Disable encryption to inspect V1; Secure V2 is the encrypted production profile.')
+    const frame = legacyWire.buildTelemetryFrame({keyId:'labdevice0000001',schemaVersion:1,timestampSec:1,nonce:Buffer.alloc(12),payload,secret:'local-lab-only',confirmed})
+    lengths=[frame.length];r.parts.payload=payload.length;r.parts.framing=legacyWire.V2_HEADER_LEN;r.parts.security=legacyWire.HMAC_LEN
+    r.profile='Legacy V1 / authenticated plaintext'
+    r.security.authentication='Per-device HMAC secret';r.security.integrity='HMAC-SHA256';r.security.tagBytes=32
+    r.reliability={guarantee:confirmed?'legacy receipt':'best effort',retries:'Legacy SDK retry policy',deduplication:'Legacy replay policy',identity:'paired PSK'}
+  } else {
+    lengths = batches.map((b,i)=>{
+      const options={rootSecret:cryptoRoot,wireDeviceId:1,sequence:i+1,slot:1,confirmed,batch:s.batch>1,payload:b}
+      const frame=s.security?wire.buildFrame(options):plaintext.buildFrame(options)
+      const decoded=s.security?wire.decryptFrame(frame,cryptoRoot):plaintext.decodeFrame(frame)
+      if(!decoded.plaintext.equals(b)) throw Error('Struct frame round trip failed')
+      if(s.security && confirmed && !wire.verifyReceipt(wire.buildReceipt(cryptoRoot,1,i+1),cryptoRoot,1,i+1)) throw Error('Receipt validation failed')
       return frame.length
     })
-    r.parts.payload = payload.length * s.batch
-    r.parts.framing = wire.HEADER_BYTES * lengths.length + (s.batch > 1 ? lengths.length : 0)
-    r.parts.security = wire.TAG_BYTES * lengths.length
-    r.profile = `Secure V2 / ${s.precision === 'optimized' || p.fields.some((f) => f.type === 'fixed') ? 'packed' : 'original'} / ${s.delivery}`
-    r.security = {
-      encryption: 'ChaCha20-Poly1305',
-      authentication: 'Per-device root-derived keys',
-      integrity: '16-byte AEAD tag',
-      replay: 'Durable monotonic gateway state',
-      forwardSecrecy: 'No',
-      keys: 'Root enrollment, rotation, persistent counter; prevent nonce reuse',
-      tagBytes: 16,
-    }
-    r.reliability = {
-      guarantee: confirmed ? 'database commit' : 'best effort',
-      retries: 'SDK retry client; not included in this zero-loss calculation',
-      deduplication: 'Gateway duplicate receipt without duplicate database row',
-      identity: 'paired PSK',
-    }
-    r.implementation = 'Repository C/Node Secure V2 SDK and schema compiler'
-  } else {
-    lengths = [payload.length + 66]
-    r.parts.payload = payload.length
-    r.parts.framing = 34
-    r.parts.security = 32
-    if (lengths[0]! > 1400) throw Error('Legacy Struct frame exceeds its 1400-byte limit.')
-    r.profile = `Legacy authenticated plaintext / ${s.delivery}`
-    r.security = {
-      encryption: 'None',
-      authentication: 'Per-device shared secret',
-      integrity: '32-byte HMAC-SHA256',
-      replay: 'Legacy timestamp/nonce policy',
-      forwardSecrecy: 'No',
-      keys: 'Provision and rotate shared API secret',
-      tagBytes: 32,
-    }
-    r.reliability = {
-      guarantee: confirmed ? 'legacy receipt; persistence path not benchmarked' : 'best effort',
-      retries: 'Legacy SDK settings; no measured retry model applied',
-      deduplication: 'Legacy replay policy; full persistence path not exercised',
-      identity: 'paired PSK',
-    }
-    r.implementation = 'Repository legacy SDK'
-    r.notes.push(
-      'Security Off selects authenticated plaintext, not unauthenticated traffic and never unencrypted V2.',
-    )
+    r.parts.payload=payload.length*s.batch
+    r.parts.framing=(s.security?wire.HEADER_BYTES:plaintext.HEADER_BYTES)*lengths.length+(s.batch>1?lengths.length:0)
+    r.parts.security=s.security?wire.TAG_BYTES*lengths.length:0
+    r.profile=`${s.security?'Secure V2':'V2-compatible plaintext LAB ONLY'} / ${s.precision} / ${s.delivery}`
+    if(s.security) r.security={encryption:'ChaCha20-Poly1305',authentication:'Per-device root-derived keys',integrity:'16-byte AEAD tag',replay:'Durable monotonic gateway state',forwardSecrecy:'No',keys:'Root enrollment/rotation and persistent counter',tagBytes:16}
+    r.reliability={guarantee:confirmed?(s.security?'database commit':'unauthenticated lab decode receipt'):'best effort',retries:s.security?'SDK retry client; zero-loss calculation':'No automatic retries in lab profile',deduplication:s.security?'Gateway durable replay state':'None',identity:s.security?'paired PSK':'none'}
+    if(!s.security) r.notes.push('BENCHMARK ONLY: SLB0 domain prefix + control/device/sequence = 13-byte header; no encryption, tag, MAC or replay protection. Receipt is 9 unauthenticated bytes. Production gateways reject this generation. This is not an available production transport.')
   }
+  r.implementation=legacy?'Repository legacy encoder':'Repository Secure V2 SDK / additive packed schema compiler'
+  if(s.network==='IPv6')r.notes.push('IPv6 sizes use the identical datagram codec and a local udp6 receiver. Production gateway binding remains IPv4; deployment/configuration work is required for production IPv6.')
   const ip = s.network === 'IPv4' ? 20 : 40
   if (lengths.some((n) => n + 8 + ip > s.mtu))
     throw Error('A Struct datagram exceeds the selected MTU; fragmentation is not modeled.')
-  const receipt = confirmed ? (s.security ? wire.RECEIPT_BYTES : 69) : 0
+  const receipt = confirmed ? (legacy ? legacyWire.buildTelemetryReceipt(Buffer.alloc(32),'local-lab-only').length : s.security ? wire.RECEIPT_BYTES : plaintext.RECEIPT_BYTES) : 0
   udp(
     r,
     s,
@@ -310,7 +261,7 @@ function struct(r: LabResult, p: Prepared, s: LabSettings) {
   r.decoded = safeJson(p.decoded)
   r.sources = ['struct-source']
   r.notes.push(
-    `Response policy: ${confirmed ? 'authenticated receipt per frame' : 'no response'}.`,
+    `Response policy: ${confirmed ? (s.security || legacy ? 'authenticated receipt per frame' : 'unauthenticated lab decode receipt') : 'no response'}.`,
     `${lengths.length} datagram(s) for ${s.batch} reading(s); SDK frame maximum 1200 B for V2.`,
   )
 }
@@ -568,12 +519,34 @@ function mqttResult(
   }
   r.payloadHex = payload.toString('hex')
   r.decoded = safeJson(p.decoded)
-  r.sources = ['protobuf-encoding', 'mqtt-5', 'mqtt-311', 'tls13-rfc', 'cbor-rfc', 'json-rfc']
+  r.sources = ['protobuf-encoding', 'mqtt-5', 'mqtt-311', 'tls13-rfc', 'cbor-rfc', 'json-rfc', 'lab-tls-model']
+  modelTcp(r, s, up, down, qos === 2 ? 2 : 1, qos === 2 ? 2 : down ? 1 : 0)
   r.notes.push(
     'Response policy: MQTT publisher/broker acknowledgment only.',
-    'Subscriber traffic and TCP/IP headers/ACKs are excluded.',
-    'Connection setup and maintenance require exact session reference settings; no TLS record-per-message assumption.',
+    'Subscriber traffic is excluded. TCP/IP headers/ACKs use an explicit model, not captures.',
+    'Stream values prefer exact measured references; custom streams/network totals use the disclosed TLS flight model. Setup requires matching references; keepalives remain excluded.',
   )
+}
+function coapDtls(r:LabResult,p:Prepared,s:LabSettings,data:ResearchIndex,schema:string|undefined){
+  const cipher=s.coapSecurity==='dtls-ccm8'?'TLS_PSK_WITH_AES_128_CCM_8':'TLS_PSK_WITH_AES_128_CCM'
+  r.profile=`CoAP / DTLS 1.2 / ${cipher} / measured echo reference`
+  if(s.network!=='IPv4' || s.coapPath!=='/t')throw Error('DTLS references require IPv4 and /t; custom paths/IPv6 are not measured. Select OSCORE for a custom calculation.')
+  const payload=serialize(s.coapEncoding,p,s)
+  const exact=find(data,schema,q=>q.protocol_stack===`${s.coapEncoding}+CoAP+DTLS` && q.security_configuration===cipher && q.batch_size===s.batch && q.delivery_mode===(s.delivery==='confirmed'?'CON 2.04 response':'NON 2.04 response'))
+  if(!exact || number(exact,'serialized_payload_bytes')!==payload.length)throw Error('No matching DTLS measurement for this schema/serialization/batch. References cover Protobuf, JSON and named CBOR; OSCORE supports custom schemas.')
+  const up=number(exact,'application_uplink_bytes')!,down=number(exact,'application_downlink_bytes')!
+  const upCount=number(exact,'transport_header_bytes')!/8,downCount=(number(exact,'total_downlink_bytes')!-down)/28,tag=s.coapSecurity==='dtls-ccm8'?8:16
+  udp(r,s,up,down,upCount,downCount,'measured')
+  r.status='measured';r.references=[exact.id];r.implementation='Californium/Scandium 4.0.0-M6'
+  r.metrics.payload=metric(payload.length,'Actual selected serializer output matches the measured DTLS reference.')
+  r.parts.payload=payload.length;r.parts.security=tag*upCount;r.parts.framing=up-payload.length-tag*upCount
+  r.payloadHex=payload.toString('hex');r.decoded=safeJson(p.decoded)
+  r.security={encryption:'DTLS 1.2 / AES-128-CCM',authentication:'Paired PSK',integrity:`${tag}-byte CCM tag`,replay:'DTLS record window; negative tests not retained for this reference',forwardSecrecy:'No (PSK cipher)',keys:'DTLS PSK association and rotation',tagBytes:tag}
+  r.reliability={guarantee:'CoAP endpoint echoed decoded request; no database persistence',retries:s.delivery==='confirmed'?'CoAP CON; zero-loss reference':'NON; no CoAP retransmission',deduplication:'CoAP exchange handling',identity:'paired PSK'}
+  r.metrics.setup=unknown('Archived initialization combines handshake and warmup; not normalized as pure setup.')
+  r.sources=['coap-rfc','dtls12-rfc','californium','dtls-cid-rfc']
+  r.notes.push('Exact archived reference uses library-generated token and /t, not the OSCORE token control. Response echoes the payload. No native IPv6/custom DTLS model is inferred.')
+  if(s.includeSetup && s.connection!=='persistent')throw Error('DTLS lifecycle normalization is not implemented; steady-state references remain available with setup excluded.')
 }
 function httpsResult(
   r: LabResult,
@@ -640,11 +613,18 @@ function httpsResult(
       r.metrics.stream = unknown(
         'Directional HTTPS full-session accounting is not normalized; use measured reference explorer.',
       )
-  } else
-    for (const key of ['applicationUp', 'applicationDown', 'stream', 'setup'])
-      r.metrics[key] = unknown('Custom HTTP headers/TLS record splitting require a matching live reference.')
-  for (const key of ['networkUp', 'networkDown', 'exchange', 'transport', 'network'])
-    r.metrics[key] = unknown('Full TCP/IP traffic was not captured.')
+  } else {
+    const request=Buffer.from(`POST /telemetry HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: ${payload.length}\r\n${s.compression==='gzip'?'Content-Encoding: gzip\r\n':''}\r\n`)
+    const responseBody=JSON.stringify({sha256:createHash('sha256').update(body).digest('hex')})
+    const response=Buffer.from(`HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: ${Buffer.byteLength(responseBody)}\r\n\r\n${responseBody}`)
+    r.metrics.applicationUp=metric(request.length+payload.length,'Explicit example HTTP/1.1 headers (Host localhost, no Date/Server headers) plus actual body; not the archived Python header convention.')
+    r.metrics.applicationDown=metric(response.length,'Explicit 200 JSON SHA256 receipt; no durable persistence guarantee.')
+    r.metrics.stream=unknown('Custom HTTP TLS streams are modeled, not captured.')
+    r.metrics.setup=unknown('No matching custom HTTP handshake.')
+    r.parts.framing=request.length
+    r.notes.push('Custom HTTP framing uses the displayed localhost header convention; actual server/client headers and TLS writes can differ.')
+  }
+  modelTcp(r,s,r.metrics.applicationUp.value!,r.metrics.applicationDown.value!,2,2,[r.metrics.applicationUp.value!-payload.length,payload.length],[r.metrics.applicationDown.value!-77,77])
   if (!s.security)
     throw Error('This HTTP configuration was tested only over TLS; unsecured HTTP is not a silent fallback.')
   r.security = {
@@ -662,7 +642,7 @@ function httpsResult(
     deduplication: 'Application idempotency required',
     identity: 'server certificate',
   }
-  r.sources = ['tls13-rfc', 'json-rfc']
+  r.sources = ['tls13-rfc', 'json-rfc', 'lab-tls-model']
   r.notes.push('Response policy: HTTP 200 after JSON decode, no durable database guarantee.')
 }
 function lwm2m(r: LabResult, p: Prepared, s: LabSettings, data: ResearchIndex, schema: string | undefined) {
@@ -671,22 +651,26 @@ function lwm2m(r: LabResult, p: Prepared, s: LabSettings, data: ResearchIndex, s
     throw Error(
       'TLV is measured for server Read, not native Send. Use the reference explorer for Read; no unsolicited TLV Send is fabricated.',
     )
-  if (s.batch !== 1 || s.network !== 'IPv4' || s.precision !== 'original')
-    throw Error(
-      'Native LwM2M Send network coverage is limited to one original reading over IPv4; broader codecs are in the reference explorer.',
-    )
-  const exact = find(
-    data,
-    schema,
-    (q) =>
-      q.protocol_stack === `LwM2M+CoAP+${s.security ? 'DTLS' : 'UDP'}` &&
-      q.delivery_mode === 'Send 2.04 Changed' &&
-      q.protocol_specific_settings.content_format === s.lwm2mFormat,
-  )
-  if (!exact)
-    throw Error(
-      'No validated native Send network measurement for this custom schema/object layout. No unrelated sample size is substituted.',
-    )
+  const exact = s.batch===1 && s.network==='IPv4' && s.precision==='original' ? find(data,schema,q=>q.protocol_stack===`LwM2M+CoAP+${s.security?'DTLS':'UDP'}` && q.delivery_mode==='Send 2.04 Changed' && q.protocol_specific_settings.content_format===s.lwm2mFormat) : undefined
+  if (!exact) {
+    const encoded=encodeSenml(p,s)
+    const dtls=s.security?44:0 // archived Scandium CID6/GCM: record19 + nonce8 + inner-type1 + tag16
+    udp(r,s,encoded.packet.length+dtls,encoded.response.length+dtls,1,1)
+    r.status=s.security?'estimated':'calculated'
+    if(s.security) for(const key of ['applicationUp','applicationDown','networkUp','networkDown','exchange'])r.metrics[key]!.evidence='estimated'
+    r.parts.payload=encoded.payload.length;r.parts.framing=encoded.packet.length-encoded.payload.length+(s.security?28:0);r.parts.security=s.security?16:0
+    r.metrics.payload=metric(encoded.payload.length,'Real RFC8428 SenML encoding; explicit custom object /33000/0, resource IDs follow field order. Batched readings have example relative time 0..n-1 seconds.')
+    r.payloadHex=encoded.payload.toString('hex');r.decoded=safeJson(p.decoded)
+    r.implementation='node-cbor / JSON / coap-packet; Scandium CID6 GCM envelope length model'
+    r.profile=`LwM2M 1.1 custom Send / ${s.lwm2mFormat} / ${s.security?'DTLS 1.2 envelope MODEL':'CoAP UDP'}`
+    r.reliability={guarantee:'Send 2.04 acceptance; no storage guarantee',retries:s.delivery==='confirmed'?'CoAP retransmission; zero-loss model':'NON, no retry',deduplication:'Receiver-specific',identity:s.security?'paired PSK':'none'}
+    if(s.security)r.security={encryption:'DTLS 1.2 / AES-128-GCM',authentication:'ECDHE-PSK',integrity:'16-byte GCM tag',replay:'DTLS record window',forwardSecrecy:'Ephemeral handshake',keys:'PSK, registration and rotation',tagBytes:16}
+    r.metrics.setup=unknown('Custom-object registration and handshake are not captured. Lifecycle costs excluded.')
+    r.sources=['lwm2m11','leshan','senml-rfc','lab-senml-validation','lab-dtls-model']
+    r.notes.push('Custom-object Send model: new scalar resource mapping, not a substitute for an original Leshan measurement. Registration/update/handshake/keepalives excluded; DTLS overhead assumes the archived CID6/GCM profile. Confirm endpoint object interoperability before deployment.', 'Response policy: Send 2.04; no durable storage claim.')
+    if(s.includeSetup && s.connection!=='persistent')throw Error('Custom LwM2M registration/DTLS lifecycle accounting remains unmeasured. Disable setup to inspect steady state.')
+    return
+  }
   r.status = 'measured'
   r.references = [exact.id]
   r.implementation = 'Eclipse Leshan 2.0.0-M18 / Scandium 4.0.0-M6'
@@ -760,7 +744,7 @@ export function calculate(config: LabConfig, data: ResearchIndex, withScaling = 
     const r = result(id, s)
     try {
       if (id === 'struct') struct(r, p, s)
-      else if (id === 'coap') coapResult(r, p, s)
+      else if (id === 'coap') {if(s.security && s.coapSecurity && s.coapSecurity!=='oscore')coapDtls(r,p,s,data,schema);else coapResult(r,p,s)}
       else if (id === 'lwm2m') lwm2m(r, p, s, data, schema)
       else if (id === 'json' && s.jsonTransport === 'https') httpsResult(r, p, s, data, schema)
       else
@@ -806,8 +790,8 @@ export function calculate(config: LabConfig, data: ResearchIndex, withScaling = 
         if (ref) r.references.push(ref.id)
       }
     } catch (error) {
-      r.status = id === 'lwm2m' ? 'not_tested' : 'unsupported'
       r.reason = error instanceof Error ? error.message : 'Calculation failed.'
+      r.status = /unmeasured|not implemented|amortization|No matching DTLS measurement|not measured/i.test(r.reason) ? 'not_tested' : 'unsupported'
       r.metrics.effective = unknown(r.reason)
       r.metrics.selected = unknown(r.reason)
       r.notComparable.push(r.reason)
@@ -819,18 +803,23 @@ export function calculate(config: LabConfig, data: ResearchIndex, withScaling = 
     if (r.id === base.id && r.metrics.effective?.value !== null) {
       r.reduction = 0
       r.difference = 0
+      r.comparison={category:'direct',data:'Baseline data',security:'Baseline security profile',delivery:'Baseline delivery profile',measurement:`${s.boundary} ${s.traffic} bytes per logical reading`,warnings:[]}
       continue
     }
     if (r.metrics.effective?.value === null || base.metrics.effective?.value === null) {
       r.notComparable.push('Selected measurement unavailable for this protocol or baseline.')
+      r.comparison={category:r.status==='unsupported'?'unsupported':'incomplete',data:'Prepared data',security:'See profile',delivery:'See profile',measurement:'Missing selected boundary',warnings:[...r.notComparable]}
       continue
     }
-    if (r.eligibilityKey !== base.eligibilityKey) {
-      r.notComparable.push(
-        'Security/authentication, forward secrecy, response policy, delivery guarantee, or measurement scope differs from the baseline.',
-      )
-      continue
-    }
+    if (r.boundary !== base.boundary) {r.notComparable.push('Measurement boundaries differ.');continue}
+    const security = JSON.stringify(r.security) === JSON.stringify(base.security)
+    const delivery = r.reliability.guarantee === base.reliability.guarantee
+    const warnings: string[]=[]
+    if(!security)warnings.push('Security algorithms, identity, forward secrecy or protection scope differ; size difference is not an equivalent-security savings claim.')
+    if(!delivery)warnings.push('Acknowledgments and response policies differ; size difference does not establish equivalent delivery or storage guarantees.')
+    if(r.metrics.effective!.evidence==='estimated' || base.metrics.effective!.evidence==='estimated')warnings.push('Network/record model assumptions apply; this is not captured traffic.')
+    r.notComparable.push(...warnings)
+    r.comparison={category:warnings.length?'disclosed_differences':'direct',data:'Same prepared logical data and declared precision',security:security?'Matching documented profile':'Different properties; see security details',delivery:delivery?'Matching guarantee':'Different response/processing guarantees',measurement:`Same ${s.boundary} ${s.traffic} bytes per logical reading`,warnings}
     r.difference = base.metrics.effective!.value! - r.metrics.effective!.value!
     r.reduction =
       base.metrics.effective!.value! > 0 ? (r.difference / base.metrics.effective!.value!) * 100 : null

@@ -21,7 +21,7 @@ const emit = defineEmits<{ preset: [ResearchSchema]; reset: [] }>()
     <section class="lab-settings-section">
       <h2>Transmission</h2>
       <label class="lab-toggle"
-        ><span>Security<span class="lab-help">Authenticated encryption</span></span
+        ><span>Security<span class="lab-help">Off: unsecured local V2 lab profile</span></span
         ><input v-model="config.settings.security" type="checkbox" aria-label="Security"
       /></label>
       <label class="lab-label"
@@ -31,9 +31,9 @@ const emit = defineEmits<{ preset: [ResearchSchema]; reset: [] }>()
         </select></label
       >
       <label class="lab-label"
-        >Precision<select v-model="config.settings.precision" class="lab-input" aria-label="Precision">
-          <option value="original">Original precision</option>
-          <option value="optimized">Optimized precision</option>
+        >V2 encoding / precision<select v-model="config.settings.precision" class="lab-input" aria-label="Precision">
+          <option value="original">V2 Original · lossless</option>
+          <option value="optimized">V2 Optimized · declared precision</option>
         </select></label
       >
       <p class="lab-help">
@@ -68,20 +68,20 @@ const emit = defineEmits<{ preset: [ResearchSchema]; reset: [] }>()
           class="lab-input"
           aria-label="Measurement boundary"
         >
-          <option value="network">UDP/IP network estimate</option>
-          <option value="application">Application protocol bytes</option>
+          <option value="network">Network estimate / explicit model</option>
+          <option value="application">Application wire bytes (with security)</option>
           <option value="stream">TCP/TLS stream bytes</option>
         </select></label
       >
       <p class="lab-help">
-        TCP/IP totals were not captured. MQTT/HTTPS show missing network data; switch boundary to inspect
-        available bytes.
+        TCP/IP totals use an explicit segment/ACK model, not packet captures. Security and delivery differences are disclosed in each comparison.
       </p>
     </section>
     <details class="lab-settings-section lab-advanced">
       <summary>Advanced settings</summary>
       <fieldset>
         <legend>Network &amp; connections</legend>
+        <label class="lab-label">Struct generation<select v-model="config.settings.structGeneration" class="lab-input" aria-label="Struct generation"><option value="v2">Secure V2 / plaintext lab</option><option value="v1">Legacy V1 · authenticated plaintext</option></select></label>
         <label class="lab-label"
           >IP version<select v-model="config.settings.network" class="lab-input" aria-label="IP version">
             <option>IPv4</option>
@@ -98,7 +98,7 @@ const emit = defineEmits<{ preset: [ResearchSchema]; reset: [] }>()
             aria-label="Path MTU"
         /></label>
         <p class="lab-help">
-          Above MTU: network totals unavailable. No invented fragmentation. Struct IPv6 is unsupported.
+          UDP above MTU: network totals unavailable. TCP uses modeled segmentation. Struct IPv6 uses a local transport; production binding is unchanged.
         </p>
         <label class="lab-label"
           >Connection behavior<select

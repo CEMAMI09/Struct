@@ -33,6 +33,7 @@ const metadata = ref<LabMetadata | null>(null),
   settingsOpen = ref(false),
   shareMessage = ref(''),
   shareUrl = ref('')
+const resultsView = ref<'simple'|'advanced'>('simple')
 const inspected = ref<LabResult | null>(null),
   inspectedMetric = ref('selected')
 let timer: ReturnType<typeof setTimeout> | undefined, controller: AbortController | undefined
@@ -217,7 +218,7 @@ function download(format: 'json' | 'csv') {
         </p>
       </div>
       <div class="lab-research-stamp">
-        <strong>{{ metadata?.coverage.total_configurations.toLocaleString() ?? '65,019' }}</strong
+        <strong>{{ metadata?.coverage.total_configurations.toLocaleString() ?? 'Loading…' }}</strong
         ><span>reference configurations</span
         ><small>Dataset {{ metadata?.version ?? '1.0.0' }} · local host research</small
         ><a
@@ -311,8 +312,7 @@ function download(format: 'json' | 'csv') {
           <div class="lab-headline-context">
             <strong>Compare the whole stack.</strong>
             <p>
-              Security, precision and acknowledgments change the answer. A smaller number only earns a
-              comparison when its assumptions match.
+              Compare the same measurement boundary. Security, precision, delivery and network-model assumptions are explained with each result.
             </p>
           </div>
         </div>
@@ -326,7 +326,7 @@ function download(format: 'json' | 'csv') {
               <option v-for="(name, id) in protocolNames" :key="id" :value="id">{{ name }}</option>
             </select></label
           >
-          <p>Percentages are withheld when security, identity, delivery or measurement boundaries differ.</p>
+          <p>Size differences use the same data and measurement boundary. Security and delivery differences are disclosed; modeled network totals are scenario estimates.</p>
           <span v-if="pending" role="status" class="lab-updating-text">Updating results…</span>
         </div>
         <div v-if="response?.warnings.length" class="lab-warning" aria-live="polite">
@@ -334,6 +334,7 @@ function download(format: 'json' | 'csv') {
         </div>
         <template v-if="response && !error">
           <ProtocolLabComparison
+            v-model:view="resultsView"
             :results="visibleResults"
             :settings="displayConfig.settings"
             :pending="pending"

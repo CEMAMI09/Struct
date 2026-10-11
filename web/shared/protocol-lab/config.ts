@@ -9,8 +9,9 @@ export const protocolNames = {
 } as const
 export const defaultSettings: LabSettings = {
   security: true,
+  structGeneration: 'v2',
   delivery: 'unconfirmed',
-  precision: 'original',
+  precision: 'optimized',
   batch: 1,
   traffic: 'exchange',
   network: 'IPv4',
@@ -26,6 +27,7 @@ export const defaultSettings: LabSettings = {
   qos: 'auto',
   topic: 'telemetry/t',
   mqttProperties: false,
+  coapSecurity: 'oscore',
   coapToken: 2,
   coapPath: '/t',
   oscore: 'ChaCha20/Poly1305',
@@ -51,6 +53,7 @@ export const makeField = (name = 'value', type: LabField['type'] = 'float32', va
   optional: false,
   absent: false,
   repeated: false,
+  ...(type === 'string' || type === 'bytes' ? {maxBytes:64} : {}),
 })
 export function defaults(): LabConfig {
   return {

@@ -1222,3 +1222,6 @@
 }
 
 @media(max-width:600px){.lab-research>summary>span:last-child{display:block;margin-top:8px}}
+
+.lab-result-mode { display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:1rem; }
+.lab-result-mode button[aria-pressed="true"] { background:rgba(154,121,255,.18); border-color:#9a79ff; color:#d8caff; }

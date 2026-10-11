@@ -5,6 +5,15 @@ executed tests, retained observations, findings, references, limitations, and
 instructions to reproduce or extend the work. It does not contain a calculator or
 website changes.
 
+## Calculator coverage extension (October 11)
+
+The original dataset below is preserved. The additive [Protocol Lab v2 extension](extensions/lab-v2/README.md)
+adds 6,340 successful local configurations, a before/after calculator matrix,
+expanded schema and security validation, and implementation findings. Read its
+[report](extensions/lab-v2/REPORT.md) and [coverage summary](extensions/lab-v2/coverage-summary.json).
+The website now indexes 71,359 original + extension records; calculated and modeled
+network values are distinguished from actual observations.
+
 ## Read the findings
 
 1. [Complete findings and comparison tables](reports/FINAL-REPORT.md).

@@ -48,7 +48,7 @@ function toggle(event: Event) {
   <details class="lab-panel lab-research" @toggle="toggle">
     <summary>
       <span><span class="lab-eyebrow">THE UNDERLYING EVIDENCE</span>Research Explorer</span
-      ><span class="lab-help">All 65,019 configurations · on demand</span>
+      ><span class="lab-help">Original archive + extension records · on demand</span>
     </summary>
     <div class="lab-research-controls">
       <label class="lab-label"

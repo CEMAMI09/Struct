@@ -27,11 +27,13 @@ export interface LabField {
   min?: number
   max?: number
   step?: number
+  maxBytes?: number
   labels?: string[]
   fields?: LabField[]
 }
 export interface LabSettings {
   security: boolean
+  structGeneration: 'v2' | 'v1'
   delivery: 'unconfirmed' | 'confirmed'
   precision: 'original' | 'optimized'
   batch: number
@@ -49,6 +51,7 @@ export interface LabSettings {
   qos: 'auto' | 0 | 1 | 2
   topic: string
   mqttProperties: boolean
+  coapSecurity: 'oscore' | 'dtls-ccm8' | 'dtls-ccm16'
   coapToken: number
   coapPath: string
   oscore: 'AES-CCM-16-64-128' | 'AES-CCM-16-128-128' | 'ChaCha20/Poly1305'
@@ -112,6 +115,7 @@ export interface LabResult {
   boundary: string
   reduction: number | null
   difference: number | null
+  comparison?: { category: 'direct'|'disclosed_differences'|'incomplete'|'unsupported'; data: string; security: string; delivery: string; measurement: string; warnings: string[] }
   notComparable: string[]
   sample?: string
   sampleLanguage?: string

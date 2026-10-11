@@ -36,6 +36,7 @@ function move(index: number, by: number) {
   fields.value = copy
 }
 function changeType(f: LabField) {
+  if (['string','bytes'].includes(f.type)) f.maxBytes=64
   f.repeated = false
   f.absent = false
   f.optional = false
@@ -194,6 +195,7 @@ function applyAdvanced() {
           :open="optimized && ['float32', 'float64', 'fixed'].includes(field.type)"
         >
           <summary>Constraints &amp; presence</summary>
+          <label v-if="['string','bytes'].includes(field.type)" class="lab-label">Struct maximum bytes<input v-model.number="field.maxBytes" class="lab-input" type="number" min="1" max="256" :aria-label="`${field.name} maximum bytes`" /><span class="lab-help">Fixed allocation + 2-byte length. UTF-8 uses byte length; bounds are explicit.</span></label>
           <div v-if="['float32', 'float64', 'fixed'].includes(field.type)" class="lab-range-grid">
             <label
               >Minimum<input
