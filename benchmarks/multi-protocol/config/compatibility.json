@@ -1,0 +1,309 @@
+[
+  {
+    "protocol": "Struct legacy V1",
+    "security_mode": "HMAC plaintext / optional ChaCha20-Poly1305",
+    "delivery_mode": "send once / signed receipt",
+    "supported_serialization": [
+      "legacy-le-v1"
+    ],
+    "status": "measured",
+    "limitations": "Legacy receipt benchmark endpoint does not exercise database persistence. Native batching absent.",
+    "network_type": [
+      "IPv4"
+    ],
+    "implementation": "repository JS SDK",
+    "batching": "not supported by legacy SDK",
+    "connection_behavior": []
+  },
+  {
+    "protocol": "Struct Secure V2",
+    "security_mode": "mandatory ChaCha20-Poly1305",
+    "delivery_mode": "unconfirmed / authenticated commit receipt",
+    "supported_serialization": [
+      "legacy-le-v1",
+      "bitpacked-v1"
+    ],
+    "status": "measured",
+    "limitations": "1200 B configured frame maximum; 16 immutable slots/device; codec types restricted; no native compression.",
+    "network_type": [
+      "IPv4"
+    ],
+    "batching": "native count + equal-size records; SDK splits oversized batches",
+    "connection_behavior": [],
+    "implementation": null
+  },
+  {
+    "protocol": "Struct Secure V2",
+    "security_mode": "unencrypted",
+    "delivery_mode": "any",
+    "supported_serialization": [],
+    "status": "not_supported_by_protocol",
+    "limitations": "Secure V2 requires AEAD; never offer security disabled",
+    "network_type": [],
+    "connection_behavior": [],
+    "batching": "see stack adapter; not universal",
+    "implementation": null
+  },
+  {
+    "protocol": "Struct JS SDK",
+    "security_mode": "mandatory AEAD",
+    "delivery_mode": "any",
+    "supported_serialization": [
+      "legacy-le-v1",
+      "bitpacked-v1"
+    ],
+    "status": "not_supported_by_chosen_library",
+    "limitations": "Selected SDK creates udp4 sockets; no IPv6 SDK claim",
+    "network_type": [
+      "IPv6"
+    ],
+    "connection_behavior": [],
+    "batching": "see stack adapter; not universal",
+    "implementation": null
+  },
+  {
+    "protocol": "MQTT3.1.1 / MQTT5",
+    "security_mode": "TCP / TLS1.2 / TLS1.3",
+    "delivery_mode": "QoS0 / QoS1 / QoS2",
+    "supported_serialization": [
+      "Protobuf",
+      "compact JSON",
+      "positional JSON",
+      "canonical CBOR",
+      "positional CBOR"
+    ],
+    "status": "measured",
+    "limitations": "Publisher leg measured; observer leg excluded; anonymous MQTT identity, certificate-verified server TLS; OpenSSL terminator explicitly part of stack.",
+    "network_type": [
+      "IPv4",
+      "IPv6"
+    ],
+    "batching": "application envelope",
+    "connection_behavior": [
+      "persistent",
+      "fresh",
+      "reused 1/2/5/10/25/50/100 readings",
+      "idle PING"
+    ],
+    "implementation": null
+  },
+  {
+    "protocol": "HTTPS HTTP1.1",
+    "security_mode": "TLS1.2 / TLS1.3",
+    "delivery_mode": "HTTP200 after decode",
+    "supported_serialization": [
+      "compact JSON",
+      "standard JSON",
+      "gzip JSON"
+    ],
+    "status": "measured",
+    "limitations": "HTTP1.1 local test endpoint, not a managed cloud-service benchmark; TCP packet totals unknown.",
+    "network_type": [
+      "IPv4",
+      "IPv6"
+    ],
+    "batching": "JSON array",
+    "connection_behavior": [
+      "persistent",
+      "fresh"
+    ],
+    "implementation": null
+  },
+  {
+    "protocol": "CoAP",
+    "security_mode": "none",
+    "delivery_mode": "CON / NON +2.04",
+    "supported_serialization": [
+      "CBOR",
+      "JSON",
+      "Protobuf"
+    ],
+    "status": "measured",
+    "limitations": "",
+    "network_type": [
+      "IPv4",
+      "IPv6"
+    ],
+    "batching": "application envelope",
+    "implementation": "aiocoap0.4.17",
+    "connection_behavior": []
+  },
+  {
+    "protocol": "CoAP OSCORE",
+    "security_mode": "AES-CCM8 / AES-CCM16 / ChaCha20-Poly1305",
+    "delivery_mode": "CON / NON +2.04",
+    "supported_serialization": [
+      "CBOR",
+      "JSON",
+      "Protobuf"
+    ],
+    "status": "measured",
+    "limitations": "Preprovisioned contexts; no EDHOC handshake; partial IV length changes; current high-volume harness uses real low-level OSCORE and local resource wrapper.",
+    "network_type": [
+      "IPv4",
+      "IPv6"
+    ],
+    "connection_behavior": [],
+    "batching": "see stack adapter; not universal",
+    "implementation": null
+  },
+  {
+    "protocol": "CoAP DTLS",
+    "security_mode": "DTLS1.2 PSK AES128CCM8 / AES128CCM16",
+    "delivery_mode": "CON / NON echo",
+    "supported_serialization": [
+      "CBOR",
+      "JSON",
+      "Protobuf"
+    ],
+    "status": "measured",
+    "limitations": "IPv4 pilot; echo responses repeat payload. Larger automatic blockwise integration timed out: <=1024 B NON and <=2048 B CON retained. Tamper/replay negative DTLS tests pending.",
+    "network_type": [
+      "IPv4"
+    ],
+    "implementation": "Californium/Scandium4.0.0-M6",
+    "connection_behavior": [],
+    "batching": "see stack adapter; not universal"
+  },
+  {
+    "protocol": "CoAP DTLS",
+    "security_mode": "DTLS1.3",
+    "delivery_mode": "CON / NON",
+    "supported_serialization": [],
+    "status": "not_supported_by_chosen_library",
+    "limitations": "Chosen Scandium stack covers DTLS1.2; future library investigation required",
+    "network_type": [],
+    "connection_behavior": [],
+    "batching": "see stack adapter; not universal",
+    "implementation": null
+  },
+  {
+    "protocol": "CoAP UDP",
+    "security_mode": "none",
+    "delivery_mode": "Observe / blockwise",
+    "supported_serialization": [
+      "opaque bytes"
+    ],
+    "status": "measured",
+    "limitations": "Actual high-level aiocoap Context handles blockwise1024..16384 B and notification; not sensor-schema comparison",
+    "network_type": [],
+    "connection_behavior": [],
+    "batching": "see stack adapter; not universal",
+    "implementation": null
+  },
+  {
+    "protocol": "LwM2M1.1",
+    "security_mode": "none / DTLS1.2 PSK",
+    "delivery_mode": "registration / update / Read / native Send",
+    "supported_serialization": [
+      "TLV",
+      "LwM2M JSON",
+      "SenML JSON",
+      "SenML CBOR"
+    ],
+    "status": "measured",
+    "limitations": "Network original schema pilot IPv4; wider codec library includes single-resource text/opaque. Model33000 is local vendor-test object.",
+    "implementation": "Leshan2.0.0-M18",
+    "network_type": [
+      "IPv4"
+    ],
+    "connection_behavior": [],
+    "batching": "see stack adapter; not universal"
+  },
+  {
+    "protocol": "LwM2M1.2",
+    "security_mode": "any",
+    "delivery_mode": "any",
+    "supported_serialization": [],
+    "status": "not_supported_by_chosen_library",
+    "limitations": "Leshan M18 target is1.1; no1.2 measurement claimed",
+    "network_type": [],
+    "connection_behavior": [],
+    "batching": "see stack adapter; not universal",
+    "implementation": null
+  },
+  {
+    "protocol": "LwM2M1.1",
+    "security_mode": "OSCORE / TCP / TLS",
+    "delivery_mode": "Observe and additional secure transports",
+    "supported_serialization": [],
+    "status": "not_implemented_in_harness",
+    "limitations": "Leshan documents experimental OSCORE/TCP and supports Send/Observe; network coverage must be extended before exposing these settings",
+    "network_type": [],
+    "connection_behavior": [],
+    "batching": "see stack adapter; not universal",
+    "implementation": null
+  },
+  {
+    "protocol": "Any stack",
+    "security_mode": "any",
+    "delivery_mode": "any",
+    "supported_serialization": [],
+    "status": "not_tested",
+    "limitations": "Physical ESP32 timing, energy, radio framing, cellular billing, capture-level TCP segmentation/ACKs, DNS, TLS resumption/0RTT, certificate chains/mTLS not measured",
+    "network_type": [],
+    "connection_behavior": [],
+    "batching": "see stack adapter; not universal",
+    "implementation": null
+  },
+  {
+    "protocol": "LwM2M1.1",
+    "security_mode": "none / DTLS1.2 PSK",
+    "delivery_mode": "Observe / Notify",
+    "supported_serialization": [],
+    "status": "not_implemented_in_harness",
+    "limitations": "Chosen library supports it; generic CoAP Observe measurements must not substitute for LwM2M notification costs",
+    "network_type": [],
+    "connection_behavior": [],
+    "batching": "see stack adapter; not universal",
+    "implementation": null
+  },
+  {
+    "protocol": "CoAP OSCORE",
+    "security_mode": "all tested algorithms",
+    "delivery_mode": "blockwise / Observe",
+    "supported_serialization": [],
+    "status": "not_implemented_in_harness",
+    "limitations": "Secure high-level integration remains untested; plain CoAP tests do not establish these interactions",
+    "network_type": [],
+    "connection_behavior": [],
+    "batching": "see stack adapter; not universal",
+    "implementation": null
+  },
+  {
+    "protocol": "CoAP DTLS",
+    "security_mode": "CID disabled / alternate CID lengths",
+    "delivery_mode": "CON / NON",
+    "supported_serialization": [],
+    "status": "not_tested",
+    "limitations": "Measured handshakes negotiate6-byte CIDs. CID toggles, lengths and NAT migration remain untested",
+    "network_type": [],
+    "connection_behavior": [],
+    "batching": "see stack adapter; not universal",
+    "implementation": null
+  },
+  {
+    "protocol": "MQTT",
+    "security_mode": "TLS resumption / mTLS",
+    "delivery_mode": "session recovery",
+    "supported_serialization": [],
+    "status": "not_tested",
+    "limitations": "Persistent TCP is measured; durable-session recovery and client certificate identity are separate",
+    "network_type": [],
+    "connection_behavior": [],
+    "batching": "see stack adapter; not universal",
+    "implementation": null
+  },
+  {
+    "protocol": "Struct Secure V2",
+    "security_mode": "mandatory AEAD",
+    "delivery_mode": "alternate maximum / all slots",
+    "supported_serialization": [],
+    "status": "not_tested",
+    "limitations": "Source supports25..1400-byte configured maximum and16slots; benchmark uses1200 and selected slots",
+    "network_type": [],
+    "connection_behavior": [],
+    "batching": "see stack adapter; not universal",
+    "implementation": null
+  }
+]

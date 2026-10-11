@@ -1,0 +1,10 @@
+{
+  "records_validated": 32458,
+  "errors": 0,
+  "checks": [
+    "independent Struct overhead/batch/receipt formula versus actual bytes",
+    "independent CoAP header/token/option/payload parsing",
+    "isolated native LwM2M Send windows"
+  ],
+  "additional": "analyzers/build_dataset.py verifies every UDP sum, independently parses MQTT Remaining Length/topic/QoS/properties and DTLS Hello/cipher/CID/record lengths"
+}

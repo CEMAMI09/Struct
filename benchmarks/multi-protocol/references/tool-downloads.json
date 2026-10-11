@@ -1,0 +1,38 @@
+[
+  {
+    "name": "7zr.exe",
+    "url": "https://github.com/ip7z/7zip/releases/download/26.04/7zr.exe",
+    "sha256": "256feca8e274e5da655e2a284fabafd9f554365eb164862089dacd4e8276d282",
+    "bytes": 602624
+  },
+  {
+    "name": "7z2604-x64.exe",
+    "url": "https://github.com/ip7z/7zip/releases/download/26.04/7z2604-x64.exe",
+    "sha256": "d54bf805f9f3704d1e8db2fa3498ae7ef2df0312b40b558e7c71c734430a665d",
+    "bytes": 1664082
+  },
+  {
+    "name": "nanomq-0.25.6-windows-x86_64.zip",
+    "url": "https://github.com/nanomq/nanomq/releases/download/0.25.6/nanomq-0.25.6-windows-x86_64.zip",
+    "sha256": "321a16acc3c05ade55dfa6115250253e329a5779b9d9e9c0e17a94c92e147e70",
+    "bytes": 7007788
+  },
+  {
+    "name": "OpenJDK21U-jdk_x64_windows_hotspot_21.0.12.1_1.zip",
+    "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jdk_x64_windows_hotspot_21.0.12.1_1.zip",
+    "sha256": "f9d6e191ab098c0d416e7d588a24420a8621cd2f4720dab2459b8b7b2d2d8b4e",
+    "bytes": 205073461
+  },
+  {
+    "name": "leshan-demo-client-2.0.0-M18-jar-with-dependencies.jar",
+    "url": "https://repo.maven.apache.org/maven2/org/eclipse/leshan/leshan-demo-client/2.0.0-M18/leshan-demo-client-2.0.0-M18-jar-with-dependencies.jar",
+    "sha256": "7519d31d94ef053aa9ccd269a12169b4d46f17cd7ffcdf1af437137114a59443",
+    "bytes": 7984431
+  },
+  {
+    "name": "leshan-demo-server-2.0.0-M18-jar-with-dependencies.jar",
+    "url": "https://repo.maven.apache.org/maven2/org/eclipse/leshan/leshan-demo-server/2.0.0-M18/leshan-demo-server-2.0.0-M18-jar-with-dependencies.jar",
+    "sha256": "734b5b8487aa208847b676e7f543744998c6b6ab7bc154551220336d633b02da",
+    "bytes": 17610810
+  }
+]

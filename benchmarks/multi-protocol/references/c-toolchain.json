@@ -1,0 +1,8 @@
+{
+  "zig_version": "0.16.0",
+  "mbedtls_version": "3.6.7",
+  "mbedtls_build_info_sha256": "4bb715278f3199298220b930514ace4f461ed0e9ff27b656d6e2616a1ca3287f",
+  "execution_target": "wasm32-wasi",
+  "physical_esp32": false,
+  "sdk_sources": "See sourceHashes and generatedHeaders in results/raw/struct-esp32-pilot.json"
+}

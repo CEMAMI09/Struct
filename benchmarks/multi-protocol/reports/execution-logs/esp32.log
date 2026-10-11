@@ -1,0 +1,66 @@
+[struct] native parser unavailable — using JavaScript parser fallback
+(node:17824) ExperimentalWarning: WASI is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+Original V1 baseline is UNENCRYPTED; this is NOT an equivalent-security comparison.
+Metric                             | Original V1 | Secure V2 original schema | Secure V2 optimized schema
+Encoded sensor payload             | 9 B         | 9 B                       | 3 B                       
+Application uplink                 | 75 B        | 34 B                      | 28 B                      
+Total UDP/IPv4 uplink (estimated)  | 103 B       | 62 B                      | 56 B                      
+Application receipt                | 69 B        | 21 B                      | 21 B                      
+Confirmed round trip (estimated)   | 200 B       | 111 B                     | 105 B                     
+IPv4 uplink reduction vs V1        | —           | 39.81%                    | 45.63%                    
+Application uplink reduction vs V1 | —           | 54.67%                    | 62.67%                    
+
+original / unconfirmed: 34 B application, 62 B estimated IPv4 uplink, 0 B receipt, 62 B estimated total
+  plaintext: 00 00 BC 41 00 00 75 42 01
+  datagram:  84 00 00 00 01 00 00 00 00 0E FC DF B9 C6 14 BD 38 92 4D F5 BD B2 06 77 AC E5 50 02 09 B0 C9 8E B1 89
+  receipt:   (none)
+  decoded: {"temp":23.5,"humidity":61.25,"is_active":true}; absolute errors: {"temp":0,"humidity":0}
+  bytes 0..0: control: generation + slot + confirmed + batch (1 B) = 84
+  bytes 1..4: wire device ID (BE32) (4 B) = 00 00 00 01
+  bytes 5..8: sequence (BE32) (4 B) = 00 00 00 00
+  bytes 9..17: encrypted sensor payload (9 B) = 0E FC DF B9 C6 14 BD 38 92
+  bytes 18..33: Poly1305 authentication tag (16 B) = 4D F5 BD B2 06 77 AC E5 50 02 09 B0 C9 8E B1 89
+
+original / confirmed: 34 B application, 62 B estimated IPv4 uplink, 21 B receipt, 111 B estimated total
+  plaintext: 00 00 BC 41 00 00 75 42 01
+  datagram:  86 00 00 00 01 00 00 00 01 58 81 68 78 58 DB CF E7 B1 22 D5 FF 25 C3 24 D6 38 72 A5 11 A2 AC C2 D1 FE
+  receipt:   C0 00 00 00 01 35 16 40 95 86 89 EB 15 AA D6 4B D7 D4 5D E1 77
+  decoded: {"temp":23.5,"humidity":61.25,"is_active":true}; absolute errors: {"temp":0,"humidity":0}
+  bytes 0..0: control: generation + slot + confirmed + batch (1 B) = 86
+  bytes 1..4: wire device ID (BE32) (4 B) = 00 00 00 01
+  bytes 5..8: sequence (BE32) (4 B) = 00 00 00 01
+  bytes 9..17: encrypted sensor payload (9 B) = 58 81 68 78 58 DB CF E7 B1
+  bytes 18..33: Poly1305 authentication tag (16 B) = 22 D5 FF 25 C3 24 D6 38 72 A5 11 A2 AC C2 D1 FE
+
+optimized / unconfirmed: 28 B application, 56 B estimated IPv4 uplink, 0 B receipt, 56 B estimated total
+  plaintext: 4F 73 2C
+  datagram:  88 00 00 00 02 00 00 00 00 54 74 E1 FF D7 B1 01 90 ED ED 7B 01 4E F4 D3 63 68 39 87
+  receipt:   (none)
+  decoded: {"temp":23.5,"humidity":61.300000000000004,"is_active":true}; absolute errors: {"temp":0,"humidity":0.05000000000000426}
+  bytes 0..0: control: generation + slot + confirmed + batch (1 B) = 88
+  bytes 1..4: wire device ID (BE32) (4 B) = 00 00 00 02
+  bytes 5..8: sequence (BE32) (4 B) = 00 00 00 00
+  bytes 9..11: encrypted sensor payload (3 B) = 54 74 E1
+  bytes 12..27: Poly1305 authentication tag (16 B) = FF D7 B1 01 90 ED ED 7B 01 4E F4 D3 63 68 39 87
+
+optimized / confirmed: 28 B application, 56 B estimated IPv4 uplink, 21 B receipt, 105 B estimated total
+  plaintext: 4F 73 2C
+  datagram:  8A 00 00 00 02 00 00 00 01 2A AA BF D6 72 F4 3D 04 B3 0B 27 70 A2 60 80 32 C0 D2 99
+  receipt:   C0 00 00 00 01 25 2D CF 8A EE 39 33 BC A3 7F 7A 4F DF 2C 69 3E
+  decoded: {"temp":23.5,"humidity":61.300000000000004,"is_active":true}; absolute errors: {"temp":0,"humidity":0.05000000000000426}
+  bytes 0..0: control: generation + slot + confirmed + batch (1 B) = 8A
+  bytes 1..4: wire device ID (BE32) (4 B) = 00 00 00 02
+  bytes 5..8: sequence (BE32) (4 B) = 00 00 00 01
+  bytes 9..11: encrypted sensor payload (3 B) = 2A AA BF
+  bytes 12..27: Poly1305 authentication tag (16 B) = D6 72 F4 3D 04 B3 0B 27 70 A2 60 80 32 C0 D2 99
+
+Original plaintext offsets: 0..3 temp float32 LE; 4..7 humidity float32 LE; 8 active boolean.
+Optimized plaintext: temp 11 bits (code 635), humidity 10 bits (code 613), active 1 bit, zero padding 2 bits; MSB first.
+Receipt offsets: 0 control C0; 1..4 sequence BE32; 5..20 Poly1305 tag over the 5-byte header and empty ciphertext.
+The nonce is derived (8-byte HKDF prefix + sequence BE32), not transmitted. No padding or extra HMAC. Schema slots are 1 and 2; original legacy schema version remains 1.
+All application byte counts are measured buffers received over loopback UDP. IPv4/UDP adds an ESTIMATED 28 B per actual datagram; excludes link/radio headers, provisioning, retries and fragmentation.
+Verified: 4 committed telemetry rows, 4 tampered frames rejected; actual gateway receipts accepted by the C SDK. Fixed overhead target: 25 B.
+
+Machine-readable report: C:\Users\codye\OneDrive\Documents\Struct\benchmarks\multi-protocol\results\raw\struct-esp32-pilot.json

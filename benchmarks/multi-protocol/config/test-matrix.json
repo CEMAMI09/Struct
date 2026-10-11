@@ -1,0 +1,17 @@
+{
+  "version": "1.0.0",
+  "strategy": "Explicit runner selections; not a full cross product and not claimed to be formal pairwise coverage",
+  "library": "schemas/library.json",
+  "runners": {
+    "serialization": "all367cases x8serializers; reference/preset batches; selected packed and field16Protobuf variants",
+    "struct": "allcases attempted against2realcodecs; supported schemas xconfirmed/unconfirmed; legacy plaintext/encrypted where applicable; reference/preset batches",
+    "coap": "allcases x6serializers xCON/NON xIPv4/IPv6;3OSCORE algorithms for all nonrandom cases plus20random; reference batches and token/path variations",
+    "mqtt": "reference/preset/payload-size/field-count/unicode/nested/array/optional and10random x5serializers x2versions x3QoS x3security x2network; reference batches/topic/properties",
+    "mqtt_connections": "original schema x3serializers x2versions x3QoS x3security x2network x7connection-reuse counts;3idlePINGcases",
+    "https": "representative families x2JSONstyles x2compression x2TLS x2network; reference batches; selected fresh sessions",
+    "lwm2m": "allcases x6codecformats with explicitunsupportedmapping; network originalvalues x4Readformats,2nativeSendformats,registration/update xNoSec/DTLS",
+    "coap_dtls": "representative113cases x3serializers xCON/NON x2PSKciphers; reference batches; explicitlargeintegrationlimits",
+    "impairment": "realCoAPContext sixlossrates xCON/NON,100/1000readings;4latency/jitter scenarios; actualStructSDK sixlossrates,20/1000readings; separateburstoverload run"
+  },
+  "remaining": "See compatibility.json and reports/FINAL-REPORT.md"
+}

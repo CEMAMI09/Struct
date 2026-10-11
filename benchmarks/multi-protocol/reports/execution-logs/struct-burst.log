@@ -1,0 +1,12 @@
+Struct loss 0 confirmed false received 1000 / 1000
+Struct loss 0 confirmed true received 20 / 20
+Struct loss 0.001 confirmed false received 1000 / 1000
+Struct loss 0.001 confirmed true received 20 / 20
+Struct loss 0.01 confirmed false received 993 / 1000
+Struct loss 0.01 confirmed true received 20 / 20
+Struct loss 0.02 confirmed false received 985 / 1000
+Struct loss 0.02 confirmed true received 20 / 20
+Struct loss 0.05 confirmed false received 959 / 1000
+Struct loss 0.05 confirmed true received 20 / 20
+Struct loss 0.1 confirmed false received 911 / 1000
+Struct loss 0.1 confirmed true received 20 / 20

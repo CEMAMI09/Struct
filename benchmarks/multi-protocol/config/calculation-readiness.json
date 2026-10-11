@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "documentation": "reports/CALCULATION-RULES.md",
+  "rules": [
+    {"setting": "schema/values/types", "readiness": "exact_real_serializer", "conditions": "reject unsupported types; declare optional/numeric/binary/external-schema conventions"},
+    {"setting": "Struct single/batch/security/receipt", "readiness": "exact_real_encoder", "conditions": "mandatory AEAD; codec limits; frame maximum and batch splitting; receipt per confirmed frame"},
+    {"setting": "CoAP token/URI/options/response", "readiness": "exact_real_encoder", "conditions": "declare response policy; blockwise/Observe are actual multi-message exchanges"},
+    {"setting": "OSCORE algorithm/IDs/sequence/options", "readiness": "exact_with_context_state", "conditions": "real protect/unprotect; PartialIV and response binding; provisioning separate"},
+    {"setting": "MQTT version/QoS/topic/properties", "readiness": "exact_plaintext_frames", "conditions": "implementation-specific acknowledgment forms; observer leg and storage separate"},
+    {"setting": "UDP IPv4/IPv6 overhead", "readiness": "specification_calculated", "conditions": "UDP8 plus IPv4 minimum20 or IPv6 base40 per unfragmented datagram; no extensions or lower layers"},
+    {"setting": "TLS/DTLS handshake/record splitting/CID", "readiness": "measured_reference_or_live_test", "conditions": "parse cipher/CID; certificates, tickets, padding, resumption and splitting vary"},
+    {"setting": "TCP/IP segmentation/ACK/setup/termination", "readiness": "requires_packet_capture", "conditions": "packet counts cannot be derived from recv chunks; current totals null"},
+    {"setting": "loss/jitter/retries/reuse", "readiness": "measured_reference_or_labeled_model", "conditions": "actual attempts/drops/unique delivery separate; preserve retry policy; no fabricated percentage scaling"},
+    {"setting": "LwM2M codecs/resource layouts", "readiness": "exact_selected_codec_mapping", "conditions": "real object/resource model and format; native Send distinct from Read; broader lifecycle requires integration"},
+    {"setting": "MCU timing/memory/energy", "readiness": "requires_hardware_validation", "conditions": "host/WASI results do not establish ESP32 battery or instruction behavior"},
+    {"setting": "cellular/cloud ROI", "readiness": "operator_specific_labeled_model", "conditions": "both directions, lifecycle, units, regional minimums and rounding; dated prices; not actual customer bills"}
+  ]
+}

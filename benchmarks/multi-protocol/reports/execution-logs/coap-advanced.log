@@ -1,0 +1,17 @@
+C:\Users\codye\OneDrive\Documents\Struct\benchmarks\multi-protocol\runners\coap_advanced.py:63: DeprecationWarning: register_callback on observe results is deprecated: Use `async for notify in request.observation` instead.
+  observation.observation.register_callback(lambda message:notification.set_result(message) if not notification.done() else None)
+C:\Users\codye\OneDrive\Documents\Struct\benchmarks\multi-protocol\runners\coap_advanced.py:78: DeprecationWarning: Initializing messages with an mtype is deprecated. Instead, set transport_tuning=aiocoap.Reliable or aiocoap.Unreliable.
+  request=aiocoap.Message(code=aiocoap.POST,uri=uri,payload=data,mtype=aiocoap.CON if con else aiocoap.NON,transport_tuning=FastTuning())
+CoAP loss 0 CON False received 1000 / 1000
+CoAP loss 0 CON True received 100 / 100
+CoAP loss 0.001 CON False received 1000 / 1000
+CoAP loss 0.001 CON True received 100 / 100
+CoAP loss 0.01 CON False received 995 / 1000
+CoAP loss 0.01 CON True received 100 / 100
+CoAP loss 0.02 CON False received 987 / 1000
+CoAP loss 0.02 CON True received 100 / 100
+CoAP loss 0.05 CON False received 946 / 1000
+CoAP loss 0.05 CON True received 100 / 100
+CoAP loss 0.1 CON False received 899 / 1000
+CoAP loss 0.1 CON True received 100 / 100
+Advanced CoAP records 22

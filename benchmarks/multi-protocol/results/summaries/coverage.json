@@ -1,0 +1,182 @@
+{
+  "dataset_version": "1.0.0",
+  "generated_at": "2026-10-11T03:40:07.678180+00:00",
+  "total_configurations": 65019,
+  "test_status_counts": {
+    "passed": 63944,
+    "unsupported": 1075
+  },
+  "unique_schema_value_cases": 367,
+  "library_cases": 367,
+  "distinct_schema_definitions": 150,
+  "successful_stacks": {
+    "CoAP+UDP blockwise": 5,
+    "CoAP+UDP Observe": 1,
+    "CoAP+UDP impairment": 12,
+    "CoAP+UDP latency": 4,
+    "protobuf+CoAP+DTLS": 412,
+    "json-compact+CoAP+DTLS": 378,
+    "cbor-canonical+CoAP+DTLS": 400,
+    "cbor-canonical+CoAP+UDP": 1528,
+    "cbor-canonical+CoAP+OSCORE+UDP": 3624,
+    "cbor-array+CoAP+UDP": 1528,
+    "cbor-array+CoAP+OSCORE+UDP": 3624,
+    "cbor-integer-keys+CoAP+UDP": 1528,
+    "cbor-integer-keys+CoAP+OSCORE+UDP": 3624,
+    "json-compact+CoAP+UDP": 1528,
+    "json-compact+CoAP+OSCORE+UDP": 3624,
+    "json-array+CoAP+UDP": 1528,
+    "json-array+CoAP+OSCORE+UDP": 3624,
+    "protobuf+CoAP+UDP": 1524,
+    "protobuf+CoAP+OSCORE+UDP": 3612,
+    "json-compact+HTTPS/TLS": 1024,
+    "json-standard+HTTPS/TLS": 1024,
+    "LwM2M TLV serialization": 355,
+    "LwM2M JSON serialization": 355,
+    "LwM2M SENML_JSON serialization": 355,
+    "LwM2M SENML_CBOR serialization": 355,
+    "LwM2M TEXT serialization": 227,
+    "LwM2M OPAQUE serialization": 20,
+    "LwM2M+CoAP+UDP": 8,
+    "LwM2M+CoAP+DTLS": 8,
+    "protobuf+MQTT+TCP": 1572,
+    "json-compact+MQTT+TCP": 1572,
+    "cbor-canonical+MQTT+TCP": 1572,
+    "protobuf+MQTT+TLS": 3144,
+    "json-compact+MQTT+TLS": 3144,
+    "cbor-canonical+MQTT+TLS": 3144,
+    "cbor-array+MQTT+TCP": 1488,
+    "json-array+MQTT+TCP": 1488,
+    "cbor-array+MQTT+TLS": 2976,
+    "json-array+MQTT+TLS": 2976,
+    "protobuf": 458,
+    "json-compact": 427,
+    "json-standard": 427,
+    "json-array": 427,
+    "cbor": 427,
+    "cbor-canonical": 427,
+    "cbor-array": 427,
+    "cbor-integer-keys": 427,
+    "Struct Secure V2 impairment": 24,
+    "Struct legacy V1 authenticated plaintext": 340,
+    "Struct legacy V1 encrypted": 340,
+    "Struct Secure V2": 878
+  },
+  "per_runner": {
+    "coap-advanced.ndjson": {
+      "passed": 22
+    },
+    "coap-dtls.ndjson": {
+      "passed": 1190,
+      "unsupported": 166
+    },
+    "coap.ndjson": {
+      "passed": 30896
+    },
+    "https.ndjson": {
+      "passed": 2048
+    },
+    "lwm2m-codecs.ndjson": {
+      "passed": 1667,
+      "unsupported": 535
+    },
+    "lwm2m-network.ndjson": {
+      "passed": 16
+    },
+    "mqtt-connections.ndjson": {
+      "passed": 756
+    },
+    "mqtt.ndjson": {
+      "passed": 22320
+    },
+    "serialization.ndjson": {
+      "passed": 3447,
+      "unsupported": 1
+    },
+    "struct-impairment-normalized-input.ndjson": {
+      "passed": 24
+    },
+    "struct.ndjson": {
+      "passed": 1558,
+      "unsupported": 373
+    }
+  },
+  "covered_axes": {
+    "security_configuration": [
+      "AES-CCM-16-128-128",
+      "AES-CCM-16-64-128",
+      "ChaCha20-Poly1305",
+      "ChaCha20-Poly1305 + HMAC-SHA256",
+      "ChaCha20-Poly1305 / HKDF-SHA256 / 16-byte tag",
+      "ChaCha20/Poly1305",
+      "DTLS 1.2 PSK",
+      "HMAC-SHA256; no confidentiality",
+      "None",
+      "TLS_PSK_WITH_AES_128_CCM",
+      "TLS_PSK_WITH_AES_128_CCM_8",
+      "TLSv1.2",
+      "TLSv1.3"
+    ],
+    "delivery_mode": [
+      "CON",
+      "CON 2.04 response",
+      "CON piggyback 2.04 ACK",
+      "CON retries",
+      "CON with blockwise reassembly",
+      "HTTP 200 after JSON decode",
+      "NON",
+      "NON 2.04 response",
+      "Observe subscription + notification",
+      "QoS 0",
+      "QoS 1",
+      "QoS 2",
+      "Register 2.01 Created",
+      "Send 2.04 Changed",
+      "Update registration",
+      "confirmed",
+      "none",
+      "server Read request / response",
+      "unconfirmed"
+    ],
+    "batch_size": [
+      "1",
+      "10",
+      "100",
+      "2",
+      "25",
+      "5",
+      "50"
+    ],
+    "network_type": [
+      "IPv4",
+      "IPv6",
+      "none"
+    ],
+    "connection_mode": [
+      "connection reused for 10 readings",
+      "connection reused for 100 readings",
+      "connection reused for 2 readings",
+      "connection reused for 25 readings",
+      "connection reused for 5 readings",
+      "connection reused for 50 readings",
+      "connectionless",
+      "connectionless; preprovisioned context",
+      "established DTLS association",
+      "new connection per message",
+      "new registration",
+      "none",
+      "persistent",
+      "registered",
+      "registered; reused security association"
+    ]
+  },
+  "supplemental_checks": {
+    "C_ESP32_gateway_modes": 4,
+    "C_gateway_tampered_frames": 4,
+    "TLS_negative_configurations": 2
+  },
+  "scope": "Configurations are not individual sensor readings or packets. Unsupported rows are attempted mappings/explicit capability exclusions, not successful transmissions.",
+  "coverage_complete_cross_product": false,
+  "packet_capture": false,
+  "validation_errors": []
+}

@@ -1,0 +1,453 @@
+[
+  {
+    "id": "protobuf-encoding",
+    "url": "https://protobuf.dev/programming-guides/encoding/",
+    "sections": "Base 128 Varints; Message Structure; Packed Repeated Elements; Field Order",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "wire keys, varints, zigzag, lengths, fixed32/64, repeated framing"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "protobuf-languages",
+    "url": "https://protobuf.dev/reference/",
+    "sections": "Language reference and generated code guides",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "official language runtimes and code generation; not a direct MCU certification"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "nanopb",
+    "url": "https://github.com/nanopb/nanopb",
+    "sections": "README; LICENSE",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "small C Protobuf implementation, researched but not benchmarked"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "zephyr-lwm2m",
+    "url": "https://docs.zephyrproject.org/latest/services/connectivity/networking/api/lwm2m.html",
+    "sections": "Overview; Security modes; Sample usage",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "Zephyr LwM2M implementation and DTLS options; hardware ports not tested here"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "wakaama-status",
+    "url": "https://github.com/eclipse-wakaama/wakaama",
+    "sections": "Repository status; README",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "C implementation; repository archived September15 2026; not selected as maintained benchmark implementation"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "udp-guidelines",
+    "url": "https://www.rfc-editor.org/rfc/rfc8085",
+    "sections": "3.1; 3.2",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "UDP applications need congestion control and bounded message sizes; local burst loss is not a cellular model"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "mqtt-311",
+    "url": "https://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html",
+    "sections": "2.2; 3.1; 3.3-3.7; 4.3",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "Remaining Length, CONNECT, PUBLISH, QoS control exchanges, persistent sessions"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "mqtt-5",
+    "url": "https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html",
+    "sections": "2.2; 3.1; 3.3-3.7; 4.3",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "MQTT5 property lengths, QoS, connection/session semantics"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "coap-rfc",
+    "url": "https://www.rfc-editor.org/rfc/rfc7252",
+    "sections": "3; 4; 5.3; 5.4; 6.5; 9",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "4-byte base header, tokens, option deltas, payload marker, CON/NON semantics"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "oscore-rfc",
+    "url": "https://www.rfc-editor.org/rfc/rfc8613",
+    "sections": "3-6; 8-9; Appendix B",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "AEAD context, partial IV/KID, inner/outer options, replay handling, sequence persistence"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "cbor-rfc",
+    "url": "https://www.rfc-editor.org/rfc/rfc8949",
+    "sections": "3; 4.2",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "major types, integer/string/map/array lengths; deterministic shortest floating representations"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "json-rfc",
+    "url": "https://www.rfc-editor.org/rfc/rfc8259",
+    "sections": "2; 6-8",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "JSON syntax and UTF8; bytes and 64-bit portable integers require explicit conventions"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "tls13-rfc",
+    "url": "https://www.rfc-editor.org/rfc/rfc8446",
+    "sections": "4; 5; 7; 8",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "TLS1.3 handshake, record header, inner content type, AEAD, forward secrecy qualifications"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "tls13-current",
+    "url": "https://www.rfc-editor.org/info/rfc9846/",
+    "sections": "1.2; 4; 5",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "2026 backward-compatible TLS1.3 revision obsoletes8446; measured libraries are not claimed audited against every revised requirement"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "udp-rfc",
+    "url": "https://www.rfc-editor.org/rfc/rfc768",
+    "sections": "Format",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "8-byte UDP header"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "ipv4-rfc",
+    "url": "https://www.rfc-editor.org/rfc/rfc791",
+    "sections": "3.1",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "minimum20-byte IPv4 header; options and fragmentation require separate accounting"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "ipv6-rfc",
+    "url": "https://www.rfc-editor.org/rfc/rfc8200",
+    "sections": "3-4",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "40-byte IPv6 base header; extension headers excluded from simple estimates"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "dtls12-rfc",
+    "url": "https://www.rfc-editor.org/rfc/rfc6347",
+    "sections": "4.1; 4.2",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "DTLS1.2 record header, epochs, sequence numbers, handshake retransmissions"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "dtls-cid-rfc",
+    "url": "https://www.rfc-editor.org/rfc/rfc9146",
+    "sections": "3-5",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "DTLS1.2 connection ID negotiation, type25 variable record header, encrypted inner content type; measured6-byte CIDs"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "ecdhe-psk-rfc",
+    "url": "https://www.rfc-editor.org/rfc/rfc8442",
+    "sections": "2; 4",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "ECDHE_PSK AES-GCM/CCM suites; ephemeral key exchange distinction from pure PSK"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "iana-tls",
+    "url": "https://www.iana.org/assignments/tls-parameters",
+    "sections": "TLS Cipher Suites; ContentType",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "0xD001 is TLS_ECDHE_PSK_WITH_AES_128_GCM_SHA256; record type25 is DTLS1.2 CID"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "dtls13-rfc",
+    "url": "https://datatracker.ietf.org/doc/html/rfc9147",
+    "sections": "4; 5",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "DTLS1.3 exists; not selected Scandium version coverage"
+    ],
+    "status": "standard reference; full feature implementation not tested"
+  },
+  {
+    "id": "observe-rfc",
+    "url": "https://www.rfc-editor.org/rfc/rfc7641",
+    "sections": "3-4",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "Observe registration, notifications, cancellation"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "blockwise-rfc",
+    "url": "https://www.rfc-editor.org/rfc/rfc7959",
+    "sections": "2-3",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "Block1/Block2 options and reassembly; not equal to IP fragmentation"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "senml-rfc",
+    "url": "https://www.rfc-editor.org/rfc/rfc8428",
+    "sections": "4-6",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "SenML names, base names, numeric labels, JSON/CBOR formats"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "http11-rfc",
+    "url": "https://www.rfc-editor.org/rfc/rfc9112",
+    "sections": "2-3; 6; 9",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "HTTP1.1 framing, Content-Length, request/response and persistent connections"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "lwm2m11",
+    "url": "https://www.openmobilealliance.org/release/LightweightM2M/V1_1-20180710-A/",
+    "sections": "Core and Transport specifications; registration, information reporting and data formats",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "LwM2M1.1 registration/update, Read/Observe/Send, resource paths, content formats"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "lwm2m12",
+    "url": "https://www.openmobilealliance.org/release/LightweightM2M/V1_2-20201110-A/",
+    "sections": "Core and Transport specifications",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "LwM2M1.2 is a separate target; no claim that Leshan M18 implements it"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "leshan",
+    "url": "https://github.com/eclipse-leshan/leshan",
+    "sections": "README; release leshan-2.0.0-M18; Maven artifact sources",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "Java LwM2M implementation, model codecs, local demos, dual licensing"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "leshan-features",
+    "url": "https://github.com/eclipse-leshan/leshan/wiki/LWM2M-1.1-supported-features",
+    "sections": "Data formats; reporting; security; transport",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "1.1 codecs and Send/Observe; experimental OSCORE/TCP; no automatic 1.2 claim"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "californium",
+    "url": "https://github.com/eclipse-californium/californium",
+    "sections": "README; bundled version 4.0.0-M6",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "CoAP library and Scandium DTLS implementation"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "aiocoap",
+    "url": "https://aiocoap.codeberg.page/aiocoap/doc/installation.html",
+    "sections": "Features; extras; non-Linux transports",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "Python CoAP/OSCORE, optional DTLS dependency, Windows transport limits"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "paho-python",
+    "url": "https://eclipse.dev/paho/files/paho.mqtt.python/html/",
+    "sections": "Client; network loop; TLS; QoS; known limitations",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "MQTT3.1.1/5 client, QoS0/1/2, TLS context injection, session caveats"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "nanomq",
+    "url": "https://github.com/nanomq/nanomq",
+    "sections": "README; tag0.25.6; LICENSE",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "portable Windows real broker; MQTT3/5; MIT license"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "nanomq-windows",
+    "url": "https://nanomq.io/docs/en/latest/installation/windows.html",
+    "sections": "Windows binaries and supported features",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "Windows portable distribution; TLS build dependent"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "cbor2",
+    "url": "https://cbor2.readthedocs.io/en/latest/",
+    "sections": "Usage; canonical encoding",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "actual binary serializer; canonical float minimization"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "mosquitto",
+    "url": "https://mosquitto.org/download/",
+    "sections": "Windows downloads",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "researched initial broker candidate; official download DNS failure; NanoMQ used instead"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "struct-source",
+    "url": "repository:474e6b73f147c4dc4fef840ac5d0f66b46d86434",
+    "sections": "sdk/js/{index,protocol,secure-v2,secure-v2-client}.cjs; protocol/schema/bitpacked.cjs; sdk/c; tcp-server; migrations033",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "actual framing, cryptography, slots, batches, counters, receipts, schema limits; source hashes in environment manifest"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "roi-1nce",
+    "url": "https://www.1nce.com/en-us/1nce-connect/pricing",
+    "sections": "US pricing and FAQ",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "USD14/10years/500MB; USD10/500MB topup; flat fee is not per-message marginal billing"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "roi-hologram",
+    "url": "https://www.hologram.io/pricing/",
+    "sections": "Self-service",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "USD0.03/MB plus USD1/month/SIM and USD3/SIM; contract differences"
+    ],
+    "status": "source inspected"
+  },
+  {
+    "id": "roi-aws",
+    "url": "https://aws.amazon.com/iot-core/pricing/",
+    "sections": "Messaging; connection; rules; region selector",
+    "retrieved_date": "2026-10-10",
+    "retrieval_timezone": "America/Los_Angeles",
+    "claims": [
+      "5KB message billing increments; shrinking within one increment need not reduce ingestion charges"
+    ],
+    "status": "source inspected"
+  }
+]

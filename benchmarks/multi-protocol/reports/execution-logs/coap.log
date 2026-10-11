@@ -1,0 +1,13 @@
+C:\Users\codye\OneDrive\Documents\Struct\benchmarks\multi-protocol\runners\coap.py:62: DeprecationWarning: Initializing messages with an MID is deprecated. (No replacement: This needs to be managed by the library.)
+  message=aiocoap.Message(code=aiocoap.POST,mtype=aiocoap.CON if confirmed else aiocoap.NON,mid=100,token=b'\x51'*tokenlen,payload=data)
+C:\Users\codye\OneDrive\Documents\Struct\benchmarks\multi-protocol\runners\coap.py:62: DeprecationWarning: Initializing messages with an mtype is deprecated. Instead, set transport_tuning=aiocoap.Reliable or aiocoap.Unreliable.
+  message=aiocoap.Message(code=aiocoap.POST,mtype=aiocoap.CON if confirmed else aiocoap.NON,mid=100,token=b'\x51'*tokenlen,payload=data)
+C:\Users\codye\OneDrive\Documents\Struct\benchmarks\multi-protocol\runners\coap.py:62: DeprecationWarning: Initializing messages with a token is deprecated. (No replacement: This needs to be managed by the library.)
+  message=aiocoap.Message(code=aiocoap.POST,mtype=aiocoap.CON if confirmed else aiocoap.NON,mid=100,token=b'\x51'*tokenlen,payload=data)
+C:\Users\codye\OneDrive\Documents\Struct\benchmarks\multi-protocol\runners\coap.py:87: DeprecationWarning: Initializing messages with an MID is deprecated. (No replacement: This needs to be managed by the library.)
+  response=aiocoap.Message(code=aiocoap.CHANGED,mtype=aiocoap.ACK if confirmed else aiocoap.NON,mid=100 if confirmed else 101,token=message.token)
+C:\Users\codye\OneDrive\Documents\Struct\benchmarks\multi-protocol\runners\coap.py:87: DeprecationWarning: Initializing messages with an mtype is deprecated. Instead, set transport_tuning=aiocoap.Reliable or aiocoap.Unreliable.
+  response=aiocoap.Message(code=aiocoap.CHANGED,mtype=aiocoap.ACK if confirmed else aiocoap.NON,mid=100 if confirmed else 101,token=message.token)
+C:\Users\codye\OneDrive\Documents\Struct\benchmarks\multi-protocol\runners\coap.py:87: DeprecationWarning: Initializing messages with a token is deprecated. (No replacement: This needs to be managed by the library.)
+  response=aiocoap.Message(code=aiocoap.CHANGED,mtype=aiocoap.ACK if confirmed else aiocoap.NON,mid=100 if confirmed else 101,token=message.token)
+CoAP records added: 30896 seconds: 32.78

@@ -1,0 +1,154 @@
+[
+  {
+    "path": "benchmarks/multi-protocol/analyzers/build_dataset.py",
+    "sha256": "148a5c12ea41a08ed89ab442754171028edf0311efab25818f9e161a19777b5d"
+  },
+  {
+    "path": "benchmarks/multi-protocol/analyzers/dtls.py",
+    "sha256": "ed0b377060b17f641fd64f8454a5366d4daeba82e99656e3fb6644a8a3cd5bba"
+  },
+  {
+    "path": "benchmarks/multi-protocol/analyzers/report.py",
+    "sha256": "a74dea5900a4d30eff847e1415541d0e7ddf11203a75ba5426ca6ddf47fb2a10"
+  },
+  {
+    "path": "benchmarks/multi-protocol/implementations/coap/BenchmarkDtls.java",
+    "sha256": "bbcc34d017105bd3b0bd6ef7c2202fd800ccd63e500fd1e8f1442098948004c2"
+  },
+  {
+    "path": "benchmarks/multi-protocol/implementations/local_network.py",
+    "sha256": "762ade54f982feb45920c36d3168b0e0a538a2556f8f8efb9d46677214acd3bf"
+  },
+  {
+    "path": "benchmarks/multi-protocol/implementations/lwm2m/BenchmarkLwm2m.java",
+    "sha256": "0864ba5126908b700afa5a9580ca76770ac2aacba9220649b9a12561a6be1c5a"
+  },
+  {
+    "path": "benchmarks/multi-protocol/implementations/serializers.py",
+    "sha256": "ce9b350f77689c916e5bddfb33bb725d93a6f6656620d8094d6dff53772478c5"
+  },
+  {
+    "path": "benchmarks/multi-protocol/runners/coap.py",
+    "sha256": "5d949e14ef02eb9e572c4baae2ff9c80c3571d5aba2c39a733b0fdaeeff53550"
+  },
+  {
+    "path": "benchmarks/multi-protocol/runners/coap_advanced.py",
+    "sha256": "e770030bc5b7f5d3769396090f36283c60df3f24c1621b0dc700a8992c853452"
+  },
+  {
+    "path": "benchmarks/multi-protocol/runners/coap_dtls.py",
+    "sha256": "a5aabbfbf89450882ed3d8ad8a3d8ef8c7d938e9bd915bf144a95796d82e8784"
+  },
+  {
+    "path": "benchmarks/multi-protocol/runners/common.py",
+    "sha256": "bd0c913034b3b6ccc516f48764a002930b45b5cba6608b50f7c3ea87f95ca5fe"
+  },
+  {
+    "path": "benchmarks/multi-protocol/runners/https.py",
+    "sha256": "43fb97eb56d803b3a5456b6cdb9b285ab1db3a1afa7568b62192189fff8e7698"
+  },
+  {
+    "path": "benchmarks/multi-protocol/runners/lwm2m.py",
+    "sha256": "5ac43ecb5b382c9bd3556c5b2b899a33aeb4e2c0d40ad79ff5061f0a321b4226"
+  },
+  {
+    "path": "benchmarks/multi-protocol/runners/mqtt.py",
+    "sha256": "71ae03733a566cba44faad67273f6a92b2bf10a3e59f6c2295f1b7a679f2bf27"
+  },
+  {
+    "path": "benchmarks/multi-protocol/runners/mqtt_connections.py",
+    "sha256": "2377ce64e0da2ca5ed64ea65c5b44292130d9f98920f204fec3551bc5f6c71ee"
+  },
+  {
+    "path": "benchmarks/multi-protocol/runners/security_checks.py",
+    "sha256": "4319b5133e5bbcd5237b100b221046578dc73bd07fd0783f650da00e2abef2d4"
+  },
+  {
+    "path": "benchmarks/multi-protocol/runners/serialization.py",
+    "sha256": "efea1b596148de6fb9a342bc0c37bafe50e287ce3f073f60a4176112e3d687b2"
+  },
+  {
+    "path": "benchmarks/multi-protocol/runners/struct.cjs",
+    "sha256": "3d0a4f239de947d05127b4195e9a18a808a21a8367f67af2970c36db1efc41b9"
+  },
+  {
+    "path": "benchmarks/multi-protocol/runners/struct_impairment.cjs",
+    "sha256": "7d8a967163ec059ae2460eb8bfe315753d14b8a82ba4301f2ac6e46785ba52dc"
+  },
+  {
+    "path": "benchmarks/multi-protocol/schemas/generate.py",
+    "sha256": "7b4c6497aa407f2dbb5cec69a3fc1be9f44698c8a91c48e8bfc7c8c04ded5855"
+  },
+  {
+    "path": "benchmarks/multi-protocol/scripts/archive_dataset.py",
+    "sha256": "a8663af3cf3baca21ed80b48b8b6b918ce3e9f5eb97d86523f40caa2d18d2d16"
+  },
+  {
+    "path": "benchmarks/multi-protocol/scripts/bootstrap.py",
+    "sha256": "bde7b5bdb39065a0e7e449a0f3669b3266403d889f278b84898e1bdddc228f68"
+  },
+  {
+    "path": "benchmarks/multi-protocol/scripts/inventory.py",
+    "sha256": "b0e9720937d156c1499e2296a0c107e741e5089ca61be3107aa22e8e85fe7b24"
+  },
+  {
+    "path": "benchmarks/multi-protocol/scripts/research.py",
+    "sha256": "470b69ec3877ee647a54c6bb3f5caa936fe64f9e57773d126dcfaf172e5941fb"
+  },
+  {
+    "path": "benchmarks/multi-protocol/scripts/run.py",
+    "sha256": "9734288e85da5044b98ad1a873b050d9fe59d96a0e6fdd2e23bd835311f917d5"
+  },
+  {
+    "path": "benchmarks/multi-protocol/validators/validate.py",
+    "sha256": "ccf5f933a78194859159c3fd13d89753bd3cbeb9fe3e9f57ef0e5d01842868c3"
+  },
+  {
+    "path": "package-lock.json",
+    "sha256": "48315b493fffec4fe90028754f2794b3102f48b12cb288c3c2d80aa407a1e96a"
+  },
+  {
+    "path": "protocol/schema/bitpacked.cjs",
+    "sha256": "f5bcd018ea20ebb0788342b456485ac8ed748f64a3f495c10251fd05fd851716"
+  },
+  {
+    "path": "scripts/benchmark-secure-v2-esp32.cjs",
+    "sha256": "0f65658328085eadb51a2ab6c0f17df484b9c7402ca076fdfcee16fbf88e7f7b"
+  },
+  {
+    "path": "sdk/js/index.cjs",
+    "sha256": "39c989d3b19ccbc41dd5e3dda7cf0bc62c7c47cb5ee5f4f5a2a93dbc1bead87f"
+  },
+  {
+    "path": "sdk/js/protocol.cjs",
+    "sha256": "a8af82f92c687d40256e4ebc23ee7c8c6f828340ba8e5d640e2fbaf8f27985d2"
+  },
+  {
+    "path": "sdk/js/secure-v2-client.cjs",
+    "sha256": "f06e2e9169efccd02e75527c99ccde1f5ac35e39694ebbbdae55585a735b31e0"
+  },
+  {
+    "path": "sdk/js/secure-v2.cjs",
+    "sha256": "0707112bc4966400e3707d3bcf62015d9e61c83e0a5e7e121988d7f54ea09ae4"
+  },
+  {
+    "path": "tcp-server/ingest.js",
+    "sha256": "33ff91ee0121496ef55f76ac576f67517f7f44abbcfcbade4ecfcf1e94f2918a"
+  },
+  {
+    "path": "tcp-server/parser.js",
+    "sha256": "b22628237dd89c74c123e92ffd95c5a6028c9f88e2002c0094ed00336495cba0"
+  },
+  {
+    "path": "tcp-server/secure-v2.js",
+    "sha256": "29a6ccaf1e2f830d91bf64fa380d26928c425d3c25fb4e241af11765fdd7f50e"
+  },
+  {
+    "path": "tests/database.cjs",
+    "sha256": "a864fa5352a73cc01f4565ecdcc3390d9b062c1d8de845cfa53956dc1b86e3c9"
+  },
+  {
+    "path": "web/shared/schemaCodegen.ts",
+    "sha256": "7bc3da0eb29fb6bf6e51a7b2cf1ba04af18dc745c11eb8d1716614ac93b1f78c"
+  }
+]

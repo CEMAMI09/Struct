@@ -1,0 +1,116 @@
+[
+  {
+    "mode": "Struct legacy authenticated plaintext",
+    "confidentiality": false,
+    "integrity": "HMAC-SHA256",
+    "tag_bytes": 32,
+    "nonce_transmitted_bytes": 12,
+    "identity": "device shared API secret",
+    "replay": "timestamp + nonce gateway policy; network harness does not exercise full legacy replay store",
+    "forward_secrecy": false,
+    "key_rotation": "separate service provisioning",
+    "scope": "message"
+  },
+  {
+    "mode": "Struct legacy encrypted",
+    "confidentiality": true,
+    "integrity": "ChaCha20-Poly1305 plus outer HMAC",
+    "tag_bytes": 16,
+    "outer_mac_bytes": 32,
+    "nonce_transmitted_bytes": 24,
+    "identity": "device API secret plus encryption key",
+    "forward_secrecy": false,
+    "scope": "message"
+  },
+  {
+    "mode": "Struct Secure V2",
+    "confidentiality": true,
+    "integrity": "ChaCha20-Poly1305",
+    "tag_bytes": 16,
+    "nonce_transmitted_bytes": 0,
+    "nonce": "HKDF direction-specific8B prefix plus BE32sequence",
+    "wire_id_bytes": 4,
+    "sequence_bytes": 4,
+    "identity": "device root secret; gateway receipt possession of root-derived key",
+    "replay": "PostgreSQL monotonic replay state and duplicate-commit handling",
+    "forward_secrecy": false,
+    "key_rotation": "re-enrollment/root-secret lifecycle; sequence exhaustion must not reuse nonce",
+    "scope": "message",
+    "negative_tests": "C pilot tamper; broader wire tag tamper; gateway tests in repository"
+  },
+  {
+    "mode": "OSCORE AES-CCM8",
+    "confidentiality": true,
+    "integrity": "AES-CCM",
+    "tag_bytes": 8,
+    "nonce": "derived; Partial IV and sender KID transmitted as needed",
+    "identity": "preprovisioned paired context",
+    "replay": "sliding replay window",
+    "forward_secrecy": false,
+    "key_rotation": "replace context before sequence/key exhaustion; EDHOC not tested",
+    "scope": "message end-to-end",
+    "negative_tests": "real aiocoap tamper and replay rejection"
+  },
+  {
+    "mode": "OSCORE AES-CCM16 / ChaCha20-Poly1305",
+    "confidentiality": true,
+    "tag_bytes": 16,
+    "nonce": "derived Partial IV",
+    "identity": "paired context",
+    "replay": "sliding replay window",
+    "forward_secrecy": false,
+    "scope": "message end-to-end",
+    "negative_tests": "real aiocoap tamper and replay rejection"
+  },
+  {
+    "mode": "TLS1.2 / TLS1.3 measured",
+    "confidentiality": true,
+    "integrity": "negotiated AEAD; parse ServerHello cipher from raw connection records",
+    "tag_bytes": 16,
+    "identity": "server certificate verified against temporary local trust anchor; MQTT publisher is anonymous",
+    "replay": "connection record sequence; application replay/dedup separate",
+    "forward_secrecy": "ephemeral key exchange for selected certificate handshakes; inspect negotiated cipher; not same as static Struct/OSCORE PSK",
+    "scope": "connection terminating at local gateway",
+    "key_rotation": "certificates/trust/client credentials separately managed",
+    "negative_tests": "wrong CA and corrupted ciphertext rejected by same OpenSSL library"
+  },
+  {
+    "mode": "DTLS1.2 PSK CCM8 / CCM16",
+    "confidentiality": true,
+    "tag_bytes": [
+      8,
+      16
+    ],
+    "identity": "shared PSK identity",
+    "nonce": "8-byte record explicit nonce plus implicit context",
+    "connection_id_bytes": 6,
+    "record_header_bytes": 19,
+    "inner_content_type_bytes": 1,
+    "configuration": "actual Scandium default CID negotiation; parse per-connection Hello, not universal DTLS constant",
+    "replay": "DTLS record replay filtering; application guarantees separate",
+    "forward_secrecy": false,
+    "scope": "connection",
+    "negative_tests": "not_tested; successful real authenticated encryption/decryption only"
+  },
+  {
+    "mode": "LwM2M measured DTLS1.2 ECDHE_PSK AES128GCM",
+    "confidentiality": true,
+    "integrity": "AES-GCM",
+    "tag_bytes": 16,
+    "negotiated_cipher": "TLS_ECDHE_PSK_WITH_AES_128_GCM_SHA256",
+    "cipher_code": "0xD001",
+    "identity": "PSK-authenticated ephemeral key exchange",
+    "nonce": "8-byte explicit record nonce plus implicit context",
+    "connection_id_bytes": 6,
+    "record_header_bytes": 19,
+    "inner_content_type_bytes": 1,
+    "forward_secrecy": "ECDHE suite supports forward secrecy with fresh ephemeral secrets and proper erasure; unlike direct pure-PSK CCM benchmark",
+    "scope": "connection",
+    "negative_tests": "DTLS negative tamper/replay not tested",
+    "sources": [
+      "ecdhe-psk-rfc",
+      "iana-tls",
+      "dtls-cid-rfc"
+    ]
+  }
+]

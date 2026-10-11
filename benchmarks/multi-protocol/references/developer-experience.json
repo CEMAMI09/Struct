@@ -1,0 +1,93 @@
+[
+  {
+    "stack": "Struct Secure V2",
+    "measured_language": "C/Node",
+    "rerun_phase": "struct",
+    "schema_integration": "generated immutable slots",
+    "measured_authentication": "device root",
+    "hardware_evidence": "ESP32 adapter exists; C host pilot measured; physical untested",
+    "host_integration_verified": true,
+    "setup_time_measured": false,
+    "firmware_management_tested": false,
+    "cloud_service_tested": false,
+    "scope": "implementation integration, not intrinsic protocol capability"
+  },
+  {
+    "stack": "Protobuf + MQTT",
+    "measured_language": "Python",
+    "rerun_phase": "mqtt",
+    "schema_integration": "dynamic proto2 descriptor",
+    "measured_authentication": "server-only TLS in measured stack",
+    "hardware_evidence": "nanopb C researched; hardware untested",
+    "host_integration_verified": true,
+    "setup_time_measured": false,
+    "firmware_management_tested": false,
+    "cloud_service_tested": false,
+    "scope": "implementation integration, not intrinsic protocol capability"
+  },
+  {
+    "stack": "JSON/CBOR + MQTT",
+    "measured_language": "Python",
+    "rerun_phase": "mqtt",
+    "schema_integration": "application conventions",
+    "measured_authentication": "server-only TLS in measured stack",
+    "hardware_evidence": "embedded client not tested",
+    "host_integration_verified": true,
+    "setup_time_measured": false,
+    "firmware_management_tested": false,
+    "cloud_service_tested": false,
+    "scope": "implementation integration, not intrinsic protocol capability"
+  },
+  {
+    "stack": "JSON + HTTPS",
+    "measured_language": "Python",
+    "rerun_phase": "https",
+    "schema_integration": "application conventions",
+    "measured_authentication": "certificate-verified server",
+    "hardware_evidence": "hardware untested",
+    "host_integration_verified": true,
+    "setup_time_measured": false,
+    "firmware_management_tested": false,
+    "cloud_service_tested": false,
+    "scope": "implementation integration, not intrinsic protocol capability"
+  },
+  {
+    "stack": "CoAP/OSCORE",
+    "measured_language": "Python",
+    "rerun_phase": "coap",
+    "schema_integration": "application codec + resource",
+    "measured_authentication": "paired OSCORE context",
+    "hardware_evidence": "embedded ports untested",
+    "host_integration_verified": true,
+    "setup_time_measured": false,
+    "firmware_management_tested": false,
+    "cloud_service_tested": false,
+    "scope": "implementation integration, not intrinsic protocol capability"
+  },
+  {
+    "stack": "CoAP/DTLS",
+    "measured_language": "Java",
+    "rerun_phase": "coap-dtls",
+    "schema_integration": "application codec + resource",
+    "measured_authentication": "PSK identity",
+    "hardware_evidence": "embedded ports untested",
+    "host_integration_verified": true,
+    "setup_time_measured": false,
+    "firmware_management_tested": false,
+    "cloud_service_tested": false,
+    "scope": "implementation integration, not intrinsic protocol capability"
+  },
+  {
+    "stack": "LwM2M1.1",
+    "measured_language": "Java",
+    "rerun_phase": "lwm2m",
+    "schema_integration": "object/resource model",
+    "measured_authentication": "NoSec or DTLS PSK",
+    "hardware_evidence": "Zephyr documented; physical ports untested",
+    "host_integration_verified": true,
+    "setup_time_measured": false,
+    "firmware_management_tested": false,
+    "cloud_service_tested": false,
+    "scope": "implementation integration, not intrinsic protocol capability"
+  }
+]

@@ -1,0 +1,43 @@
+[
+  {
+    "provider": "1NCE",
+    "region": "US public page",
+    "currency": "USD",
+    "retrieved_date": "2026-10-10",
+    "publication_date": null,
+    "plan": "Lifetime Flat",
+    "upfront": 14,
+    "term_years": 10,
+    "included_MB": 500,
+    "topup_USD": 10,
+    "topup_MB": 500,
+    "billing_increment_bytes": null,
+    "source_reference": "roi-1nce",
+    "limitations": "Bundle, taxes/shipping/coverage/contract limits apply. Do not treat14/500 as marginal per-MB charge."
+  },
+  {
+    "provider": "Hologram",
+    "region": "global self-service subject to coverage",
+    "currency": "USD",
+    "retrieved_date": "2026-10-10",
+    "publication_date": null,
+    "per_MB": 0.03,
+    "monthly_per_SIM": 1,
+    "SIM_card": 3,
+    "billing_increment_bytes": null,
+    "source_reference": "roi-hologram",
+    "limitations": "Public self-service example; negotiated and regional plans differ; session rounding not established."
+  },
+  {
+    "provider": "AWS IoT Core",
+    "currency": "USD",
+    "retrieved_date": "2026-10-10",
+    "publication_date": null,
+    "region": "region-specific pricing selector",
+    "billing_unit": "message in5KB increments",
+    "billing_increment_bytes": 5120,
+    "unit_price": null,
+    "source_reference": "roi-aws",
+    "limitations": "Separate connectivity, ingestion/fanout, rules, actions and other services; no price inferred without region/tier. Reducing below5KB may save zero billed messages."
+  }
+]

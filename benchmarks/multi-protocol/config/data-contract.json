@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "record_format": "NDJSON; normalized stream gzip-compressed",
+  "identifiers": "test_id identifies declared configuration; timestamp identifies this execution; schema_id indexes schemas/library.json",
+  "unknown": "null, never assumed zero",
+  "numeric_conventions": {"large_integer": {"$integer": "base10 exact value"}, "binary": {"$bytes": "hexadecimal bytes"}},
+  "layer_definitions": {
+    "serialized_payload_bytes": "actual serializer output; Struct records per-reading payload while competitor batch tests record the actual serialized envelope",
+    "application_uplink_bytes": "actual UDP contents including message security/DTLS; MQTT/HTTP plaintext protocol stream before TLS",
+    "stream_uplink_bytes": "actual TCP byte stream including TLS where selected; no TCP/IP headers",
+    "total_uplink_bytes": "UDP content plus calculated unfragmented UDP/IP base headers; null for TCP streams",
+    "total_network_bytes": "steady exchange under per-field provenance; initialization separately tracked; not cellular/radio bytes",
+    "handshake_bytes": "inspect handshake_scope: may include MQTT CONNECT/CONNACK, registration or warmup; not pure TLS/DTLS everywhere",
+    "effective_bytes_per_reading": "total_network_bytes divided by logical reading count under the test scope; not always a complete lifecycle",
+    "security_enabled": "selected encryption/AEAD mode; legacy HMAC plaintext is false despite integrity/authentication; always inspect security_configuration",
+    "decoding_verified": "declared test acceptance/decoding assertion; management and opaque-transfer tests have distinct scopes"
+  },
+  "measurement_types": ["measured", "specification_calculated", "modeled", "unsupported", "not_tested", "failed"],
+  "provenance": "primary record measurement_type plus field-level measurement_provenance; calculated IP headers do not become captured traffic",
+  "precision": "numeric value semantics under chosen type/conventions, not arbitrary bit-pattern, NaN-payload or signed-zero qualification",
+  "comparison": "match precision, identity/security properties, response guarantee, lifecycle and measured layer before ranking",
+  "raw_references": "raw_artifact/raw_line locate original observations with full schema, values, decoded values, errors, hex and timings",
+  "retention": "large raw files are local/gitignored; archive raw gzip files and artifact hashes for full dataset releases"
+}

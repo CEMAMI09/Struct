@@ -1,0 +1,363 @@
+{
+  "format": "struct-first-esp32-secure-v2-benchmark-v1",
+  "measuredAt": "2026-10-10T22:50:14.033Z",
+  "sourceCommit": "474e6b73f147c4dc4fef840ac5d0f66b46d86434",
+  "simulation": "Generated ESP32 C application serializers and actual C/mbedTLS SDK run on host; Node bridges exact bytes over local UDP. No ESP32 instruction/radio/flash emulation.",
+  "security": "ChaCha20-Poly1305, 128-bit tag, HKDF-SHA256, normal 1200-byte maximum and 1024-sequence reservation",
+  "nodeVersion": "v24.18.1",
+  "testRootHex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+  "values": {
+    "temp": 23.5,
+    "humidity": 61.25,
+    "is_active": true
+  },
+  "baseline": {
+    "payload": 9,
+    "protocol": 66,
+    "applicationUplink": 75,
+    "ipv4Udp": 28,
+    "ipv4Uplink": 103,
+    "applicationReceipt": 69,
+    "confirmedRoundTrip": 200,
+    "security": "User-supplied unencrypted V1 baseline; not equivalent security"
+  },
+  "schemas": [
+    {
+      "name": "original",
+      "slot": 1,
+      "encoding": "legacy-le-v1",
+      "record_bytes": 9,
+      "legacy_schema_version": 1,
+      "schema_definition": [
+        {
+          "name": "temp",
+          "type": "float32"
+        },
+        {
+          "name": "humidity",
+          "type": "float32"
+        },
+        {
+          "name": "is_active",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "optimized",
+      "slot": 2,
+      "encoding": "bitpacked-v1",
+      "record_bytes": 3,
+      "schema_definition": [
+        {
+          "name": "temp",
+          "type": "fixed",
+          "min": -40,
+          "max": 125,
+          "precision": 0.1
+        },
+        {
+          "name": "humidity",
+          "type": "fixed",
+          "min": 0,
+          "max": 100,
+          "precision": 0.1
+        },
+        {
+          "name": "is_active",
+          "type": "boolean"
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "schema": "original",
+      "confirmed": false,
+      "wireDeviceId": 1,
+      "sequence": 0,
+      "slot": 1,
+      "legacySchemaVersion": 1,
+      "payloadBytes": 9,
+      "headerBytes": 9,
+      "cipherBytes": 9,
+      "authenticationTagBytes": 16,
+      "encryptionExpansionBytes": 0,
+      "fixedOverheadBytes": 25,
+      "applicationUplinkBytes": 34,
+      "estimatedIpv4UdpOverheadBytes": 28,
+      "estimatedIpv4UplinkBytes": 62,
+      "applicationReceiptBytes": 0,
+      "estimatedIpv4ReceiptBytes": 0,
+      "estimatedTotalBytes": 62,
+      "applicationUplinkReductionPercent": 54.666666666666664,
+      "ipv4UplinkReductionPercent": 39.80582524271845,
+      "payloadHex": "00 00 BC 41 00 00 75 42 01",
+      "frameHex": "84 00 00 00 01 00 00 00 00 0E FC DF B9 C6 14 BD 38 92 4D F5 BD B2 06 77 AC E5 50 02 09 B0 C9 8E B1 89",
+      "receiptHex": "",
+      "decoded": {
+        "temp": 23.5,
+        "humidity": 61.25,
+        "is_active": true
+      },
+      "absoluteError": {
+        "temp": 0,
+        "humidity": 0
+      },
+      "layout": [
+        {
+          "name": "control: generation + slot + confirmed + batch",
+          "offset": 0,
+          "bytes": 1,
+          "hex": "84"
+        },
+        {
+          "name": "wire device ID (BE32)",
+          "offset": 1,
+          "bytes": 4,
+          "hex": "00 00 00 01"
+        },
+        {
+          "name": "sequence (BE32)",
+          "offset": 5,
+          "bytes": 4,
+          "hex": "00 00 00 00"
+        },
+        {
+          "name": "encrypted sensor payload",
+          "offset": 9,
+          "bytes": 9,
+          "hex": "0E FC DF B9 C6 14 BD 38 92"
+        },
+        {
+          "name": "Poly1305 authentication tag",
+          "offset": 18,
+          "bytes": 16,
+          "hex": "4D F5 BD B2 06 77 AC E5 50 02 09 B0 C9 8E B1 89"
+        }
+      ]
+    },
+    {
+      "schema": "original",
+      "confirmed": true,
+      "wireDeviceId": 1,
+      "sequence": 1,
+      "slot": 1,
+      "legacySchemaVersion": 1,
+      "payloadBytes": 9,
+      "headerBytes": 9,
+      "cipherBytes": 9,
+      "authenticationTagBytes": 16,
+      "encryptionExpansionBytes": 0,
+      "fixedOverheadBytes": 25,
+      "applicationUplinkBytes": 34,
+      "estimatedIpv4UdpOverheadBytes": 28,
+      "estimatedIpv4UplinkBytes": 62,
+      "applicationReceiptBytes": 21,
+      "estimatedIpv4ReceiptBytes": 49,
+      "estimatedTotalBytes": 111,
+      "applicationUplinkReductionPercent": 54.666666666666664,
+      "ipv4UplinkReductionPercent": 39.80582524271845,
+      "payloadHex": "00 00 BC 41 00 00 75 42 01",
+      "frameHex": "86 00 00 00 01 00 00 00 01 58 81 68 78 58 DB CF E7 B1 22 D5 FF 25 C3 24 D6 38 72 A5 11 A2 AC C2 D1 FE",
+      "receiptHex": "C0 00 00 00 01 35 16 40 95 86 89 EB 15 AA D6 4B D7 D4 5D E1 77",
+      "decoded": {
+        "temp": 23.5,
+        "humidity": 61.25,
+        "is_active": true
+      },
+      "absoluteError": {
+        "temp": 0,
+        "humidity": 0
+      },
+      "layout": [
+        {
+          "name": "control: generation + slot + confirmed + batch",
+          "offset": 0,
+          "bytes": 1,
+          "hex": "86"
+        },
+        {
+          "name": "wire device ID (BE32)",
+          "offset": 1,
+          "bytes": 4,
+          "hex": "00 00 00 01"
+        },
+        {
+          "name": "sequence (BE32)",
+          "offset": 5,
+          "bytes": 4,
+          "hex": "00 00 00 01"
+        },
+        {
+          "name": "encrypted sensor payload",
+          "offset": 9,
+          "bytes": 9,
+          "hex": "58 81 68 78 58 DB CF E7 B1"
+        },
+        {
+          "name": "Poly1305 authentication tag",
+          "offset": 18,
+          "bytes": 16,
+          "hex": "22 D5 FF 25 C3 24 D6 38 72 A5 11 A2 AC C2 D1 FE"
+        }
+      ]
+    },
+    {
+      "schema": "optimized",
+      "confirmed": false,
+      "wireDeviceId": 2,
+      "sequence": 0,
+      "slot": 2,
+      "legacySchemaVersion": null,
+      "payloadBytes": 3,
+      "headerBytes": 9,
+      "cipherBytes": 3,
+      "authenticationTagBytes": 16,
+      "encryptionExpansionBytes": 0,
+      "fixedOverheadBytes": 25,
+      "applicationUplinkBytes": 28,
+      "estimatedIpv4UdpOverheadBytes": 28,
+      "estimatedIpv4UplinkBytes": 56,
+      "applicationReceiptBytes": 0,
+      "estimatedIpv4ReceiptBytes": 0,
+      "estimatedTotalBytes": 56,
+      "applicationUplinkReductionPercent": 62.66666666666667,
+      "ipv4UplinkReductionPercent": 45.63106796116505,
+      "payloadHex": "4F 73 2C",
+      "frameHex": "88 00 00 00 02 00 00 00 00 54 74 E1 FF D7 B1 01 90 ED ED 7B 01 4E F4 D3 63 68 39 87",
+      "receiptHex": "",
+      "decoded": {
+        "temp": 23.5,
+        "humidity": 61.300000000000004,
+        "is_active": true
+      },
+      "absoluteError": {
+        "temp": 0,
+        "humidity": 0.05000000000000426
+      },
+      "layout": [
+        {
+          "name": "control: generation + slot + confirmed + batch",
+          "offset": 0,
+          "bytes": 1,
+          "hex": "88"
+        },
+        {
+          "name": "wire device ID (BE32)",
+          "offset": 1,
+          "bytes": 4,
+          "hex": "00 00 00 02"
+        },
+        {
+          "name": "sequence (BE32)",
+          "offset": 5,
+          "bytes": 4,
+          "hex": "00 00 00 00"
+        },
+        {
+          "name": "encrypted sensor payload",
+          "offset": 9,
+          "bytes": 3,
+          "hex": "54 74 E1"
+        },
+        {
+          "name": "Poly1305 authentication tag",
+          "offset": 12,
+          "bytes": 16,
+          "hex": "FF D7 B1 01 90 ED ED 7B 01 4E F4 D3 63 68 39 87"
+        }
+      ]
+    },
+    {
+      "schema": "optimized",
+      "confirmed": true,
+      "wireDeviceId": 2,
+      "sequence": 1,
+      "slot": 2,
+      "legacySchemaVersion": null,
+      "payloadBytes": 3,
+      "headerBytes": 9,
+      "cipherBytes": 3,
+      "authenticationTagBytes": 16,
+      "encryptionExpansionBytes": 0,
+      "fixedOverheadBytes": 25,
+      "applicationUplinkBytes": 28,
+      "estimatedIpv4UdpOverheadBytes": 28,
+      "estimatedIpv4UplinkBytes": 56,
+      "applicationReceiptBytes": 21,
+      "estimatedIpv4ReceiptBytes": 49,
+      "estimatedTotalBytes": 105,
+      "applicationUplinkReductionPercent": 62.66666666666667,
+      "ipv4UplinkReductionPercent": 45.63106796116505,
+      "payloadHex": "4F 73 2C",
+      "frameHex": "8A 00 00 00 02 00 00 00 01 2A AA BF D6 72 F4 3D 04 B3 0B 27 70 A2 60 80 32 C0 D2 99",
+      "receiptHex": "C0 00 00 00 01 25 2D CF 8A EE 39 33 BC A3 7F 7A 4F DF 2C 69 3E",
+      "decoded": {
+        "temp": 23.5,
+        "humidity": 61.300000000000004,
+        "is_active": true
+      },
+      "absoluteError": {
+        "temp": 0,
+        "humidity": 0.05000000000000426
+      },
+      "layout": [
+        {
+          "name": "control: generation + slot + confirmed + batch",
+          "offset": 0,
+          "bytes": 1,
+          "hex": "8A"
+        },
+        {
+          "name": "wire device ID (BE32)",
+          "offset": 1,
+          "bytes": 4,
+          "hex": "00 00 00 02"
+        },
+        {
+          "name": "sequence (BE32)",
+          "offset": 5,
+          "bytes": 4,
+          "hex": "00 00 00 01"
+        },
+        {
+          "name": "encrypted sensor payload",
+          "offset": 9,
+          "bytes": 3,
+          "hex": "2A AA BF"
+        },
+        {
+          "name": "Poly1305 authentication tag",
+          "offset": 12,
+          "bytes": 16,
+          "hex": "D6 72 F4 3D 04 B3 0B 27 70 A2 60 80 32 C0 D2 99"
+        }
+      ]
+    }
+  ],
+  "generatedHeaders": {
+    "original": "#ifndef STRUCT_PACKET_V1_H\n#define STRUCT_PACKET_V1_H\n#include <string.h>\n#include \"struct_sdk.h\"\n\n#define STRUCT_SCHEMA_VERSION 1\n#define STRUCT_PACKET_SIZE 9u\n// Native member layout is irrelevant: always call struct_pack_packet.\ntypedef struct {\n  float f_temp;\n  float f_humidity;\n  uint8_t f_is_active;\n} StructPacket;\n\nstatic inline size_t struct_pack_packet(uint8_t *out, size_t capacity, const StructPacket *p) {\n  if (!out || !p || capacity < STRUCT_PACKET_SIZE) return 0;\n  struct_put_f32(out + 0, p->f_temp);\n  struct_put_f32(out + 4, p->f_humidity);\n  out[8] = !!p->f_is_active;\n  return STRUCT_PACKET_SIZE;\n}\n#endif\n\n#define STRUCT_SCHEMA_SLOT 1u\n#define STRUCT_SCHEMA_ENCODING \"legacy-le-v1\"\n",
+    "optimized": "#ifndef STRUCT_GENERATED_PACKED_PACKET_H\n#define STRUCT_GENERATED_PACKED_PACKET_H\n#include <stdint.h>\n#include <stddef.h>\n#include <stdbool.h>\n#include <string.h>\n#include <math.h>\n#include <float.h>\n#if FLT_RADIX != 2 || FLT_MANT_DIG != 24 || FLT_MAX_EXP != 128\n#error \"Struct float fields require IEEE 754 binary32\"\n#endif\n#define STRUCT_SCHEMA_SLOT 2u\n#define STRUCT_SCHEMA_ENCODING \"bitpacked-v1\"\n#define STRUCT_PACKET_BITS 22u\n#define STRUCT_PACKET_SIZE 3u\ntypedef struct {\n  double f_temp;\n  double f_humidity;\n  bool f_is_active;\n} StructPacket;\nstatic inline void struct_pack_bits(uint8_t *out, size_t offset, unsigned width, uint32_t code) {\n  for (unsigned i=0; i<width; i++) if ((code >> (width-i-1)) & 1u) out[(offset+i)/8] |= (uint8_t)(1u << (7u-(offset+i)%8));\n}\nstatic inline double struct_pack_round_even(double value) { double low=floor(value), fraction=value-low; return fraction>0.5 || (fraction==0.5 && fmod(low,2.0)!=0) ? low+1 : low; }\nstatic inline int struct_pack_f16(double value, uint32_t *out) {\n  if (!isfinite(value)) return 0; uint32_t sign=signbit(value)?0x8000u:0; double a=fabs((double)value);\n  if (a==0) { *out=sign; return 1; }\n  if (a < 0x1p-14) { *out=sign+(uint32_t)struct_pack_round_even(a*0x1p24); return 1; }\n  int exponent; (void)frexp(a,&exponent); exponent--; double mantissa=struct_pack_round_even((a/ldexp(1.0,exponent)-1.0)*1024.0);\n  if (mantissa==1024) { exponent++; mantissa=0; } if (exponent>15) return 0;\n  *out=sign+(uint32_t)(exponent+15)*1024u+(uint32_t)mantissa; return 1;\n}\n/* Explicit bit writers; neither member layout nor native byte order is transmitted. */\nstatic inline size_t struct_pack_packet(uint8_t *out, size_t capacity, const StructPacket *p) {\n  if (!out || !p || capacity < STRUCT_PACKET_SIZE || sizeof(float)!=4) return 0;\n  double value_0 = p->f_temp;\n  if (!isfinite(value_0)) return 0;\n  if (value_0 < -40.0 - 0.1 * 1e-7 || value_0 > 125.0 + 0.1 * 1e-7) return 0;\n  if (value_0 < -40.0) value_0 = -40.0;\n  if (value_0 > 125.0) value_0 = 125.0;\n  double rounded_0 = floor((value_0 - -40.0) / 0.1 + 0.5 + 1e-7);\n  if (rounded_0 < 0 || rounded_0 >= 1651.0) return 0;\n  uint32_t code_0 = (uint32_t)rounded_0;\n  double value_1 = p->f_humidity;\n  if (!isfinite(value_1)) return 0;\n  if (value_1 < 0.0 - 0.1 * 1e-7 || value_1 > 100.0 + 0.1 * 1e-7) return 0;\n  if (value_1 < 0.0) value_1 = 0.0;\n  if (value_1 > 100.0) value_1 = 100.0;\n  double rounded_1 = floor((value_1 - 0.0) / 0.1 + 0.5 + 1e-7);\n  if (rounded_1 < 0 || rounded_1 >= 1001.0) return 0;\n  uint32_t code_1 = (uint32_t)rounded_1;\n  uint32_t code_2 = p->f_is_active ? 1u : 0u;\n  memset(out,0,STRUCT_PACKET_SIZE);\n  struct_pack_bits(out, 0u, 11u, code_0);\n  struct_pack_bits(out, 11u, 10u, code_1);\n  struct_pack_bits(out, 21u, 1u, code_2);\n  return STRUCT_PACKET_SIZE;\n}\n#endif\n"
+  },
+  "sourceHashes": {
+    "scripts/benchmark-secure-v2-esp32.cjs": "0f65658328085eadb51a2ab6c0f17df484b9c7402ca076fdfcee16fbf88e7f7b",
+    "sdk/c/benchmarks/first_esp32_secure_v2.c": "c1391c681095ecd33142355901c56d0eb3b732f824042a506d1af85f532f8904",
+    "web/shared/secureV2Schema.ts": "1a49403af1449a64f0e501217a98dfcf99cd32fd590f1baa52607214f6a111b4",
+    "web/shared/schemaCodegen.ts": "7bc3da0eb29fb6bf6e51a7b2cf1ba04af18dc745c11eb8d1716614ac93b1f78c",
+    "protocol/schema/bitpacked.cjs": "f5bcd018ea20ebb0788342b456485ac8ed748f64a3f495c10251fd05fd851716",
+    "sdk/c/src/struct_secure_v2.c": "a1b0e70df3749213dc71d9cb723d8860d8a0ad2ca9c5cc06680c89747fae9c56",
+    "sdk/c/src/struct_v2_counter.c": "7c8a95e60012f944b7c78362a1e22b875487fbdcc16e1baa89507f4da4f9a167",
+    "sdk/c/src/struct_v2_mbedtls.h": "7fec9183d3474f3e34a0fad80aa57238676a5223f21b08b412a4f436a81f50e1",
+    "tcp-server/secure-v2.js": "29a6ccaf1e2f830d91bf64fa380d26928c425d3c25fb4e241af11765fdd7f50e",
+    "supabase/migrations/033_secure_v2.sql": "0e89a40a4fef7332d0af11ea33fc67dc37ff6ae3449613e5e747aae485ec3910"
+  },
+  "compiler": "C/mbedTLS compiled to WASI using Zig",
+  "verification": {
+    "telemetryRows": 4,
+    "tamperedFramesRejected": 4,
+    "gatewayAuthenticationAndDecoding": true,
+    "cSdkConfirmedReceiptsVerified": 2,
+    "fixedOverheadBytes": 25
+  }
+}

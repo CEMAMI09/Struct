@@ -1,0 +1,134 @@
+[
+  {
+    "label": "Legacy plaintext / HMAC",
+    "test_id": "eb6a5dcffbfa45b89a41f53e",
+    "raw_artifact": "results/raw/struct.ndjson.gz",
+    "raw_line": 8
+  },
+  {
+    "label": "Legacy encrypted / HMAC",
+    "test_id": "b591536e40974599519f7f50",
+    "raw_artifact": "results/raw/struct.ndjson.gz",
+    "raw_line": 22
+  },
+  {
+    "label": "Secure V2 original / commit receipt",
+    "test_id": "3d3acd9fbd8bfc201e861df3",
+    "raw_artifact": "results/raw/struct.ndjson.gz",
+    "raw_line": 36
+  },
+  {
+    "label": "Secure V2 optimized / commit receipt",
+    "test_id": "06e81beb925ec7f100a029e7",
+    "raw_artifact": "results/raw/struct.ndjson.gz",
+    "raw_line": 65
+  },
+  {
+    "label": "protobuf + CoAP plain",
+    "test_id": "732960066666e2b5378c8aa7",
+    "raw_artifact": "results/raw/coap.ndjson.gz",
+    "raw_line": 811
+  },
+  {
+    "label": "json-compact + CoAP plain",
+    "test_id": "beb7f9f689bfd5da0a1f02c7",
+    "raw_artifact": "results/raw/coap.ndjson.gz",
+    "raw_line": 491
+  },
+  {
+    "label": "cbor-canonical + CoAP plain",
+    "test_id": "8302bc354f1b95c0256ebf5c",
+    "raw_artifact": "results/raw/coap.ndjson.gz",
+    "raw_line": 11
+  },
+  {
+    "label": "cbor-array + CoAP plain",
+    "test_id": "4aa27f95f6018862b193060e",
+    "raw_artifact": "results/raw/coap.ndjson.gz",
+    "raw_line": 171
+  },
+  {
+    "label": "CBOR array + CoAP/OSCORE CCM8",
+    "test_id": "444bd1600920c3bf524b55cb",
+    "raw_artifact": "results/raw/coap.ndjson.gz",
+    "raw_line": 211
+  },
+  {
+    "label": "CBOR array + CoAP/OSCORE CCM16",
+    "test_id": "a8dace15ce42ea95e66e224d",
+    "raw_artifact": "results/raw/coap.ndjson.gz",
+    "raw_line": 251
+  },
+  {
+    "label": "CBOR array + CoAP/OSCORE ChaCha20",
+    "test_id": "3439aeeeb0733a540d7d71ae",
+    "raw_artifact": "results/raw/coap.ndjson.gz",
+    "raw_line": 291
+  },
+  {
+    "label": "Protobuf + CoAP/DTLS CCM8 echo",
+    "test_id": "936275baeab0ea65d374e11b",
+    "raw_artifact": "results/raw/coap-dtls.ndjson.gz",
+    "raw_line": 8
+  },
+  {
+    "label": "Protobuf + CoAP/DTLS CCM16 echo",
+    "test_id": "250dcc5247fbc7fa6ea497f2",
+    "raw_artifact": "results/raw/coap-dtls.ndjson.gz",
+    "raw_line": 686
+  },
+  {
+    "label": "LwM2M Send SenML CBOR plain",
+    "test_id": "381c86fc2d801189a75036ed",
+    "raw_artifact": "results/raw/lwm2m-network.ndjson.gz",
+    "raw_line": 7
+  },
+  {
+    "label": "LwM2M Send SenML CBOR DTLS",
+    "test_id": "c3eccabe005a994d00892d37",
+    "raw_artifact": "results/raw/lwm2m-network.ndjson.gz",
+    "raw_line": 15
+  },
+  {
+    "label": "protobuf MQTT5 QoS1 TCP",
+    "test_id": "7ea6785d439cf41724b6ec03",
+    "raw_artifact": "results/raw/mqtt.ndjson.gz",
+    "raw_line": 11781
+  },
+  {
+    "label": "protobuf MQTT5 QoS1 TLSv1.3",
+    "test_id": "9970f9f7ae383bc5e3b58f75",
+    "raw_artifact": "results/raw/mqtt.ndjson.gz",
+    "raw_line": 19221
+  },
+  {
+    "label": "json-compact MQTT5 QoS1 TCP",
+    "test_id": "0f2f03e8852b30419d925d4e",
+    "raw_artifact": "results/raw/mqtt.ndjson.gz",
+    "raw_line": 11789
+  },
+  {
+    "label": "json-compact MQTT5 QoS1 TLSv1.3",
+    "test_id": "5a4b19325a549172b223ea8b",
+    "raw_artifact": "results/raw/mqtt.ndjson.gz",
+    "raw_line": 19229
+  },
+  {
+    "label": "cbor-array MQTT5 QoS1 TCP",
+    "test_id": "d2e7e6fd2a3d62b63d1cdaf8",
+    "raw_artifact": "results/raw/mqtt.ndjson.gz",
+    "raw_line": 11805
+  },
+  {
+    "label": "cbor-array MQTT5 QoS1 TLSv1.3",
+    "test_id": "47771dc4874dc232068d44aa",
+    "raw_artifact": "results/raw/mqtt.ndjson.gz",
+    "raw_line": 19245
+  },
+  {
+    "label": "Compact JSON HTTPS TLS1.3",
+    "test_id": "6ae96d75ced386fbc3efa627",
+    "raw_artifact": "results/raw/https.ndjson.gz",
+    "raw_line": 1025
+  }
+]

@@ -12,6 +12,7 @@
     "test": "npm --prefix web test && npm --prefix tcp-server test && node tests/database.cjs && node tests/auth-security.cjs && node tests/billing-db.cjs && node tests/delivery.cjs && node tcp-server/test-delivery.js && node sdk/tests/test_vectors.cjs && node sdk/tests/test_udp.cjs && node tests/debugger.cjs && npm run test:secure-v2",
     "test:secure-v2": "node tests/secure-v2-db.cjs && node tests/bitpacked.cjs && node sdk/tests/test_secure_v2.cjs && node sdk/tests/test_secure_v2_udp.cjs && node tests/secure-v2-sdk.cjs",
     "benchmark:secure-v2": "node scripts/benchmark-secure-v2.cjs",
+    "benchmark:secure-v2:esp32": "node scripts/benchmark-secure-v2-esp32.cjs",
     "test:database": "node tests/database.cjs",
     "test:debugger": "node tests/debugger.cjs",
     "debug:local": "node scripts/debug-local.cjs",

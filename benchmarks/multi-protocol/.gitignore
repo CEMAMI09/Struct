@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+!reports/execution-logs/*.log
+# Originals are restored from the tracked, checksum-verified archive/ chunks.
+results/raw/*.ndjson
+results/raw/*.json
+results/raw/*.gz
+results/summaries/all.csv
+results/summaries/representative.json
+results/summaries/payload-sizes.csv
