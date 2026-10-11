@@ -1,263 +1,384 @@
+<script setup lang="ts">
+import {
+  defaultRoi,
+  defaults,
+  protocolNames,
+  presetFields,
+  restoreConfig,
+  shareConfig,
+} from '#shared/protocol-lab/config'
+import type {
+  LabConfig,
+  LabMetadata,
+  LabResponse,
+  LabResult,
+  ProtocolId,
+  ResearchSchema,
+} from '#shared/protocol-lab/types'
+import { calculateRoi } from '#shared/protocol-lab/roi'
+definePageMeta({ layout: 'protocol-lab' })
+useSeoMeta({
+  title: 'Struct Protocol Lab — Interactive IoT benchmark & ROI calculator',
+  description:
+    'Encode your own telemetry schema. Inspect measured and calculated Struct, Protobuf, CoAP, LwM2M, JSON and CBOR traffic, security, delivery and connectivity costs.',
+})
+const config = ref<LabConfig>(defaults()),
+  roi = ref(structuredClone(defaultRoi)),
+  response = ref<LabResponse | null>(null),
+  displayConfig = ref<LabConfig>(defaults())
+const metadata = ref<LabMetadata | null>(null),
+  dataError = ref(''),
+  error = ref(''),
+  pending = ref(true),
+  settingsOpen = ref(false),
+  shareMessage = ref(''),
+  shareUrl = ref('')
+const inspected = ref<LabResult | null>(null),
+  inspectedMetric = ref('selected')
+let timer: ReturnType<typeof setTimeout> | undefined, controller: AbortController | undefined
+const visibleResults = computed(
+  () => response.value?.results.filter((r) => config.value.settings.visible.includes(r.id)) ?? [],
+)
+const structResult = computed(() => response.value?.results.find((r) => r.id === 'struct'))
+const primary = computed(() => (error.value ? null : (structResult.value?.metrics.effective?.value ?? null)))
+const format = (value: number | null) =>
+  value === null ? '—' : new Intl.NumberFormat('en', { maximumFractionDigits: 2 }).format(value)
+async function update() {
+  controller?.abort()
+  const current = new AbortController()
+  controller = current
+  pending.value = true
+  error.value = ''
+  const snapshot = JSON.parse(JSON.stringify(config.value)) as LabConfig
+  try {
+    const next = await $fetch<LabResponse>('/api/protocol-lab/calculate', {
+      method: 'POST',
+      body: snapshot,
+      signal: current.signal,
+    })
+    if (controller === current) {
+      response.value = next
+      displayConfig.value = snapshot
+    }
+  } catch (e) {
+    if (!current.signal.aborted) {
+      const failure = e as { data?: { message?: string }; message?: string }
+      error.value = failure.data?.message || 'The calculation could not be completed. Please retry.'
+    }
+  } finally {
+    if (controller === current) pending.value = false
+  }
+}
+watch(
+  config,
+  () => {
+    clearTimeout(timer)
+    pending.value = true
+    timer = setTimeout(update, 300)
+  },
+  { deep: true },
+)
+async function loadMetadata() {
+  try {
+    metadata.value = await $fetch<LabMetadata>('/protocol-lab/metadata.json')
+    dataError.value = ''
+  } catch {
+    dataError.value = 'Benchmark metadata could not load. The dataset may be temporarily unavailable.'
+  }
+}
+onMounted(async () => {
+  if (window.location.hash.startsWith('#lab=')) {
+    try {
+      config.value = restoreConfig(window.location.hash.slice(5))
+    } catch (e) {
+      shareMessage.value =
+        'Shared configuration could not be restored. Defaults loaded. ' +
+        (e instanceof Error ? e.message : 'Invalid share URL.')
+    }
+  }
+  await loadMetadata()
+  await update()
+})
+onUnmounted(() => {
+  clearTimeout(timer)
+  controller?.abort()
+})
+function reset() {
+  config.value = defaults()
+  roi.value = structuredClone(defaultRoi)
+  shareMessage.value = ''
+  shareUrl.value = ''
+}
+function preset(schema: ResearchSchema) {
+  if (!schema) return
+  config.value.fields = presetFields(schema)
+  if (schema.precision_policy !== 'lossless') config.value.settings.precision = 'optimized'
+}
+function toggleProtocol(id: ProtocolId) {
+  const visible = config.value.settings.visible
+  if (visible.includes(id)) {
+    if (visible.length > 1) config.value.settings.visible = visible.filter((x) => x !== id)
+  } else config.value.settings.visible.push(id)
+}
+function inspect(result: LabResult, metric: string) {
+  inspectedMetric.value = metric
+  inspected.value = result
+}
+async function share() {
+  try {
+    shareUrl.value = window.location.origin + '/benchmarks#lab=' + shareConfig(config.value)
+    await navigator.clipboard.writeText(shareUrl.value)
+    shareMessage.value = 'Configuration link copied. Sample values are included; pricing is not.'
+  } catch (e) {
+    shareMessage.value = shareUrl.value
+      ? 'Copy the configuration URL below.'
+      : e instanceof Error
+        ? e.message
+        : 'Could not create a share URL.'
+  }
+}
+function download(format: 'json' | 'csv') {
+  if (!response.value || pending.value || error.value) return
+  let roiResults
+  try {
+    roiResults = roi.value.enabled ? calculateRoi(roi.value, visibleResults.value) : null
+  } catch {
+    roiResults = { error: 'Invalid ROI inputs; technical comparison is still valid.' }
+  }
+  const exportData = {
+    datasetVersion: metadata.value?.version,
+    configuration: displayConfig.value,
+    results: visibleResults.value,
+    warnings: response.value.warnings,
+    roiScenario: roi.value.enabled ? roi.value : null,
+    roiResults,
+  }
+  let text = JSON.stringify(exportData, null, 2),
+    mime = 'application/json'
+  if (format === 'csv') {
+    const quote = (v: unknown) => {
+      const value = typeof v === 'string' ? v : JSON.stringify(v)
+      return '"' + String(value ?? '').replace(/"/g, '""') + '"'
+    }
+    const rows = [
+      [
+        'protocol',
+        'profile',
+        'status',
+        'boundary',
+        'metric',
+        'bytes',
+        'evidence',
+        'methodology',
+        'references',
+        'warnings',
+        'schema',
+        'settings',
+      ],
+    ]
+    for (const r of visibleResults.value)
+      for (const [key, metric] of Object.entries(r.metrics))
+        rows.push([
+          r.name,
+          r.profile,
+          r.status,
+          r.boundary,
+          key,
+          metric.value === null ? '' : String(metric.value),
+          metric.evidence,
+          metric.note,
+          JSON.stringify(r.references),
+          JSON.stringify([...r.notes, ...r.notComparable]),
+          JSON.stringify(displayConfig.value.fields),
+          JSON.stringify(displayConfig.value.settings),
+        ])
+    text = rows.map((row) => row.map(quote).join(',')).join('\r\n')
+    mime = 'text/csv'
+  }
+  const url = URL.createObjectURL(new Blob([text], { type: mime })),
+    anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = `struct-protocol-lab.${format}`
+  anchor.click()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+</script>
 <template>
-  <div class="method">
-    <div class="method-main">
-      <p class="label mb-3">Methodology</p>
-      <h1 class="method-title">Benchmark methodology</h1>
-      <p class="method-lede">
-        Claims on the landing page are either calculated from Protocol v2, tied to the cold-uplink
-        comparison below, or labeled pending. This page is the source of those conditions.
-      </p>
-
-      <section class="method-section">
-        <h2>Sample telemetry schema</h2>
+  <div class="protocol-lab">
+    <header class="lab-page-heading">
+      <div>
+        <p class="lab-eyebrow">STRUCT RESEARCH / PROTOCOL LAB</p>
+        <h1>Your data. Every protocol.<br /><span>See what actually travels.</span></h1>
         <p>
-          Reference payload used for size calculations matches
-          <span class="mono">dummy-device.js</span> and
-          <span class="mono">test_device.cpp</span>:
+          Build a telemetry schema. Explore its encoding, security and delivery costs.<br
+            class="lab-desktop-break"
+          />
+          Measured evidence and transparent calculations, with no missing bytes disguised as savings.
         </p>
-        <pre class="method-pre">{
-  "temp": 22.5,        // float32, 4 bytes
-  "humidity": 40.0,    // float32, 4 bytes
-  "is_active": true    // uint8 boolean, 1 byte
-}</pre>
-        <p>Packed little-endian payload: <strong>9 bytes</strong>.</p>
-      </section>
-
-      <section class="method-section">
-        <h2>Struct encoded frame</h2>
-        <p>Protocol v2 telemetry uplink:</p>
-        <pre class="method-pre">[1B proto=2][16B key_id][1B schema][4B unix_ts][12B nonce][payload][32B HMAC-SHA256]</pre>
-        <ul>
-          <li>Header: 34 bytes</li>
-          <li>HMAC: 32 bytes</li>
-          <li>Reference payload: 9 bytes</li>
-          <li><strong>Authenticated frame: 75 bytes</strong></li>
-        </ul>
-        <p>
-          The landing page rounds this to <strong>~100&nbsp;B</strong> as a small authenticated UDP
-          uplink example (a few extra schema bytes, or typical IPv4+UDP headers on the wire, land
-          near that figure). It is not a claim that every Struct payload is 100 bytes.
-        </p>
-      </section>
-
-      <section class="method-section">
-        <h2>Encryption and delivery confirmation</h2>
-        <p>
-          For the same 9-byte sample, optional encryption adds 32 bytes, making the
-          uplink 107 bytes. Confirmed UDP adds a 69-byte signed storage receipt.
-          With minimum IPv4 and UDP headers, one successful exchange is 200 bytes
-          without encryption or 232 bytes with encryption, before link-layer
-          overhead. These are format calculations, not packet captures.
-        </p>
-        <p>
-          Lost packets or receipts can add retransmissions. Radio registration,
-          time synchronization, signal quality, and modem tail time also affect
-          energy use. Smaller payloads alone do not establish battery savings.
-        </p>
-      </section>
-
-      <section class="method-section">
-        <h2>HTTPS / TLS cold-uplink example</h2>
-        <p>
-          The ~5.2&nbsp;KB HTTPS figure is an <strong>approximate cold TLS + HTTP POST</strong>
-          overhead used for the comparison — a new TCP connection, TLS handshake, and a small JSON
-          telemetry request. It is <strong>not a packet capture stored in this repository</strong>.
-        </p>
-        <p>
-          <span class="mono">100 / 5200 ≈ 1.9%</span> remaining, which is the source of
-          “~98% less transmitted data per cold uplink” in the illustrative estimate. That ratio does
-          <strong>not</strong> mean the packed struct is 99% smaller than the JSON document.
-          The JSON body for this schema is on the order of tens of bytes; most of the 5.2&nbsp;KB is
-          session/handshake overhead.
-        </p>
-        <p>
-          Persistent HTTPS/TLS sessions and persistent MQTT connections may have substantially
-          lower per-message overhead than a cold connection. MQTT, TCP, and HTTPS are appropriate
-          for many workloads; the comparison is limited to intermittent cold uplinks.
-        </p>
-      </section>
-
-      <section class="method-section">
-        <h2>Fleet cost model</h2>
-        <p>The ~$2,400/month figure is a model, not a measured invoice:</p>
-        <ul>
-          <li>10,000 devices</li>
-          <li>1 cold uplink per minute</li>
-          <li>~5,100 bytes saved per ping (5,200 − 100)</li>
-          <li>≈ 2.2&nbsp;TB/month</li>
-          <li>$1.10/GB metered cellular</li>
-        </ul>
-        <p>
-          It does not apply if devices keep MQTT or TLS sessions alive, batch readings, or transmit
-          less often.
-        </p>
-      </section>
-
-      <section class="method-section">
-        <h2>Still unmeasured</h2>
-        <p>
-          The following are <strong>not</strong> measured in this repository. Landing-page cells
-          say <span class="mono">Benchmark pending</span> rather than guessed numbers.
-        </p>
-        <ul>
-          <li>CBOR, MessagePack, and Protobuf encodings of the sample schema</li>
-          <li>JSON + MQTT/TLS per-message size on a warm session</li>
-          <li>Radio awake time / “10× less awake time” (no MCU capture yet)</li>
-          <li>Battery-life deltas (depend on modem, signal, retries, sleep current, chemistry, temperature, firmware)</li>
-          <li>Decode latency on a specific microcontroller</li>
-          <li>Compiler flags and MCU used for firmware timing</li>
-        </ul>
-        <p>
-          These measurements are not in the repository. A reproducible bench would encode the sample
-          schema to JSON, CBOR, MessagePack, and Protobuf, capture cold HTTPS against Struct UDP, and
-          record radio-on time for a named board with published compiler settings.
-        </p>
-      </section>
-
-      <section class="method-section">
-        <h2>Verified from implementation</h2>
-        <ul>
-          <li>
-            Generated headers use <span class="mono">#pragma pack(1)</span> structs and
-            <span class="mono">static_assert</span> on size — no
-            <span class="mono">malloc</span>/<span class="mono">new</span> in the packing path.
-          </li>
-          <li>Field types: <span class="mono">float32</span>, <span class="mono">int32</span>, <span class="mono">uint8</span>, <span class="mono">boolean</span>, <span class="mono">flags</span>.</li>
-          <li>Transports: TCP stream and UDP datagram, both Protocol v2 + HMAC-SHA256.</li>
-          <li>Optional ChaCha20-Poly1305 on Pro/Scale, with timestamp + durable nonce replay checks.</li>
-          <li>Destinations are signed HTTPS webhooks, not first-party Datadog/AWS connectors.</li>
-        </ul>
-      </section>
-
-      <section class="method-section">
-        <h2>When other encodings win</h2>
-        <ul>
-          <li><strong>Protobuf</strong> — schema evolution, nested messages, multi-language codegen.</li>
-          <li><strong>CBOR / MessagePack</strong> — self-describing binary without an out-of-band schema.</li>
-          <li><strong>MQTT</strong> — long-lived bidirectional sessions, fan-out, command/control.</li>
-          <li><strong>HTTPS / JSON</strong> — request/response, firewall traversal, human-debuggable APIs.</li>
-        </ul>
-      </section>
+      </div>
+      <div class="lab-research-stamp">
+        <strong>{{ metadata?.coverage.total_configurations.toLocaleString() ?? '65,019' }}</strong
+        ><span>reference configurations</span
+        ><small>Dataset {{ metadata?.version ?? '1.0.0' }} · local host research</small
+        ><a
+          v-if="metadata"
+          :href="`${metadata.researchUrl}/reports/FINAL-REPORT.md`"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Read the methodology ↗</a
+        >
+      </div>
+    </header>
+    <div class="lab-toolbar">
+      <button
+        type="button"
+        class="lab-button lab-mobile-settings"
+        :aria-expanded="settingsOpen"
+        aria-controls="lab-settings"
+        @click="settingsOpen = !settingsOpen"
+      >
+        {{ settingsOpen ? 'Hide settings' : 'Edit schema & settings' }}
+      </button>
+      <div class="lab-protocol-switches" aria-label="Visible protocols">
+        <button
+          v-for="(name, id) in protocolNames"
+          :key="id"
+          type="button"
+          :aria-pressed="config.settings.visible.includes(id)"
+          :class="{ active: config.settings.visible.includes(id) }"
+          @click="toggleProtocol(id)"
+        >
+          {{ name }}
+        </button>
+      </div>
+      <div class="lab-actions">
+        <button type="button" class="lab-button" @click="share">Share</button
+        ><button
+          type="button"
+          class="lab-button"
+          :disabled="pending || !response || !!error"
+          @click="download('json')"
+        >
+          JSON ↓</button
+        ><button
+          type="button"
+          class="lab-button"
+          :disabled="pending || !response || !!error"
+          @click="download('csv')"
+        >
+          CSV ↓
+        </button>
+      </div>
     </div>
+    <p v-if="shareMessage" class="lab-notice" role="status">{{ shareMessage }}</p>
+    <input
+      v-if="shareUrl"
+      class="lab-input lab-share-url"
+      :value="shareUrl"
+      readonly
+      aria-label="Shareable configuration URL"
+    />
+    <div class="lab-workbench">
+      <div id="lab-settings" class="lab-settings-wrap" :class="{ open: settingsOpen }">
+        <ProtocolLabSidebar
+          v-model="config"
+          v-model:roi="roi"
+          :metadata="metadata"
+          @reset="reset"
+          @preset="preset"
+        />
+      </div>
+      <div class="lab-dashboard">
+        <div v-if="dataError" role="alert" class="lab-error-panel">
+          {{ dataError }}
+          <button type="button" class="lab-button" @click="loadMetadata">Reload dataset</button>
+        </div>
+        <div v-if="error" role="alert" class="lab-error-panel">
+          <strong>Check your experiment</strong>
+          <p>{{ error }}</p>
+          <button type="button" class="lab-button" @click="update">Retry calculation</button>
+        </div>
+        <div class="lab-headline">
+          <div>
+            <p class="lab-eyebrow">
+              STRUCT · {{ displayConfig.settings.traffic === 'exchange' ? 'FULL EXCHANGE' : 'UPLINK' }}
+            </p>
+            <strong :class="{ 'lab-updating': pending }"
+              >{{ format(primary) }}<span v-if="primary !== null"> B</span></strong
+            >
+            <p>per logical reading · {{ displayConfig.settings.boundary }} boundary</p>
+          </div>
+          <div class="lab-headline-context">
+            <strong>Compare the whole stack.</strong>
+            <p>
+              Security, precision and acknowledgments change the answer. A smaller number only earns a
+              comparison when its assumptions match.
+            </p>
+          </div>
+        </div>
+        <div class="lab-baseline">
+          <label
+            >Comparison baseline<select
+              v-model="config.settings.baseline"
+              class="lab-input"
+              aria-label="Comparison baseline"
+            >
+              <option v-for="(name, id) in protocolNames" :key="id" :value="id">{{ name }}</option>
+            </select></label
+          >
+          <p>Percentages are withheld when security, identity, delivery or measurement boundaries differ.</p>
+          <span v-if="pending" role="status" class="lab-updating-text">Updating results…</span>
+        </div>
+        <div v-if="response?.warnings.length" class="lab-warning" aria-live="polite">
+          <p v-for="warning in response.warnings" :key="warning">{{ warning }}</p>
+        </div>
+        <template v-if="response && !error">
+          <ProtocolLabComparison
+            :results="visibleResults"
+            :settings="displayConfig.settings"
+            :pending="pending"
+            @inspect="inspect"
+          />
+          <ProtocolLabCharts
+            :results="visibleResults"
+            :scaling="response.scaling"
+            :settings="displayConfig.settings"
+            @axis="config.settings.scaling = $event"
+            @inspect="inspect"
+          />
+          <ProtocolLabRoi :input="roi" :results="visibleResults" />
+          <ProtocolLabIntegration :result="structResult" :settings="displayConfig.settings" />
+        </template>
+        <div v-else-if="pending && !error" class="lab-loading" role="status">
+          Loading encoders and benchmark references…
+        </div>
+        <ProtocolLabResearchExplorer />
+        <footer class="lab-methodology-note">
+          <strong>Measurement boundaries matter.</strong>
+          <p>
+            Encoded payload and datagram lengths come from real encoders or matching benchmark observations.
+            UDP/IP headers are specification-calculated; TCP packet counts, cellular framing and
+            physical-device energy were not measured. Sample schemas are processed by this site's calculator;
+            no device traffic is transmitted. Use example values, not secrets.
+          </p>
+          <a href="/benchmark-methodology">Historical landing-page methodology</a><span> · </span
+          ><a
+            v-if="metadata"
+            :href="`${metadata.researchUrl}/reports/CALCULATION-RULES.md`"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Calculation rules ↗</a
+          >
+        </footer>
+      </div>
+    </div>
+    <ProtocolLabExplanation
+      :result="inspected"
+      :metric="inspectedMetric"
+      :config="displayConfig"
+      :metadata="metadata"
+      @close="inspected = null"
+    />
   </div>
 </template>
-
-<script setup lang="ts">
-definePageMeta({ layout: 'doc' })
-
-useSeoMeta({
-  title: 'Benchmark methodology — Struct',
-  description:
-    'Conditions behind Struct’s cold-uplink size comparison, Protocol v2 frame layout, and pending measurements.',
-})
-</script>
-
-<style scoped>
-.method-main {
-  max-width: none;
-  margin: 0;
-  padding: 0;
-}
-
-.method-title {
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
-  color: var(--struct-text);
-}
-
-.method-lede {
-  margin-top: 1rem;
-  font-size: 1.125rem;
-  line-height: 1.7;
-  color: var(--struct-text-secondary);
-}
-
-.method-section {
-  margin-top: 2.5rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--struct-border);
-}
-
-.method-section h2 {
-  font-size: 1.15rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--struct-text);
-}
-
-.method-section p,
-.method-section li {
-  margin-top: 0.75rem;
-  font-size: 1.0625rem;
-  line-height: 1.7;
-  color: var(--struct-text-secondary);
-}
-
-.method-section ul {
-  margin: 0.5rem 0 0;
-  padding-left: 1.15rem;
-}
-
-.method-section strong {
-  font-weight: 600;
-  color: var(--struct-text);
-}
-
-.method-pre {
-  margin-top: 0.85rem;
-  overflow-x: auto;
-  border: 1px solid var(--struct-border);
-  border-radius: 10px;
-  background: var(--struct-inset);
-  padding: 0.9rem 1rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
-  line-height: 1.55;
-  color: var(--struct-info);
-  white-space: pre-wrap;
-}
-
-.mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.85em;
-  color: var(--struct-text-secondary);
-}
-
-.todo {
-  border: 1px dashed rgba(86, 23, 252, 0.35);
-  border-radius: 10px;
-  background: rgba(86, 23, 252, 0.05);
-  padding: 0.85rem 1rem;
-  color: var(--struct-text-secondary);
-}
-
-.label {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--struct-muted);
-}
-
-.nav-logo {
-  display: inline-flex;
-  align-items: center;
-}
-
-.btn-ghost {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--struct-border);
-  border-radius: 8px;
-  padding: 0.45rem 0.85rem;
-  color: var(--struct-text);
-  text-decoration: none;
-}
-
-.btn-ghost:hover {
-  border-color: rgba(86, 23, 252, 0.45);
-}
-</style>
+<style src="~/assets/css/protocol-lab.css" />

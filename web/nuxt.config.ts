@@ -27,6 +27,8 @@ export default defineNuxtConfig({
   },
 
   nitro: {
+    externals: { inline: [/sdk[\\/]js[\\/]secure-v2/, /protocol[\\/]schema/] },
+    serverAssets: [{ baseName: 'protocol-lab', dir: fileURLToPath(new URL('./server/assets/protocol-lab', import.meta.url)) }],
     alias: {
       '#shared': sharedDir,
     },
