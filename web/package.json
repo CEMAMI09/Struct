@@ -16,7 +16,8 @@
     "prebuild": "npm run lab:data",
     "predev": "npm run lab:data",
     "test:lab:browser": "playwright test --config playwright.lab.config.ts",
-    "test:lab": "vitest run server/protocol-lab --pool=threads --maxWorkers=1"
+    "test:lab": "vitest run server/protocol-lab --pool=threads --maxWorkers=1",
+    "test:phase12:browser": "playwright test --config playwright.phase12.config.ts"
   },
   "dependencies": {
     "@nuxtjs/supabase": "^2.0.9",

@@ -26,7 +26,7 @@ export function authCallbackDestination(search: string, hash: string): '/dashboa
  * Keep the conditions aligned with authCallbackDestination.
  */
 export const AUTH_CALLBACK_BOOT_SCRIPT =
-  "(function(){try{var q=new URLSearchParams(location.search);var h=new URLSearchParams((location.hash||'').replace(/^#/,''));if(q.get('error')||h.get('error')){sessionStorage.removeItem('struct-post-auth');return}var type=h.get('type')||q.get('type')||'';if(type==='recovery'||q.get('flow')==='recovery')return;var email=(q.has('token_hash')||q.has('token'))&&(type==='signup'||type==='magiclink'||type==='invite'||type==='email'||type==='email_change');if(q.has('code')||h.has('access_token')||email)sessionStorage.setItem('struct-post-auth','/dashboard')}catch(e){}})();"
+  "(function(){try{var q=new URLSearchParams(location.search);var h=new URLSearchParams((location.hash||'').replace(/^#/,''));if(q.get('error')||h.get('error')){sessionStorage.removeItem('struct-post-auth');return}var type=h.get('type')||q.get('type')||'';if(type==='recovery'||q.get('flow')==='recovery')return;var email=(q.has('token_hash')||q.has('token'))&&(type==='signup'||type==='magiclink'||type==='invite'||type==='email'||type==='email_change');if(q.has('code')||h.has('access_token')||email){sessionStorage.setItem('struct-post-auth','/dashboard');if(location.pathname==='/')location.replace('/confirm'+location.search+location.hash)}}catch(e){}})();"
 
 function authStorage(): Storage | null {
   if (typeof globalThis.sessionStorage === 'undefined') return null
@@ -61,4 +61,13 @@ export function pendingAuthRedirect(pathname: string): '/dashboard' | null {
     return null
   }
   return '/dashboard'
+}
+
+/** Only same-site dashboard routes are valid post-login destinations. */
+export function safeAuthDestination(value: unknown): string {
+ if(typeof value!=='string'||value.length>2048||/[\\\x00-\x20]/.test(value))return '/dashboard'
+ if(value==='/dashboard'||value.startsWith('/dashboard/')||value.startsWith('/dashboard?')){
+  const parsed=new URL(value,'https://struct.invalid');if(parsed.origin==='https://struct.invalid'&&(parsed.pathname==='/dashboard'||parsed.pathname.startsWith('/dashboard/')))return parsed.pathname+parsed.search+parsed.hash
+ }
+ return '/dashboard'
 }

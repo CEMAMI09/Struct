@@ -30,12 +30,7 @@
     </p>
     <p v-if="pageMsg" class="mb-4 text-sm text-[#b79bff]">{{ pageMsg }}</p>
 
-    <DeviceCredentialsModal
-      v-if="pendingCredentials"
-      :credentials="pendingCredentials"
-      :device-name="pendingCredentialsName"
-      @close="clearPendingCredentials"
-    />
+
 
     <!-- Billing -->
     <section v-if="activeTab === 'billing'" class="space-y-4">
@@ -64,13 +59,12 @@
               {{ billingLoading ? 'Opening…' : 'Manage billing' }}
             </button>
             <button
-              v-if="canWrite && currentOrganization?.stripe_customer_id"
+              v-if="canWrite"
               type="button"
               class="btn-ghost text-xs"
-              :disabled="billingLoading"
-              @click="onSyncBilling"
+              :disabled="billingSyncing || billingLoading" @click="onSyncBilling"
             >
-              Refresh
+              {{billingSyncing?'Refreshing…':'Refresh billing'}}
             </button>
           </div>
         </div>
@@ -123,70 +117,7 @@
       </div>
     </section>
 
-    <!-- API Keys -->
-    <section v-else-if="activeTab === 'api-keys'" class="space-y-4">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p class="label">Device credentials</p>
-          <p class="text-xs text-[#8B93A7]">Each device has a public key ID. Rotating replaces the key ID and shows a new API secret once.</p>
-        </div>
-        <button v-if="canWrite" type="button" class="btn-primary" @click="showTokenForm = !showTokenForm">
-          Rotate credentials
-        </button>
-      </div>
-
-      <form
-        v-if="showTokenForm"
-        class="card flex flex-col gap-3 p-4 sm:flex-row"
-        @submit.prevent="onRotateToken"
-      >
-        <select v-model="tokenDeviceId" class="input flex-1" required>
-          <option value="" disabled>Select a device</option>
-          <option v-for="device in devices" :key="device.id" :value="device.id">
-            {{ device.name }}
-          </option>
-        </select>
-        <button class="btn-primary shrink-0" type="submit" :disabled="rotatingToken">
-          {{ rotatingToken ? 'Generating…' : 'Generate' }}
-        </button>
-      </form>
-
-      <div class="card overflow-hidden">
-        <div v-if="!devices.length" class="p-8 text-center text-sm text-[#8B93A7]">
-          No device credentials yet.
-        </div>
-        <div
-          v-for="device in devices"
-          v-else
-          :key="device.id"
-          class="flex flex-col gap-3 border-b border-[#2A2F3A] p-4 last:border-b-0 sm:flex-row sm:items-center"
-        >
-          <div class="min-w-0 flex-1">
-            <p class="text-sm font-medium text-[#E8EAEF]">{{ device.name }}</p>
-            <p class="mt-1 font-mono text-xs text-[#8B93A7]">
-              Key ID {{ revealedKeys.has(device.id) ? device.api_key : maskToken(device.api_key) }}
-            </p>
-          </div>
-          <div class="flex gap-2">
-            <button type="button" class="btn-ghost text-xs" @click="toggleKey(device.id)">
-              {{ revealedKeys.has(device.id) ? 'Hide' : 'Reveal' }}
-            </button>
-            <button
-              v-if="canWrite"
-              type="button"
-              class="btn-ghost text-xs text-red-400"
-              title="Delete device and revoke its credentials"
-              @click="onRevokeToken(device.id, device.name)"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-      <p class="text-[11px] text-[#8B93A7]">
-        Rotating replaces the selected device’s key ID and API secret immediately. Delete removes the device.
-      </p>
-    </section>
+    <section v-else-if="activeTab === 'api-keys'" class="space-y-4"><h2 class="font-semibold">Secure V2 device credentials</h2><p class="text-sm text-[#9AA3B2]">Private credentials are included only in explicit starter exports. Rotate in device setup after secret exposure or counter-state loss. One credential belongs to one sender.</p><div v-for="device in devices" :key="device.id" class="card flex flex-wrap items-center justify-between gap-3 p-4"><span>{{device.name}}</span><NuxtLink :to="`/dashboard/schema?device=${device.id}`" class="btn-ghost text-xs">Manage device credentials</NuxtLink></div><NuxtLink to="/docs/devices" class="text-[#b79bff]">Credential and rotation guide</NuxtLink></section>
 
     <!-- Webhooks -->
     <section v-else-if="activeTab === 'webhooks'" class="space-y-4">
@@ -299,7 +230,7 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'auth' })
 
-import type { DeviceCredentials, SubscriptionTier } from '~/types'
+import type { SubscriptionTier } from '~/types'
 
 type SettingsTab = 'billing' | 'api-keys' | 'webhooks' | 'account' | 'appearance' | 'support'
 type PaidTier = Exclude<SubscriptionTier, 'free'>
@@ -310,8 +241,6 @@ const supabase = useSupabaseClient()
 const {
   devices,
   fetchDevices,
-  deleteDevice,
-  rotateDeviceApiKey,
 } = useDevices()
 const {
   currentOrganization,
@@ -328,6 +257,7 @@ const {
   fetchDestinations,
 } = useDestinations()
 const {
+  syncing: billingSyncing,
   loading: billingLoading,
   error: billingError,
   startCheckout,
@@ -347,7 +277,7 @@ const upgradePlans: { id: PaidTier; name: string; price: string; blurb: string }
     id: 'pro',
     name: 'Pro',
     price: '$49/mo',
-    blurb: '155-device start · encryption & downlinks',
+    blurb: '155-device start · 30-day retention & downlinks',
   },
   {
     id: 'scale',
@@ -379,18 +309,12 @@ watch(() => route.query.tab, (tab) => {
     activeTab.value = tab as SettingsTab
   }
 }, { immediate: true })
-const pendingCredentials = ref<DeviceCredentials | null>(null)
-const pendingCredentialsName = ref('')
 const pageError = ref('')
 const pageMsg = ref('')
 const usagePercent = computed(() =>
   Math.min(100, Math.round((devices.value.length / Math.max(1, deviceLimit.value)) * 100)),
 )
 
-const showTokenForm = ref(false)
-const tokenDeviceId = ref('')
-const rotatingToken = ref(false)
-const revealedKeys = ref(new Set<string>())
 
 const resettingPassword = ref(false)
 const newPassword = ref('')
@@ -454,74 +378,19 @@ async function onUpgrade(tier: PaidTier) {
 }
 
 async function onSyncBilling() {
+  if(billingSyncing.value)return
   setMessage()
   try {
     const result = await syncFromStripe()
     if (result?.synced) {
-      pageMsg.value = `Synced from Stripe: ${result.deviceLimit} device limit (${result.stripeQuantity} paid slots).`
+      pageMsg.value = 'Billing information is up to date.'
     } else if (result) {
-      pageMsg.value = 'No active Stripe subscription found to sync.'
+      pageMsg.value = result.subscriptionTier==='free'?"You’re currently using the Free plan.":'Billing information is up to date.'
     } else {
-      pageError.value = 'Could not sync billing from Stripe.'
+      pageError.value = 'Unable to refresh billing information. Please try again.'
     }
   } catch (error: any) {
     pageError.value = error?.data?.message || error.message
-  }
-}
-
-function maskToken(token: string) {
-  return token.length > 8 ? `${token.slice(0, 4)}••••••••${token.slice(-4)}` : '••••••••'
-}
-
-function toggleSet(setRef: Ref<Set<string>>, id: string) {
-  const next = new Set(setRef.value)
-  if (next.has(id)) next.delete(id)
-  else next.add(id)
-  setRef.value = next
-}
-
-function toggleKey(id: string) {
-  toggleSet(revealedKeys, id)
-}
-
-function clearPendingCredentials() {
-  pendingCredentials.value = null
-  pendingCredentialsName.value = ''
-}
-
-async function onRotateToken() {
-  if (!tokenDeviceId.value) return
-  rotatingToken.value = true
-  setMessage()
-  try {
-    const result = await rotateDeviceApiKey(tokenDeviceId.value)
-    const device = result.device
-    const next = new Set(revealedKeys.value)
-    next.add(device.id)
-    revealedKeys.value = next
-    showTokenForm.value = false
-    if (result.credentials) {
-      pendingCredentialsName.value = device.name
-      pendingCredentials.value = result.credentials
-      pageMsg.value = `New credentials for ${device.name}. Save the API secret now — it won’t be shown again.`
-    } else {
-      pageMsg.value = `Rotated credentials for ${device.name}.`
-    }
-  } catch (error: any) {
-    pageError.value = error.message
-  } finally {
-    rotatingToken.value = false
-  }
-}
-
-async function onRevokeToken(id: string, name: string) {
-  if (!confirm(`Delete “${name}” and permanently revoke its credentials?`)) return
-  setMessage()
-  try {
-    await deleteDevice(id)
-    pageMsg.value = 'Device deleted and credentials revoked.'
-  } catch (error: any) {
-    pageError.value = error.message
   }
 }
 

@@ -85,6 +85,10 @@ export interface Device {
   secure_v2_enabled?: boolean
   wire_device_id?: number | null
   mac_address: string | null
+  first_telemetry_at?: string | null
+  starter_downloaded_at?: string | null
+  configuration_acknowledged_at?: string | null
+  expected_report_interval_ms?: number | null
   last_seen: string | null
   created_at: string
   tags: DeviceTags

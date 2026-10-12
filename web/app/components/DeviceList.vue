@@ -19,10 +19,10 @@
           :aria-current="selectedId === device.id ? 'true' : undefined"
           @click="$emit('select', device.id)"
         >
-          <StatusDot :online="isDeviceOnline(device.last_seen)" show-label />
+          <StatusDot :status="deviceActivity(device, now)" show-label />
           <span class="min-w-0 flex-1">
             <span class="block truncate text-sm font-medium text-[#E8EAEF]">{{ device.name }}</span>
-            <span class="mono block truncate text-[10px] text-[#9AA3B2]">Key ID {{ device.api_key }}</span>
+            <span class="mono block truncate text-[10px] text-[#9AA3B2]">{{device.secure_v2_enabled?'Wire ID '+device.wire_device_id:'Existing device '+device.id}}</span>
           </span>
         </button>
       </li>
@@ -32,7 +32,10 @@
 
 <script setup lang="ts">
 import type { Device } from '~/types'
-import { isDeviceOnline } from '~/types'
+import { deviceActivity } from '#shared/deviceActivity'
+const now=ref(Date.now());let timer:ReturnType<typeof setInterval>|undefined
+onMounted(()=>{timer=setInterval(()=>now.value=Date.now(),15000)})
+onBeforeUnmount(()=>clearInterval(timer))
 
 defineProps<{
   devices: Device[]

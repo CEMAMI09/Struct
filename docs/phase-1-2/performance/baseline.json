@@ -1,0 +1,98 @@
+[
+  {
+    "path": "/",
+    "settledMs": 730,
+    "url": "http://127.0.0.1:3106/",
+    "requests": 66,
+    "dataRequests": 0,
+    "nav": {
+      "ttfbMs": 1.4000000953674316,
+      "domContentLoadedMs": 121.20000004768372,
+      "lcpMs": null
+    }
+  },
+  {
+    "path": "/login",
+    "settledMs": 672,
+    "url": "http://127.0.0.1:3106/dashboard",
+    "requests": 63,
+    "dataRequests": 5,
+    "nav": {
+      "ttfbMs": 13.400000095367432,
+      "domContentLoadedMs": 51.299999952316284,
+      "lcpMs": null
+    }
+  },
+  {
+    "path": "/dashboard",
+    "settledMs": 672,
+    "url": "http://127.0.0.1:3106/dashboard",
+    "requests": 62,
+    "dataRequests": 5,
+    "nav": {
+      "ttfbMs": 13.900000095367432,
+      "domContentLoadedMs": 40.59999990463257,
+      "lcpMs": null
+    }
+  },
+  {
+    "path": "/dashboard/devices",
+    "settledMs": 677,
+    "url": "http://127.0.0.1:3106/dashboard/devices",
+    "requests": 63,
+    "dataRequests": 4,
+    "nav": {
+      "ttfbMs": 11.399999856948853,
+      "domContentLoadedMs": 39.89999985694885,
+      "lcpMs": null
+    }
+  },
+  {
+    "path": "/dashboard/schema",
+    "settledMs": 672,
+    "url": "http://127.0.0.1:3106/dashboard/schema",
+    "requests": 63,
+    "dataRequests": 5,
+    "nav": {
+      "ttfbMs": 14.400000095367432,
+      "domContentLoadedMs": 39.200000047683716,
+      "lcpMs": null
+    }
+  },
+  {
+    "path": "/dashboard/debugger",
+    "settledMs": 682,
+    "url": "http://127.0.0.1:3106/dashboard/debugger",
+    "requests": 61,
+    "dataRequests": 4,
+    "nav": {
+      "ttfbMs": 12.200000047683716,
+      "domContentLoadedMs": 70.40000009536743,
+      "lcpMs": null
+    }
+  },
+  {
+    "path": "/dashboard/settings",
+    "settledMs": 671,
+    "url": "http://127.0.0.1:3106/dashboard/settings",
+    "requests": 63,
+    "dataRequests": 6,
+    "nav": {
+      "ttfbMs": 14.700000047683716,
+      "domContentLoadedMs": 39.799999952316284,
+      "lcpMs": null
+    }
+  },
+  {
+    "path": "/docs",
+    "settledMs": 668,
+    "url": "http://127.0.0.1:3106/docs",
+    "requests": 37,
+    "dataRequests": 0,
+    "nav": {
+      "ttfbMs": 19.299999952316284,
+      "domContentLoadedMs": 48.10000014305115,
+      "lcpMs": null
+    }
+  }
+]

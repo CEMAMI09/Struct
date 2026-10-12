@@ -19,7 +19,9 @@
     "mock:esp": "node scripts/esp-emulator.js",
     "test:sdk": "node sdk/tests/test_udp.cjs",
     "test:protocol": "node sdk/tests/test_vectors.cjs",
-    "package:sdk": "python scripts/package-sdk.py"
+    "package:sdk": "python scripts/package-sdk.py",
+    "test:onboarding": "node tests/onboarding-db.cjs",
+    "test:phase12:fixture": "node tests/phase12/fixture.cjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8"

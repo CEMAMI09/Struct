@@ -1,0 +1,2 @@
+import {defineConfig,devices} from '@playwright/test'
+export default defineConfig({testDir:'./test/phase12',timeout:45000,workers:1,use:{baseURL:process.env.PHASE12_BASE_URL||'http://127.0.0.1:3104',trace:'retain-on-failure'},reporter:[['list'],['json',{outputFile:'../work/phase12/browser.json'}]],outputDir:'../work/phase12/browser-results',projects:[{name:'desktop',use:{viewport:{width:1440,height:1000}}},{name:'tablet',use:{viewport:{width:820,height:1180}}},{name:'mobile',use:{...devices['iPhone 13'],defaultBrowserType:'chromium'}}]})

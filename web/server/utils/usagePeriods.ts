@@ -1,3 +1,4 @@
+import {deviceAllowanceMessage,BILLING_SETTINGS_PATH} from '#shared/limitFeedback'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { TIER_FLOORS, type OrganizationBillingRow, type SubscriptionTier } from './billing'
 import { countOrganizationDevices, getOrganizationBilling } from './organizations'
@@ -150,7 +151,8 @@ export async function resolveUsagePlan(
     throw createError({
       statusCode: 402,
       statusMessage: 'Payment Required',
-      message: `Free tier supports up to 5 devices. This upload would reach ${plan.projectedCount}. Upgrade to add more.`,
+      message: deviceAllowanceMessage(currentCount,activeLimit,plan.projectedCount),
+      data:{code:"DEVICE_LIMIT",resource:"devices",usage:currentCount,limit:activeLimit,projected:plan.projectedCount,actionUrl:BILLING_SETTINGS_PATH},
     })
   }
 

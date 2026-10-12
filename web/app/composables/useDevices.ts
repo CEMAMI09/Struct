@@ -11,7 +11,7 @@ import type {
 import { formatMacAddress } from '#shared/bulkUpload'
 import type { Json } from '~/types/database.types'
 
-const DEVICE_FIELDS = 'id,user_id,organization_id,name,api_key,key_id,api_secret_preview,protocol_version,mac_address,last_seen,created_at,tags,encryption_enabled,profile_id,hardware_id'
+const DEVICE_FIELDS = 'id,user_id,organization_id,name,api_key,key_id,api_secret_preview,protocol_version,mac_address,last_seen,created_at,tags,encryption_enabled,profile_id,hardware_id,secure_v2_enabled,wire_device_id,first_telemetry_at,starter_downloaded_at,configuration_acknowledged_at,expected_report_interval_ms'
 
 function normalizeDevice(row: any): Device {
   const keyId = row.key_id || row.api_key || ''
@@ -26,6 +26,12 @@ function normalizeDevice(row: any): Device {
     protocol_version: Number(row.protocol_version) || 2,
     mac_address: row.mac_address ?? null,
     last_seen: row.last_seen ?? null,
+    first_telemetry_at: row.first_telemetry_at ?? null,
+    starter_downloaded_at: row.starter_downloaded_at ?? null,
+    configuration_acknowledged_at: row.configuration_acknowledged_at ?? null,
+    expected_report_interval_ms: row.expected_report_interval_ms ?? null,
+    secure_v2_enabled: !!row.secure_v2_enabled,
+    wire_device_id: row.wire_device_id ?? null,
     created_at: row.created_at,
     tags: (row.tags && typeof row.tags === 'object' ? row.tags : {}) as DeviceTags,
     encryption_enabled: !!row.encryption_enabled,
@@ -90,6 +96,7 @@ export function useDevices() {
   const error = useState<string | null>('devices-error', () => null)
   /** Org id for which devices/schemas were last successfully loaded (incl. empty). */
   const loadedForOrg = useState<string | null>('devices-loaded-org', () => null)
+  const loadedAt=useState('devices-loaded-at',()=>0)
   const devicesLoaded = computed(() =>
     !!loadedForOrg.value && loadedForOrg.value === currentOrgId.value && !loading.value,
   )
@@ -110,6 +117,7 @@ export function useDevices() {
       return
     }
     const orgId = currentOrgId.value
+    if (!opts?.force && loadedForOrg.value === orgId && !error.value && Date.now()-loadedAt.value<30000) return
     if (inflight.promise && inflight.orgId === orgId && !opts?.force) return inflight.promise
     const generation = ++inflight.generation
 
@@ -165,6 +173,7 @@ export function useDevices() {
           Object.entries(schemaVersions.value).filter(([id]) => deviceIds.has(id)),
         )
         loadedForOrg.value = orgId
+        loadedAt.value=Date.now()
       } catch (e: any) {
         if (generation === inflight.generation && currentOrgId.value === orgId) {
           error.value = e.message || 'Failed to load devices'
@@ -199,9 +208,9 @@ export function useDevices() {
     requireWrite()
     const organization_id = requireOrgId()
 
-    let response: { device: any; credentials?: { keyId: string; apiSecret: string } }
+    let response: { device: any; credentials?: { keyId: string; apiSecret: string } | null }
     try {
-      response = await $fetch<{ device: any; credentials?: { keyId: string; apiSecret: string } }>('/api/devices', {
+      response = await $fetch<{ device: any; credentials?: { keyId: string; apiSecret: string } | null }>('/api/devices', {
         method: 'POST',
         body: { name, orgId: organization_id },
       })
@@ -209,7 +218,7 @@ export function useDevices() {
       const message =
         e?.statusCode === 402
           ? e?.data?.message ||
-            'Free tier supports up to 5 devices. Upgrade your plan to add more.'
+            'Device allowance reached. Open Billing to review current usage and available options.'
           : e?.data?.message || e.message || 'Failed to create device'
       throw new Error(message)
     }
@@ -335,9 +344,9 @@ export function useDevices() {
     requireWrite()
     const organization_id = requireOrgId()
 
-    let response: { device: any; credentials?: { keyId: string; apiSecret: string } }
+    let response: { device: any; credentials?: { keyId: string; apiSecret: string } | null }
     try {
-      response = await $fetch<{ device: any; credentials?: { keyId: string; apiSecret: string } }>(`/api/devices/${id}/key`, {
+      response = await $fetch<{ device: any; credentials?: { keyId: string; apiSecret: string } | null }>(`/api/devices/${id}/key`, {
         method: 'POST',
         body: { orgId: organization_id },
       })

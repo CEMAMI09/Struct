@@ -4,6 +4,7 @@
     <p class="mb-6 text-sm text-[#8B93A7]">Five free devices. No credit card required.</p>
 
     <form class="space-y-4" method="post" @submit.prevent="onSubmit">
+      <fieldset :disabled="!hydrated" class="space-y-4">
       <div>
         <label class="label" for="email">Email</label>
         <input
@@ -33,9 +34,10 @@
       </div>
       <p v-if="error" class="text-sm text-red-300" role="alert">{{ error }}</p>
       <p v-if="info" class="text-sm text-[#b79bff]">{{ info }}</p>
-      <button type="submit" class="btn-primary w-full" :disabled="loading">
+      <button type="submit" class="btn-primary w-full" :disabled="loading || !hydrated">
         {{ loading ? 'Creating…' : 'Sign up' }}
       </button>
+      </fieldset>
     </form>
 
     <AuthSsoButtons />
@@ -56,6 +58,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'auth' })
 
+import { safeAuthDestination } from '~/utils/postAuthRedirect'
 const route = useRoute()
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
@@ -63,6 +66,7 @@ const emailEl = ref<HTMLInputElement | null>(null)
 const passwordField = ref<{ currentValue: () => string } | null>(null)
 const email = ref('')
 const password = ref('')
+const hydrated=ref(false)
 const loading = ref(false)
 const error = ref('')
 const info = ref('')
@@ -71,7 +75,7 @@ let leaving = false
 function goDashboard() {
   if (leaving) return
   leaving = true
-  return navigateTo('/dashboard', { replace: true, external: true })
+  return navigateTo(safeAuthDestination(route.query.redirect), { replace: true })
 }
 
 watch(
@@ -82,13 +86,6 @@ watch(
   { immediate: true },
 )
 
-async function waitForUser(timeoutMs = 3000) {
-  const start = Date.now()
-  while (!user.value && Date.now() - start < timeoutMs) {
-    await new Promise((r) => setTimeout(r, 40))
-  }
-  return !!user.value
-}
 
 function readCredentials() {
   const emailVal = (emailEl.value?.value || email.value).trim()
@@ -99,6 +96,7 @@ function readCredentials() {
 }
 
 onMounted(() => {
+  hydrated.value=true
   loading.value = false
   if (import.meta.client && (route.query.email || route.query.password)) {
     const emailFromQuery =
@@ -125,14 +123,14 @@ async function onSubmit() {
       email: emailVal,
       password: passwordVal,
       options: {
-        emailRedirectTo: `${window.location.origin}/confirm`,
+        emailRedirectTo: `${window.location.origin}/confirm?redirect=${encodeURIComponent(safeAuthDestination(route.query.redirect))}`,
       },
     })
     if (err) {
       error.value = err.message
       return
     }
-    if (data.session || (await waitForUser())) {
+    if (data.session) {
       await goDashboard()
       return
     }

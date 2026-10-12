@@ -15,11 +15,11 @@ export interface OrgMemberRow {
 const STORAGE_KEY = 'struct.currentOrgId'
 
 /** In-flight dedupe for ensureOrganization across concurrent callers. */
-const organizationInflightByApp = new WeakMap<object, { ensure: Promise<Organization | null> | null; memberships: Promise<void> | null }>()
+const organizationInflightByApp = new WeakMap<object, { ensure: Promise<Organization | null> | null; memberships: Promise<void> | null; usage:Promise<any>|null;usageOrg:string|null;usageAt:number;membershipGeneration:number }>()
 
 export function useOrganization() {
   const app = useNuxtApp()
-  if (!organizationInflightByApp.has(app)) organizationInflightByApp.set(app, { ensure: null, memberships: null })
+  if (!organizationInflightByApp.has(app)) organizationInflightByApp.set(app, { ensure: null, memberships: null,usage:null,usageOrg:null,usageAt:0,membershipGeneration:0 })
   const inflight = organizationInflightByApp.get(app)!
   const supabase = useSupabaseClient()
   const user = useSupabaseUser()
@@ -63,7 +63,7 @@ export function useOrganization() {
 
   /** Prefer hydrated user, then local session — avoids Auth network round-trips on every page. */
   async function resolveUserId(): Promise<string | null> {
-    if (user.value?.id) return user.value.id
+    if (user.value?.id || user.value?.sub) return user.value.id || user.value.sub
     const { data } = await supabase.auth.getSession()
     return data.session?.user?.id ?? null
   }
@@ -142,6 +142,7 @@ export function useOrganization() {
       return inflight.memberships
     }
 
+    const generation=++inflight.membershipGeneration
     const run = async () => {
       const uid = await resolveUserId()
       if (!uid) {
@@ -162,6 +163,7 @@ export function useOrganization() {
           .eq('user_id', uid)
           .order('created_at', { ascending: true })
 
+        if(generation!==inflight.membershipGeneration)return
         if (err) throw err
 
         const rows = (data || []).map((row: any) => ({
@@ -190,11 +192,11 @@ export function useOrganization() {
           localStorage.setItem(STORAGE_KEY, currentOrgId.value)
         }
       } catch (e: any) {
+        if(generation!==inflight.membershipGeneration)return
         error.value = e.message || 'Failed to load organizations'
         // Keep any previously loaded memberships — never wipe on transient failures.
       } finally {
-        loading.value = false
-        ready.value = true
+        if(generation===inflight.membershipGeneration){loading.value = false;ready.value = true}
       }
     }
 
@@ -258,11 +260,13 @@ export function useOrganization() {
   }
 
   function clearOrganizationState() {
+    inflight.membershipGeneration++;inflight.memberships=null;inflight.ensure=null;inflight.usage=null;inflight.usageOrg=null
     memberships.value = []
     currentOrgId.value = null
     loading.value = false
     ready.value = false
     error.value = null
+    usageDeviceLimit.value=null;usagePeakPaid.value=0;inflight.usageAt=0
     if (import.meta.client) {
       localStorage.removeItem(STORAGE_KEY)
     }
@@ -411,21 +415,28 @@ export function useOrganization() {
     return org.name.trim().toLowerCase() !== 'personal'
   })
 
-  async function fetchUsageStats() {
+  async function fetchUsageStats(opts?:{force?:boolean}) {
     const orgId = currentOrgId.value
     if (!orgId) return null
-    try {
+    if(inflight.usage && inflight.usageOrg===orgId)return inflight.usage
+    if(!opts?.force && inflight.usageOrg===orgId && Date.now()-inflight.usageAt<30000)return null
+    if(inflight.usageOrg!==orgId){usageDeviceLimit.value=null;usagePeakPaid.value=0}
+    inflight.usageOrg=orgId
+    const run=(async()=>{try {
       const stats = await $fetch<{
         deviceLimit: number
         peakPaidQuantity: number
         peakDeviceCount: number
       }>(`/api/billing/usage?orgId=${encodeURIComponent(orgId)}`)
+      if(currentOrgId.value!==orgId)return null
+      inflight.usageAt=Date.now()
       usageDeviceLimit.value = stats.deviceLimit
       usagePeakPaid.value = stats.peakPaidQuantity
       return stats
     } catch {
       return null
-    }
+    }})().finally(()=>{if(inflight.usage===run)inflight.usage=null})
+    inflight.usage=run;return run
   }
 
   return {

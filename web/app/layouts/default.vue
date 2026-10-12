@@ -21,6 +21,7 @@
           <button
             type="button"
             class="btn-ghost shrink-0 px-2.5 py-2 md:hidden"
+            ref="menuButton"
             aria-label="Open menu"
             :aria-expanded="navOpen"
             @click="navOpen = true"
@@ -95,7 +96,9 @@ const route = useRoute()
 const user = useSupabaseUser()
 const supabase = useSupabaseClient()
 const NAV_COLLAPSED_KEY = 'struct-nav-collapsed'
+const menuButton=ref<HTMLButtonElement|null>(null)
 const navOpen = ref(false)
+watch(navOpen,(open,previous)=>{if(previous&&!open)void nextTick(()=>menuButton.value?.focus())})
 const navCollapsed = ref(false)
 
 function toggleNavCollapsed() {
@@ -119,7 +122,7 @@ const {
   fetchUsageStats,
   setCurrentOrg,
 } = useOrganization()
-const { syncFromStripe } = useBilling()
+
 
 const userEmail = computed(() => user.value?.email || '')
 const signingOut = ref(false)
@@ -128,6 +131,8 @@ let bootstrappedForUser: string | null = null
 
 const title = computed(() => {
   const map: Record<string, string> = {
+    '/dashboard/getting-started':'Getting Started',
+    '/dashboard/compatibility':'Existing firmware compatibility',
     '/dashboard': 'Overview',
     '/dashboard/schema': 'Schema',
     '/dashboard/debugger': 'Diagnostics',
@@ -151,7 +156,7 @@ watch(
 )
 
 async function bootstrapOrg() {
-  const uid = user.value?.id || null
+  const uid = user.value?.id || user.value?.sub || null
   if (bootstrapInflight) return bootstrapInflight
   if (uid && bootstrappedForUser === uid) {
     // Already warm for this session — refresh usage quietly, never block on Stripe.
@@ -161,15 +166,12 @@ async function bootstrapOrg() {
 
   const run = async () => {
     await ensureOrganization()
-    bootstrappedForUser = user.value?.id || uid
+    bootstrappedForUser = user.value?.id || user.value?.sub || uid
 
     // Usage for the header is cheap; don't wait for Stripe.
     void fetchUsageStats()
 
-    // Stripe sync is billing hygiene — run in the background so pages paint immediately.
-    if (canWrite.value && currentOrganization.value?.stripe_customer_id) {
-      void syncFromStripe()
-    }
+
   }
 
   bootstrapInflight = run().finally(() => {
@@ -186,7 +188,7 @@ onMounted(() => {
 })
 
 watch(user, (u, prev) => {
-  if (u && u.id !== prev?.id) {
+  if (u && (u.id||u.sub) !== (prev?.id||prev?.sub)) {
     bootstrappedForUser = null
     bootstrapOrg().catch(() => {})
   }

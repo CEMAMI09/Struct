@@ -84,7 +84,7 @@
 }
 
 .doc-main :deep(a) {
-  color: var(--struct-accent);
+  color: var(--struct-info);
   text-underline-offset: 0.15em;
 }
 

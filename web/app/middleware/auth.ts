@@ -1,4 +1,4 @@
-export default defineNuxtRouteMiddleware(async () => {
+export default defineNuxtRouteMiddleware(async (to) => {
   const user = useSupabaseUser()
   const supabase = useSupabaseClient()
 
@@ -9,6 +9,6 @@ export default defineNuxtRouteMiddleware(async () => {
   }
 
   if (!loggedIn) {
-    return navigateTo('/login')
+    return navigateTo({path:'/login',query:{redirect:to.fullPath}},{replace:true})
   }
 })

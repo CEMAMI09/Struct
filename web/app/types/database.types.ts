@@ -353,6 +353,10 @@ export type Database = {
       }
       devices: {
         Row: {
+          first_telemetry_at: string | null
+          starter_downloaded_at: string | null
+          configuration_acknowledged_at: string | null
+          expected_report_interval_ms: number | null
           secure_v2_enabled: boolean
           wire_device_id: number | null
           api_key: string
@@ -375,6 +379,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          first_telemetry_at?: string | null
+          starter_downloaded_at?: string | null
+          configuration_acknowledged_at?: string | null
+          expected_report_interval_ms?: number | null
           secure_v2_enabled?: boolean
           wire_device_id?: number | null
           api_key: string
@@ -397,6 +405,10 @@ export type Database = {
           user_id?: string
         }
         Update: {
+          first_telemetry_at?: string | null
+          starter_downloaded_at?: string | null
+          configuration_acknowledged_at?: string | null
+          expected_report_interval_ms?: number | null
           secure_v2_enabled?: boolean
           wire_device_id?: number | null
           api_key?: string
@@ -610,6 +622,8 @@ export type Database = {
       }
       organizations: {
         Row: {
+          first_telemetry_at: string | null
+          onboarding_dismissed_at: string | null
           created_at: string
           id: string
           name: string
@@ -620,6 +634,8 @@ export type Database = {
           subscription_tier: Database["public"]["Enums"]["subscription_tier_enum"]
         }
         Insert: {
+          first_telemetry_at?: string | null
+          onboarding_dismissed_at?: string | null
           created_at?: string
           id?: string
           name: string
@@ -630,6 +646,8 @@ export type Database = {
           subscription_tier?: Database["public"]["Enums"]["subscription_tier_enum"]
         }
         Update: {
+          first_telemetry_at?: string | null
+          onboarding_dismissed_at?: string | null
           created_at?: string
           id?: string
           name?: string
@@ -1008,6 +1026,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      workspace_onboarding: { Args: {p_org_id:string}; Returns: Json }
+      dismiss_workspace_onboarding: { Args: {p_org_id:string}; Returns: undefined }
+      update_device_setup: { Args: {p_device_id:string;p_step:string;p_interval_ms?:number|null}; Returns: undefined }
+      create_secure_device_with_usage: {
+        Args: {p_org_id:string;p_user_id:string;p_name:string;p_key_id:string;p_api_secret_encrypted:string;p_api_secret_preview:string;p_mac_address:string;p_expected_current_count:number;p_root_secret_encrypted:string;p_secret_preview:string;p_bootstrap_token_encrypted:string;p_bootstrap_token_hash:string}
+        Returns: Database['public']['Tables']['devices']['Row']
+      }
       enroll_device_secure_v2: {
         Args: { p_device_id: string; p_org_id: string; p_root_secret_encrypted: string; p_secret_preview: string; p_bootstrap_token_encrypted: string; p_bootstrap_token_hash: string; p_rotate?: boolean; p_grace_seconds?: number }
         Returns: SecureV2CredentialRow

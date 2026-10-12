@@ -3,17 +3,10 @@
     <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
       <div>
         <p class="text-sm text-[#8B93A7]">
-          Templates for hardware fleets — a shared packed schema and master key for
-          zero-touch registration.
+          Existing fleet-profile compatibility. New senders use individual Secure V2 enrollment. Bulk Secure V2 provisioning is not available yet.
         </p>
       </div>
-      <NuxtLink
-        v-if="canWrite"
-        to="/dashboard/profiles/new"
-        class="btn-primary"
-      >
-        New profile
-      </NuxtLink>
+
     </div>
 
     <p v-if="error" class="mb-3 text-sm text-red-400">{{ error }}</p>
@@ -21,15 +14,9 @@
       Loading profiles…
     </p>
     <p v-else-if="!loading && !profiles.length" class="mb-3 text-sm text-[#8B93A7]">
-      No profiles yet —
-      <NuxtLink
-        v-if="canWrite"
-        to="/dashboard/profiles/new"
-        class="text-[#b79bff] hover:underline"
-      >
-        create one
-      </NuxtLink>
-      <span v-else>ask an admin to create one</span>.
+      No historical profiles in this workspace.
+
+      <NuxtLink to="/dashboard/schema" class="underline">Set up Secure V2 instead</NuxtLink>.
     </p>
 
     <div v-if="profiles.length" class="space-y-3">

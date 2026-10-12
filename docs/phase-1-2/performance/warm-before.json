@@ -1,0 +1,68 @@
+{
+  "base": "http://127.0.0.1:3106",
+  "measurements": [
+    {
+      "round": 0,
+      "path": "/dashboard/devices",
+      "settledIncluding350ms": 423.2467999999999,
+      "dataRequests": [
+        "/rest/v1/devices",
+        "/rest/v1/schemas"
+      ],
+      "jsRequests": 0
+    },
+    {
+      "round": 0,
+      "path": "/dashboard",
+      "settledIncluding350ms": 395.8941999999997,
+      "dataRequests": [
+        "/rest/v1/devices",
+        "/rest/v1/schemas",
+        "/rest/v1/telemetry"
+      ],
+      "jsRequests": 0
+    },
+    {
+      "round": 1,
+      "path": "/dashboard/devices",
+      "settledIncluding350ms": 395.5114000000003,
+      "dataRequests": [
+        "/rest/v1/devices",
+        "/rest/v1/schemas"
+      ],
+      "jsRequests": 0
+    },
+    {
+      "round": 1,
+      "path": "/dashboard",
+      "settledIncluding350ms": 408.6226999999999,
+      "dataRequests": [
+        "/rest/v1/devices",
+        "/rest/v1/schemas",
+        "/rest/v1/telemetry"
+      ],
+      "jsRequests": 0
+    },
+    {
+      "round": 2,
+      "path": "/dashboard/devices",
+      "settledIncluding350ms": 409.5119999999997,
+      "dataRequests": [
+        "/rest/v1/devices",
+        "/rest/v1/schemas"
+      ],
+      "jsRequests": 0
+    },
+    {
+      "round": 2,
+      "path": "/dashboard",
+      "settledIncluding350ms": 407.8131999999996,
+      "dataRequests": [
+        "/rest/v1/devices",
+        "/rest/v1/schemas",
+        "/rest/v1/telemetry"
+      ],
+      "jsRequests": 0
+    }
+  ]
+}

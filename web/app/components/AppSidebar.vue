@@ -1,5 +1,9 @@
 <template>
   <aside
+    ref="sidebar"
+    :inert="mobile && !open"
+    :aria-hidden="mobile && !open ? true : undefined"
+    @keydown="onNavKey"
     class="app-side"
     :class="[
       open ? 'translate-x-0' : '-translate-x-full',
@@ -30,12 +34,14 @@
           v-for="link in group.links"
           :key="link.to"
           :to="link.to"
+          :prefetch-on="['/dashboard/devices','/dashboard/schema'].includes(link.to)?'visibility':'interaction'"
           class="app-nav-link"
           :class="[
             collapsed ? 'md:justify-center md:px-2' : 'px-2.5',
             isActive(link.to) ? 'is-active' : '',
           ]"
           :aria-current="isActive(link.to) ? 'page' : undefined"
+          :aria-label="link.label"
           :title="collapsed ? link.label : undefined"
           @click="emit('close')"
         >
@@ -48,7 +54,7 @@
     <p class="app-side-meta">
       <span>Beta</span>
       <span class="app-side-meta-mark" aria-hidden="true">·</span>
-      <span>v1.01</span>
+      <span>Secure V2</span>
     </p>
     <div class="app-side-foot" :class="collapsed ? 'p-2 md:px-2' : 'p-3'">
       <button
@@ -66,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+const props=defineProps<{
   open?: boolean
   collapsed?: boolean
 }>()
@@ -77,6 +83,12 @@ const emit = defineEmits<{
 }>()
 
 const route = useRoute()
+const sidebar=ref<HTMLElement|null>(null),mobile=ref(false)
+function resized(){mobile.value=window.innerWidth<768}
+onMounted(()=>{resized();window.addEventListener('resize',resized)})
+onBeforeUnmount(()=>window.removeEventListener('resize',resized))
+watch(()=>props.open,async open=>{if(open&&mobile.value){await nextTick();sidebar.value?.querySelector<HTMLElement>('button,a')?.focus()}})
+function onNavKey(e:KeyboardEvent){if(!mobile.value||!props.open)return;if(e.key==='Escape'){emit('close');return}if(e.key==='Tab'){const nodes=[...sidebar.value!.querySelectorAll<HTMLElement>('a,button')].filter(n=>n.getClientRects().length);const first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}}
 const { isEnterprise } = useOrganization()
 
 const icon = {
@@ -91,7 +103,7 @@ const icon = {
   deliveries:
     '<svg viewBox="0 0 16 16" fill="none"><path d="M3.5 4.5h9M3.5 8h9M3.5 11.5h5.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>',
   schema:
-    '<svg viewBox="0 0 16 16" fill="none"><path d="M3.5 4.5h9M3.5 8h9M3.5 11.5h6" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>',
+    '<svg viewBox="0 0 16 16" fill="none"><path d="m5 3-3 5 3 5m6-10 3 5-3 5M9 2 7 14" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>',
   debugger:
     '<svg viewBox="0 0 16 16" fill="none"><path d="M5.5 4.5 2.75 8 5.5 11.5M10.5 4.5 13.25 8 10.5 11.5M9 3.5 7 12.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   organization:
@@ -111,7 +123,7 @@ const groups = computed(() => [
     label: 'Fleet',
     links: [
       { to: '/dashboard/devices', label: 'Devices', icon: icon.devices },
-      { to: '/dashboard/profiles', label: 'Profiles', icon: icon.profiles },
+
     ],
   },
   {
@@ -128,6 +140,7 @@ const groups = computed(() => [
       { to: '/dashboard/deliveries', label: 'Deliveries', icon: icon.deliveries },
     ],
   },
+  {label:'Help',links:[{to:'/dashboard/getting-started',label:'Getting Started',icon:icon.profiles},{to:'/docs',label:'Documentation',icon:icon.audit}]},
   {
     label: 'Workspace',
     links: [

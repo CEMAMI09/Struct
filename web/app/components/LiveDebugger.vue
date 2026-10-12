@@ -39,7 +39,7 @@
         </div>
         <div class="flex-1 overflow-auto p-4">
           <p class="mb-2 text-xs text-[#8B93A7]">
-            Protocol v2: header + timestamp + nonce + payload + HMAC
+            Historical authenticated frame: header + timestamp + nonce + payload + HMAC
           </p>
           <pre class="mono whitespace-pre-wrap break-all text-xs leading-6 text-[#c5cad3]">{{ hexOutput || '— click Simulate —' }}</pre>
         </div>

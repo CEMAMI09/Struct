@@ -1,3 +1,4 @@
+import {createSecureV2Credential,requireSecureV2Available,noStoreSecureV2} from '../../utils/secureV2'
 import { serverSupabaseServiceRole } from '#supabase/server'
 import { requireOrgWriter } from '../../utils/auth'
 import {
@@ -7,6 +8,8 @@ import {
 import { resolveCapacityPlan } from '../../utils/deviceCapacity'
 
 export default defineEventHandler(async (event) => {
+  noStoreSecureV2(event)
+  requireSecureV2Available()
   const body = await readBody<{
     name?: string
     orgId?: string
@@ -25,11 +28,12 @@ export default defineEventHandler(async (event) => {
 
   const plan = await resolveCapacityPlan(serviceSupabase, orgId, 1)
   const creds = createDeviceCredentials()
+  const secure=createSecureV2Credential()
 
   // The database creates the device, initial schemas, and usage peak in one
   // transaction. A failed usage update must not strand a one-time secret.
   const { data: device, error: deviceError } = await serviceSupabase.rpc(
-    'create_device_with_usage',
+    'create_secure_device_with_usage',
     {
       p_org_id: orgId,
       p_user_id: user.id,
@@ -39,6 +43,8 @@ export default defineEventHandler(async (event) => {
       p_api_secret_preview: creds.apiSecretPreview,
       p_mac_address: macAddress ?? '',
       p_expected_current_count: plan.currentCount,
+      p_root_secret_encrypted:secure.rootEncrypted,p_secret_preview:secure.preview,
+      p_bootstrap_token_encrypted:secure.bootstrapEncrypted,p_bootstrap_token_hash:`\\x${secure.bootstrapHash.toString('hex')}`,
     },
   )
 
@@ -53,9 +59,6 @@ export default defineEventHandler(async (event) => {
 
   return {
     device: sanitizeDeviceForClient(device),
-    credentials: {
-      keyId: creds.keyId,
-      apiSecret: creds.apiSecret,
-    },
+    credentials: null, // Private Secure V2 credentials are exported with the starter.
   }
 })

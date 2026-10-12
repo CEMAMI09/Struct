@@ -52,7 +52,7 @@ const links = [
   { href: '/#features', label: 'How it works' },
   { href: '/#schema', label: 'Schema' },
   { href: '/benchmarks', label: 'Benchmarks' },
-  { href: '/#faq', label: 'Questions' },
+  { href: '/docs', label: 'Docs' },
 ]
 
 watch(

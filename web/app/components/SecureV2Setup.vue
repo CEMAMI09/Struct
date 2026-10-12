@@ -21,7 +21,7 @@
    <p v-if="!canWrite" class="text-sm text-[#9AA3B2]">An owner or admin can enroll devices, publish slots, and export private firmware projects.</p>
   </div>
   <div v-if="credentials" class="card p-5 space-y-3">
-   <h3 class="font-semibold">Save the device secret</h3><p class="text-sm text-[#9AA3B2]">Keep this secret private. One credential belongs to one physical device. The project download fills in the private configuration automatically.</p>
+   <h3 class="font-semibold">Save the device secret</h3><p class="text-sm text-[#9AA3B2]">Keep this secret private. One credential belongs to one sender. The project download fills in the private configuration automatically.</p>
    <label class="label" for="secure-v2-secret">Device root secret</label><input id="secure-v2-secret" readonly :value="credentials.rootSecret" class="input font-mono text-xs" @focus="($event.target as HTMLInputElement).select()" />
    <div class="flex gap-3"><button class="btn-ghost" @click="copySecret">Copy secret</button><button class="btn-ghost" @click="credentials=null">Hide secret</button></div>
   </div>
@@ -31,7 +31,7 @@
     <ul v-if="state.slots.length" class="space-y-2"><li v-for="slot in state.slots" :key="slot.slot" class="rounded-lg border border-white/10 p-3 text-sm"><span class="font-mono">Slot {{slot.slot}}</span> · {{slot.encoding}} · {{slot.record_bytes}} B payload · {{slot.record_bytes+25}} B secure frame <span v-if="slot.legacy_schema_version">· legacy v{{slot.legacy_schema_version}}</span><span v-if="slot.sample_interval_ms"> · {{slot.sample_interval_ms}} ms interval</span></li></ul>
     <p v-else class="text-sm">Publish the first slot before downloading a project.</p>
     <template v-if="canWrite">
-     <div class="grid gap-3 sm:grid-cols-2"><div><label class="label" for="secure-v2-slot">New unused slot</label><select id="secure-v2-slot" v-model.number="newSlot" class="input" :disabled="!unusedSlots.length"><option v-for="slot in unusedSlots" :key="slot" :value="slot">Slot {{slot}}</option></select></div><div><label class="label" for="secure-v2-encoding">Payload encoding</label><select id="secure-v2-encoding" v-model="encoding" class="input"><option value="bitpacked-v1">Optimized bit-packed fields</option><option value="legacy-le-v1" :disabled="!legacySchema?.schema_definition.length">Preserve published legacy schema</option></select></div></div>
+     <div class="grid gap-3 sm:grid-cols-2"><div><label class="label" for="secure-v2-slot">New unused slot</label><select id="secure-v2-slot" v-model.number="newSlot" class="input" :disabled="!unusedSlots.length"><option v-for="slot in unusedSlots" :key="slot" :value="slot">Slot {{slot}}</option></select></div><div><label class="label" for="secure-v2-encoding">Payload encoding</label><select id="secure-v2-encoding" v-model="encoding" class="input"><option value="bitpacked-v1">Optimized bit-packed fields</option><option v-if="legacySchema?.schema_definition.length && !devices.find(d=>d.id===deviceId)?.secure_v2_enabled" value="legacy-le-v1">Copy existing firmware layout for migration</option></select></div></div>
      <template v-if="encoding==='bitpacked-v1'">
       <div class="flex flex-wrap gap-3"><button class="btn-ghost text-xs" @click="environmentalExample">Use environmental example</button><button class="btn-ghost text-xs" @click="fields.push(packedFieldDefault(`field_${fields.length}`,'boolean'))">Add field</button></div>
       <div v-for="(field,index) in fields" :key="index" class="rounded-lg border border-white/10 p-3 space-y-3">
@@ -41,6 +41,7 @@
        <label v-if="['uint','int','bitset'].includes(field.type)" class="label">Bit width (1–64)<input v-model.number="field.width" type="number" min="1" max="64" class="input max-w-32" /></label>
        <label v-if="field.type==='enum'" class="label">Ordered labels, separated by commas<input :value="field.values?.join(', ')" class="input" @input="field.values=($event.target as HTMLInputElement).value.split(',').map(value=>value.trim())" /></label>
       </div>
+      <ContextHelp title="What are precision and schema slots?" to="/docs/schemas">A slot permanently identifies a layout. Fixed-point fields trade precision for size; publish changes into unused slots.</ContextHelp>
       <p class="text-xs text-[#9AA3B2]">Fixed fields deliberately trade precision for size. Float32/Float64 preserve their declared IEEE format; wide integers use exact 64-bit serializers. Deploy the updated gateway before publishing new field types. No published legacy field changes automatically.</p>
      </template>
      <p v-else class="text-sm">This slot copies the existing published schema v{{legacySchema?.version}} exactly, including little-endian floats and one-byte booleans.</p>
@@ -50,10 +51,12 @@
     </template>
    </div>
    <div class="card p-5 space-y-4">
-    <h3 class="font-semibold">Download a complete ESP32 project</h3><p class="text-sm text-[#9AA3B2]">Includes firmware, the generated encoder, private device configuration, pinned SDK source, and a first-run guide. Enter Wi-Fi credentials, build, and upload.</p>
-    <div class="grid gap-3 sm:grid-cols-2"><div><label class="label" for="secure-v2-export-slot">Firmware schema slot</label><select id="secure-v2-export-slot" v-model.number="exportSlot" class="input"><option v-for="slot in state.slots" :key="slot.slot" :value="slot.slot">Slot {{slot.slot}} · {{slot.encoding}}</option></select></div><div><label class="label" for="secure-v2-board">ESP32 board</label><select id="secure-v2-board" v-model="board" class="input"><option value="esp32-c3-devkitm-1">ESP32-C3 DevKitM-1</option><option value="esp32dev">ESP32 Dev Module</option></select></div></div>
-    <label class="flex items-center gap-2 text-sm"><input v-model="confirmed" type="checkbox" />Request an authenticated storage receipt and bounded retries</label>
-    <button v-if="canWrite" class="btn-primary" :disabled="busy||!state.slots.length" @click="downloadProject">{{busy?'Preparing…':'Download private PlatformIO project'}}</button>
+    <h3 class="font-semibold">Download your starter project</h3><label class="label" for="starter-platform">Platform</label><select id="starter-platform" v-model="platform" class="input"><option value="esp32">ESP32 / PlatformIO</option><option value="node">Node.js / local computer (no hardware)</option></select><p class="text-sm text-[#9AA3B2]">{{platform==='node'?'Includes the real Node SDK, generated schema, private configuration and sample values. Extract the folder and run node send.cjs.':'Includes firmware, the generated encoder, private device configuration, pinned SDK source, and a first-run guide. Enter Wi-Fi credentials, build, and upload.'}}</p>
+    <div class="grid gap-3 sm:grid-cols-2"><div><label class="label" for="secure-v2-export-slot">Firmware schema slot</label><select id="secure-v2-export-slot" v-model.number="exportSlot" class="input"><option v-for="slot in state.slots" :key="slot.slot" :value="slot.slot">Slot {{slot.slot}} · {{slot.encoding}}</option></select></div><div v-if="platform==='esp32'"><label class="label" for="secure-v2-board">ESP32 board</label><select id="secure-v2-board" v-model="board" class="input"><option value="esp32-c3-devkitm-1">ESP32-C3 DevKitM-1</option><option value="esp32dev">ESP32 Dev Module</option></select></div></div>
+    <label v-if="platform==='esp32'" class="flex items-center gap-2 text-sm"><input v-model="confirmed" type="checkbox" />Request an authenticated storage receipt and bounded retries</label>
+    <button v-if="canWrite" class="btn-primary" :disabled="busy||!state.slots.length" @click="downloadProject">{{busy?'Preparing…':platform==='node'?'Download private Node starter':'Download private PlatformIO project'}}</button>
+    <p v-if="platform==='node'" class="text-xs text-[#9AA3B2]">Node always requests a storage receipt. Do not run this sender and ESP32 firmware with the same credential.</p>
+    <NuxtLink to="/docs/getting-started" class="text-sm text-[#b79bff]">Complete first-packet guide</NuxtLink>
     <p class="text-xs text-[#9AA3B2]">Preserve NVS counter state across reboots. Erasing NVS or restoring an old flash backup requires credential rotation. Never flash this project onto multiple devices.</p>
    </div>
   </template>
@@ -63,13 +66,14 @@
 <script setup lang="ts">
 import type {Device,DeviceSchema} from '~/types'
 import {ENVIRONMENTAL_PACKED,PACKED_TYPES,packedFieldDefault,slotRecordBytes,type PackedField,type SecureV2Encoding,type SecureV2Slot} from '#shared/secureV2Schema'
-import {generateSecureV2Project,embedSecureV2Sdk,type SecureV2Board,type SecureV2ProjectCredentials} from '#shared/secureV2Project'
+import {generateSecureV2Project,embedSecureV2Sdk,generateSecureV2NodeProject,embedSecureV2NodeSdk,type SecureV2Board,type SecureV2ProjectCredentials} from '#shared/secureV2Project'
 const props=defineProps<{devices:Device[],schemas:Record<string,DeviceSchema>}>()
 const {currentOrgId,canWrite}=useOrganization()
+const onboarding=useOnboarding()
 const deviceId=useState('schema-selected-device',()=>''),state=ref<{available:boolean,enabled:boolean,wireDeviceId?:number|null,secretPreview?:string|null,slots:SecureV2Slot[]}|null>(null)
 const credentials=ref<SecureV2ProjectCredentials|null>(null),loading=ref(false),loaded=ref(false),busy=ref(false),error=ref(''),notice=ref('')
 const fields=ref<PackedField[]>(structuredClone(ENVIRONMENTAL_PACKED)),encoding=ref<SecureV2Encoding>('bitpacked-v1'),newSlot=ref(0),exportSlot=ref(0),sampleInterval=ref('')
-const rotationVisible=ref(false),graceSeconds=ref(0),board=ref<SecureV2Board>('esp32-c3-devkitm-1'),confirmed=ref(false)
+const rotationVisible=ref(false),graceSeconds=ref(0),board=ref<SecureV2Board>('esp32dev'),confirmed=ref(true),platform=ref<'esp32'|'node'>('esp32')
 let generation=0
 const unusedSlots=computed(()=>Array.from({length:16},(_,i)=>i).filter(i=>!state.value?.slots.some(s=>s.slot===i)))
 const legacySchema=computed(()=>props.schemas[deviceId.value])
@@ -106,10 +110,12 @@ async function downloadProject(){
   const archive=unzipSync(new Uint8Array(await response.arrayBuffer()));if(run!==generation)return
   const result=await $fetch<any>(`/api/devices/${deviceId.value}/secure-v2/project`,{method:'POST',body:{orgId:currentOrgId.value}});if(run!==generation)return
   const slot=(result.slots as SecureV2Slot[]).find(s=>s.slot===exportSlot.value);if(!slot)throw new Error('Selected slot is unavailable; refresh configuration')
-  const files=generateSecureV2Project({slot,credentials:result.credentials,board:board.value,confirmed:confirmed.value})
-  const project=embedSecureV2Sdk(Object.fromEntries(Object.entries(files).map(([name,source])=>[name,strToU8(source)])),archive)
-  const blob=new Blob([zipSync(project)],{type:'application/zip'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='struct-secure-v2-esp32.zip';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)
-  credentials.value=null;notice.value='Private project downloaded. Enter Wi-Fi credentials in include/struct_config.h, then build and upload.'
+  const files=platform.value==='node'?generateSecureV2NodeProject({slot,credentials:result.credentials}):generateSecureV2Project({slot,credentials:result.credentials,board:board.value,confirmed:confirmed.value})
+  const generated=Object.fromEntries(Object.entries(files).map(([name,source])=>[name,strToU8(source)]))
+  const project=platform.value==='node'?embedSecureV2NodeSdk(generated,archive):embedSecureV2Sdk(generated,archive)
+  const blob=new Blob([zipSync(project)],{type:'application/zip'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=platform.value==='node'?'struct-secure-v2-node.zip':'struct-secure-v2-esp32.zip';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)
+  credentials.value=null;notice.value=platform.value==='node'?'Private starter downloaded. Extract it, then run node send.cjs.':'Private project downloaded. Enter Wi-Fi credentials in include/struct_config.h, then build and upload.'
+  try{await onboarding.markDevice(deviceId.value,'downloaded')}catch{notice.value+=' Download succeeded, but progress could not be saved.'}
  }catch(e){if(run===generation)error.value=failure(e)}finally{busy.value=false}
 }
 onBeforeUnmount(()=>{generation++;credentials.value=null})

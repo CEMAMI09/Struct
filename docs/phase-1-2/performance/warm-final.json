@@ -1,0 +1,56 @@
+{
+  "base": "http://127.0.0.1:3107",
+  "measurements": [
+    {
+      "round": 0,
+      "path": "/dashboard/devices",
+      "settledIncluding350ms": 421.08370000000014,
+      "dataRequests": [],
+      "jsRequests": 0
+    },
+    {
+      "round": 0,
+      "path": "/dashboard",
+      "settledIncluding350ms": 406.9288999999999,
+      "dataRequests": [
+        "/rest/v1/rpc/workspace_onboarding",
+        "/rest/v1/telemetry"
+      ],
+      "jsRequests": 0
+    },
+    {
+      "round": 1,
+      "path": "/dashboard/devices",
+      "settledIncluding350ms": 408.4340000000002,
+      "dataRequests": [],
+      "jsRequests": 0
+    },
+    {
+      "round": 1,
+      "path": "/dashboard",
+      "settledIncluding350ms": 405.59019999999964,
+      "dataRequests": [
+        "/rest/v1/rpc/workspace_onboarding",
+        "/rest/v1/telemetry"
+      ],
+      "jsRequests": 0
+    },
+    {
+      "round": 2,
+      "path": "/dashboard/devices",
+      "settledIncluding350ms": 409.52669999999944,
+      "dataRequests": [],
+      "jsRequests": 0
+    },
+    {
+      "round": 2,
+      "path": "/dashboard",
+      "settledIncluding350ms": 419.9295000000002,
+      "dataRequests": [
+        "/rest/v1/rpc/workspace_onboarding",
+        "/rest/v1/telemetry"
+      ],
+      "jsRequests": 0
+    }
+  ]
+}

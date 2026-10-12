@@ -15,6 +15,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'auth' })
 
+import { safeAuthDestination } from '~/utils/postAuthRedirect'
 const route = useRoute()
 const user = useSupabaseUser()
 const supabase = useSupabaseClient()
@@ -31,7 +32,8 @@ function queryError() {
 async function goDashboard() {
   if (redirected) return
   redirected = true
-  await navigateTo('/dashboard', { replace: true, external: true })
+  if(import.meta.client)sessionStorage.removeItem('struct-post-auth')
+  await navigateTo(safeAuthDestination(route.query.redirect), { replace: true })
 }
 
 watch(

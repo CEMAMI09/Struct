@@ -1,0 +1,98 @@
+[
+  {
+    "path": "/",
+    "settledMs": 722,
+    "url": "http://127.0.0.1:3107/",
+    "requests": 63,
+    "dataRequests": 0,
+    "nav": {
+      "ttfbMs": 0.6999998092651367,
+      "domContentLoadedMs": 115.5,
+      "lcpMs": null
+    }
+  },
+  {
+    "path": "/login",
+    "settledMs": 688,
+    "url": "http://127.0.0.1:3107/dashboard",
+    "requests": 65,
+    "dataRequests": 6,
+    "nav": {
+      "ttfbMs": 15.599999904632568,
+      "domContentLoadedMs": 69.70000004768372,
+      "lcpMs": null
+    }
+  },
+  {
+    "path": "/dashboard",
+    "settledMs": 670,
+    "url": "http://127.0.0.1:3107/dashboard",
+    "requests": 64,
+    "dataRequests": 6,
+    "nav": {
+      "ttfbMs": 13.399999856948853,
+      "domContentLoadedMs": 40.299999952316284,
+      "lcpMs": null
+    }
+  },
+  {
+    "path": "/dashboard/devices",
+    "settledMs": 670,
+    "url": "http://127.0.0.1:3107/dashboard/devices",
+    "requests": 52,
+    "dataRequests": 4,
+    "nav": {
+      "ttfbMs": 12.700000047683716,
+      "domContentLoadedMs": 58.5,
+      "lcpMs": null
+    }
+  },
+  {
+    "path": "/dashboard/schema",
+    "settledMs": 673,
+    "url": "http://127.0.0.1:3107/dashboard/schema",
+    "requests": 63,
+    "dataRequests": 5,
+    "nav": {
+      "ttfbMs": 14.799999952316284,
+      "domContentLoadedMs": 44,
+      "lcpMs": null
+    }
+  },
+  {
+    "path": "/dashboard/debugger",
+    "settledMs": 671,
+    "url": "http://127.0.0.1:3107/dashboard/debugger",
+    "requests": 53,
+    "dataRequests": 4,
+    "nav": {
+      "ttfbMs": 12.900000095367432,
+      "domContentLoadedMs": 58,
+      "lcpMs": null
+    }
+  },
+  {
+    "path": "/dashboard/settings",
+    "settledMs": 657,
+    "url": "http://127.0.0.1:3107/dashboard/settings",
+    "requests": 55,
+    "dataRequests": 5,
+    "nav": {
+      "ttfbMs": 14.099999904632568,
+      "domContentLoadedMs": 54.89999985694885,
+      "lcpMs": null
+    }
+  },
+  {
+    "path": "/docs",
+    "settledMs": 667,
+    "url": "http://127.0.0.1:3107/docs",
+    "requests": 50,
+    "dataRequests": 0,
+    "nav": {
+      "ttfbMs": 8.299999952316284,
+      "domContentLoadedMs": 42.799999952316284,
+      "lcpMs": null
+    }
+  }
+]

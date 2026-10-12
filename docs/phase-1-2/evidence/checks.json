@@ -1,0 +1,32 @@
+{
+  "web_tests": {
+    "passed": 178,
+    "failed": 0,
+    "files": 35
+  },
+  "firmware_export_tests": {
+    "passed": 4,
+    "failed": 0,
+    "boards": [
+      "esp32dev",
+      "esp32-c3-devkitm-1"
+    ],
+    "physical_hardware": false,
+    "local_path_workaround": true
+  },
+  "phase12_browser": {
+    "passed": 18,
+    "failed": 0,
+    "seconds": 24.8
+  },
+  "protocol_lab_browser": {
+    "passed": 18,
+    "failed": 0,
+    "seconds": 30.3
+  },
+  "typecheck": "passed",
+  "production_build": "passed",
+  "independent_host_c_suite": "blocked: host compiler / mbedTLS configuration unavailable",
+  "production_migration": "not_applied",
+  "production_deployment": "not_performed"
+}

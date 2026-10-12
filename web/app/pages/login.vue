@@ -4,6 +4,7 @@
     <p class="mb-6 text-sm text-[#8B93A7]">Use your Struct account to open the dashboard.</p>
 
     <form class="space-y-4" method="post" @submit.prevent="onSubmit">
+      <fieldset :disabled="!hydrated" class="space-y-4">
       <div>
         <label class="label" for="email">Email</label>
         <input
@@ -35,9 +36,10 @@
         </NuxtLink>
       </div>
       <p v-if="error" class="text-sm text-red-300" role="alert">{{ error }}</p>
-      <button type="submit" class="btn-primary w-full" :disabled="loading">
+      <button type="submit" class="btn-primary w-full" :disabled="loading || !hydrated">
         {{ loading ? 'Signing in…' : 'Sign in' }}
       </button>
+      </fieldset>
     </form>
 
     <AuthSsoButtons />
@@ -52,6 +54,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'auth' })
 
+import { safeAuthDestination } from '~/utils/postAuthRedirect'
 const route = useRoute()
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
@@ -59,6 +62,7 @@ const emailEl = ref<HTMLInputElement | null>(null)
 const passwordField = ref<{ currentValue: () => string } | null>(null)
 const email = ref('')
 const password = ref('')
+const hydrated=ref(false)
 const loading = ref(false)
 const error = ref('')
 let leaving = false
@@ -66,7 +70,7 @@ let leaving = false
 function goDashboard() {
   if (leaving) return
   leaving = true
-  return navigateTo('/dashboard', { replace: true, external: true })
+  return navigateTo(safeAuthDestination(route.query.redirect), { replace: true })
 }
 
 watch(
@@ -77,13 +81,6 @@ watch(
   { immediate: true },
 )
 
-async function waitForUser(timeoutMs = 3000) {
-  const start = Date.now()
-  while (!user.value && Date.now() - start < timeoutMs) {
-    await new Promise((r) => setTimeout(r, 40))
-  }
-  return !!user.value
-}
 
 function readCredentials() {
   // DOM values first — autofill often doesn't sync into v-model until blur/click
@@ -102,6 +99,7 @@ function queryError() {
 }
 
 onMounted(() => {
+  hydrated.value=true
   loading.value = false
   const fromOAuth = queryError()
   if (fromOAuth) error.value = fromOAuth
@@ -140,7 +138,6 @@ async function onSubmit() {
       return
     }
     await supabase.auth.getSession()
-    await waitForUser()
     await goDashboard()
   } catch (e: any) {
     error.value = e?.message || 'Sign in failed. Check your connection and try again.'

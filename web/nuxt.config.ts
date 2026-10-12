@@ -20,6 +20,12 @@ export default defineNuxtConfig({
   },
 
   vite: {
+    // This dependency-free local CommonJS file is not a dependency-optimizer package.
+    // Serve the canonical codec as ESM in development; production uses commonjsOptions below.
+    plugins: [{name:'struct-packed-codec-dev',apply:'serve',enforce:'pre',transform(code,id){
+      if(!id.replace(/\\/g,'/').split('?')[0]?.endsWith('/protocol/schema/bitpacked.cjs'))return
+      return {code:code.replace(/module\.exports\s*=\s*(\{[^\n]+\})/, 'export $1;'),map:null}
+    }}],
     build: {
       // The dependency-free packed codec is shared with the CommonJS gateway.
       commonjsOptions: { include: [/node_modules/, /protocol[\\/]schema/] },
@@ -27,7 +33,7 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    externals: { inline: [/sdk[\\/]js[\\/]secure-v2/, /protocol[\\/]schema/] },
+    externals: { inline: [/sdk[\\/]js/, /protocol[\\/]schema/] },
     serverAssets: [{ baseName: 'protocol-lab', dir: fileURLToPath(new URL('./server/assets/protocol-lab', import.meta.url)) }],
     alias: {
       '#shared': sharedDir,

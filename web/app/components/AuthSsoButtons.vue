@@ -53,6 +53,8 @@
 </template>
 
 <script setup lang="ts">
+import {safeAuthDestination} from '~/utils/postAuthRedirect'
+const route=useRoute()
 const supabase = useSupabaseClient()
 const loading = ref<'github' | 'google' | null>(null)
 const error = ref('')
@@ -65,7 +67,7 @@ async function start(provider: 'github' | 'google') {
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/confirm`,
+        redirectTo: `${window.location.origin}/confirm?redirect=${encodeURIComponent(safeAuthDestination(route.query.redirect))}`,
       },
     })
     if (err) {

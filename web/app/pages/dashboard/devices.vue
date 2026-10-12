@@ -10,9 +10,7 @@
         </p>
       </div>
       <div v-if="canWrite" class="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
-        <button class="btn-ghost w-full sm:w-auto" @click="showBulk = true">
-          Bulk upload
-        </button>
+
         <button
           class="btn-primary w-full sm:w-auto"
           @click="showForm = !showForm"
@@ -21,12 +19,6 @@
         </button>
       </div>
     </div>
-
-    <BulkDeviceUpload
-      v-if="showBulk && canWrite"
-      @close="showBulk = false"
-      @imported="onBulkImported"
-    />
 
     <form
       v-if="showForm && canWrite"
@@ -54,16 +46,17 @@
         placeholder="Filter: Chicago_Factory, v1.0.4…"
         aria-label="Filter devices"
       />
-      <label class="flex cursor-pointer items-center gap-2 text-xs text-[#9AA3B2]" title="Last packet was within the past hour, and none in the last 30 seconds">
+      <label class="flex cursor-pointer items-center gap-2 text-xs text-[#9AA3B2]" :title="ACTIVITY_HELP">
         <input v-model="offlineOnly" type="checkbox" class="accent-[#5617fc]" />
-        Quiet after a packet in the last hour
+        Inactive devices
       </label>
       <span class="self-center font-mono text-[10px] text-[#8B93A7]">
         {{ filtered.length }} / {{ devices.length }}
       </span>
     </div>
 
-    <p v-if="error" class="mb-4 text-sm text-red-400">{{ error }}</p>
+    <ContextHelp title="What does Inactive mean?" to="/docs/devices">{{ACTIVITY_HELP}}</ContextHelp>
+    <p v-if="error" class="banner banner-error mb-4" role="alert">{{ error }} <NuxtLink to="/dashboard/settings?tab=billing" class="underline">Review usage and Billing</NuxtLink> · <NuxtLink to="/docs/troubleshooting" class="underline">Troubleshoot</NuxtLink></p>
 
     <DeviceCredentialsModal
       v-if="pendingCredentials"
@@ -81,7 +74,7 @@
 
     <p v-if="!error && !devicesLoaded && !devices.length" class="card p-8 text-center text-sm text-[#9AA3B2]">Loading devices…</p>
     <div v-else-if="devicesLoaded && !filtered.length" class="card p-8 text-center text-sm text-[#9AA3B2]">
-      {{ devices.length ? 'No devices match this filter.' : 'No devices yet. Create one to get a key ID and API secret.' }}
+      {{ devices.length ? 'No devices match this filter.' : 'No devices yet. Create one, publish a schema, and download your Secure V2 starter.' }}
     </div>
 
     <div v-else-if="devices.length" class="space-y-3 p-0.5">
@@ -92,10 +85,10 @@
       >
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div class="flex items-start gap-3">
-            <StatusDot :online="isDeviceOnline(device.last_seen)" class="mt-1.5" />
+            <StatusDot :status="deviceActivity(device,now)" show-label class="mt-1.5" />
             <div>
               <p class="font-medium text-[#E8EAEF]">{{ device.name }}</p>
-              <p class="mt-1 break-all font-mono text-xs text-[#9aa3b2]">Key ID {{ device.api_key }}</p>
+              <p class="mt-1 break-all font-mono text-xs text-[#9aa3b2]">{{device.secure_v2_enabled?'Wire ID '+device.wire_device_id:'Existing device '+device.id}}</p>
               <p
                 v-if="device.mac_address"
                 class="mt-1 font-mono text-[10px] text-[#8B93A7]"
@@ -103,9 +96,9 @@
                 MAC {{ formatMacAddress(device.mac_address) }}
               </p>
               <p class="mt-1 text-[10px] text-[#8B93A7]">
-                Last seen:
-                {{ device.last_seen ? new Date(device.last_seen).toLocaleString() : 'never' }}
-                <span v-if="device.encryption_enabled" class="ml-2 text-[#b79bff]">· ChaCha20</span>
+                {{device.last_seen?'Last observed:':'First stored evidence:'}}
+                {{ device.last_seen || device.first_telemetry_at ? new Date((device.last_seen || device.first_telemetry_at)!).toLocaleString() : 'no activity observed' }}
+                <span v-if="device.secure_v2_enabled" class="ml-2 text-[#b79bff]">· Authenticated encryption</span>
               </p>
               <div v-if="Object.keys(device.tags || {}).length" class="mt-2 flex flex-wrap gap-1.5">
                 <span
@@ -119,11 +112,12 @@
             </div>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button type="button" class="btn-ghost text-xs" @click="copyKey(device.api_key)">
+            <details class="relative"><summary class="btn-ghost cursor-pointer text-xs">More actions</summary><div class="mt-2 flex max-w-sm flex-wrap gap-2 rounded-lg border border-white/10 p-3">
+            <button v-if="!device.secure_v2_enabled" type="button" class="btn-ghost text-xs" @click="copyKey(device.api_key)">
               {{ copied === device.api_key ? 'Copied' : 'Copy key ID' }}
             </button>
-            <NuxtLink class="btn-ghost text-xs" :to="`/dashboard?device=${device.id}`">Telemetry</NuxtLink>
-            <NuxtLink class="btn-ghost text-xs" :to="`/dashboard/schema?device=${device.id}`">Schema</NuxtLink>
+
+
             <NuxtLink class="btn-ghost text-xs" :to="`/dashboard/debugger?device=${device.id}`">Diagnostics</NuxtLink>
             <button
               v-if="canWrite"
@@ -134,7 +128,7 @@
               {{ editingId === device.id && editorPanel === 'tags' ? 'Close tags' : 'Tags' }}
             </button>
             <button
-              v-if="canWrite"
+              v-if="canWrite && !device.secure_v2_enabled"
               type="button"
               class="btn-ghost text-xs"
               @click="toggleEdit(device.id, 'commands')"
@@ -148,6 +142,9 @@
             >
               Delete
             </button>
+            <NuxtLink v-if="!device.secure_v2_enabled" to="/dashboard/compatibility" class="text-xs text-[#b79bff]">Existing firmware migration</NuxtLink></div></details>
+            <NuxtLink class="btn-primary text-xs" :to="`/dashboard?device=${device.id}`">Open device</NuxtLink>
+            <NuxtLink v-if="!device.last_seen && !device.first_telemetry_at" class="btn-ghost text-xs" :to="`/dashboard/schema?device=${device.id}`">Set up</NuxtLink>
           </div>
         </div>
 
@@ -237,7 +234,11 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'auth' })
 
-import { isDeviceOnline, pairsToTags, tagsToPairs } from '~/types'
+import { pairsToTags, tagsToPairs } from '~/types'
+import {deviceActivity,ACTIVITY_HELP} from '#shared/deviceActivity'
+const now=ref(Date.now());let activityTimer:ReturnType<typeof setInterval>|undefined
+onMounted(()=>{activityTimer=setInterval(()=>now.value=Date.now(),15000)})
+onBeforeUnmount(()=>clearInterval(activityTimer))
 import type { Device, DeviceCredentials } from '~/types'
 
 const {
@@ -283,19 +284,13 @@ const HOUR_MS = 60 * 60 * 1000
 const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
   return devices.value.filter((d) => {
-    if (offlineOnly.value) {
-      if (!d.last_seen) return true
-      const age = Date.now() - new Date(d.last_seen).getTime()
-      // offline in last hour = was seen sometime, but not online now, and last activity within ~reasonable fleet window
-      // Spec: "went offline in the last hour" → last_seen within past hour AND currently offline
-      if (isDeviceOnline(d.last_seen)) return false
-      if (age > HOUR_MS) return false
-    }
+    if (offlineOnly.value && deviceActivity(d,now.value)!=='Inactive')return false
 
     if (!q) return true
 
     const hay = [
       d.name,
+      deviceActivity(d,now.value),
       d.api_key,
       d.mac_address || '',
       d.mac_address ? formatMacAddress(d.mac_address) : '',

@@ -2,8 +2,11 @@ import type { SubscriptionTier } from '~/types'
 
 type PaidTier = Exclude<SubscriptionTier, 'free'>
 
+const syncControls=new WeakMap<object,{pending:Promise<any>|null;org:string|null}>()
 export function useBilling() {
-  const { currentOrgId, requireWrite, fetchMemberships } = useOrganization()
+  const app=useNuxtApp();if(!syncControls.has(app))syncControls.set(app,{pending:null,org:null});const control=syncControls.get(app)!
+  const syncing=useState('billing-syncing',()=>false)
+  const { currentOrgId, requireWrite, fetchMemberships,fetchUsageStats } = useOrganization()
   const loading = useState('billing-loading', () => false)
   const error = useState<string | null>('billing-error', () => null)
 
@@ -88,34 +91,24 @@ export function useBilling() {
   }
 
   async function syncFromStripe() {
-    const orgId = currentOrgId.value
-    if (!orgId) return null
-
-    try {
-      const result = await $fetch<{
-        ok: boolean
-        synced: boolean
-        subscriptionTier: SubscriptionTier
-        stripeQuantity: number
-        deviceLimit: number
-      }>('/api/stripe/sync', {
-        method: 'POST',
-        body: { orgId },
-      })
-      // Refresh membership silently — caller/layout should not await a second usage trip.
-      void fetchMemberships()
-      const { fetchUsageStats } = useOrganization()
-      void fetchUsageStats()
-      return result
-    } catch (e: any) {
-      // Non-fatal on page load — keep showing last known org state.
-      console.warn('[billing] stripe sync failed', e?.data?.message || e?.message || e)
-      return null
-    }
+    const orgId=currentOrgId.value;if(!orgId)return null
+    if(control.pending&&control.org===orgId)return control.pending
+    control.org=orgId;syncing.value=true;error.value=null
+    const run=(async()=>{
+      try {
+        const result=await $fetch<{ok:boolean;synced:boolean;subscriptionTier:SubscriptionTier;stripeQuantity:number;deviceLimit:number}>('/api/stripe/sync',{method:'POST',body:{orgId}})
+        if(currentOrgId.value!==orgId)return null
+        await fetchMemberships()
+        await fetchUsageStats({force:true})
+        return currentOrgId.value===orgId?result:null
+      }catch(e:any){if(currentOrgId.value===orgId)error.value='Unable to refresh billing information. Please try again.';return null}
+    })().finally(()=>{if(control.pending===run){control.pending=null;syncing.value=false}})
+    control.pending=run;return run
   }
 
   return {
     loading,
+    syncing,
     error,
     startCheckout,
     openPortal,

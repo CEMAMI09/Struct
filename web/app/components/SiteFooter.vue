@@ -18,7 +18,7 @@
       <div>
         <h2>Developers</h2>
         <ul>
-          <li><a href="/#schema">Schema sandbox</a></li>
+          <li><NuxtLink to="/docs">Documentation</NuxtLink></li>
           <li><NuxtLink to="/benchmarks">Benchmark methodology</NuxtLink></li>
           <li>
             <a href="https://github.com/CEMAMI09/Struct" target="_blank" rel="noopener noreferrer">GitHub</a>
@@ -28,7 +28,7 @@
       <div>
         <h2>Legal</h2>
         <ul>
-          <li><a href="mailto:sales@struct.dev?subject=Struct inquiry">Contact</a></li>
+          <li><a href="mailto:support@usestruct.com">Contact</a></li>
           <li><NuxtLink to="/privacy">Privacy</NuxtLink></li>
           <li><NuxtLink to="/terms">Terms of Use</NuxtLink></li>
         </ul>

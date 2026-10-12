@@ -21,25 +21,35 @@
     </div>
 
     <p v-if="error" class="banner banner-error" role="alert">{{ error }}</p>
+    <p v-if="onboarding.error.value" class="banner" role="status">{{onboarding.error.value}} <NuxtLink to="/docs/getting-started">View guide</NuxtLink></p>
     <p v-if="telemetryError" class="banner banner-error" role="alert">{{ telemetryError }}</p>
 
+    <p v-if="firstPacketNotice" role="status" class="banner">Your first valid packet is stored. <a v-if="rows.length" href="#latest-event" class="underline">Inspect the latest reading below</a><span v-else>Select the reporting device to inspect its stored reading</span>. Webhook delivery is tracked separately.</p>
     <FirstDeviceGuide
       v-if="showSetupGuide"
       :device-id="selectedId"
       :has-device="!!selectedDevice"
-      :has-schema="!!selectedSchema?.schema_definition.length"
-      :has-telemetry="!!rows.length"
+      :has-schema="!!selectedId && !!onboarding.state.value?.schema_device_ids?.includes(selectedId)"
+      :has-telemetry="!!selectedDevice?.first_telemetry_at || (!!chartRows.length && rowsDeviceId === selectedId)"
+      :has-visible-telemetry="!!rows.length"
+      :expected-interval-ms="selectedDevice?.expected_report_interval_ms"
+      :configured="!!selectedDevice?.configuration_acknowledged_at"
+      :downloaded="!!selectedDevice?.starter_downloaded_at"
+      @dismiss="dismissGuide"
       :can-write="canWrite"
     />
 
+    <div class="flex flex-wrap gap-3 text-xs"><button v-if="!showSetupGuide" class="btn-ghost text-xs" @click="onboarding.reopened.value=true;onboarding.refresh()">Getting Started</button><NuxtLink to="/docs/getting-started" class="text-[#b79bff]">First-packet guide</NuxtLink></div>
+    <p v-if="selectedDevice && !selectedDevice.last_seen && !selectedDevice.first_telemetry_at && !showSetupGuide" class="banner">This device has not reported yet. <NuxtLink :to="`/dashboard/schema?device=${selectedId}`">Set up this device</NuxtLink>. Open Getting Started for the full workflow.</p>
     <template v-if="devices.length">
       <div class="grid min-h-0 items-stretch gap-4 lg:grid-cols-12">
         <section class="card flex min-h-[360px] flex-col p-4 lg:col-span-8">
-          <TelemetryChart
+          <LazyTelemetryChart v-if="chartRows.length"
             :rows="chartRows"
             :loading="telemetryPending"
             :empty-label="telemetryError ? 'Stored events could not be loaded.' : undefined"
           />
+          <div v-else class="grid min-h-[300px] place-items-center text-sm text-[#9AA3B2]" role="status">{{telemetryPending?'Loading stored readings…':'No retained readings. Send telemetry or check the device guide.'}}</div>
         </section>
 
         <dl class="flex flex-col gap-3 lg:col-span-4">
@@ -54,8 +64,8 @@
           <div class="card flex-1 px-4 py-3.5">
             <dt class="text-xs text-[#9AA3B2]">Selected device activity</dt>
             <dd class="mt-2 text-sm font-medium tracking-tight text-[#E8EAEF]">
-              {{ selectedDeviceActive ? 'Packet seen within 30 seconds' : 'No packet in the last 30 seconds' }}
-              <span class="mt-1 block text-xs font-normal tracking-normal text-[#9AA3B2]">Based on the latest packet, not a connection status.</span>
+              {{ selectedActivity }}
+              <span class="mt-1 block text-xs font-normal tracking-normal text-[#9AA3B2]">{{ ACTIVITY_HELP }}</span>
             </dd>
           </div>
         </dl>
@@ -64,8 +74,6 @@
       <div v-if="selectedId" class="flex flex-wrap gap-2">
         <NuxtLink class="btn-ghost text-xs" :to="`/dashboard/schema?device=${selectedId}`">Schema</NuxtLink>
         <NuxtLink class="btn-ghost text-xs" :to="`/dashboard/debugger?device=${selectedId}`">Diagnostics</NuxtLink>
-        <NuxtLink class="btn-ghost text-xs" to="/dashboard/destinations">Destinations</NuxtLink>
-        <NuxtLink class="btn-ghost text-xs" to="/dashboard/deliveries">Deliveries</NuxtLink>
       </div>
 
       <div class="grid min-h-0 gap-4 lg:grid-cols-12">
@@ -73,7 +81,7 @@
           <DeviceList :devices="devices" :selected-id="selectedId" @select="onSelectDevice" />
         </section>
 
-        <section class="card min-h-0 overflow-auto p-4 lg:col-span-8">
+        <section id="latest-event" class="card min-h-0 overflow-auto p-4 lg:col-span-8">
           <div class="mb-3 flex items-center justify-between gap-2">
             <h2 class="text-sm font-semibold text-[#E8EAEF]">Latest stored event</h2>
             <span class="shrink-0 text-xs text-[#9AA3B2]">{{ lastStoredLabel }}</span>
@@ -103,9 +111,9 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'auth' })
 
-import { isDeviceOnline } from '~/types'
+import { deviceActivity, ACTIVITY_HELP } from '#shared/deviceActivity'
 
-import { shouldShowDeviceSetupGuide } from '~/utils/deviceSetupGuide'
+
 
 const route = useRoute()
 const { devices, schemas, error, devicesLoaded, fetchDevices, subscribePresence } = useDevices()
@@ -129,27 +137,21 @@ let unsubPresence: (() => void) | undefined
 let unsubTelemetry: (() => void) | undefined
 
 const selectedDevice = computed(() => devices.value.find((d) => d.id === selectedId.value))
-const selectedSchema = computed(() => selectedId.value ? schemas.value[selectedId.value] : null)
 const telemetryPending = computed(() => !!selectedId.value && telemetrySettledId.value !== selectedId.value)
 const chartRows = computed(() => telemetryPending.value ? [] : rows.value)
 const awaitingDevices = computed(() => !error.value && !devicesLoaded.value && !devices.value.length)
-const showSetupGuide = computed(() => !telemetryError.value && shouldShowDeviceSetupGuide({
-  hasError: !!error.value,
-  devicesLoaded: devicesLoaded.value,
-  deviceCount: devices.value.length,
-  hasSelectedDevice: !!selectedDevice.value,
-  hasSchema: !!selectedSchema.value?.schema_definition.length,
-  telemetrySettled: !!selectedId.value && telemetrySettledId.value === selectedId.value,
-  telemetryCount: telemetryPending.value ? 0 : rows.value.length,
-}))
+const onboarding=useOnboarding()
+const firstPacketNotice=ref(false)
+watch(()=>onboarding.state.value?.first_packet_at,(value,previous)=>{if(value&&previous===null)firstPacketNotice.value=true})
+const showSetupGuide=computed(()=>onboarding.show.value && devicesLoaded.value)
+const now=ref(Date.now());let activityTimer:ReturnType<typeof setInterval>|undefined
+async function dismissGuide(){try{await onboarding.dismiss()}catch(e:any){telemetryError.value=e.message}}
 const deviceHeading = computed(() => {
   if (selectedDevice.value) return selectedDevice.value.name
   return awaitingDevices.value ? 'Loading devices…' : 'No device selected'
 })
 const latest = computed(() => chartRows.value[chartRows.value.length - 1] || null)
-const selectedDeviceActive = computed(() =>
-  isDeviceOnline(selectedDevice.value?.last_seen || null) || isDeviceOnline(latest.value?.timestamp || null),
-)
+const selectedActivity=computed(()=>deviceActivity(selectedDevice.value||{},now.value))
 const latestJson = computed(() =>
   latest.value ? JSON.stringify(latest.value.parsed_json, null, 2) : '',
 )
@@ -180,6 +182,7 @@ async function onSelectDevice(id: string) {
   }
 }
 
+watch(()=>rows.value.length,()=>{if(rows.value.length)void onboarding.refresh()})
 watch(rowsDeviceId, (deviceId) => {
   if (deviceId && deviceId === selectedId.value) {
     telemetrySettledId.value = deviceId
@@ -190,7 +193,7 @@ watch(rowsDeviceId, (deviceId) => {
 async function onRefresh() {
   refreshing.value = true
   try {
-    await fetchDevices({ force: true })
+    await Promise.all([fetchDevices({ force: true }),onboarding.refresh()])
     const requested = typeof route.query.device === 'string' ? route.query.device : ''
     const id =
       (selectedId.value && devices.value.some((d) => d.id === selectedId.value) && selectedId.value) ||
@@ -223,6 +226,8 @@ async function onRefresh() {
 
 onMounted(async () => {
   await fetchDevices()
+  void onboarding.refresh()
+  activityTimer=setInterval(()=>{now.value=Date.now();if(!onboarding.state.value?.first_packet_at&&!onboarding.state.value?.dismissed_at)void onboarding.refresh()},30000)
   unsubPresence = subscribePresence()
   const id = preferredDeviceId()
   if (id) await onSelectDevice(id)
@@ -240,6 +245,7 @@ watch(() => route.query.device, (requested) => {
 })
 
 onBeforeUnmount(() => {
+  clearInterval(activityTimer)
   unsubPresence?.()
   unsubTelemetry?.()
 })

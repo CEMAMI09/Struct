@@ -13,18 +13,9 @@
       <NuxtLink to="/dashboard/devices" class="btn-ghost text-xs">Devices</NuxtLink>
       <NuxtLink to="/dashboard/debugger" class="btn-ghost text-xs">Diagnostics</NuxtLink>
     </div>
-    <div class="mb-4 flex gap-2" role="group" aria-label="Protocol setup">
-      <button class="btn-ghost text-sm" :aria-pressed="protocolTab==='legacy'" @click="protocolTab='legacy'">Legacy schemas</button>
-      <button class="btn-ghost text-sm" :aria-pressed="protocolTab==='secure-v2'" @click="protocolTab='secure-v2'">Secure V2</button>
-    </div>
-    <SecureV2Setup v-if="protocolTab==='secure-v2' && (devices.length || devicesLoaded)" :devices="devices" :schemas="schemas" />
-    <SchemaBuilder
-      v-else-if="devices.length || devicesLoaded"
-      class="min-h-0 flex-1"
-      :devices="devices"
-      :schemas="schemas"
-      :schema-versions="schemaVersions"
-    />
+    <p class="mb-4 text-sm text-[#9AA3B2]">Publish a Secure V2 schema, choose your platform, and download a complete private starter. <NuxtLink to="/docs/schemas" class="text-[#b79bff]">Schema guide</NuxtLink></p>
+    <SecureV2Setup v-if="devices.length || devicesLoaded" :devices="devices" :schemas="schemas" />
+
   </div>
 </template>
 
@@ -32,10 +23,10 @@
 definePageMeta({ middleware: 'auth' })
 
 const route = useRoute()
-const { devices, schemas, schemaVersions, error, devicesLoaded, fetchDevices } = useDevices()
+const { devices, schemas, error, devicesLoaded, fetchDevices } = useDevices()
 const user = useSupabaseUser()
 const selectedDeviceId = useState('schema-selected-device', () => '')
-const protocolTab = ref<'legacy'|'secure-v2'>('legacy')
+
 
 async function load() {
   await fetchDevices()

@@ -5,7 +5,7 @@
     <select v-model="mode" class="input"><option value="production">Production gateway</option><option value="local">Local gateway / fault tests</option><option value="simulation">Simulation — no transmission</option></select>
    </label>
   </div>
-  <LiveDebugger v-if="mode==='simulation'" :devices="devices" :schemas="schemas" />
+  <p v-if="mode==='simulation'" class="banner">The historical frame sandbox is in existing-firmware compatibility tooling. For current Secure V2 use the generated Node starter or real gateway traces.</p>
   <template v-else>
    <p class="text-sm text-[#8B93A7]">{{ mode==='production'?'Traces follow real gateway processing. Capture lasts 15 minutes and retains the latest 200 attempts per device. Missing traces do not prove packet loss.':'Run the local command in your Struct checkout, then open its diagnostic file. UDP, SDK cryptography, PostgreSQL transactions and HTTP delivery are real; faults are injected.' }}</p>
    <div v-if="mode==='production'" class="flex flex-wrap gap-3">
@@ -19,7 +19,7 @@
    <div class="card space-y-2 p-4">
     <p class="text-sm">{{mode==='local'?'Reproduce with generated local credentials:':'Send a real encoded payload; configure credentials through environment variables:'}}</p>
     <code class="block break-all text-xs">{{command}}</code><button class="btn-ghost" @click="copyCommand">Copy command</button>
-    <p v-if="mode==='production'" class="text-xs text-[#8B93A7]">Legacy: set STRUCT_HOST, STRUCT_KEY_ID, STRUCT_API_SECRET, and STRUCT_ENCRYPTION_KEY for encrypted devices. Secure V2: use --v2 with STRUCT_WIRE_DEVICE_ID, STRUCT_DEVICE_SECRET, and STRUCT_COUNTER_FILE. First provisioning also needs STRUCT_BOOTSTRAP_TOKEN and --bootstrap. Never put credentials in shared commands.</p>
+    <p v-if="mode==='production'" class="text-xs text-[#8B93A7]">Secure V2: use --v2 with STRUCT_WIRE_DEVICE_ID, STRUCT_DEVICE_SECRET, and STRUCT_COUNTER_FILE. First provisioning also needs STRUCT_BOOTSTRAP_TOKEN and --bootstrap. Never put credentials in shared commands.</p>
     <label class="label">{{mode==='local'?'Open local diagnostic JSON':'Attach SDK outcome JSON to match a packet fingerprint'}}<input type="file" accept=".json" @change="importFile" /></label>
    </div>
    <p v-if="error" role="alert" class="text-red-400">{{error}}</p><p v-if="notice" role="status" class="text-sm">{{notice}}</p>
@@ -61,11 +61,7 @@ const command=computed(()=>mode.value==='local'?`node scripts/debug-local.cjs --
 let generation=0
 function clear(){generation++;traces.value=[];webhooks.value=[];outcomes.value=[];error.value='';notice.value='';busy.value=false}
 watch([mode,deviceId,currentOrgId],clear)
-watch([deviceId,currentOrgId],async()=>{
- const run=generation;secureDevice.value=false
- if(!deviceId.value||!currentOrgId.value)return
- try{const config=await $fetch<{enabled:boolean}>(`/api/devices/${deviceId.value}/secure-v2`,{query:{orgId:currentOrgId.value}});if(run===generation)secureDevice.value=config.enabled}catch{/* Legacy diagnostics remain available during rollout. */}
-})
+watch([deviceId,()=>props.devices],()=>{secureDevice.value=props.devices.some(d=>d.id===deviceId.value&&d.secure_v2_enabled)},{immediate:true})
 async function enable(){try{busy.value=true;const {error:e}=await db.rpc('enable_packet_tracing',{p_device_id:deviceId.value});if(e)throw e;notice.value='Capture enabled. Send an SDK packet, then refresh.'}catch{error.value='Could not enable capture. You may not have permission, or packet tracing is not set up for this project (diagnostic code 025).'}finally{busy.value=false}}
 async function refresh(){
  const run=++generation;busy.value=true;error.value=''
