@@ -31,7 +31,8 @@ async function run(){
  await db.query('select replay_webhook_delivery($1)',[job.id])
  assert.equal((await db.query('select replay_count from webhook_deliveries')).rows[0].replay_count,1)
  await db.query("select set_config('request.jwt.claim.sub',$1,false)",['10000000-0000-0000-0000-000000000099'])
- await assert.rejects(db.query('select replay_webhook_delivery($1)',[job.id]),/Not authorized/)
+ await assert.rejects(db.query('select replay_webhook_delivery($1)',[job.id]),{code:'42501',message:'PERMISSION_DENIED'})
+ assert.equal((await db.query('select replay_count from webhook_deliveries where id=$1',[job.id])).rows[0].replay_count,1)
  await db.query("insert into pending_commands(device_id,user_id,packed_hex) values($1,$2,'02')",[d,u])
  const cmd=(await db.query("select * from claim_pending_downlinks($1,'worker',1)",[d])).rows[0]
  const ack=code=>db.query('select acknowledge_pending_command($1,$2,$3::smallint) ok',[d,cmd.command_id,code])

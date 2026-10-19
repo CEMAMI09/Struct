@@ -1,0 +1,3 @@
+[submodule "landing-page-template/dark-saas-landing-page"]
+	path = landing-page-template/dark-saas-landing-page
+	url = https://github.com/diego-teileche/dark-saas-landing-page.git

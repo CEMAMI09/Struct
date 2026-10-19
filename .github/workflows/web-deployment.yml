@@ -1,0 +1,35 @@
+name: Isolated web deployment
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  vercel-build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7, Node 24 action runtime
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7, Node 24 action runtime
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      # Deliberately do not install root/tcp-server packages: Vercel installs web.
+      - run: npm --prefix web ci --no-audit --no-fund
+      - name: Build deployable Vercel output
+        shell: bash
+        run: |
+          set -o pipefail
+          npm --prefix web run build 2>&1 | tee web-build.log
+          if grep -E 'could not be resolved|Cannot find package|ERR_MODULE_NOT_FOUND' web-build.log; then
+            exit 1
+          fi
+        env:
+          NITRO_PRESET: vercel
+          NUXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:9
+          NUXT_PUBLIC_SUPABASE_KEY: local-build-anon-key
+      - name: Verify packaged dependencies and HTTP responses outside checkout
+        run: node scripts/check-web-deployment.mjs
