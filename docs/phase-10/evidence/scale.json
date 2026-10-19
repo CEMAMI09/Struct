@@ -1,0 +1,20 @@
+{
+  "at": "2026-10-16T19:04:59.391Z",
+  "devices": 1000,
+  "seedMs": 550.4042999999999,
+  "previewMs": 68.08580000000006,
+  "schedulerCalls": 10,
+  "schedulerMeanMs": 14.128709999999932,
+  "dispatchAndAuthenticatedSimulatorReportsMs": 1980.7137999999998,
+  "dispatched": 1000,
+  "overviewMs": 10.944700000000012,
+  "overviewBytes": 113152,
+  "memory": {
+    "rss": 457248768,
+    "heapTotal": 100294656,
+    "heapUsed": 21131848,
+    "external": 284984921,
+    "arrayBuffers": 84953195
+  },
+  "boundary": "Seeded 1,000 independent CSPRNG encrypted roots and local PGlite profiles; ten bounded scheduling transactions and 2,000 HKDF/HMAC+nonce-validated DB simulator actions. No external HTTPS, hardware, cloud, real firmware flash or production-capacity claim."
+}

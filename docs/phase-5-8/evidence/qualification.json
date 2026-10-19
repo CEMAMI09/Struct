@@ -1,0 +1,177 @@
+{
+  "generatedAt": "2026-10-13T21:32:04.958Z",
+  "gitBase": "27be12d582231ff7b2601f4021c2192474934866",
+  "workingTree": "Uncommitted coordinated Phase 3/4, 7, 6 and 5/8 changes; no production deployment",
+  "environment": {
+    "os": "win32",
+    "release": "10.0.26200",
+    "architecture": "x64",
+    "node": "v24.18.1",
+    "versions": {
+      "nuxt": "4.5.2",
+      "vue": "3.5.42",
+      "vitest": "4.1.11",
+      "@playwright/test": "1.64.0",
+      "@electric-sql/pglite": "0.5.8"
+    }
+  },
+  "suites": {
+    "observability": {
+      "status": "passed",
+      "log": "work/fleet/observability-suites-final.log",
+      "logSHA256": "d2777621bb13c0501ef5ed61804a7dbbd8fdc7803b50f87842c33a0e92c3c64a",
+      "checks": 102
+    },
+    "web": {
+      "status": "passed",
+      "log": "work/fleet/observability-web-final.log",
+      "logSHA256": "7826d735984efe8cfba587d72a440e64a762a12dc10aa13c335a1d8914751610"
+    },
+    "browser": {
+      "status": "passed",
+      "log": "work/fleet/observability-browser-final.log",
+      "logSHA256": "bff9c63cc1e0cc570e822feada77adc2a31cd723b7ab0740a7275007e48eed40"
+    },
+    "secureV2": {
+      "status": "passed",
+      "log": "work/fleet/observability-secure-v2.log",
+      "logSHA256": "a241ea4ec97523be83df6571d778e4d8e5dfef3434dc0269fc06ee6ce6be9819"
+    },
+    "gateway": {
+      "status": "passed",
+      "log": "work/fleet/observability-gateway.log",
+      "logSHA256": "03c55af327db97b97145d0ba6d33ced16c6bb412295c54228dbaedf0587d1067"
+    },
+    "pipelines": {
+      "status": "passed",
+      "log": "work/fleet/observability-pipelines.log",
+      "logSHA256": "2fbc8fe258ab35335c499ab3f2b409d29ad6c5c857582736470d71ed100d62c5"
+    },
+    "integrations": {
+      "status": "passed",
+      "log": "work/fleet/observability-integrations.log",
+      "logSHA256": "05bd94155bc77dea025c6b208edf87726c2a2d322018c238c97ac46b999ac836"
+    },
+    "fleet": {
+      "status": "passed",
+      "log": "work/fleet/observability-fleet.log",
+      "logSHA256": "eac5fe12518a0f4210b7d9423a81ee38b515b19d04c01c3433fe7b1487fa28a9"
+    },
+    "typecheck": {
+      "status": "passed",
+      "log": "work/fleet/observability-typecheck-final.log",
+      "logSHA256": "35c62ca729afe750856dba1ea693f7ad9cea0f856dd91a367edea9d1d370c8d9"
+    },
+    "build": {
+      "status": "passed",
+      "log": "work/fleet/observability-build-final.log",
+      "logSHA256": "ca035296f7a078c645929134389b006ab6a58fa2e9be9eec70295de52cdde33c"
+    }
+  },
+  "browser": {
+    "startTime": "2026-10-13T21:30:54.818Z",
+    "duration": 17880.537,
+    "expected": 9,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "measurements": {
+    "postgres-performance": {
+      "file": "docs/phase-5-8/evidence/postgres-performance.json",
+      "SHA256": "70e2a997bce3d1da98b8dceab00c387c87b9f64da094663eb4bc18adb028b68b",
+      "boundary": "Actual local PostgreSQL SQL transactions with synthetic 1-byte sensor metadata; excludes UDP/crypto, Supabase RTT and production hardware; no physical fleet throughput claim"
+    },
+    "synthetic-scale": {
+      "file": "docs/phase-5-8/evidence/synthetic-scale.json",
+      "SHA256": "b4116f300a05288a69de31520dfd5d881b7161ff117a4035148b9c44f48bbe13",
+      "boundary": "Local PGlite; 1 actual authenticated reading plus synthetic fleet metadata and packet counters. Not credential provisioning, physical devices, hosted latency or database CPU."
+    },
+    "gateway-performance": {
+      "file": "docs/phase-5-8/evidence/gateway-performance.json",
+      "SHA256": "b4c3541d50a0c98ba53ca586847346721011ce89986466003b023f2bba9e6dd0",
+      "boundary": "Actual Node AEAD/frame processing and local SQL/PGlite. Same build with metrics off/on. No UDP socket, Supabase RTT or physical device. Loop throughput includes simulated device frame creation; per-packet latency excludes frame creation. CPU/RSS include in-process database."
+    }
+  },
+  "sources": [
+    {
+      "title": "Protocol Lab validated UDP/IPv4/IPv6 minimum header references",
+      "registry": "benchmarks/multi-protocol/references/sources.json",
+      "SHA256": "517b56a2689b2e753598f33906d6342d2d8251abfc0d7c1fac6ac19fa4d4ec70"
+    },
+    {
+      "title": "Resend send API",
+      "url": "https://resend.com/docs/api-reference/emails/send-email",
+      "retrieved": "2026-10-13"
+    },
+    {
+      "title": "Resend idempotency keys",
+      "url": "https://resend.com/docs/dashboard/emails/idempotency-keys",
+      "retrieved": "2026-10-13"
+    }
+  ],
+  "files": {
+    "docs/phase-5-8/ARCHITECTURE.md": "38f054bbfc5640227eed31b0c16cf18f4767c768e5742c45863da604d57daeec",
+    "docs/phase-5-8/AUDIT.md": "604bc8cbe7719302376c800f8b137d44182f5df07d22463d43b20b1c131e86dd",
+    "docs/phase-5-8/DEPLOYMENT.md": "d946392e60d65570a772aed1f8778e3fd7fd85e3fc314c093c13a44f525094ca",
+    "docs/phase-5-8/README.md": "82afaa8c945f57eac9c1c47b2d0afaf15a3a0f08521729990ab88053a26391dd",
+    "docs/phase-5-8/VERIFICATION.md": "dd44ccceb951d80a29b82cdc6146137174ea2f2fcb28b2d9efeb5acb90f128f2",
+    "docs/phase-5-8/evidence/analytics-desktop.png": "16000d8e4addd40a0799bc7f2a201fcb6dd5799e99664e4d9830e11fa61b7979",
+    "docs/phase-5-8/evidence/analytics-mobile.png": "bf623f77a855f122f9491f4a3bdec28949dc9dba30664cbfd6fcccde7338311c",
+    "docs/phase-5-8/evidence/analytics-tablet.png": "f75e754fbc696bca8a186071a82fd4e4c010cc96cb48ccda595028698784e911",
+    "docs/phase-5-8/evidence/monitoring-desktop.png": "c55432938c39667754105c75e314391fcb79c353b69ed3e51aa8710a06a3385c",
+    "docs/phase-5-8/evidence/monitoring-mobile.png": "4c631307cc868b24e1421c9712275dc2cb3a15da0c6b781b741b3de6a7de28c4",
+    "docs/phase-5-8/evidence/monitoring-tablet.png": "2829a4041d6a13508e366e14c27d8e51aa113cca97f5390332375ff4e7fd1ebb",
+    "package.json": "40b818bab20f33136214a1acd2aa5c71bfd11c423a949283cecbb38719394674",
+    "protocol/schema/bitpacked.cjs": "124bdaf40e3f7228ac19fd652c52b41f23f9d64a035198d27f32cada2f139a30",
+    "sdk/js/secure-v2.cjs": "0707112bc4966400e3707d3bcf62015d9e61c83e0a5e7e121988d7f54ea09ae4",
+    "supabase/migrations/038_monitoring_analytics.sql": "6c9cecc3c3791742275152fd09f1ba21068cdeabdb1626a17f9578b2ead66f57",
+    "tcp-server/ecosystem.observability.config.cjs": "2294c38583db85ad928dddb84e25185a28cb1063c0d6d9664110302cc55a9d0a",
+    "tcp-server/ingest.js": "5c6421d7736739e4b9bbc534536132e9b86e19c39a556edafed15fa23c474415",
+    "tcp-server/observability-worker.js": "17f75e7c9fde4f2b7a755d59735a8be9937c9c53a44381546fb5256e4d0a54ab",
+    "tcp-server/observability/collector.js": "0b7f9cedb93dd8b761fd8b274dbd0a7b5f8530efa3bf8bea582995f51b4addac",
+    "tcp-server/observability/worker.js": "8bcb186e4ae76ed706e73bd2428681e0cab37eee3ca0422e26a43b1efb216a5d",
+    "tcp-server/secure-v2.js": "b99c2b3a3316c0ad528db2daa80cc5b38abf33e1d6f7336a630845746eb5f2a9",
+    "tcp-server/udp.js": "7428c5c743d82f72d91cf408aa4489dd1eab17432873a77044618c84b134574f",
+    "tests/observability/accounting.cjs": "7c89a591434733513552abe8f9f2252eaf6b5109d242ab1ab988296c40293e00",
+    "tests/observability/collect-evidence.cjs": "670348bf0d6d2f50751d94e2da70da5edcaf15d521f426609538e67349df3bbd",
+    "tests/observability/database.cjs": "5a158b057f82337366d2f704347ba6d0f596b713ade39414d622d5f425dbba0c",
+    "tests/observability/fixture.cjs": "ee8d5133fc27914c3fc1fa75abc7ac7f831125e9bfb1f945d3133b33cf189a72",
+    "tests/observability/gateway-load.cjs": "cd0ca1571870922a83aa8c2f921d1ecfcc3e4d6e70660de7d57d27fbe3351b8d",
+    "tests/observability/notifications.cjs": "dfc6e3a32f904e17888552e0b88b394197683b954968cb03b2298c619408b4f9",
+    "tests/observability/postgres-performance.cjs": "cce39d8c0e8abc58889c371d0c4faa0d7a36112dc42306bcf7250dbcaf38065e",
+    "tests/observability/recovery.cjs": "52442986cac4f0271a53f4acd9a90a586ca7f2a1b8da76f29c54a4db8e719ba5",
+    "tests/observability/scale.cjs": "89060e00b8a20d818f1b57f329248979690299d975c810589ab4256fcb22570e",
+    "tests/observability/wide-values.cjs": "179a28c9256b84cfb9593c7031ddb1c77bea5fff0e494856af96c0e18f4cf2f6",
+    "web/app/components/AppSidebar.vue": "666a9c5a7f02e82d8d2ad3e65c7e1545ff64ce95fe9f6968b3e9c3d851c9a901",
+    "web/app/components/DeliveryEventTrace.vue": "16390f886a5a78c1d402de1a0caaba44d2c28f774801243ceecfa92d273d65e9",
+    "web/app/components/ObservabilityDashboard.vue": "1abb070b74dd73cd7240bd01443a0c4973c96544f41af590ed9357c7cf451f3f",
+    "web/app/components/UsageChart.vue": "3949457c82b8aa765655204c5359bd85062e2fecab0f8a4361a2c19f97379fa5",
+    "web/app/layouts/default.vue": "af3225b5a8312eac61a6fb7af22fd61df14c00ee965bda8eb63556764c6c18bc",
+    "web/app/pages/dashboard/alerts.vue": "1b3d5cff51df479a1b55e77b7eb75bb2f038b1802e98b24b7ac05f16fbdba9ba",
+    "web/app/pages/dashboard/analytics.vue": "6d3e87eef0a9a2c15a2a5d447cc12be684eba55e3d0002ccd3d957b80bffdf0e",
+    "web/app/pages/dashboard/monitoring.vue": "234b48ddeeaf1d4a0cc3f29c05c3c69f4447c49ee7484553591a35fc4545f1a1",
+    "web/nuxt.config.ts": "07b2760479490481c7c12e406266ddbfe0fd35b0d1698bf0ace36db94e2fd699",
+    "web/package.json": "a812bc8d0d10b37c82072f91c72d5a8bd3a1e7d0f102519e83853c47062c5465",
+    "web/server/api/observability/action.post.ts": "2158e6e2f93d5a3e9b279daa2937de630b9d5838505bc91366052bb41f5451f4",
+    "web/server/api/observability/index.get.ts": "945f96083d7f1b151fbc0fdba3bce0b08970a55c4e473563e36257ed95ad5fe5",
+    "web/server/api/observability/sample.get.ts": "66f52dd69876fc748764da494e322ff21c1099cb0b283bf9fde89e54d83ee183",
+    "web/server/api/observability/usage.get.ts": "3cacf587a7e9418d0260412b131db0cfc8ba2f1afc1489d90383eca3ad247c7d",
+    "web/server/protocol-lab/engine.ts": "f5d2a5fe70df49fbf2000d3170a62bd6aa76af7485799fa2a9b01340b05684d2",
+    "web/server/utils/observability.test.ts": "3df51d8c66d7fb697f10ffd97f8d49845bcfc054915d46d8c59b5e94d9ebb37c",
+    "web/server/utils/observability.ts": "92a9c4c4458bc11e2169848947c3b98e311cbf1517db8316c5acb7b5907a55a0",
+    "web/shared/observability.test.ts": "05f6aef3582fd189e2e3aace90904e7e8ba9a47da753b27869b4743830406996",
+    "web/shared/observability.ts": "1232b257592f1f57d3670a2f6448e7831812513cc919d104f2028b3ebc9cb94f",
+    "web/shared/observabilityGuides.ts": "b370fe853776c17f3f375f1a3be9005188fa666a9cad34cb0031096f4571792c",
+    "web/test/observability/workflows.spec.ts": "b2483db5c481e4ca148ba5ac650ed297a72833d7e27d228daaf0697260223a4e"
+  },
+  "unverified": [
+    "Physical hardware",
+    "Live email/provider delivery",
+    "Hosted Supabase Auth/PostgREST",
+    "Production traffic and carrier billing",
+    "Sustained production-scale load (100000 synthetic records were tested)",
+    "Database server CPU and resource telemetry",
+    "Full assistive-technology audit"
+  ]
+}

@@ -11,7 +11,8 @@ import type {
 import { formatMacAddress } from '#shared/bulkUpload'
 import type { Json } from '~/types/database.types'
 
-const DEVICE_FIELDS = 'id,user_id,organization_id,name,api_key,key_id,api_secret_preview,protocol_version,mac_address,last_seen,created_at,tags,encryption_enabled,profile_id,hardware_id,secure_v2_enabled,wire_device_id,first_telemetry_at,starter_downloaded_at,configuration_acknowledged_at,expected_report_interval_ms'
+const DEVICE_FIELDS =
+  'id,user_id,organization_id,name,api_key,key_id,api_secret_preview,protocol_version,mac_address,last_seen,created_at,tags,encryption_enabled,profile_id,hardware_id,secure_v2_enabled,wire_device_id,first_telemetry_at,starter_downloaded_at,configuration_acknowledged_at,expected_report_interval_ms'
 
 function normalizeDevice(row: any): Device {
   const keyId = row.key_id || row.api_key || ''
@@ -31,9 +32,12 @@ function normalizeDevice(row: any): Device {
     configuration_acknowledged_at: row.configuration_acknowledged_at ?? null,
     expected_report_interval_ms: row.expected_report_interval_ms ?? null,
     secure_v2_enabled: !!row.secure_v2_enabled,
+    lifecycle: row.lifecycle,
     wire_device_id: row.wire_device_id ?? null,
     created_at: row.created_at,
-    tags: (row.tags && typeof row.tags === 'object' ? row.tags : {}) as DeviceTags,
+    tags: (row.tags && typeof row.tags === 'object'
+      ? row.tags
+      : {}) as DeviceTags,
     encryption_enabled: !!row.encryption_enabled,
     profile_id: row.profile_id ?? null,
     hardware_id: row.hardware_id ?? null,
@@ -45,7 +49,9 @@ function normalizeSchema(row: any): DeviceSchema {
     id: row.id,
     device_id: row.device_id,
     organization_id: row.organization_id,
-    schema_definition: Array.isArray(row.schema_definition) ? row.schema_definition : [],
+    schema_definition: Array.isArray(row.schema_definition)
+      ? row.schema_definition
+      : [],
     version: Number(row.version) >= 1 ? Number(row.version) : 1,
     updated_at: row.updated_at,
   }
@@ -56,17 +62,24 @@ function normalizeSchemaVersion(row: any): SchemaVersion {
     id: row.id,
     device_id: row.device_id,
     version: row.version,
-    schema_definition: Array.isArray(row.schema_definition) ? row.schema_definition as SchemaField[] : [],
+    schema_definition: Array.isArray(row.schema_definition)
+      ? (row.schema_definition as SchemaField[])
+      : [],
     created_at: row.created_at,
   }
 }
 
 function schemaDefinitionJson(definition: SchemaField[]): Json {
-  return definition.map(field => {
+  return definition.map((field) => {
     if (field.type === 'flags') {
-      return { name: field.name, type: field.type, bits: field.bits.map(bit => ({ name: bit.name, bit: bit.bit })) }
+      return {
+        name: field.name,
+        type: field.type,
+        bits: field.bits.map((bit) => ({ name: bit.name, bit: bit.bit })),
+      }
     }
-    if (field.type === 'char') return { name: field.name, type: field.type, length: field.length }
+    if (field.type === 'char')
+      return { name: field.name, type: field.type, length: field.length }
     return { name: field.name, type: field.type }
   })
 }
@@ -75,30 +88,44 @@ function definitionsEqual(a: SchemaField[], b: SchemaField[]) {
   return JSON.stringify(a) === JSON.stringify(b)
 }
 
-const devicesInflightByApp = new WeakMap<object, {
-  promise: Promise<void> | null
-  orgId: string | null
-  generation: number
-}>()
+const devicesInflightByApp = new WeakMap<
+  object,
+  {
+    promise: Promise<void> | null
+    orgId: string | null
+    generation: number
+  }
+>()
 
 export function useDevices() {
   const app = useNuxtApp()
-  if (!devicesInflightByApp.has(app)) devicesInflightByApp.set(app, { promise: null, orgId: null, generation: 0 })
+  const fleetMode =
+    useRuntimeConfig().public.fleetEnabled === true ||
+    String(useRuntimeConfig().public.fleetEnabled) === 'true'
+  if (!devicesInflightByApp.has(app))
+    devicesInflightByApp.set(app, { promise: null, orgId: null, generation: 0 })
   const inflight = devicesInflightByApp.get(app)!
   const supabase = useSupabaseClient()
   const user = useSupabaseUser()
-  const { currentOrgId, requireOrgId, requireWrite, ensureOrganization } = useOrganization()
+  const { currentOrgId, requireOrgId, requireWrite, ensureOrganization } =
+    useOrganization()
 
   const devices = useState<Device[]>('devices', () => [])
   const schemas = useState<Record<string, DeviceSchema>>('schemas', () => ({}))
-  const schemaVersions = useState<Record<string, SchemaVersion[]>>('schema-versions', () => ({}))
+  const schemaVersions = useState<Record<string, SchemaVersion[]>>(
+    'schema-versions',
+    () => ({}),
+  )
   const loading = useState('devices-loading', () => false)
   const error = useState<string | null>('devices-error', () => null)
   /** Org id for which devices/schemas were last successfully loaded (incl. empty). */
   const loadedForOrg = useState<string | null>('devices-loaded-org', () => null)
-  const loadedAt=useState('devices-loaded-at',()=>0)
-  const devicesLoaded = computed(() =>
-    !!loadedForOrg.value && loadedForOrg.value === currentOrgId.value && !loading.value,
+  const loadedAt = useState('devices-loaded-at', () => 0)
+  const devicesLoaded = computed(
+    () =>
+      !!loadedForOrg.value &&
+      loadedForOrg.value === currentOrgId.value &&
+      !loading.value,
   )
 
   async function hasAuth(): Promise<boolean> {
@@ -117,8 +144,28 @@ export function useDevices() {
       return
     }
     const orgId = currentOrgId.value
-    if (!opts?.force && loadedForOrg.value === orgId && !error.value && Date.now()-loadedAt.value<30000) return
-    if (inflight.promise && inflight.orgId === orgId && !opts?.force) return inflight.promise
+    const requested =
+      fleetMode &&
+      typeof app.$router?.currentRoute?.value?.query?.device === 'string'
+        ? app.$router.currentRoute.value.query.device
+        : null
+    const hasRequested =
+      !requested || devices.value.some((d) => d.id === requested)
+    if (
+      hasRequested &&
+      !opts?.force &&
+      loadedForOrg.value === orgId &&
+      !error.value &&
+      Date.now() - loadedAt.value < 30000
+    )
+      return
+    if (
+      hasRequested &&
+      inflight.promise &&
+      inflight.orgId === orgId &&
+      !opts?.force
+    )
+      return inflight.promise
     const generation = ++inflight.generation
 
     if (loadedForOrg.value !== orgId) {
@@ -142,21 +189,50 @@ export function useDevices() {
           return
         }
 
-        const { data, error: err } = await supabase
+        let inventory = supabase
           .from('devices')
-          .select(DEVICE_FIELDS)
+          .select(fleetMode ? DEVICE_FIELDS + ',lifecycle' : DEVICE_FIELDS)
           .eq('organization_id', orgId)
           .order('created_at', { ascending: false })
+        if (fleetMode)
+          inventory = inventory.not('lifecycle', 'eq', 'deleted').limit(100)
+        const { data, error: err } = await inventory
 
         if (err) throw err
-        if (generation !== inflight.generation || currentOrgId.value !== orgId) return
+        if (generation !== inflight.generation || currentOrgId.value !== orgId)
+          return
         const fetchedDevices = (data || []).map(normalizeDevice)
+        if (
+          fleetMode &&
+          requested &&
+          !fetchedDevices.some((d) => d.id === requested)
+        ) {
+          const chosen = await supabase
+            .from('devices')
+            .select(DEVICE_FIELDS + ',lifecycle')
+            .eq('organization_id', orgId)
+            .eq('id', requested)
+            .not('lifecycle', 'eq', 'deleted')
+            .limit(1)
+          if (chosen.error) throw chosen.error
+          if (chosen.data?.[0])
+            fetchedDevices.unshift(normalizeDevice(chosen.data[0]))
+        }
 
         let nextSchemas: Record<string, DeviceSchema> = {}
         if (fetchedDevices.length) {
-          const schemaResult = await supabase.from('schemas')
-            .select('id,device_id,organization_id,schema_definition,version,updated_at')
+          let schemaQuery = supabase
+            .from('schemas')
+            .select(
+              'id,device_id,organization_id,schema_definition,version,updated_at',
+            )
             .eq('organization_id', orgId)
+          if (fleetMode)
+            schemaQuery = schemaQuery.in(
+              'device_id',
+              fetchedDevices.map((d) => d.id),
+            )
+          const schemaResult = await schemaQuery
           if (schemaResult.error) throw schemaResult.error
 
           for (const row of schemaResult.data || []) {
@@ -164,18 +240,24 @@ export function useDevices() {
             nextSchemas[schema.device_id] = schema
           }
         }
-        if (generation !== inflight.generation || currentOrgId.value !== orgId) return
+        if (generation !== inflight.generation || currentOrgId.value !== orgId)
+          return
         devices.value = fetchedDevices
         schemas.value = nextSchemas
         // Historical versions are loaded only when a device is opened in Schema.
-        const deviceIds = new Set(fetchedDevices.map(device => device.id))
+        const deviceIds = new Set(fetchedDevices.map((device) => device.id))
         schemaVersions.value = Object.fromEntries(
-          Object.entries(schemaVersions.value).filter(([id]) => deviceIds.has(id)),
+          Object.entries(schemaVersions.value).filter(([id]) =>
+            deviceIds.has(id),
+          ),
         )
         loadedForOrg.value = orgId
-        loadedAt.value=Date.now()
+        loadedAt.value = Date.now()
       } catch (e: any) {
-        if (generation === inflight.generation && currentOrgId.value === orgId) {
+        if (
+          generation === inflight.generation &&
+          currentOrgId.value === orgId
+        ) {
           error.value = e.message || 'Failed to load devices'
         }
       } finally {
@@ -208,9 +290,15 @@ export function useDevices() {
     requireWrite()
     const organization_id = requireOrgId()
 
-    let response: { device: any; credentials?: { keyId: string; apiSecret: string } | null }
+    let response: {
+      device: any
+      credentials?: { keyId: string; apiSecret: string } | null
+    }
     try {
-      response = await $fetch<{ device: any; credentials?: { keyId: string; apiSecret: string } | null }>('/api/devices', {
+      response = await $fetch<{
+        device: any
+        credentials?: { keyId: string; apiSecret: string } | null
+      }>('/api/devices', {
         method: 'POST',
         body: { name, orgId: organization_id },
       })
@@ -247,7 +335,9 @@ export function useDevices() {
     return { device, credentials: response.credentials ?? null }
   }
 
-  async function previewBulkUpload(rows: BulkDeviceInput[]): Promise<BulkUploadQuote> {
+  async function previewBulkUpload(
+    rows: BulkDeviceInput[],
+  ): Promise<BulkUploadQuote> {
     await ensureOrganization()
     requireWrite()
     const organization_id = requireOrgId()
@@ -279,14 +369,18 @@ export function useDevices() {
       const err = new Error(
         e?.data?.message || e?.message || 'Failed to complete bulk upload',
       ) as Error & { refreshRequired?: boolean }
-      err.refreshRequired = !!e?.data?.data?.refreshRequired || !!e?.data?.refreshRequired
+      err.refreshRequired =
+        !!e?.data?.data?.refreshRequired || !!e?.data?.refreshRequired
       throw err
     }
 
     const created = (response.devices || []).map(normalizeDevice)
     if (created.length) {
-      const createdIds = new Set(created.map(device => device.id))
-      devices.value = [...created, ...devices.value.filter(device => !createdIds.has(device.id))]
+      const createdIds = new Set(created.map((device) => device.id))
+      devices.value = [
+        ...created,
+        ...devices.value.filter((device) => !createdIds.has(device.id)),
+      ]
       for (const device of created) {
         schemas.value = {
           ...schemas.value,
@@ -322,11 +416,16 @@ export function useDevices() {
     const organization_id = requireOrgId()
 
     try {
-      await $fetch(`/api/devices/${id}?orgId=${encodeURIComponent(organization_id)}`, {
-        method: 'DELETE',
-      })
+      await $fetch(
+        `/api/devices/${id}?orgId=${encodeURIComponent(organization_id)}`,
+        {
+          method: 'DELETE',
+        },
+      )
     } catch (e: any) {
-      throw new Error(e?.data?.message || e.message || 'Failed to delete device')
+      throw new Error(
+        e?.data?.message || e.message || 'Failed to delete device',
+      )
     }
 
     devices.value = devices.value.filter((d) => d.id !== id)
@@ -344,14 +443,22 @@ export function useDevices() {
     requireWrite()
     const organization_id = requireOrgId()
 
-    let response: { device: any; credentials?: { keyId: string; apiSecret: string } | null }
+    let response: {
+      device: any
+      credentials?: { keyId: string; apiSecret: string } | null
+    }
     try {
-      response = await $fetch<{ device: any; credentials?: { keyId: string; apiSecret: string } | null }>(`/api/devices/${id}/key`, {
+      response = await $fetch<{
+        device: any
+        credentials?: { keyId: string; apiSecret: string } | null
+      }>(`/api/devices/${id}/key`, {
         method: 'POST',
         body: { orgId: organization_id },
       })
     } catch (e: any) {
-      throw new Error(e?.data?.message || e.message || 'Failed to rotate API key')
+      throw new Error(
+        e?.data?.message || e.message || 'Failed to rotate API key',
+      )
     }
 
     const device = normalizeDevice(response.device)
@@ -375,13 +482,19 @@ export function useDevices() {
     return device
   }
 
-  async function setDeviceEncryption(id: string, enabled: boolean): Promise<string | null> {
+  async function setDeviceEncryption(
+    id: string,
+    enabled: boolean,
+  ): Promise<string | null> {
     requireWrite()
-    const { data, error: err } = await supabase.rpc('configure_device_encryption', {
-      p_device_id: id,
-      p_enabled: enabled,
-      p_rotate: false,
-    })
+    const { data, error: err } = await supabase.rpc(
+      'configure_device_encryption',
+      {
+        p_device_id: id,
+        p_enabled: enabled,
+        p_rotate: false,
+      },
+    )
     if (err) throw err
     devices.value = devices.value.map((device) =>
       device.id === id ? { ...device, encryption_enabled: enabled } : device,
@@ -391,26 +504,34 @@ export function useDevices() {
 
   async function rotateEncryptionKey(id: string): Promise<string> {
     requireWrite()
-    const { data, error: err } = await supabase.rpc('configure_device_encryption', {
-      p_device_id: id,
-      p_enabled: true,
-      p_rotate: true,
-    })
+    const { data, error: err } = await supabase.rpc(
+      'configure_device_encryption',
+      {
+        p_device_id: id,
+        p_enabled: true,
+        p_rotate: true,
+      },
+    )
     if (err) throw err
     devices.value = devices.value.map((device) =>
       device.id === id ? { ...device, encryption_enabled: true } : device,
     )
-    if (typeof data !== 'string') throw new Error('Encryption key was not returned')
+    if (typeof data !== 'string')
+      throw new Error('Encryption key was not returned')
     return data
   }
 
   async function getDeviceEncryptionKey(id: string): Promise<string> {
     requireWrite()
-    const { data, error: err } = await supabase.rpc('get_device_encryption_key', {
-      p_device_id: id,
-    })
+    const { data, error: err } = await supabase.rpc(
+      'get_device_encryption_key',
+      {
+        p_device_id: id,
+      },
+    )
     if (err) throw err
-    if (typeof data !== 'string') throw new Error('Encryption key is not available')
+    if (typeof data !== 'string')
+      throw new Error('Encryption key is not available')
     return data
   }
 
@@ -425,26 +546,43 @@ export function useDevices() {
     if (err) throw err
     const saved = normalizeSchema(Array.isArray(data) ? data[0] : data)
     schemas.value = { ...schemas.value, [deviceId]: saved }
-    const { data: versions, error: versionError } = await supabase.from('schema_versions')
-      .select('id,device_id,version,schema_definition,created_at').eq('device_id', deviceId).order('version', { ascending: true })
+    const { data: versions, error: versionError } = await supabase
+      .from('schema_versions')
+      .select('id,device_id,version,schema_definition,created_at')
+      .eq('device_id', deviceId)
+      .order('version', { ascending: true })
     if (versionError) throw versionError
-    schemaVersions.value = { ...schemaVersions.value, [deviceId]: (versions || []).map(normalizeSchemaVersion) }
+    schemaVersions.value = {
+      ...schemaVersions.value,
+      [deviceId]: (versions || []).map(normalizeSchemaVersion),
+    }
     return saved
   }
 
-  async function fetchSchemaVersions(deviceId: string, opts?: { force?: boolean }) {
+  async function fetchSchemaVersions(
+    deviceId: string,
+    opts?: { force?: boolean },
+  ) {
     if (!opts?.force && schemaVersions.value[deviceId]) return
     const orgId = requireOrgId()
-    if (!devices.value.some(device => device.id === deviceId && device.organization_id === orgId)) {
+    if (
+      !devices.value.some(
+        (device) => device.id === deviceId && device.organization_id === orgId,
+      )
+    ) {
       throw new Error('Select a device in this workspace')
     }
-    const { data, error: err } = await supabase.from('schema_versions')
+    const { data, error: err } = await supabase
+      .from('schema_versions')
       .select('id,device_id,version,schema_definition,created_at')
       .eq('device_id', deviceId)
       .order('version', { ascending: true })
     if (err) throw err
     if (currentOrgId.value !== orgId) return
-    schemaVersions.value = { ...schemaVersions.value, [deviceId]: (data || []).map(normalizeSchemaVersion) }
+    schemaVersions.value = {
+      ...schemaVersions.value,
+      [deviceId]: (data || []).map(normalizeSchemaVersion),
+    }
   }
 
   function subscribePresence() {
@@ -460,7 +598,8 @@ export function useDevices() {
         const latest = new Map<string, string | null>()
         for (let offset = 0; offset < ids.length; offset += 200) {
           if (stopped || currentOrgId.value !== orgId) return
-          const { data, error: err } = await supabase.from('devices')
+          const { data, error: err } = await supabase
+            .from('devices')
             .select('id,last_seen')
             .eq('organization_id', orgId)
             .in('id', ids.slice(offset, offset + 200))
@@ -469,7 +608,9 @@ export function useDevices() {
         }
         if (!stopped && currentOrgId.value === orgId) {
           devices.value = devices.value.map((device) =>
-            latest.has(device.id) ? { ...device, last_seen: latest.get(device.id) ?? null } : device,
+            latest.has(device.id)
+              ? { ...device, last_seen: latest.get(device.id) ?? null }
+              : device,
           )
         }
       } catch {
@@ -478,8 +619,13 @@ export function useDevices() {
         refreshing = false
       }
     }
-    const timer = setInterval(() => { void refreshPresence() }, 30_000)
-    return () => { stopped = true; clearInterval(timer) }
+    const timer = setInterval(() => {
+      void refreshPresence()
+    }, 30_000)
+    return () => {
+      stopped = true
+      clearInterval(timer)
+    }
   }
 
   return {

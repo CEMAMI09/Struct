@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import {ingestEndpoint} from './ingestEndpoint'
 import type { H3Event } from 'h3'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { serverSupabaseClient } from '#supabase/server'
@@ -22,7 +23,7 @@ export function noStoreSecureV2(event: H3Event) {
 
 export async function authorizeSecureV2Device(event: H3Event, service: SupabaseClient, deviceId: string, orgId: string, write = true) {
   if (!deviceId || !orgId) throw createError({ statusCode: 400, message: 'Device and organization are required.' })
-  if (write) await requireOrgWriter(event, orgId)
+  if (write) await requireOrgWriter(event, orgId, 'devices.provision')
   else {
     const client = await serverSupabaseClient(event)
     const { data: { user }, error } = await client.auth.getUser()
@@ -91,7 +92,7 @@ export async function getSecureV2Metadata(service: SupabaseClient, deviceId: str
     secretPreview = credential?.secret_preview || null
   }
   return { available: true, enabled: device.secure_v2_enabled, wireDeviceId: device.wire_device_id ? Number(device.wire_device_id) : null,
-    secretPreview, slots: (slots || []) as SecureV2Slot[] }
+    secretPreview, ...(process.env.STRUCT_INGEST_HOST||process.env.STRUCT_INGEST_PORT||process.env.STRUCT_BOOTSTRAP_ORIGIN?{endpoint:ingestEndpoint()}:{}), slots: (slots || []) as SecureV2Slot[] }
 }
 
 export function exportSecureV2Credential(row: { wire_device_id: number | string; root_secret_encrypted: string; bootstrap_token_encrypted: string }) {

@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-10-16T08:06:03.577Z",
+  "boundary": "Actual disposable PostgreSQL cold filesystem backup/restore, matching local server version. Not hosted Supabase/PITR, offsite encrypted backups or a contractual RPO/RTO.",
+  "backupHighestSequence": 0,
+  "backupEvents": 2,
+  "backupDeliveryIntents": 2,
+  "postgresVersion": "18.4",
+  "coldCopyMs": 532.5834,
+  "startAndQuarantineMs": 715.6864999999998,
+  "verifiedRecoveryMs": 741.5812000000001,
+  "lostPostSnapshotEvents": 1,
+  "testsPassed": 14,
+  "security": "Ingestion quarantined before reopening; all restored active epochs must be replaced/revoked. Old packet rejected, new epoch accepted. Physical firmware update remains a manual prerequisite.",
+  "migrationSHA256": {
+    "039_enterprise_roles.sql": "b3c0586715480255c65310d7cd8c1af3677cfabed102f788d7d70ca6d5a6b5b2",
+    "040_enterprise_operations.sql": "34e6db80a65b3bc95806a5ff4249daa9867487ef7d30d0bb94313572b6db66ca"
+  }
+}

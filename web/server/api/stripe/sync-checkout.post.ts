@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  await requireOrgWriter(event, orgId)
+  await requireOrgWriter(event, orgId, 'billing.manage')
 
   const serviceSupabase = await serverSupabaseServiceRole(event)
   const subscriptionId =

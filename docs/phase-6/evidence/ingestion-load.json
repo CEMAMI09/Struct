@@ -1,0 +1,47 @@
+{
+  "scope": "Actual local PostgreSQL SQL commit transactions; durable outbox enabled; excludes UDP/crypto/network gateway, Supabase RTT and production hardware",
+  "sampleCount": 500,
+  "stages": [
+    {
+      "stage": "036 baseline",
+      "durationMs": 340.1905999999999,
+      "commitsPerSecond": 1469.7643027173594,
+      "medianCommitMs": 0.6192999999998392,
+      "p95CommitMs": 0.9193000000000211,
+      "maxCommitMs": 11.225500000000011
+    },
+    {
+      "stage": "037 idle",
+      "durationMs": 369.4818,
+      "commitsPerSecond": 1353.2466281153766,
+      "medianCommitMs": 0.6824000000001433,
+      "p95CommitMs": 1.0251000000002932,
+      "maxCommitMs": 6.7199999999998
+    },
+    {
+      "stage": "037 with concurrent same-workspace enrollment",
+      "durationMs": 379.63520000000017,
+      "commitsPerSecond": 1317.0538453757708,
+      "medianCommitMs": 0.7002000000002226,
+      "p95CommitMs": 0.969300000000203,
+      "maxCommitMs": 15.770399999999881
+    }
+  ],
+  "timestamp": "2026-10-12T20:54:01.474Z",
+  "bulkJob": {
+    "devices": 500,
+    "durationMs": 955.8404999999998,
+    "devicesPerSecond": 523.0998268016475
+  },
+  "eventsPersisted": 1500,
+  "deliveryIntents": 1500,
+  "memory": {
+    "rss": 87343104,
+    "heapTotal": 29417472,
+    "heapUsed": 13490032,
+    "external": 2932779,
+    "arrayBuffers": 493377
+  },
+  "postgresVersion": "18.4",
+  "migrationSHA256": "2f999cd107be3fcf336c8ff09cb0c866cf02e4647932c577a235af0e15d4d588"
+}

@@ -1,0 +1,34 @@
+# Reference only; Docker/cloud deployment has not been qualified by local Node tests.
+x-struct: &struct
+  build:
+    context: ../..
+    dockerfile: deployment/enterprise/Dockerfile
+  env_file: ${STRUCT_PRIVATE_ENV_FILE:?Set a private external environment file}
+  read_only: true
+  tmpfs:
+    - /tmp
+  restart: unless-stopped
+  init: true
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+services:
+  gateway:
+    <<: *struct
+    ports:
+      - "${STRUCT_BIND_ADDRESS:-127.0.0.1}:8081:8081/udp"
+      - "${STRUCT_BIND_ADDRESS:-127.0.0.1}:8080:8080/tcp"
+    command: [node, server.js]
+  delivery:
+    <<: *struct
+    command: [node, worker.js]
+  fleet:
+    <<: *struct
+    command: [node, fleet-worker.js]
+  observability:
+    <<: *struct
+    command: [node, observability-worker.js]
+  enterprise:
+    <<: *struct
+    command: [node, enterprise-worker.js]

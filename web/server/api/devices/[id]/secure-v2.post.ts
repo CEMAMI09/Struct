@@ -1,4 +1,5 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
+import {requireOrgWriter} from '../../../utils/auth'
 import { authorizeSecureV2Device, createSecureV2Credential, getSecureV2Metadata, noStoreSecureV2, requireSecureV2Available } from '../../../utils/secureV2'
 import { sanitizeDeviceForClient } from '../../../utils/deviceCredentials'
 
@@ -15,12 +16,8 @@ export default defineEventHandler(async (event) => {
   const service = await serverSupabaseServiceRole(event)
   const device = await authorizeSecureV2Device(event, service, deviceId, orgId)
   const credentials = createSecureV2Credential()
-  const { data, error } = await service.rpc('enroll_device_secure_v2', {
-    p_device_id: deviceId, p_org_id: orgId, p_root_secret_encrypted: credentials.rootEncrypted,
-    p_secret_preview: credentials.preview, p_bootstrap_token_encrypted: credentials.bootstrapEncrypted,
-    p_bootstrap_token_hash: `\\x${credentials.bootstrapHash.toString('hex')}`,
-    p_rotate: body.action === 'rotate', p_grace_seconds: body.graceSeconds || 0,
-  })
+  const {user,requestId}=await requireOrgWriter(event,orgId,'devices.provision')
+  const {data,error}=await (service as any).rpc('enterprise_device_admin',{p_org:orgId,p_actor:user.id,p_action:body.action,p_device:deviceId,p_request:requestId,p_data:{rootEncrypted:credentials.rootEncrypted,preview:credentials.preview,bootstrapEncrypted:credentials.bootstrapEncrypted,bootstrapHash:credentials.bootstrapHash.toString('hex'),grace:body.graceSeconds||0}})
   if (error || !data) throw createError({ statusCode: error?.message.includes('ENROLLED') ? 409 : 500,
     message: error?.message.includes('ENROLLED') ? 'Secure V2 enrollment changed. Refresh and retry.' : 'Secure V2 enrollment failed.' })
   const metadata = await getSecureV2Metadata(service, deviceId)

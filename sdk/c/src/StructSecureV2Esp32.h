@@ -26,7 +26,7 @@ class StructSecureV2Esp32 {
   struct_v2_client client{};
   struct_v2_counter_port counter{};
   nvs_handle_t nvsHandle = 0;
-  bool nvsOpened = false, ready = false;
+  bool nvsOpened = false, ready = false, freshBootstrap = false;
 
   class BoundedResponse : public Stream {
   public:
@@ -116,7 +116,7 @@ public:
       const char *hostname = STRUCT_DEFAULT_INGEST_HOST, uint16_t port = STRUCT_DEFAULT_UDP_PORT,
       size_t maxFrame = STRUCT_V2_DEFAULT_MAX_FRAME, uint32_t block = STRUCT_V2_DEFAULT_RESERVATION,
       const char *bootstrapUrl = STRUCT_V2_DEFAULT_BOOTSTRAP_URL, const char *trustedCa = STRUCT_V2_TLS_ROOT) {
-    end(); if (!hostname || !*hostname || !port || WiFi.status() != WL_CONNECTED) return false;
+    end(); freshBootstrap=false; if (!hostname || !*hostname || !port || WiFi.status() != WL_CONNECTED) return false;
     if (WiFi.hostByName(hostname, host) != 1) return false;
     destinationPort = port;
     char name[16]; snprintf(name, sizeof(name), "sv2%08lx", (unsigned long)wireId);
@@ -131,6 +131,7 @@ public:
     if (state == 1) {
       if (!bootstrap(wireId, bootstrapToken, bootstrapUrl, trustedCa) ||
           struct_v2_counter_provision(&counter, wireId, client.key_fingerprint, 0)) { end(); return false; }
+      freshBootstrap=true;
     } else if (state != 0 || next == STRUCT_V2_COUNTER_LIMIT) { end(); return false; }
     ready = udp.begin(49152u + (esp_random() % 16384u)) == 1;
     if (!ready) end(); return ready;
@@ -139,6 +140,7 @@ public:
       struct_delivery delivery = struct_delivery_default(0)) {
     return ready ? struct_v2_send(&client, slot, payload, n, millis(), delivery) : STRUCT_INVALID;
   }
+  bool freshlyBootstrapped() const { return freshBootstrap && ready; }
   size_t batchCapacity(size_t recordSize) const { return ready ? struct_v2_batch_capacity(&client, recordSize) : 0; }
   struct_result sendBatch(uint8_t slot, const uint8_t *records, size_t recordSize, size_t count,
       size_t *encodedCount, struct_delivery delivery = struct_delivery_default(0)) {

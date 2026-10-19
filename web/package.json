@@ -17,7 +17,13 @@
     "predev": "npm run lab:data",
     "test:lab:browser": "playwright test --config playwright.lab.config.ts",
     "test:lab": "vitest run server/protocol-lab --pool=threads --maxWorkers=1",
-    "test:phase12:browser": "playwright test --config playwright.phase12.config.ts"
+    "test:phase12:browser": "playwright test --config playwright.phase12.config.ts",
+    "test:pipelines:browser": "playwright test --config playwright.pipeline.config.ts",
+    "test:integrations:browser": "playwright test --config playwright.integrations.config.ts",
+    "test:fleet:browser": "playwright test --config playwright.fleet.config.ts",
+    "test:observability:browser": "playwright test --config playwright.observability.config.ts",
+    "test:enterprise:browser": "playwright test --config playwright.enterprise.config.ts",
+    "test:management:browser": "playwright test --config playwright.management.config.ts"
   },
   "dependencies": {
     "@nuxtjs/supabase": "^2.0.9",

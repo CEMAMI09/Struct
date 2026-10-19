@@ -76,11 +76,9 @@ export function useDestinations() {
           return
         }
 
-        const { data, error: err } = await supabase
-          .from('destinations')
-          .select(DESTINATION_FIELDS)
-          .eq('organization_id', orgId)
-          .order('created_at', { ascending: false })
+        let query = supabase.from('destinations').select(DESTINATION_FIELDS).eq('organization_id', orgId).order('created_at', { ascending: false })
+        if (useRuntimeConfig().public.integrationsEnabled) query = query.eq('integration_managed' as never, false)
+        const { data, error: err } = await query
 
         if (err) throw err
         if (generation !== inflight.generation || currentOrgId.value !== orgId) return

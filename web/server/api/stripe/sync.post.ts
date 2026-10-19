@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'orgId is required' })
   }
 
-  await requireOrgWriter(event, orgId)
+  await requireOrgWriter(event, orgId, 'billing.manage')
 
   const serviceSupabase = await serverSupabaseServiceRole(event)
   const org = await getOrganizationBilling(serviceSupabase, orgId)

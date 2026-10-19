@@ -7,35 +7,47 @@ export default defineEventHandler(async (event) => {
   const orgId = String(query.orgId || '').trim()
 
   if (!deviceId || !orgId) {
-    throw createError({ statusCode: 400, message: 'device id and orgId are required' })
+    throw createError({
+      statusCode: 400,
+      message: 'device id and orgId are required',
+    })
   }
 
-  await requireOrgWriter(event, orgId)
+  if (process.env.STRUCT_FLEET_ENABLED === 'true')
+    throw createError({
+      statusCode: 409,
+      message:
+        'Use the confirmed Fleet Archive action to preserve telemetry and delivery history.',
+    })
+  const { user, requestId } = await requireOrgWriter(
+    event,
+    orgId,
+    'devices.delete',
+  )
   const serviceSupabase = await serverSupabaseServiceRole(event)
 
-  const { data: device, error: lookupError } = await serviceSupabase
-    .from('devices')
-    .select('id, organization_id')
-    .eq('id', deviceId)
-    .eq('organization_id', orgId)
-    .maybeSingle()
-
-  if (lookupError) {
-    throw createError({ statusCode: 500, message: lookupError.message })
-  }
-  if (!device) {
-    throw createError({ statusCode: 404, message: 'Device not found' })
-  }
-
-  const { error: deleteError } = await serviceSupabase
-    .from('devices')
-    .delete()
-    .eq('id', deviceId)
-    .eq('organization_id', orgId)
-
-  if (deleteError) {
-    throw createError({ statusCode: 500, message: deleteError.message })
-  }
+  const { error } = await (serviceSupabase as any).rpc(
+    'enterprise_legacy_admin',
+    {
+      p_org: orgId,
+      p_actor: user.id,
+      p_action: 'delete',
+      p_device: deviceId,
+      p_request: requestId,
+      p_data: {},
+    },
+  )
+  if (error)
+    throw createError({
+      statusCode: error.message.includes('USE_FLEET_ARCHIVE')
+        ? 409
+        : error.message.includes('PERMISSION_DENIED')
+          ? 403
+          : 404,
+      message: error.message.includes('USE_FLEET_ARCHIVE')
+        ? 'Archive this device using Fleet Management to preserve telemetry and delivery history.'
+        : 'Device deletion unavailable.',
+    })
 
   return { ok: true }
 })

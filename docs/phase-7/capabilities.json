@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "activation": "default-off",
+  "providers": {
+    "http": {
+      "transport": "HTTPS POST",
+      "authentication": "HMAC-SHA256; optional bearer token",
+      "verification": "configuration only",
+      "acceptance": "HTTP 2xx",
+      "nativeBatching": false
+    },
+    "aws_sqs": {
+      "transport": "AWS SDK v3 HTTPS",
+      "authentication": "Explicit access key; optional session token",
+      "verification": "GetQueueAttributes",
+      "acceptance": "MessageId returned",
+      "nativeBatching": false
+    },
+    "aws_eventbridge": {
+      "transport": "AWS SDK v3 HTTPS",
+      "authentication": "Explicit access key; optional session token",
+      "verification": "DescribeEventBus",
+      "acceptance": "Individual PutEvents entry accepted",
+      "nativeBatching": false
+    },
+    "azure_service_bus": {
+      "transport": "HTTPS REST",
+      "authentication": "Entity-scoped SAS",
+      "verification": "configuration only",
+      "acceptance": "Service Bus accepted HTTP response",
+      "nativeBatching": false
+    },
+    "google_pubsub": {
+      "transport": "HTTPS REST",
+      "authentication": "Service account RSA JWT/OAuth",
+      "verification": "Topic lookup",
+      "acceptance": "messageIds returned",
+      "nativeBatching": false
+    },
+    "postgresql": {
+      "transport": "Verified TLS PostgreSQL",
+      "authentication": "Username/password; optional CA",
+      "verification": "Read-only privileges/columns/unique-key check",
+      "acceptance": "Insert committed or existing event_id",
+      "nativeBatching": false
+    }
+  },
+  "routing": {
+    "operators": [
+      "eq",
+      "ne",
+      "gt",
+      "gte",
+      "lt",
+      "lte",
+      "contains",
+      "exists"
+    ],
+    "fields": [
+      "device_id",
+      "schema_slot",
+      "schema_version",
+      "event_type",
+      "payload.*"
+    ],
+    "maxNodes": 64,
+    "maxDepth": 5,
+    "maxChildren": 16,
+    "conditionalEntitlement": "logical_routing / existing Scale",
+    "rulesPerDestination": 1
+  },
+  "transformation": {
+    "formats": [
+      "envelope-v1",
+      "flat-v1"
+    ],
+    "conversions": [
+      "identity",
+      "string",
+      "boolean"
+    ],
+    "maxFields": 100,
+    "maxOutputBytes": 240000,
+    "mandatory": [
+      "format_version",
+      "event_type",
+      "event_id"
+    ],
+    "unsafeIntegers": "exact decimal strings; no numeric narrowing"
+  },
+  "sharedDelivery": {
+    "queue": "existing webhook_deliveries",
+    "attemptsPerCycle": 8,
+    "retryAgeHours": 24,
+    "payloadDays": 7,
+    "metadataDays": 30,
+    "maxManualCycles": 3,
+    "maxRecoveryBatch": 100,
+    "mappingPreviewMinutes": 10
+  },
+  "verification": {
+    "http": "local HTTP/HMAC receiver",
+    "aws_sqs": "official SDK/local HTTP contract",
+    "aws_eventbridge": "official SDK/local HTTP contract",
+    "azure_service_bus": "REST/SAS local contract",
+    "google_pubsub": "REST/RSA OAuth local contract",
+    "postgresql": "actual PostgreSQL 18.4 with verified TLS 1.3",
+    "liveCloud": false
+  },
+  "unsupported": [
+    "private connectivity",
+    "role assumption/workload identity",
+    "provider-native batching",
+    "global rule catalog/priority",
+    "extra provider adapters",
+    "arbitrary SQL/column mappings",
+    "automatic encryption-key rotation"
+  ]
+}

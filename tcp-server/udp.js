@@ -35,6 +35,9 @@ function startUdpServer(supabase, opts = {}) {
   /** @type {Map<string, UdpEndpoint>} */
   const endpoints = new Map()
   let inFlight = 0
+  const metricsReport = require('./observability/collector').enabled()?setInterval(()=>console.log(JSON.stringify({type:'gateway_metric_observations',...require('./observability/collector').health})),30000):null
+  metricsReport?.unref()
+  socket.once('close',()=>clearInterval(metricsReport))
 
   function rememberEndpoint(deviceId, rinfo) {
     if (endpoints.size >= 4096) endpoints.delete(endpoints.keys().next().value)
@@ -88,6 +91,7 @@ function startUdpServer(supabase, opts = {}) {
       acquired = true
       const result = await processFrame(msg, {
         transport: 'udp',
+        ipVersion: rinfo.family === 'IPv6' ? 6 : 4,
         supabase,
         authorizeRate: checkPayloadRateLimit,
         // UDP downlinks are intentionally not delivered here without an
@@ -100,6 +104,7 @@ function startUdpServer(supabase, opts = {}) {
       if (result.receipt) {
         socket.send(result.receipt, rinfo.port, rinfo.address, (err) => {
           if (err) console.warn(`[struct] UDP receipt failed: ${err.message}`)
+          else if(result.device && result.eventIds) require('./observability/collector').observe(supabase,{device_id:result.device.id,kind:'receipt',receipt_bytes:result.receipt.length,ip_version:rinfo.family==='IPv6'?6:4,category:'socket_submitted_not_peer_received'})
         })
       }
       if (result.device) {

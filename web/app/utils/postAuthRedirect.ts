@@ -63,9 +63,10 @@ export function pendingAuthRedirect(pathname: string): '/dashboard' | null {
   return '/dashboard'
 }
 
-/** Only same-site dashboard routes are valid post-login destinations. */
+/** Only dashboard routes and the exact invitation acceptance page are allowed. */
 export function safeAuthDestination(value: unknown): string {
  if(typeof value!=='string'||value.length>2048||/[\\\x00-\x20]/.test(value))return '/dashboard'
+ if(value==='/invite')return '/invite'
  if(value==='/dashboard'||value.startsWith('/dashboard/')||value.startsWith('/dashboard?')){
   const parsed=new URL(value,'https://struct.invalid');if(parsed.origin==='https://struct.invalid'&&(parsed.pathname==='/dashboard'||parsed.pathname.startsWith('/dashboard/')))return parsed.pathname+parsed.search+parsed.hash
  }

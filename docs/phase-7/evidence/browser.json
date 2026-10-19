@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-10-12T19:30:25.982Z",
+  "stats": {
+    "startTime": "2026-10-12T19:30:25.982Z",
+    "duration": 16785.419,
+    "expected": 18,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "boundary": "Real Nuxt rendering, loopback auth fixture, integration API responses mocked; not hosted end-to-end verification",
+  "projects": [
+    "desktop 1440x1000",
+    "tablet 820x1180",
+    "mobile iPhone 13 / Chromium"
+  ]
+}

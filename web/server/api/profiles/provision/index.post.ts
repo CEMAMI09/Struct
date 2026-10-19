@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { user } = await requireOrgWriter(event, orgId)
+  const { user } = await requireOrgWriter(event, orgId, 'devices.export_credentials')
   const supabase = await serverSupabaseServiceRole(event)
 
   const { data: profile, error: profileError } = await supabase

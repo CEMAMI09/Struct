@@ -24,6 +24,7 @@ async function loadDestinations(supabase, userId, deviceId, organizationId) {
     .from('destinations')
     .select('id, name, url, device_id, enabled, routing_rule, event_types, signing_secret')
     .eq('enabled', true)
+  if (process.env.STRUCT_INTEGRATIONS_ENABLED === 'true') query = query.eq('integration_managed', false)
 
   query = organizationId
     ? query.eq('organization_id', organizationId)

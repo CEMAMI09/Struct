@@ -26,6 +26,7 @@ class Trace {
 // Allowlisted values only. Never serialize an exception, device object or frame.
 let pending=0
 async function persistTrace(db,trace){
+ if(!trace.data.stages.some(stage=>stage.stage==='authentication'&&stage.status==='passed'))return
  if(!trace.device?.organization_id || !trace.device?.debug_trace_until || Date.parse(trace.device.debug_trace_until)<=Date.now())return
  if(pending>=32)return // Bound diagnostic work; telemetry never waits for it.
  pending++

@@ -50,7 +50,7 @@
           </div>
           <div class="flex shrink-0 flex-col gap-2 sm:items-end">
             <button
-              v-if="canWrite"
+              v-if="canBilling"
               type="button"
               class="btn-primary"
               :disabled="billingLoading"
@@ -59,7 +59,7 @@
               {{ billingLoading ? 'Opening…' : 'Manage billing' }}
             </button>
             <button
-              v-if="canWrite"
+              v-if="canBilling"
               type="button"
               class="btn-ghost text-xs"
               :disabled="billingSyncing || billingLoading" @click="onSyncBilling"
@@ -86,7 +86,7 @@
         </div>
       </div>
 
-      <div v-if="canWrite && showUpgradePlans" class="space-y-3">
+      <div v-if="canBilling && showUpgradePlans" class="space-y-3">
         <div>
           <p class="label">Upgrade plan</p>
           <p class="text-xs text-[#8B93A7]">
@@ -244,7 +244,7 @@ const {
 } = useDevices()
 const {
   currentOrganization,
-  canWrite,
+  can,
   deviceLimit,
   usagePeakPaid,
   ensureOrganization,
@@ -290,6 +290,7 @@ const upgradePlans: { id: PaidTier; name: string; price: string; blurb: string }
 const hasPaidSubscription = computed(
   () => !!currentOrganization.value?.stripe_subscription_id,
 )
+const canBilling = computed(()=>can('billing.manage'))
 const showUpgradePlans = ref(false)
 
 const { mode, setMode } = useTheme()

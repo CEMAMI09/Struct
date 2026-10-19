@@ -1,0 +1,16 @@
+{
+  "passed": 57,
+  "transport": "DNS and HTTPS transport dependency injection; no public request sent",
+  "scenarios": [
+    "HTTP retry classification",
+    "Retry-After bounds",
+    "state transitions",
+    "mixed DNS answers",
+    "DNS rebinding pinned lookup",
+    "redirect not followed",
+    "private and metadata targets",
+    "oversized request",
+    "response discarded",
+    "unauthenticated trace suppressed"
+  ]
+}

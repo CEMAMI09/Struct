@@ -40,6 +40,7 @@
     />
 
     <div class="flex flex-wrap gap-3 text-xs"><button v-if="!showSetupGuide" class="btn-ghost text-xs" @click="onboarding.reopened.value=true;onboarding.refresh()">Getting Started</button><NuxtLink to="/docs/getting-started" class="text-[#b79bff]">First-packet guide</NuxtLink></div>
+    <p v-if="deviceOperationsEnabled && selectedId" class="banner"><NuxtLink :to="'/dashboard/device-operations?device='+selectedId">Inspect this device’s management capabilities, configuration and operation evidence</NuxtLink>.</p>
     <p v-if="selectedDevice && !selectedDevice.last_seen && !selectedDevice.first_telemetry_at && !showSetupGuide" class="banner">This device has not reported yet. <NuxtLink :to="`/dashboard/schema?device=${selectedId}`">Set up this device</NuxtLink>. Open Getting Started for the full workflow.</p>
     <template v-if="devices.length">
       <div class="grid min-h-0 items-stretch gap-4 lg:grid-cols-12">
@@ -110,6 +111,7 @@
 
 <script setup lang="ts">
 definePageMeta({ middleware: 'auth' })
+const deviceOperationsEnabled=useRuntimeConfig().public.deviceOperationsEnabled
 
 import { deviceActivity, ACTIVITY_HELP } from '#shared/deviceActivity'
 

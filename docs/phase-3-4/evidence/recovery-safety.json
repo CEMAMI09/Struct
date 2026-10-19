@@ -1,0 +1,18 @@
+{
+  "checks": 18,
+  "passed": 18,
+  "selection": {
+    "eligible": 110,
+    "bounded": 100
+  },
+  "scenarios": [
+    "legacy activation guard",
+    "bounded filtered selection",
+    "paused exclusion",
+    "eight attempt ceiling",
+    "three recovery cycles",
+    "cancel audit",
+    "rate limit",
+    "tenant/viewer/operator permissions"
+  ]
+}

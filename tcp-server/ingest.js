@@ -55,12 +55,14 @@ async function lookupDeviceByKeyId(supabase, keyId) {
   const { data: device, error } = await supabase
     .from('devices')
     .select(
-      'id, name, key_id, api_secret_encrypted, user_id, organization_id, debug_trace_until, encryption_enabled, encryption_key, schemas(version, schema_definition)',
+      'id, name, key_id, api_secret_encrypted, user_id, organization_id, debug_trace_until, lifecycle, encryption_enabled, encryption_key, schemas(version, schema_definition)',
     )
     .eq('key_id', keyId)
     .maybeSingle()
 
   if (error) throw new Error(`Device lookup failed: ${error.message}`)
+  if (device?.lifecycle && device.lifecycle !== 'enabled')
+    throw new Error('Device authorization disabled or revoked')
   return device
 }
 
@@ -271,6 +273,9 @@ async function ingestFleetTelemetryFrame(ctx, profile, body) {
   const resolved = await resolveDeviceFromFleetPayload(supabase, profile, structBuf)
   const device = resolved.device
 
+  if (device?.lifecycle && device.lifecycle !== 'enabled')
+    throw new Error('Device authorization disabled or revoked')
+
   if (device.encryption_enabled) {
     throw new Error('Encrypted devices require an encrypted frame with their per-device key_id')
   }
@@ -413,15 +418,27 @@ async function expectedFrameLength(supabase, header) {
 }
 
 async function processFrame(buf, ctx) {
+  const enterpriseMetrics=require('./enterprise/metrics'),enterpriseStarted=enterpriseMetrics.begin()
   const {Trace,persistTrace}=require('./trace')
   const trace=ctx.trace || new Trace(ctx.transport,buf?.length||0)
   if(Buffer.isBuffer(buf))trace.data.packet_id=createHash('sha256').update(buf).digest('hex')
+  const metricContext={...ctx,trace,metricStarted:performance.now()}
   try {
-    const result=await processFrameInner(buf,{...ctx,trace})
+    const result=await processFrameInner(buf,metricContext)
+    enterpriseMetrics.finish(enterpriseStarted,result)
     trace.complete()
     trace.data.acknowledgment=result.receipt?'built; device receipt not observed':'not requested'
     return {...result,trace:trace.data}
-  } catch(error) { trace.fail();throw error }
+  } catch(error) {
+    enterpriseMetrics.finish(enterpriseStarted,null,trace.current?.stage)
+    trace.fail()
+    const metrics=require('./observability/collector')
+    if(metrics.enabled()) {
+      if(metricContext.metricDevice) metrics.observe(ctx.supabase,{device_id:metricContext.metricDevice.id,kind:'rejected',app_bytes:buf?.length||0,ip_version:ctx.ipVersion??null,category:trace.current?.stage==='storage'?'storage_or_replay':trace.current?.stage==='schema'?'schema':trace.current?.stage==='decoding'?'decoding':'authenticated_rejection'})
+      else metrics.health.unattributed++ // No trustworthy tenant/device attribution.
+    }
+    throw error
+  }
   finally {
     // Tracing must never gate a storage receipt. Persistence is best effort.
     if(!ctx.trace)void persistTrace(ctx.supabase,trace)

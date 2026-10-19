@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-10-16T06:03:06.278Z",
+  "boundary": "Local PGlite SQL only; excludes hosted authentication, network and browser latency",
+  "migration": "038",
+  "authorization": {
+    "medianMs": 0.15079999999989013,
+    "p95Ms": 0.3510999999998603
+  },
+  "members": {
+    "medianMs": 0.24109999999996035,
+    "p95Ms": 0.5117000000000189
+  },
+  "audit": {
+    "medianMs": 0.14949999999998909,
+    "p95Ms": 0.21420000000011896
+  }
+}

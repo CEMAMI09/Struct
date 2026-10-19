@@ -1,4 +1,5 @@
 import type { OrgRole, Organization, OrganizationMember } from '~/types'
+import {hasPermission} from '#shared/permissions'
 
 export interface OrgMembership extends OrganizationMember {
   organization: Organization
@@ -35,7 +36,8 @@ export function useOrganization() {
   )
   const currentOrganization = computed(() => currentMembership.value?.organization || null)
   const role = computed<OrgRole | null>(() => currentMembership.value?.role ?? null)
-  const canWrite = computed(() => role.value === 'owner' || role.value === 'admin')
+  const canWrite = computed(() => hasPermission(role.value,'devices.update'))
+  const can = (cap:string)=>hasPermission(role.value,cap)
   const isViewer = computed(() => role.value === 'viewer')
   const isOwner = computed(() => role.value === 'owner')
   const isEnterprise = computed(
@@ -446,6 +448,7 @@ export function useOrganization() {
     currentMembership,
     role,
     canWrite,
+    can,
     isViewer,
     isOwner,
     isEnterprise,

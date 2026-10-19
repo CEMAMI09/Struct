@@ -1,0 +1,19 @@
+{
+  "checks": 50,
+  "passed": 50,
+  "database": "PGlite PostgreSQL single backend",
+  "scenarios": [
+    "Secure V2 authentication/commit/duplicates",
+    "atomic outbox failure rollback",
+    "batch identity",
+    "lease recovery and stale fencing",
+    "503 Retry-After",
+    "401 dead letter",
+    "manual idempotent/bulk recovery",
+    "pause/resume",
+    "retention",
+    "multi-tenant RLS",
+    "viewer permissions"
+  ],
+  "multi_backend_concurrency": "not tested in this fixture"
+}

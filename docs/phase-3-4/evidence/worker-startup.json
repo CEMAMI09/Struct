@@ -1,0 +1,9 @@
+{
+  "checks": 8,
+  "passed": 8,
+  "hung_rpc_exit_ms": 10116.768,
+  "transport": "real worker process against isolated HTTP database fixture",
+  "limitations": [
+    "fake Supabase REST responses; SQL and crypto tested separately"
+  ]
+}

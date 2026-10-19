@@ -38,7 +38,7 @@
     <p v-if="trace.bytes && trace.protocol==='Struct Secure V2'" class="text-sm">Payload {{trace.bytes.payload}} B · security envelope {{trace.bytes.security_overhead??25}} B<span v-if="trace.bytes.batch_metadata"> · batch count {{trace.bytes.batch_metadata}} B</span> · complete Struct frame {{trace.frame_bytes}} B · estimated IPv4 + UDP {{trace.bytes.ipv4_udp??trace.frame_bytes+28}} B · receipt {{trace.bytes.acknowledgment}} B separately</p>
     <p v-else-if="trace.bytes" class="text-sm">Payload {{trace.bytes.payload}} B · protocol {{trace.bytes.protocol}} B · stable event ID {{trace.bytes.event_identity}} B · encryption {{trace.bytes.encryption}} B · complete Struct frame {{trace.frame_bytes}} B · receipt {{trace.bytes.acknowledgment}} B separately</p>
     <p v-if="trace.bytes" class="text-xs text-[#8B93A7]">{{trace.bytes.transport_note}}. UDP transport: 28 B IPv4 or 48 B IPv6 per datagram. Receipt bytes are separate from the uplink.</p>
-    <p class="text-sm">Webhooks: {{webhookSummary(trace.event_id)}} <NuxtLink class="underline" to="/dashboard/deliveries">Delivery history</NuxtLink></p>
+    <p class="text-sm">Webhooks: {{webhookSummary(trace.event_id)}} <NuxtLink class="underline" :to="trace.event_id ? `/dashboard/deliveries?event=${encodeURIComponent(trace.event_id)}` : '/dashboard/deliveries'">Delivery history</NuxtLink></p>
    </article>
    <button v-if="traces.length" class="btn-primary" @click="download">Download sanitized diagnostic bundle</button>
   </template>

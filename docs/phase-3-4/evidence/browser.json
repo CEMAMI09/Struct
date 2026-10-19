@@ -1,0 +1,229 @@
+{
+  "generated_at": "2026-10-12T04:56:32.306Z",
+  "stats": {
+    "startTime": "2026-10-12T04:53:27.883Z",
+    "duration": 12303.141,
+    "expected": 18,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "cases": [
+    {
+      "title": "trace uses recorded evidence and remains responsive",
+      "project": "desktop",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "duration_ms": 797,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "title": "retry preview requires confirmation and only reports scheduling",
+      "project": "desktop",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "duration_ms": 525,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "title": "filters and keyset pagination query the server",
+      "project": "desktop",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "duration_ms": 571,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "title": "filtered bulk recovery previews a bounded selection before scheduling",
+      "project": "desktop",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "duration_ms": 546,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "title": "destination pause retains work and viewer recovery is absent",
+      "project": "desktop",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "duration_ms": 642,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "title": "invalid input and missing backend data produce explicit errors",
+      "project": "desktop",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "duration_ms": 629,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "title": "trace uses recorded evidence and remains responsive",
+      "project": "tablet",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "duration_ms": 588,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "title": "retry preview requires confirmation and only reports scheduling",
+      "project": "tablet",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "duration_ms": 526,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "title": "filters and keyset pagination query the server",
+      "project": "tablet",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "duration_ms": 551,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "title": "filtered bulk recovery previews a bounded selection before scheduling",
+      "project": "tablet",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "duration_ms": 519,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "title": "destination pause retains work and viewer recovery is absent",
+      "project": "tablet",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "duration_ms": 584,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "title": "invalid input and missing backend data produce explicit errors",
+      "project": "tablet",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "duration_ms": 591,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "title": "trace uses recorded evidence and remains responsive",
+      "project": "mobile",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "duration_ms": 699,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "title": "retry preview requires confirmation and only reports scheduling",
+      "project": "mobile",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "duration_ms": 536,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "title": "filters and keyset pagination query the server",
+      "project": "mobile",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "duration_ms": 769,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "title": "filtered bulk recovery previews a bounded selection before scheduling",
+      "project": "mobile",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "duration_ms": 598,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "title": "destination pause retains work and viewer recovery is absent",
+      "project": "mobile",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "duration_ms": 580,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "title": "invalid input and missing backend data produce explicit errors",
+      "project": "mobile",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "duration_ms": 540,
+          "errors": []
+        }
+      ]
+    }
+  ]
+}

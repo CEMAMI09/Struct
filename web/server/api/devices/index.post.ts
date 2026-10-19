@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'name and orgId are required' })
   }
 
-  const { user } = await requireOrgWriter(event, orgId)
+  const { user } = await requireOrgWriter(event, orgId, 'devices.create')
   const serviceSupabase = await serverSupabaseServiceRole(event)
 
   const plan = await resolveCapacityPlan(serviceSupabase, orgId, 1)

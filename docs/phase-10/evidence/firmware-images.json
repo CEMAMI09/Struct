@@ -1,0 +1,22 @@
+{
+  "at": "2026-10-16T18:53:45.318Z",
+  "results": [
+    {
+      "platform": "esp32",
+      "identityMode": "persistent-nvs-v1",
+      "size": 1108480,
+      "sha256": "c796272998bed85668afffbfbec78737a244a0a1630d3069d454a613cf10d947",
+      "signatureVerified": true,
+      "physicalInstallation": false
+    },
+    {
+      "platform": "esp32c3",
+      "identityMode": "persistent-nvs-v1",
+      "size": 1198752,
+      "sha256": "f00d90062852933951e5b2f95aeee589d75f87095c925f9e477a81db9163d7a4",
+      "signatureVerified": true,
+      "physicalInstallation": false
+    }
+  ],
+  "boundary": "Actual compiled PlatformIO application binaries and offline P-256 CLI signatures; generated examples advertise configuration support, not qualified physical OTA."
+}

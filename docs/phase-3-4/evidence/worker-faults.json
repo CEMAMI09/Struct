@@ -1,0 +1,161 @@
+{
+  "observations": [
+    {
+      "scenario": "503",
+      "status": "pending",
+      "error_category": "http_transient",
+      "actual_http_requests": 1
+    },
+    {
+      "scenario": "503 recovery",
+      "status": "delivered"
+    },
+    {
+      "scenario": "429",
+      "status": "pending",
+      "error_category": "http_transient",
+      "actual_http_requests": 1
+    },
+    {
+      "scenario": "429 recovery",
+      "status": "delivered"
+    },
+    {
+      "scenario": "401",
+      "status": "dead",
+      "error_category": "http_permanent",
+      "actual_http_requests": 1
+    },
+    {
+      "scenario": "dns",
+      "status": "pending",
+      "error_category": "dns",
+      "actual_http_requests": 0
+    },
+    {
+      "scenario": "dns recovery",
+      "status": "delivered"
+    },
+    {
+      "scenario": "timeout",
+      "status": "pending",
+      "error_category": "timeout",
+      "actual_http_requests": 1
+    },
+    {
+      "scenario": "timeout recovery",
+      "status": "delivered"
+    },
+    {
+      "scenario": "refused",
+      "status": "pending",
+      "error_category": "network",
+      "actual_http_requests": 0
+    },
+    {
+      "scenario": "refused recovery",
+      "status": "delivered"
+    },
+    {
+      "scenario": "killed after claim before send",
+      "status": "recovered",
+      "lease_clock": "advanced in disposable fixture"
+    },
+    {
+      "scenario": "killed during HTTP request",
+      "status": "recovered",
+      "remote_requests": 2,
+      "lease_clock": "advanced in disposable fixture"
+    },
+    {
+      "scenario": "remote success then killed before completion",
+      "status": "recovered",
+      "remote_requests": 2,
+      "stable_delivery_id": true
+    },
+    {
+      "scenario": "database RPC unavailable",
+      "status": "recovered",
+      "fault": "local RPC error injection, not database process termination"
+    },
+    {
+      "scenario": "two workers, 20 slow local HTTP deliveries",
+      "requests": 20,
+      "runtime_ms": 2565.120499999999,
+      "deliveries_per_second": 7.796904667831397,
+      "distinct_events": 20,
+      "sql_backend": "single PGlite backend; does not prove multi-backend row-lock contention"
+    }
+  ],
+  "gateway_host_processing": {
+    "samples": 20,
+    "median_ms": 2.482899999999063,
+    "p95_ms": 3.7016999999996187
+  },
+  "remote_validation": "Actual loopback HTTP, raw-body HMAC and stable event/delivery identifiers verified; production HTTPS transport tested separately",
+  "memory": {
+    "rss": 433094656,
+    "heapTotal": 59301888,
+    "heapUsed": 29561200,
+    "external": 260789218,
+    "arrayBuffers": 100750814
+  },
+  "worker_resources": [
+    {
+      "started_at": "2026-10-16T18:18:44.539Z",
+      "claims": 17,
+      "completed": 17,
+      "delivered": 17,
+      "retry": 0,
+      "dead": 0,
+      "skipped": 0,
+      "stale_completions": 0,
+      "database_errors": 0,
+      "last_claim_at": "2026-10-16T18:18:47.023Z",
+      "last_database_error_at": null,
+      "latency_ms_total": 1881,
+      "healthy": true,
+      "active": 0,
+      "stopped": false,
+      "memory": {
+        "rss": 66838528,
+        "heapTotal": 12296192,
+        "heapUsed": 7947176,
+        "external": 2597715,
+        "arrayBuffers": 166437
+      },
+      "cpu": {
+        "user": 31000,
+        "system": 31000
+      }
+    },
+    {
+      "started_at": "2026-10-16T18:18:44.540Z",
+      "claims": 3,
+      "completed": 3,
+      "delivered": 3,
+      "retry": 0,
+      "dead": 0,
+      "skipped": 0,
+      "stale_completions": 0,
+      "database_errors": 0,
+      "last_claim_at": "2026-10-16T18:18:47.040Z",
+      "last_database_error_at": null,
+      "latency_ms_total": 330,
+      "healthy": true,
+      "active": 0,
+      "stopped": false,
+      "memory": {
+        "rss": 66138112,
+        "heapTotal": 12034048,
+        "heapUsed": 7768400,
+        "external": 2583162,
+        "arrayBuffers": 151884
+      },
+      "cpu": {
+        "user": 15000,
+        "system": 31000
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+# Phases 5 + 8 audit — 2026-10-13
+
+The repository contains uncommitted, locally verified Phases 3/4, 7 and 6. They are prerequisites, not evidence of a production rollout. No production access is needed for this work.
+
+- Secure V2 authenticates AEAD before decoding, resolves immutable device slots, splits batches and commits through PostgreSQL replay RPCs. Receipts acknowledge durable storage; they do not acknowledge webhook processing. The gateway knows exact frame/payload lengths but historically persists these only in opt-in diagnostic traces.
+- `secure_v2_packets` and `telemetry_events` preserve packet/event identity. Retained decoded telemetry provides logical readings and sample timestamps, not historical network captures. Old packet/IP/receipt bytes must remain unavailable unless recorded.
+- Workspace onboarding and current-epoch provisioning evidence survive telemetry retention. `devices.last_seen` is durable but legacy TCP activity can differ from a successful commit. Monitoring needs a separate last successful monitored commit timestamp, safely backfilled only from stored event evidence.
+- Phase 6 supplies flat multi-membership groups, labels, lifecycle guards, bounded inventory and durable administrative jobs. Monitoring must not change device credentials, wire formats, immutable slots or administrative job semantics.
+- Phases 3/4 supply transactional telemetry/outbox consistency, leased delivery work, retry/dead-letter/replay and tenant-scoped history. Phase 7 records routing snapshots. Delivery attempts can support outbound outcome metrics; request-body bytes are not complete HTTP/TCP/TLS traffic.
+- No scheduled inactivity evaluator, alert lifecycle, alert email queue, packet-usage rollups or cost preferences currently exist. Resend is an existing web dependency/tooling capability, not a durable runtime notification system.
+- Raw telemetry retention is 1/7/30 days by existing plan. New analytics must be bounded, avoid scanning complete histories and preserve unknown measurements. No new pricing/entitlements are introduced.
+
+Design: additive default-off migration 038; optional observed-ingestion RPC calling the unchanged existing commit RPC; bounded asynchronous authenticated rejection/duplicate/socket-receipt observations; transactional rollup processing; explicit scheduled/event-driven/no-expectation policies; bounded declarative rule evaluation and durable deduplicated incidents. Webhook notifications reuse the existing outbox; a small fenced email queue uses the existing retry classifiers and fixed Resend endpoint because the webhook claimant requires a real destination. Dashboard notifications are durable incidents, independent of transport success.
+
+Counters are PostgreSQL bigint and exported as decimal strings. UTC rollups retain minute/hour/day boundaries with snapshots of groups/tags. Historical backfill is explicit and reading-only; no production backfill is executed. Optional analytics failure cannot turn an already committed telemetry reading into a false failure receipt. Coverage gaps and delayed/best-effort observation boundaries must be exposed.
+
+Official notification references retrieved 2026-10-13: https://resend.com/docs/api-reference/emails/send-email and https://resend.com/docs/dashboard/emails/idempotency-keys. UDP/IP calculations reuse Protocol Lab's validated minimum headers (RFC 768, RFC 791, RFC 8200); carrier/link-layer accounting remains unavailable.

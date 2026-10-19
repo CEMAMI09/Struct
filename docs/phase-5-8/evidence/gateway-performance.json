@@ -1,0 +1,61 @@
+{
+  "timestamp": "2026-10-13T21:30:17.489Z",
+  "boundary": "Actual Node AEAD/frame processing and local SQL/PGlite. Same build with metrics off/on. No UDP socket, Supabase RTT or physical device. Loop throughput includes simulated device frame creation; per-packet latency excludes frame creation. CPU/RSS include in-process database.",
+  "stages": [
+    {
+      "name": "metrics off",
+      "packets": 500,
+      "readings": 500,
+      "observedApplicationBytes": 13000,
+      "medianProcessingMs": 1.8243000000002212,
+      "p95ProcessingMs": 2.26279999999997,
+      "loopDurationMs": 976.4733999999999,
+      "packetsPerSecond": 512.0467183233052,
+      "readingsPerSecond": 512.0467183233052,
+      "cpuMicros": {
+        "user": 1219000,
+        "system": 16000
+      }
+    },
+    {
+      "name": "metrics on",
+      "packets": 500,
+      "readings": 500,
+      "observedApplicationBytes": 13000,
+      "medianProcessingMs": 2.141200000000026,
+      "p95ProcessingMs": 2.672900000000027,
+      "loopDurationMs": 1166.9303,
+      "packetsPerSecond": 428.47460555270527,
+      "readingsPerSecond": 428.47460555270527,
+      "cpuMicros": {
+        "user": 1359000,
+        "system": 15000
+      }
+    },
+    {
+      "name": "metrics on, batch 10",
+      "packets": 500,
+      "readings": 5000,
+      "observedApplicationBytes": 18000,
+      "medianProcessingMs": 3.6841000000003987,
+      "p95ProcessingMs": 4.384600000000319,
+      "loopDurationMs": 1929.2066,
+      "packetsPerSecond": 259.1739008149775,
+      "readingsPerSecond": 2591.739008149775,
+      "cpuMicros": {
+        "user": 2032000,
+        "system": 0
+      }
+    }
+  ],
+  "committedReadings": 6005,
+  "accountedReadings": 5500,
+  "memory": {
+    "rss": 477560832,
+    "heapTotal": 86401024,
+    "heapUsed": 17279152,
+    "external": 307295383,
+    "arrayBuffers": 107264105
+  },
+  "migrationSHA256": "6c9cecc3c3791742275152fd09f1ba21068cdeabdb1626a17f9578b2ead66f57"
+}

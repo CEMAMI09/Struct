@@ -1,0 +1,103 @@
+{
+  "environment": "Windows Node/PGlite; local SQL engine, not Supabase/network/physical fleet",
+  "registration": [
+    {
+      "devices": 1,
+      "ms": 14.262000000000171,
+      "devicesPerSecond": 70.1163932127323
+    },
+    {
+      "devices": 10,
+      "ms": 35.6101000000001,
+      "devicesPerSecond": 280.8192057871214
+    },
+    {
+      "devices": 100,
+      "ms": 210.51279999999997,
+      "devicesPerSecond": 475.0304969579048
+    },
+    {
+      "devices": 1000,
+      "ms": 2798.7203,
+      "devicesPerSecond": 357.3061588183714
+    }
+  ],
+  "inventory": [
+    {
+      "devices": 10000,
+      "seedMs": 640.9417999999996,
+      "measures": [
+        {
+          "filter": {},
+          "medianMs": 20.904900000000453,
+          "maxMs": 23.870600000000195
+        },
+        {
+          "filter": {
+            "search": "Inventory 12"
+          },
+          "medianMs": 14.516000000000531,
+          "maxMs": 16.378999999999905
+        },
+        {
+          "filter": {
+            "labels": [
+              "outdoor"
+            ]
+          },
+          "medianMs": 12.042899999999463,
+          "maxMs": 13.149099999999635
+        },
+        {
+          "filter": {
+            "sort": "name"
+          },
+          "medianMs": 23.10030000000006,
+          "maxMs": 24.3770999999997
+        }
+      ]
+    },
+    {
+      "devices": 100000,
+      "seedMs": 7199.6853,
+      "measures": [
+        {
+          "filter": {},
+          "medianMs": 231.7624999999989,
+          "maxMs": 233.45690000000104
+        },
+        {
+          "filter": {
+            "search": "Inventory 12"
+          },
+          "medianMs": 135.38070000000153,
+          "maxMs": 137.39530000000013
+        },
+        {
+          "filter": {
+            "labels": [
+              "outdoor"
+            ]
+          },
+          "medianMs": 138.11080000000038,
+          "maxMs": 139.53660000000127
+        },
+        {
+          "filter": {
+            "sort": "name"
+          },
+          "medianMs": 253.52869999999893,
+          "maxMs": 254.73790000000008
+        }
+      ]
+    }
+  ],
+  "memory": {
+    "rss": 1067368448,
+    "heapTotal": 85876736,
+    "heapUsed": 18326104,
+    "external": 931142036,
+    "arrayBuffers": 731110758
+  },
+  "timestamp": "2026-10-12T20:17:00.917Z"
+}

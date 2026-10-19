@@ -1,0 +1,16 @@
+{
+  "passed": 39,
+  "timestamp": "2026-10-16T18:18:44.124Z",
+  "requests": 36,
+  "parallel_five_dispatch_ms": 27.968599999999924,
+  "boundary": "Real HTTP loopback contract receiver; AWS official SDK encoding/signing; local RSA OAuth and SAS verification; no live cloud IAM or managed emulator",
+  "implementations": {
+    "@aws-sdk/client-eventbridge": "3.1149.0",
+    "@aws-sdk/client-sqs": "3.1149.0",
+    "@smithy/node-http-handler": "4.12.1",
+    "@supabase/supabase-js": "^2.110.3",
+    "dotenv": "^17.4.2",
+    "ipaddr.js": "^2.5.0",
+    "pg": "8.23.1"
+  }
+}

@@ -20,7 +20,7 @@ def archive(path, entries):
 files = [p for p in sdk.rglob('*') if p.is_file() and (p.suffix in allowed or p.name == 'Kconfig')
          and not any(part in {'node_modules', '__pycache__', 'target', 'build', 'dist'} or part.endswith('.egg-info') for part in p.parts)]
 docs = [(p, 'docs/' + p.name) for p in (root / 'docs').glob('*.md')]
-archive(target / 'struct-sdk.zip', [(p, 'struct-sdk/' + p.relative_to(sdk).as_posix()) for p in files] + docs + [(root / 'protocol/schema/bitpacked.cjs', 'struct-sdk/js/bitpacked.cjs')])
+archive(target / 'struct-sdk.zip', [(p, 'struct-sdk/' + p.relative_to(sdk).as_posix()) for p in files] + docs + [(root / 'protocol/schema/bitpacked.cjs', 'struct-sdk/js/bitpacked.cjs'), (root / 'protocol/management/core.cjs', 'struct-sdk/protocol/management/core.cjs')])
 arduino = [p for p in files if p.is_relative_to(sdk / 'c') and not p.is_relative_to(sdk / 'c/ports')]
 archive(target / 'struct-arduino.zip', [(p, 'Struct/' + p.relative_to(sdk / 'c').as_posix()) for p in arduino])
 print('Built web/public/sdk/struct-sdk.zip and struct-arduino.zip')

@@ -1,0 +1,94 @@
+{
+  "collected_at": "2026-10-12T19:31:44.559Z",
+  "head": "27be12d582231ff7b2601f4021c2192474934866",
+  "working_tree": "local uncommitted Phase 3/4 and Phase 7; hashes identify tested implementation",
+  "environment": {
+    "node": "v24.18.1",
+    "platform": "win32",
+    "architecture": "x64"
+  },
+  "sources_sha256": {
+    "supabase/migrations/035_reliable_delivery.sql": "36d3654c8bee6208a71432972ce9aa0f01eb741428d7374c86272f44826f8d88",
+    "supabase/migrations/036_backend_integrations.sql": "edcdd1e1efda76be220197b3e451545eff196967530401e41977d6919ee0d802",
+    "tcp-server/outbox.js": "15ebdfdd18503bad891f00303e92247fe26ede486bbfcf8bdc1feb3eb34e5a8d",
+    "tcp-server/worker.js": "a718bf5b2356e93c7965126142470d24b0c3271113da3b52aa35cf24c28655cb",
+    "tcp-server/safeWebhook.js": "7ce3661936a12ae69352ee32a508258d4062ad463e4a1e4887406610bf2fd1ee",
+    "tcp-server/webhooks.js": "62b5fdb2d5e41f40df05506fcf07eef2ee86fa936b3db194a6f42abb3a047424",
+    "package.json": "bf460cc9af2db124a129d8923103d30c2ffa98ac029cc07990b830c3f86972d2",
+    "tcp-server/package.json": "5fbbfa456a0d91b8083d4a0a91ecfbd6b55a2509eb3a95f29747ef56f4c61634",
+    "tcp-server/package-lock.json": "abce970e08f8b0105ff1df007d852e27e1beab29e39e58b7d0691e33b97df139",
+    "tcp-server/integrations/adapters.js": "a1c4c69cdca447d1679de8c8ac34149431b5635838f10e95240cc4ec6d3f2062",
+    "tcp-server/integrations/config.js": "9ab786c94bbe4da6c79bbb91cebc83a8c47adad883cdd4707323e74aad3b363c",
+    "tcp-server/integrations/dispatch.js": "a9b3879f5dc3f9ec5d55f44da2c9020fab23ee9c1f09e65651f5fe8f9d5a3611",
+    "tcp-server/integrations/index.d.ts": "7b0fbc8d0b23490985213289561d51673aaff72e0df7282b6a60ea11ee76fd04",
+    "tcp-server/integrations/index.js": "6dc61b8497668609d7b220a763995100bbfe8e6e4a7696413b0bee530dce5721",
+    "tcp-server/integrations/registry.js": "cfc90b460d50d39410023d5d7875737016b2fa4dac7e4a21736fd6f48da02e81",
+    "tcp-server/integrations/secrets.js": "23d32b95665126315dbf0665273e11e43b01dffdfc0cc1102fd9d0bad555943d",
+    "tcp-server/integrations/transform.js": "35be25900376cc307e801f467879d7cbcd63bded9d95ce961d8371c4f89e3c3c",
+    "tcp-server/integrations/transport.js": "9ba71a602a4d8393a9b9475f10f0ffd4aee0cc9e97c5ea5edbd50aac9eca998b",
+    "tests/integrations/collect-evidence.cjs": "59c44a2141a13ee7ff8a5d5ce3e780e9b5071d73e62af7eead8beac01ea509f1",
+    "tests/integrations/contracts.cjs": "c9d0856b222dd13f0215e4d95f8783d11b1118cace26963876b3fe454f8a3e3c",
+    "tests/integrations/core.cjs": "892ab9c589b8459f791540580f157c6b406137a966233aae0954dff73b7513ce",
+    "tests/integrations/database.cjs": "abd8da7258b9c4537174e01226a16d14d27cac948c9a87e767432b37e5a246ba",
+    "tests/integrations/load.cjs": "59e578cb832cdb7e8ca9e02e9c55b4a5777bc8ed40d5f8a8d03cb581fb037dc8",
+    "tests/integrations/performance.cjs": "e12da8e6d4a81432859854b4454329e576dd1b8a3b90ba981111e516be971331",
+    "tests/integrations/postgres.cjs": "065c09e1bca52b651f5cb6e8b7122e9c776dcc3e1843da0304232666c6a8fab3",
+    "web/server/api/integrations/action.post.ts": "6b31efe9e616a2961798decc516aee232043793a49ca2c43b79999bd0ae730a4",
+    "web/server/api/integrations/index.get.ts": "ba004b0fbe430e7626836f30589ac4a72cb2c03e94fe22d902fd7e9e65678b5b",
+    "web/server/api/integrations/index.post.ts": "e699bf94706c7df90457c2b2676d2146033761faa1ffb37954c1bb3ce5ab8a60",
+    "web/server/utils/integrations.ts": "4c89c7657ab46330cd68db8f6b37922b22f4b1838a92c4c221c04cbbdfed6ad5",
+    "web/app/pages/dashboard/integrations.vue": "81fbe1eb71c7354a75624050009bc00835fa3ba07b8c152496ab89079e9740d8",
+    "web/app/components/IntegrationRuleEditor.vue": "3f8c825525b48f10b5ffbcb8838ae4c078c5702a3b6ac45844e509e4b467d250",
+    "web/app/components/IntegrationMappingEditor.vue": "6f7a3af25887b9da278f2db15fd5332bc07fb6cc59036617131a96144126a0d4",
+    "web/app/components/DeliveryEventTrace.vue": "128a63550c2691d279c34241f3387c313d53cfe4468bff26961413680ff62e0d",
+    "web/shared/integrationGuides.ts": "73902bfb840b21e19cd8bee2c41a05b8b2baa17af951bd49f0cc69164171da06",
+    "web/shared/integrations.ts": "10414a39cf02518c728aa509b12b978e85c529b5dda8c60760d4b248bf53b5f8",
+    "web/test/integrations/workflows.spec.ts": "7b02915eb96414d56214a185786e66046152b0cb77d091e9cd72fd6799f9c439",
+    "web/server/utils/integrations.test.ts": "a6e061a12d750b22282adadbd3dabb75046933d5ad322c0ba1c48397e05a6477"
+  },
+  "integration_assertions": {
+    "core": 44,
+    "database": 47,
+    "contracts": 39,
+    "postgres": 12,
+    "load": 5
+  },
+  "browser": {
+    "startTime": "2026-10-12T19:30:25.982Z",
+    "duration": 16785.419,
+    "expected": 18,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "web": {
+    "vitestPassed": 188,
+    "filesPassed": 37,
+    "excluded": "unchanged secureV2Project.test.ts / four PlatformIO compile tests",
+    "typecheck": "passed",
+    "productionBuild": "passed",
+    "serverBundle": "17.5 MB / 6.61 MB gzip"
+  },
+  "regressions": {
+    "pipelineDatabase": 50,
+    "recoverySafety": 18,
+    "policySecurity": 57,
+    "workerStartup": 8,
+    "postgresMultiBackend": 17,
+    "workerFaults": "passed; separate OS processes and database outage",
+    "gateway": "package suite passed",
+    "secureV2": "database/SDK/UDP passed"
+  },
+  "deployment": {
+    "supabaseMigrationsApplied": false,
+    "pushed": false,
+    "deployed": false,
+    "productionModified": false
+  },
+  "limitations": [
+    "no authenticated live-cloud checks",
+    "browser API fixtures",
+    "local performance not production capacity",
+    "no physical ESP32 test"
+  ]
+}

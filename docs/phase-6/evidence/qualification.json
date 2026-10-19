@@ -1,0 +1,91 @@
+{
+  "scope": "PGlite local SQL + real credential enrollment; no network RTT or physical devices; old query returns the former full inventory projection",
+  "registration": [
+    {
+      "targetInventory": 100,
+      "newSecureDevices": 99,
+      "durationMs": 252.0847000000001,
+      "devicesPerSecond": 392.72514357277515
+    },
+    {
+      "targetInventory": 1000,
+      "newSecureDevices": 900,
+      "durationMs": 2576.9354,
+      "devicesPerSecond": 349.2520611886507
+    },
+    {
+      "targetInventory": 10000,
+      "newSecureDevices": 9000,
+      "durationMs": 124748.6091,
+      "devicesPerSecond": 72.14509295879597
+    }
+  ],
+  "inventory": [
+    {
+      "devices": 100,
+      "old": {
+        "medianMs": 1.869399999999814,
+        "returnedRows": 100,
+        "jsonBytes": 60320
+      },
+      "current": {
+        "medianMs": 1.6197000000001935,
+        "returnedRows": 50,
+        "jsonBytes": 21931
+      }
+    },
+    {
+      "devices": 1000,
+      "old": {
+        "medianMs": 14.794499999999971,
+        "returnedRows": 1000,
+        "jsonBytes": 605611
+      },
+      "current": {
+        "medianMs": 4.0887000000002445,
+        "returnedRows": 50,
+        "jsonBytes": 22183
+      }
+    },
+    {
+      "devices": 10000,
+      "old": {
+        "medianMs": 129.63000000000466,
+        "returnedRows": 10000,
+        "jsonBytes": 6085502
+      },
+      "current": {
+        "medianMs": 28.335999999995693,
+        "returnedRows": 50,
+        "jsonBytes": 22428
+      }
+    }
+  ],
+  "csv": [
+    {
+      "rows": 100,
+      "bytes": 4707,
+      "medianMs": 0.349900000001071
+    },
+    {
+      "rows": 1000,
+      "bytes": 48807,
+      "medianMs": 1.7874999999912689
+    },
+    {
+      "rows": 10000,
+      "bytes": 507807,
+      "medianMs": 15.03629999999248
+    }
+  ],
+  "timestamp": "2026-10-12T20:43:31.724Z",
+  "filteredPreview10000Ms": 3553.8410000000003,
+  "memory": {
+    "rss": 896364544,
+    "heapTotal": 167718912,
+    "heapUsed": 28196344,
+    "external": 666426102,
+    "arrayBuffers": 459834896
+  },
+  "migrationSHA256": "2f999cd107be3fcf336c8ff09cb0c866cf02e4647932c577a235af0e15d4d588"
+}

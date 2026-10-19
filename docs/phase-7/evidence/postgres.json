@@ -1,0 +1,8 @@
+{
+  "passed": 12,
+  "timestamp": "2026-10-12T19:16:15.207Z",
+  "postgres": "18.4",
+  "tls": "TLSv1.3",
+  "concurrent_20_insert_ms": 55.2358999999999,
+  "boundary": "Actual disposable PostgreSQL with verified TLS, test-only pinned loopback override; no customer database"
+}

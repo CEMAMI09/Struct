@@ -1,0 +1,80 @@
+{
+  "timestamp": "2026-10-12T19:16:19.439Z",
+  "passed": 5,
+  "tenants": 4,
+  "workers": 2,
+  "concurrency_per_worker": 8,
+  "events": 80,
+  "delivery_jobs": 240,
+  "requests": 244,
+  "temporary_failures": 4,
+  "unique_remote_deliveries": 240,
+  "ingestion_host_total_ms": 223.50670000000014,
+  "dispatch_elapsed_ms": 2248.7889,
+  "deliveries_per_second": 106.72411269906215,
+  "local_request_median_ms": 11.444300000000112,
+  "local_request_p95_ms": 102.07540000000017,
+  "cpu_user_ms": 1562,
+  "cpu_system_ms": 78,
+  "rss_before": 444973056,
+  "rss_after": 439500800,
+  "workers_metrics": [
+    {
+      "started_at": "2026-10-12T19:16:17.190Z",
+      "claims": 141,
+      "completed": 141,
+      "delivered": 139,
+      "retry": 2,
+      "dead": 0,
+      "skipped": 0,
+      "stale_completions": 0,
+      "database_errors": 0,
+      "last_claim_at": "2026-10-12T19:16:19.437Z",
+      "last_database_error_at": null,
+      "latency_ms_total": 5716,
+      "healthy": false,
+      "active": 0,
+      "stopped": true,
+      "memory": {
+        "rss": 439500800,
+        "heapTotal": 97574912,
+        "heapUsed": 36677584,
+        "external": 257907661,
+        "arrayBuffers": 56095203
+      },
+      "cpu": {
+        "user": 4937000,
+        "system": 812000
+      }
+    },
+    {
+      "started_at": "2026-10-12T19:16:17.190Z",
+      "claims": 103,
+      "completed": 103,
+      "delivered": 101,
+      "retry": 2,
+      "dead": 0,
+      "skipped": 0,
+      "stale_completions": 0,
+      "database_errors": 0,
+      "last_claim_at": "2026-10-12T19:16:19.438Z",
+      "last_database_error_at": null,
+      "latency_ms_total": 5155,
+      "healthy": false,
+      "active": 0,
+      "stopped": true,
+      "memory": {
+        "rss": 439500800,
+        "heapTotal": 97574912,
+        "heapUsed": 36678736,
+        "external": 257907661,
+        "arrayBuffers": 56095203
+      },
+      "cpu": {
+        "user": 4937000,
+        "system": 812000
+      }
+    }
+  ],
+  "boundary": "Real local HTTP, HMAC, Secure V2 gateway and PGlite SQL; two worker loops in one process, not two PostgreSQL backends or production fleet capacity. Slow receiver=75ms, temporary HTTP503. Test scheduler advanced once for retry recovery."
+}

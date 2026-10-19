@@ -33,7 +33,7 @@ async function run(){
   await db.query("insert into devices(id,user_id,organization_id,name,api_key,key_id) values($1,$2,$3,'Trace','trace-fixture','trace-fixture')",[device,user,org])
   await db.query("select set_config('request.jwt.claim.sub',$1,false)",[user])
   await db.query('select enable_packet_tracing($1)',[device])
-  for(let i=0;i<201;i++)await db.query('select record_packet_trace($1,$2)',[device,JSON.stringify({outcome:'processed',sequence:i})])
+  for(let i=0;i<201;i++)await db.query('select record_packet_trace($1,$2)',[device,JSON.stringify({outcome:'processed',sequence:i,stages:[{stage:'authentication',status:'passed'}]})])
   await db.exec('set role authenticated')
   assert.equal((await db.query('select count(*)::int n from packet_traces')).rows[0].n,200)
   await db.query("select set_config('request.jwt.claim.sub',$1,false)",['40000000-0000-0000-0000-000000000099'])

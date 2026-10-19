@@ -108,6 +108,8 @@ async function run() {
     const deviceUser = '30000000-0000-0000-0000-000000000006'
     await db.query("insert into auth.users(id,email) values($1,'device-owner@example.invalid')", [deviceUser])
     await db.query("insert into organizations(id,name) values($1,'Atomic devices')", [deviceOrg])
+    // Management provisioning now revalidates its human actor transactionally.
+    await db.query("insert into organization_members(organization_id,user_id,role) values($1,$2,'owner')",[deviceOrg,deviceUser])
     const createDevice = async (key, expectedCount) => db.query(
       'select (create_device_with_usage($1,$2,$3,$4,$5,$6,$7,$8)).id as id',
       [deviceOrg, deviceUser, 'Sensor', key, 'ciphertext', 'abcd', null, expectedCount],

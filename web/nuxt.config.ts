@@ -27,13 +27,15 @@ export default defineNuxtConfig({
       return {code:code.replace(/module\.exports\s*=\s*(\{[^\n]+\})/, 'export $1;'),map:null}
     }}],
     build: {
+      target: 'es2020', // Exact fleet counters require browser BigInt (ES2020).
       // The dependency-free packed codec is shared with the CommonJS gateway.
       commonjsOptions: { include: [/node_modules/, /protocol[\\/]schema/] },
     },
   },
 
   nitro: {
-    externals: { inline: [/sdk[\\/]js/, /protocol[\\/]schema/] },
+    esbuild: {options: {target: 'es2020'}},
+    externals: { inline: [/protocol[\\/]management/, /sdk[\\/]js/, /protocol[\\/]schema/, /tcp-server[\\/]integrations/, /tcp-server[\\/]enterprise/, /tcp-server[\\/](parser|safeWebhook|webhooks|delivery-policy)/] },
     serverAssets: [{ baseName: 'protocol-lab', dir: fileURLToPath(new URL('./server/assets/protocol-lab', import.meta.url)) }],
     alias: {
       '#shared': sharedDir,
@@ -62,6 +64,12 @@ export default defineNuxtConfig({
     stripePriceScale: process.env.STRIPE_PRICE_SCALE || process.env.STRIPE_PRICE_STUDIO,
     resendApiKey: process.env.RESEND_API_KEY,
     public: {
+      deviceOperationsEnabled: process.env.NUXT_PUBLIC_DEVICE_OPERATIONS_ENABLED === 'true',
+      enterpriseEnabled: process.env.NUXT_PUBLIC_ENTERPRISE_ENABLED === 'true',
+      fleetEnabled: process.env.NUXT_PUBLIC_FLEET_ENABLED === 'true',
+      observabilityEnabled: process.env.NUXT_PUBLIC_OBSERVABILITY_ENABLED === 'true',
+      integrationsEnabled: process.env.NUXT_PUBLIC_INTEGRATIONS_ENABLED === 'true',
+      deliveryPipelineEnabled: process.env.NUXT_PUBLIC_DELIVERY_PIPELINE_ENABLED === 'true',
       tcpHost: process.env.NUXT_PUBLIC_TCP_HOST || '127.0.0.1',
       tcpPort: Number(process.env.NUXT_PUBLIC_TCP_PORT || 8080),
     },

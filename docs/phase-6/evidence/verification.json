@@ -1,0 +1,189 @@
+{
+  "collectedAt": "2026-10-12T21:15:59.903Z",
+  "boundary": "Local disposable databases/loopback; simulated browser authentication; no production or physical hardware qualification",
+  "environment": {
+    "platform": "win32",
+    "osRelease": "10.0.26200",
+    "architecture": "x64",
+    "node": "v24.18.1",
+    "postgres": "18.4",
+    "versions": {
+      "nuxt": "4.5.2",
+      "vue": "3.5.42",
+      "vitest": "4.1.11",
+      "@playwright/test": "1.64.0",
+      "@electric-sql/pglite": "0.5.8"
+    },
+    "gitBase": "27be12d582231ff7b2601f4021c2192474934866",
+    "worktree": "Uncommitted Phase 6 plus existing Phase 3/4 and Phase 7 work; source hashes identify tested files",
+    "independentCompiler": "Zig 0.15.2",
+    "cryptoSource": "mbedTLS 3.6.7",
+    "generatedBoards": [
+      "esp32-c3-devkitm-1",
+      "esp32dev"
+    ]
+  },
+  "suites": {
+    "fleet": {
+      "status": "passed",
+      "log": "work/fleet/final-fleet-tests.log",
+      "logSHA256": "eac5fe12518a0f4210b7d9423a81ee38b515b19d04c01c3433fe7b1487fa28a9"
+    },
+    "web": {
+      "status": "passed",
+      "log": "work/fleet/web-tests-verified.log",
+      "logSHA256": "f6aa30bad6aad02ede429d823e03a592f5f6885bed49242f4903b2a649acebc7"
+    },
+    "browser": {
+      "status": "passed",
+      "log": "work/fleet/browser-final.log",
+      "logSHA256": "f992a1db5e1852ff052a15e8c00db7a721bcbca260ae944fd418e202d3f45e25"
+    },
+    "secureV2": {
+      "status": "passed",
+      "log": "work/fleet/secure-v2-final.log",
+      "logSHA256": "923f2b1bfbf3257b9703e98071092813555cd3de359b2fd172591071ada6045d"
+    },
+    "gateway": {
+      "status": "passed",
+      "log": "work/fleet/gateway-tests-final.log",
+      "logSHA256": "b05a5302f2bdbf048e377770f08672886bdb38f461b6d633d751b41233c68e6a"
+    },
+    "pipelines": {
+      "status": "passed",
+      "log": "work/fleet/pipelines.log",
+      "logSHA256": "2fbc8fe258ab35335c499ab3f2b409d29ad6c5c857582736470d71ed100d62c5"
+    },
+    "integrations": {
+      "status": "passed",
+      "log": "work/fleet/integration-tests-final.log",
+      "logSHA256": "05bd94155bc77dea025c6b208edf87726c2a2d322018c238c97ac46b999ac836"
+    },
+    "database": {
+      "status": "passed",
+      "log": "work/fleet/database.log",
+      "logSHA256": "28bd972d969bc740c867fc371c2738334d215eecf171c9147bf86b9c20a60fbe"
+    },
+    "authentication": {
+      "status": "passed",
+      "log": "work/fleet/auth.log",
+      "logSHA256": "3f5cb60e66e6a81e7a35b40ebd14b220ca7048cfcb742739f26cd6a005ad6d0d"
+    },
+    "billing": {
+      "status": "passed",
+      "log": "work/fleet/billing.log",
+      "logSHA256": "e5c6f29fd17950199018ea698b6f4b4895cb75e59521f08df8d5f37ef8965040"
+    },
+    "build": {
+      "status": "passed",
+      "log": "work/fleet/build.log",
+      "logSHA256": "99753c112421b1d22fb78d7a2b721a946e8e49be326332ed108547113f03349f"
+    },
+    "typecheck": {
+      "status": "passed",
+      "log": "work/fleet/typecheck-final.log",
+      "logSHA256": "35c62ca729afe750856dba1ea693f7ad9cea0f856dd91a367edea9d1d370c8d9"
+    }
+  },
+  "counts": {
+    "fleetAssertions": 113,
+    "postgresConcurrentChecks": 11,
+    "webTests": 219,
+    "browserTests": 18,
+    "integrationChecks": 130,
+    "pipelineNumberedChecks": 133,
+    "pipelineFaultSuite": "passed; not assigned a synthetic test count"
+  },
+  "browser": {
+    "stats": {
+      "startTime": "2026-10-12T21:11:45.953Z",
+      "duration": 80816.703,
+      "expected": 18,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "projects": [
+      "desktop 1440x1000",
+      "tablet 820x1180",
+      "mobile iPhone 13 / Chromium"
+    ]
+  },
+  "failedAttemptsResolved": [
+    {
+      "log": "work/fleet/browser.log",
+      "reason": "Fixture SQL placeholder/projection bugs; fixed without weakening grants; final 18 passed"
+    },
+    {
+      "log": "work/fleet/web-tests-final.log",
+      "reason": "Installed Windows ESP32-C3 cross-compiler missing from process PATH; final two board builds passed"
+    },
+    {
+      "log": "work/fleet/web-tests-qualified.log",
+      "reason": "Existing Protocol Lab archive timeout under high parallel load; final full suite with maxWorkers=2 passed"
+    }
+  ],
+  "unverified": [
+    "Physical devices",
+    "Hosted Supabase Auth/PostgREST end-to-end",
+    "Production multi-instance caches",
+    "Hosted scale/CPU/WAN benchmarks",
+    "Remote credential rotation (not implemented)",
+    "Nested groups/saved views (not implemented)",
+    "Existing-device bulk schema reassignment (not implemented)"
+  ],
+  "sourcesSHA256": {
+    "package.json": "a9a867d5958467092306b67dba4252cc8e946d35f974ac69d631b8cef39b0279",
+    "supabase/migrations/037_fleet_management.sql": "2f999cd107be3fcf336c8ff09cb0c866cf02e4647932c577a235af0e15d4d588",
+    "tcp-server/ecosystem.fleet.config.cjs": "0c640a3654b2f0415dfe47c4200768abc404a6843990976831edb4b63e2cb7a4",
+    "tcp-server/fleet-worker.js": "d1a7be35c78573795226133dffeb30c42ace3981abd8a660f3f027a76a6e15e6",
+    "tcp-server/fleet/worker.js": "37c76ee67fbb46b61a7030ffa3ac7794618890cb37a85843bff50fad9ea7895d",
+    "tcp-server/ingest.js": "0a9cefd792605e13fb5b6c8fc3c72a86b421ef96d7326d963c515e16f1eeff6f",
+    "tcp-server/integrations/config.js": "7995a5c11cb747e3e056b893bf2ac3cde8050a6b6c95e93ae6d4fd1fc08e0e19",
+    "tcp-server/secure-v2.js": "8c06de55a524dbac9d0e0ed02cd2a6389fadc886628b96ce3f7ba6c6cbdd29b2",
+    "tests/fleet/collect-evidence.cjs": "61fb0cfe91893db5da0341d0098c851f340d23fc5ae296ed7802979f53863d01",
+    "tests/fleet/database.cjs": "5e526000e9bbbcb21b545e5886aea86b9e4f2c4c645f64ce3b1df97f84777a21",
+    "tests/fleet/http-fixture.cjs": "6c222451e8bccffab6223c04b0ecc62927db270b61ed4868a8e4ca20a17a8c5e",
+    "tests/fleet/ingestion-load.cjs": "69b89b4680c184f475f4c5600d127b1e639c02b621d7e30cf93d2bc5c2514640",
+    "tests/fleet/load.cjs": "957a8072816908791c0c13914b5709df06d167f9e681d1488cc14a8d3533ee2e",
+    "tests/fleet/operations.cjs": "2dae68792056a317cb8327926b696f2ebe96aff6dc2193a1c05532bee28d16ef",
+    "tests/fleet/postgres.cjs": "373da75d43b9698608ac8b523a4230231a2d4676bb73c75dc7680a0fb299fdd5",
+    "tests/fleet/qualification.cjs": "d1bb3020cdde3550b246942adf463f117045678e1cacbe0ff080e26b1a7f889a",
+    "tests/fleet/security.cjs": "98e960314e55ad1f863b320fedb340aeb104080e806d88b2fdb553977ccfa8c0",
+    "tests/fleet/udp.cjs": "c3d115c253e90ce6dbe24fbbdfdf4e44203467ae67bdb8f35a644a69f24e439f",
+    "tests/fleet/worker.cjs": "b044d893d22011772f7f614322c37318f649f3e778106863fd85a12b316c99ec",
+    "web/app/components/DeviceList.vue": "725bc952e42fd59bdd6780784226ad5a80dca21f236ee057dbc21aa80dd57b2f",
+    "web/app/components/FleetManagement.vue": "e224742a5d4c5c3d0ae3a92de8a7b49c694d49f5ab23fbac9cb1abab854ac735",
+    "web/app/components/LegacyDevices.vue": "a2bbe9451fa84d4d1b6d95ab992fa0cf57425b9aa5512158fc925283505985c5",
+    "web/app/composables/useDevices.ts": "fb9953c5b967ed62c937d568e00500597b02b052c897b3e52795906b79bb378e",
+    "web/app/composables/useFleetInventory.test.ts": "b04e3bb446a5ffae6f2dca0ae25d2cd12a19d0ccda1a5e9aabb68162b1cd5cdd",
+    "web/app/pages/dashboard/devices.vue": "f958aac2e12660f12e5c954f5f908f164d6163906835ad46b9ae0178230de3e2",
+    "web/nuxt.config.ts": "775307daaf704ef183e40813976250fbed8869152dcaaa842f5fb6e150cf3d3f",
+    "web/package.json": "ed3ae2ae86af14e91b263f0450b8aab9dfaa900b31e895d557686fb68e54b855",
+    "web/playwright.fleet.config.ts": "30f4c2d74e6627f482df4a9757b860edbac3979846f3fb622deb5184325861d0",
+    "web/server/api/devices/[id].delete.ts": "86456d6a015b588940325e6f98a5e34818d6db8aab89ad277b33b473f08ffc1f",
+    "web/server/api/fleet/action.post.ts": "2cd65d567b4f861adfd5195b62880d75c1dd3649ee1077f6d549ff71d12c2857",
+    "web/server/api/fleet/export.post.ts": "434115e50c2f5c8c7d00a8ce9afe432b5ce5cdc409368761a5f69f1cd30c1708",
+    "web/server/api/fleet/groups.post.ts": "74f036ca3b04952223d2f979c4172ce96a1573fdbcf22b6f79efaf5754f15c86",
+    "web/server/api/fleet/index.get.ts": "90838a8ad913920dfd4d853d695a1a4e1ea4317a8d96438cafc1a32d5f53e831",
+    "web/server/api/fleet/job.get.ts": "12fcc2ff9007e4933afe4790f1281770e3d0120b77933743d48983ce7d46e7a1",
+    "web/server/api/fleet/manifest.post.ts": "2572ee1ec95f110e3ee8f387caff7c263c818b5d17c72e9b71be8db0d5d172d9",
+    "web/server/api/fleet/preview.post.ts": "26a4af8b3b91fb25d6e2049cbd61656d8141a647bc96d036142c7a56c8c48619",
+    "web/server/utils/fleet.test.ts": "67d2ea8d0a061fab22543a653170ccc7af70e163886642eeb036ad6598711f7c",
+    "web/server/utils/fleet.ts": "250177b0907320673449dc8db78c5b887eefc962cb957f9bd5b70cfcc97582cc",
+    "web/shared/deviceActivity.ts": "38b4a26bd2f68f0e0da04849c421dbd6f89551ffcecc4c245bb484d3bbcb65eb",
+    "web/shared/documentation.ts": "b2aaa353b5dc8e559720766e3fd17c86c12c6d44ae620c1ce4888dab9055013e",
+    "web/shared/fleet.test.ts": "f61dacbca9d73ad6a02ffa52795e8e7412eca84ba8966043ae9c934b0f433824",
+    "web/shared/fleet.ts": "41af805feb2e150e889c49b6ac77ee11ec0f99c46f660d98760e8f245a70c2ba",
+    "web/shared/fleetActivity.test.ts": "4f69a9231279db05d9f1845016aab2eb3ab2cd7c48a33890dc9ecd858283d49a",
+    "web/shared/fleetGuides.ts": "d1ebbeab841b5cae9428293f505438c902a46a16f16c79d867551e425d0dea3b",
+    "web/shared/fleetIntent.test.ts": "c35f512386caf85855c2dea87b39356fe297e0c700aa2cc722d643a4d125106a",
+    "web/test/fleet/workflows.spec.ts": "88e79619e869111ea9373032df173634663469668b313b738325a652a4861e97"
+  },
+  "measurements": [
+    "load.json",
+    "qualification.json",
+    "ingestion-load.json",
+    "postgres.json"
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "retrieved_utc": "2026-10-12",
+  "sources": [
+    {
+      "id": "aws-sqs-send",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_SendMessage.html",
+      "supports": "SendMessage request/response; FIFO group/dedup identifiers; acceptance MessageId",
+      "implementation": "tcp-server/integrations/adapters.js"
+    },
+    {
+      "id": "aws-eventbridge-put",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/APIReference/API_PutEvents.html",
+      "supports": "Individual entry error/success handling; EventId",
+      "implementation": "tcp-server/integrations/adapters.js"
+    },
+    {
+      "id": "aws-eventbridge-missing-bus",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-putevents.html",
+      "supports": "Nonexistent bus can silently drop events; preflight bus lookup is used",
+      "implementation": "tcp-server/integrations/adapters.js"
+    },
+    {
+      "id": "aws-credentials",
+      "url": "https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/setting-credentials-node.html",
+      "supports": "Explicit credentials in SDK; benchmark implementation disables ambient discovery",
+      "implementation": "tcp-server/integrations/adapters.js"
+    },
+    {
+      "id": "azure-rest-send",
+      "url": "https://learn.microsoft.com/en-us/rest/api/servicebus/send-message-to-queue",
+      "supports": "HTTPS message publication, BrokerProperties and HTTP 201",
+      "implementation": "tcp-server/integrations/adapters.js"
+    },
+    {
+      "id": "azure-sas",
+      "url": "https://learn.microsoft.com/en-us/azure/service-bus-messaging/service-bus-sas",
+      "supports": "SAS string-to-sign; base64-text shared key; prefer scoped credentials",
+      "implementation": "tcp-server/integrations/adapters.js"
+    },
+    {
+      "id": "google-publish",
+      "url": "https://docs.cloud.google.com/pubsub/docs/reference/rest/v1/projects.topics/publish",
+      "supports": "Base64 data, attributes, messageIds; acceptance is not subscriber processing",
+      "implementation": "tcp-server/integrations/adapters.js"
+    },
+    {
+      "id": "google-service-account",
+      "url": "https://developers.google.com/identity/protocols/oauth2/service-account",
+      "supports": "RSA JWT assertion, OAuth token endpoint and scope",
+      "implementation": "tcp-server/integrations/adapters.js"
+    },
+    {
+      "id": "pg-tls",
+      "url": "https://node-postgres.com/features/ssl",
+      "supports": "TLS options and certificate validation",
+      "implementation": "tcp-server/integrations/adapters.js"
+    },
+    {
+      "id": "pg-queries",
+      "url": "https://node-postgres.com/features/queries",
+      "supports": "Parameterized values; identifiers need separate validation",
+      "implementation": "tcp-server/integrations/adapters.js"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-export type OrgRole = 'owner' | 'admin' | 'viewer'
+export type OrgRole = 'owner' | 'admin' | 'developer' | 'operator' | 'viewer'
 export type SubscriptionTier = 'free' | 'flexible' | 'pro' | 'scale'
 
 export type Json =
@@ -1026,6 +1026,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delivery_search: {Args:{p_org_id:string;p_status?:string|null;p_device_id?:string|null;p_destination_id?:string|null;p_event_id?:string|null;p_error_category?:string|null;p_from?:string|null;p_to?:string|null;p_before?:string|null;p_before_id?:string|null;p_limit?:number;p_min_attempts?:number|null;p_protocol?:string|null};Returns:Json}
+      delivery_overview: {Args:{p_org_id:string};Returns:Json}
+      delivery_event_detail: {Args:{p_org_id:string;p_event_id:string};Returns:Json}
+      delivery_recovery: {Args:{p_org_id:string;p_ids:string[];p_action:string;p_request_id:string;p_confirm?:boolean};Returns:Json}
+      delivery_recovery_selection: {Args:{p_org_id:string;p_destination_id?:string|null;p_device_id?:string|null;p_event_id?:string|null;p_error_category?:string|null;p_from?:string|null;p_to?:string|null;p_min_attempts?:number|null;p_protocol?:string|null};Returns:Json}
+      pause_webhook_destination: {Args:{p_id:string;p_pause:boolean;p_request_id:string};Returns:undefined}
+
       workspace_onboarding: { Args: {p_org_id:string}; Returns: Json }
       dismiss_workspace_onboarding: { Args: {p_org_id:string}; Returns: undefined }
       update_device_setup: { Args: {p_device_id:string;p_step:string;p_interval_ms?:number|null}; Returns: undefined }
@@ -1599,7 +1606,7 @@ export type Database = {
         | "completed"
         | "failed"
         | "expired"
-      org_role: "owner" | "admin" | "viewer"
+      org_role: "owner" | "admin" | "developer" | "operator" | "viewer"
       subscription_tier_enum: "free" | "flexible" | "pro" | "scale"
       usage_period_status: "open" | "invoiced" | "void"
     }

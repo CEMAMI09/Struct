@@ -196,7 +196,9 @@ function start() {
     console.log(`[struct] parser backend: ${parserSource}`)
     startRateLimitCleanup()
     subscribeDownlinkRealtime()
-    startUdpServer(supabase)
+    const udp=startUdpServer(supabase)
+    const health=require('./enterprise/health').heartbeat(supabase,'gateway',()=>{try{return server.listening&&!!udp.socket.address()}catch{return false}},()=>({...require('./observability/collector').health,...require('./enterprise/metrics').snapshot()}))
+    server.once('close',()=>void health.stop())
     if (process.env.OUTBOX_EMBEDDED !== 'false') require('./outbox').startOutbox(supabase)
   })
 }

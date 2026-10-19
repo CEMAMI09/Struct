@@ -1,0 +1,220 @@
+{
+  "date": "2026-10-16T16:57:46.832Z",
+  "baseCommit": "27be12d582231ff7b2601f4021c2192474934866",
+  "environment": {
+    "node": "v24.18.1",
+    "platform": "win32",
+    "architecture": "x64"
+  },
+  "scope": "Phase 9 local qualification on top of uncommitted prior phases; no production deployment, migration or notifications.",
+  "sources": {
+    "deployment/enterprise/Dockerfile": "7d0bbb91ccac6a9f81e9aaddd5cac4dbfde974151b831de00342fd94a603e356",
+    "deployment/enterprise/compose.yaml": "aca7f9c6d041d26f0ea242151ad0fd64344ba251c993d6617e1dcbc1b9029818",
+    "deployment/enterprise/private.env.example": "660c04adfc033523ffe7e4d86b4fabccea6a6d2518164b1b31a737841891aa61",
+    "protocol/enterprise-permissions.json": "c2d04357188ac23e58061cf65f8f824752a15c5d1df4713f2f20c07a90df0002",
+    "supabase/migrations/039_enterprise_roles.sql": "b3c0586715480255c65310d7cd8c1af3677cfabed102f788d7d70ca6d5a6b5b2",
+    "supabase/migrations/040_enterprise_operations.sql": "34e6db80a65b3bc95806a5ff4249daa9867487ef7d30d0bb94313572b6db66ca",
+    "tcp-server/enterprise/health.js": "56a1465f4f8dbe221d3f2a0a6bece9e7290bf8717c437a2c3da1bbcfbe406568",
+    "tcp-server/enterprise/metrics.js": "58d159912e401236c2120f7d42e13b67c785f7f46bd4cfe4e74f6b8d0aed24ab",
+    "tcp-server/enterprise/probe.js": "3128229f81e970c2e4f547fc7d16e2d3c99f4ce71dd3bd98c4814fbd9476cecf",
+    "tcp-server/enterprise/worker.js": "d69436e341f30b0c465c422ae93a4d85dfadc9645887712d45fd65a01afce6e5",
+    "tcp-server/ingest.js": "0917bfbef05928fd6655f426a9b0cecd423a6cccfd6fd78e50be87babd4ad634",
+    "tcp-server/secure-v2.js": "4489a4b32ca2ad2e78913bfebaae2a4b4b1281ec3035be53d9d17453822df51a",
+    "tcp-server/server.js": "ac480573b60b9f30dd208e4bc607612fa21f24f7fa7522ee1bc44b5a4d675783",
+    "tests/enterprise/browser-fixture.cjs": "d1199bda1ba2d814379ff94b32938c4a3d0368be5d7eb2ccc29be289174bc980",
+    "tests/enterprise/collect-evidence.cjs": "1a731b929ad5502943574a0326f762cd08699a60d56e3d58494c1749caeba753",
+    "tests/enterprise/database.cjs": "40617bfdf15110bfbb5c5b0270a83461a6ae8d5ed302c8854861c617253e2aa4",
+    "tests/enterprise/operations.cjs": "94f5a2dc3e85a82fa959fc094afafc1b227b9624e9e4ae91cc8bf465452af7a4",
+    "tests/enterprise/performance.cjs": "114a2defa2b6f19d161a588984350f7eca2daa151d210ce54cac80b32a9df4bf",
+    "tests/enterprise/recovery-postgres.cjs": "dc0c305d6f207f0668d72f949dd3c7b4c7a91bce93da5a11ce6f80586dcae048",
+    "tests/enterprise/reference.cjs": "6f0badc880de4c65ace6a3c3f857edf99743c194a2b95c4d31d5537b23fccdbd",
+    "tests/enterprise/security.cjs": "222e988f37f6c777a4ff179c51166cb2281df3bf222bf264cee2b3c115e89866",
+    "web/app/components/EnterpriseAudit.vue": "b4194e3cab05d3ab4ec47107b946fc01f04b1ce84d7bb693b309e2a9c7947339",
+    "web/app/components/EnterpriseWorkspace.vue": "8f59e31d749609dfcd0b17b822a973eea150a4b0c2d03e2787348b1b2e324a80",
+    "web/app/pages/invite.vue": "f30c816708e452a31a16aea0423885e4c9707d9945365f89999925718aa56206",
+    "web/server/api/enterprise/accept.post.ts": "55d1b9a9481ea32ac034006125ed08fff52291f293b5dd7a6c6f5d2ef8a75506",
+    "web/server/api/enterprise/action.post.ts": "513911ff6467874c16f989fb1033c16b9e73ba17f0cbd844cd2183bb1aacc1e8",
+    "web/server/api/enterprise/audit.get.ts": "27ee8b3d155a096ad868608d8cf38bef3752379476de9e095c044e33888f3a46",
+    "web/server/api/enterprise/index.get.ts": "3338a58871fd196e7a0cbc8cc0b49076a25ceb89fb3c74a9a8b9b401e7c27cd0",
+    "web/server/api/enterprise/operations.get.ts": "89b0f991bdaacbd07c46d830aa9a61981dbefe4445dacd76e71718aee95c404c",
+    "web/server/api/enterprise/v1/request.post.ts": "ce622ae6c42f3419a0fbcdd9e276752cbb3f5e9a931d31dae16698c4996fad8c",
+    "web/server/plugins/enterprise-health.ts": "d686094ce02ee65b70e2b5631b751fb56d086febf08748adcbabe3131863b98d",
+    "web/server/utils/auth.ts": "c4ea08adcd2c3e902f68ec6b22129856766946247da6288a44d3bfed6efc074d",
+    "web/server/utils/enterprise.test.ts": "538f5cfb5eda44b349846d2b69366b90cd41f902b493b48d33b34b871941df9a",
+    "web/server/utils/enterprise.ts": "0ad72d8c9db28d69b008d5d036ae544b9acb59dee5e620a4b2b06f84f02b5bd9",
+    "web/server/utils/ingestEndpoint.ts": "73cffff67bab9977e1a79b03e40e1e78e5b1a9e85bfe7ec59cb0931116fad6a5",
+    "web/server/utils/secureV2.ts": "24a4bc50c836d2e0de1aa27083c0040232bb09c5d4900574e94688822590a753",
+    "web/server/utils/secureV2Routes.test.ts": "f43a2b63b0378f2c8a31953018eda5c9517e9ff1be8395089271190863d989cb",
+    "web/shared/enterpriseGuides.ts": "0705001b31fd843d595e7d6b04d2cbd6917008d2cd05249b0415d15264d68ee5",
+    "web/shared/permissions.test.ts": "914bc9e44d6bd94bc57e35ebac1361c69e1031a3546ce70109fc2ce9be07cc34",
+    "web/shared/permissions.ts": "4605af1fa50dc775d26542f5ec7ed424ca5daa3d508a6c2411ce0de68eb48874",
+    "web/shared/secureV2Project.ts": "c8d5d3fae58cb01272b064cd567023612ce0d387c6ecd4c57098d3697bf3b502",
+    "web/test/enterprise/enterprise.spec.ts": "60ca2ae6ad6c5c5e9e9f004d0bfd4e571c4cd687bf410367fc1421ea24c613bd"
+  },
+  "logs": {
+    "enterprise": {
+      "sha256": "a9d9dcc9df402b2fccf50c078f30f27b6ec50838082ff109c322a810a9c6f27a",
+      "path": "work/enterprise/core-final.log",
+      "summary": [
+        "PASS 43 enterprise permissions/invitations/keys/audit/ingestion checks",
+        "PASS 28 actual enterprise authorization/credential/recovery/RLS checks",
+        "PASS 29 enterprise email/management-job/health/failure checks",
+        "PASS 9 isolated SDK/UDP/SQL/restart/quarantine reference checks"
+      ]
+    },
+    "postgresRecovery": {
+      "sha256": "0ddd8a77eee1aa4b0773d12551dc643be49c6566160db35fe7c7c6a1d42ba7ea",
+      "path": "work/enterprise/recovery-postgres-final.log",
+      "summary": [
+        "PASS 14 actual PostgreSQL cold backup/restore/quarantine/epoch checks"
+      ]
+    },
+    "web": {
+      "sha256": "5fae15544c217085f3e6e1d15f80be7c6d633e1437fbb8ef266efafd448cae73",
+      "path": "work/enterprise/web-tests-final.log",
+      "summary": [
+        "Test Files  1 failed | 46 passed (47)",
+        "Tests  2 failed | 249 passed (251)"
+      ]
+    },
+    "finalTargetedWeb": {
+      "sha256": "e81b976c6bdda0968f530b7fcecb3bb629ea953bd7851ea85ad13f2042bd78f9",
+      "path": "work/enterprise/web-targeted-final.log",
+      "summary": [
+        "Test Files  4 passed (4)",
+        "Tests  33 passed (33)"
+      ]
+    },
+    "browser": {
+      "sha256": "f52d6aa9a0481730e7098a1b937aa310d18282f5aff00abcfa9b823432e6f60e",
+      "path": "work/enterprise/browser-final.log",
+      "summary": [
+        "12 passed (18.4s)"
+      ]
+    },
+    "typecheck": {
+      "sha256": "35c62ca729afe750856dba1ea693f7ad9cea0f856dd91a367edea9d1d370c8d9",
+      "path": "work/enterprise/typecheck-final.log",
+      "summary": []
+    },
+    "build": {
+      "sha256": "9285952a7f288f9ad0d0f92757b81998265b6b5243d95a7ea464a31a5e53d841",
+      "path": "work/enterprise/build-final.log",
+      "summary": [
+        "Σ Total size: 17.7 MB (6.68 MB gzip)",
+        "—  ✨ Build complete!"
+      ]
+    },
+    "tcp": {
+      "sha256": "4c07e149f8d5af7b2ede7cea97cd053c0a2bbc1c095ec85586a1d3f136f53b17",
+      "path": "work/enterprise/tcp-tests-final.log",
+      "summary": []
+    },
+    "pipelines": {
+      "sha256": "2fbc8fe258ab35335c499ab3f2b409d29ad6c5c857582736470d71ed100d62c5",
+      "path": "work/enterprise/test-pipelines-final.log",
+      "summary": [
+        "PASS 50 pipeline database/gateway checks",
+        "PASS 18 recovery safety checks",
+        "PASS 57 retry/SSRF/trace-policy checks",
+        "PASS worker fault/recovery, real HTTP HMAC, duplicate ambiguity, database outage and two-process local dispatch",
+        "PASS 8 worker startup/health/shutdown checks"
+      ]
+    },
+    "integrations": {
+      "sha256": "05bd94155bc77dea025c6b208edf87726c2a2d322018c238c97ac46b999ac836",
+      "path": "work/enterprise/test-integrations-final.log",
+      "summary": [
+        "PASS 44 integration validation, transformation and security checks",
+        "PASS 47 integration database, routing, retry and tenant checks",
+        "PASS 39 local adapter contract and gateway-to-worker checks"
+      ]
+    },
+    "fleet": {
+      "sha256": "eac5fe12518a0f4210b7d9423a81ee38b515b19d04c01c3433fe7b1487fa28a9",
+      "path": "work/enterprise/test-fleet-final.log",
+      "summary": [
+        "fleet database/gateway: 37 assertions passed",
+        "fleet tenant/credential/routing: 29 assertions passed",
+        "fleet operations/recovery: 29 assertions passed",
+        "fleet worker/credential: 8 assertions passed",
+        "fleet real UDP/SDK/gateway/SQL: 10 assertions passed"
+      ]
+    },
+    "observability": {
+      "sha256": "f25021b779ab06b0ea452d88bcb39f9abf69561b42bff52dcc71476223eda4da",
+      "path": "work/enterprise/test-observability-final.log",
+      "summary": [
+        "PASS 26 observability SQL/gateway/accounting/alert/security checks",
+        "PASS 16 real serializer/UDP/byte/optional-failure checks",
+        "PASS 22 notification retry/signing/preferences/loop prevention checks",
+        "PASS 29 fault/hold/cooldown/maintenance/backfill/RLS/recovery checks",
+        "PASS 9 Float64/int64/uint64/UTF-8/binary/alert precision checks"
+      ]
+    },
+    "secureV2": {
+      "sha256": "9db4859800a6aba4ac0f03aad89b16906143265cd4791d2d096a0cce7cd29f4b",
+      "path": "work/enterprise/test-secure-v2-final.log",
+      "summary": [
+        "secure-v2 database: enrollment, immutable slots, one-use bootstrap, atomic replay/batches/outbox, rotation, retention and grants passed"
+      ]
+    },
+    "database": {
+      "sha256": "28bd972d969bc740c867fc371c2738334d215eecf171c9147bf86b9c20a60fbe",
+      "path": "work/enterprise/base-database-final.log",
+      "summary": [
+        "database: migrations, immutable schemas, receipts, opaque fleet IDs and RPC permissions passed"
+      ]
+    },
+    "authorization": {
+      "sha256": "3f5cb60e66e6a81e7a35b40ebd14b220ca7048cfcb742739f26cd6a005ad6d0d",
+      "path": "work/enterprise/base-auth-final.log",
+      "summary": [
+        "authorization: billing/membership/telemetry writes, secret isolation, audit redaction, RPC access, retention passed"
+      ]
+    },
+    "billing": {
+      "sha256": "e5c6f29fd17950199018ea698b6f4b4895cb75e59521f08df8d5f37ef8965040",
+      "path": "work/enterprise/base-billing-final.log",
+      "summary": [
+        "billing db: paid baseline, atomic device usage, free cap, claim lease, and role restrictions passed"
+      ]
+    },
+    "onboarding": {
+      "sha256": "a541c9a7704f7523735f2c67ac1e86e188e66b6c5286b90bc882e4214183bb66",
+      "path": "work/enterprise/base-onboarding-final.log",
+      "summary": [
+        "PASS durable onboarding: committed events, retention, isolation, rejected packets, permissions, manual steps"
+      ]
+    },
+    "performance": {
+      "sha256": "cf0ce449b2bd684b8aa4919f1b6ff7dc9bcd62ef0992f2e91a33dff7f6a08dd1",
+      "path": "work/enterprise/performance-final.log",
+      "summary": [
+        "PASS bounded before/after team/authorization/inventory/audit/actual-processor qualification"
+      ]
+    }
+  },
+  "browser": {
+    "startTime": "2026-10-16T08:12:34.852Z",
+    "duration": 18397.280000000002,
+    "expected": 12,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "knownBlockers": [
+    {
+      "test": "Generated PlatformIO ESP32-C3 and ESP32 firmware bootloader builds",
+      "actualResult": "failed",
+      "classification": "environment_blocked",
+      "reason": "Windows organization Device Guard blocked esptool.exe (4551). Policy was not bypassed."
+    },
+    {
+      "test": "Hosted Supabase/Auth/mail, cloud/private containers, physical hardware and production RPO/RTO",
+      "actualResult": "not_run",
+      "classification": "unverified",
+      "reason": "No production operations; Docker unavailable and no authorized live services/hardware qualified."
+    }
+  ]
+}

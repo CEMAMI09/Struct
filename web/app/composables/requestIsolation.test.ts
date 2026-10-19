@@ -18,6 +18,7 @@ it.each([
       select: () => query, eq: () => query, order: () => query, limit: () => query,
       then: response.then.bind(response),
     }
+    vi.stubGlobal('useRuntimeConfig', () => ({public:{integrationsEnabled:false}}))
     vi.stubGlobal('useNuxtApp', () => (state))
     vi.stubGlobal('useState', (key: string, init: () => unknown) => {
       if (!state.has(key)) state.set(key, { value: init() })

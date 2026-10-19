@@ -89,7 +89,8 @@ onMounted(()=>{resized();window.addEventListener('resize',resized)})
 onBeforeUnmount(()=>window.removeEventListener('resize',resized))
 watch(()=>props.open,async open=>{if(open&&mobile.value){await nextTick();sidebar.value?.querySelector<HTMLElement>('button,a')?.focus()}})
 function onNavKey(e:KeyboardEvent){if(!mobile.value||!props.open)return;if(e.key==='Escape'){emit('close');return}if(e.key==='Tab'){const nodes=[...sidebar.value!.querySelectorAll<HTMLElement>('a,button')].filter(n=>n.getClientRects().length);const first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}}
-const { isEnterprise } = useOrganization()
+const { isEnterprise,can } = useOrganization()
+const enterpriseEnabled=useRuntimeConfig().public.enterpriseEnabled
 
 const icon = {
   dashboard:
@@ -123,6 +124,12 @@ const groups = computed(() => [
     label: 'Fleet',
     links: [
       { to: '/dashboard/devices', label: 'Devices', icon: icon.devices },
+      ...(useRuntimeConfig().public.deviceOperationsEnabled ? [{to:'/dashboard/firmware',label:'Firmware',icon:icon.schema},{to:'/dashboard/device-operations',label:'Device operations',icon:icon.audit}] : []),
+      ...(useRuntimeConfig().public.observabilityEnabled ? [
+        {to:'/dashboard/monitoring',label:'Monitoring',icon:icon.dashboard},
+        {to:'/dashboard/analytics',label:'Analytics',icon:icon.deliveries},
+        {to:'/dashboard/alerts',label:'Alerts',icon:icon.debugger},
+      ] : []),
 
     ],
   },
@@ -136,7 +143,8 @@ const groups = computed(() => [
   {
     label: 'Delivery',
     links: [
-      { to: '/dashboard/destinations', label: 'Destinations', icon: icon.destinations },
+      { to: '/dashboard/destinations', label: 'Webhooks', icon: icon.destinations },
+      { to: '/dashboard/integrations', label: 'Integrations', icon: icon.destinations },
       { to: '/dashboard/deliveries', label: 'Deliveries', icon: icon.deliveries },
     ],
   },
@@ -145,8 +153,9 @@ const groups = computed(() => [
     label: 'Workspace',
     links: [
       { to: '/dashboard/organization', label: 'Organization', icon: icon.organization },
+      ...(enterpriseEnabled ? [{to:'/dashboard/security',label:'Security & API keys',icon:icon.audit},...(can('operations.read')?[{to:'/dashboard/operations',label:'Operations',icon:icon.audit}]:[])] : []),
       { to: '/dashboard/settings', label: 'Settings', icon: icon.settings },
-      ...(isEnterprise.value
+      ...(isEnterprise.value&&(!enterpriseEnabled||can('audit.read'))
         ? [{ to: '/dashboard/audit-logs', label: 'Audit log', icon: icon.audit }]
         : []),
     ],

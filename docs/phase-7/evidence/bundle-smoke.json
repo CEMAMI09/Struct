@@ -1,0 +1,5 @@
+{
+  "status": 401,
+  "body": "{\n  \"error\": true,\n  \"url\": \"http://127.0.0.1:3110/api/integrations?orgId=10000000-0000-0000-0000-000000000002\",\n  \"statusCode\": 401,\n  \"statusMessage\": \"Server Error\",\n  \"message\": \"Not authenticated\"\n}",
+  "boundary": "Built Nuxt API boot and unauthenticated rejection; local configuration only"
+}

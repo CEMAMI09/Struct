@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-16T17:09:21.070Z",
+  "migration": "040",
+  "boundary": "Local actual AEAD/frame and PGlite ingestion, 200 sequential packets, no hosted latency or physical fleet",
+  "medianMs": 2.0954999999999018,
+  "p95Ms": 3.037399999999934,
+  "packetsPerSecond": 443.1288441427229,
+  "memory": {
+    "rss": 441724928,
+    "heapTotal": 57565184,
+    "heapUsed": 35324904,
+    "external": 260751747,
+    "arrayBuffers": 101031791
+  }
+}

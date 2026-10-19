@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'orgId and importId are required' })
   }
 
-  const { user } = await requireOrgWriter(event, orgId)
+  const { user } = await requireOrgWriter(event, orgId, 'devices.export_credentials')
   const supabase = await serverSupabaseServiceRole(event)
 
   const { data: existing, error: lookupError } = await supabase

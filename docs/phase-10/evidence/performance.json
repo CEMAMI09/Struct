@@ -1,0 +1,35 @@
+{
+  "at": "2026-10-16T19:04:55.498Z",
+  "boundary": "Paired disposable PGlite/actual AEAD local microbenchmark, 20 warmup + 200 sequential committed packets per migration. Other local development services may be running. Scheduler 100 calls/one eligible device; authenticated DB+crypto fixture polls 20. Not network/cloud/hardware or fleet capacity.",
+  "beforeMigration040": {
+    "medianMs": 2.0257000000001426,
+    "p95Ms": 2.4338000000000193,
+    "totalMs": 412.97219999999857,
+    "packetsPerSecond": 484.294100183985
+  },
+  "afterMigration041": {
+    "medianMs": 2.003400000000056,
+    "p95Ms": 2.76929999999993,
+    "totalMs": 421.485699999997,
+    "packetsPerSecond": 474.51194666865666
+  },
+  "rolloutPreviewOneDeviceMs": 6.049800000000232,
+  "scheduler": {
+    "medianMs": 0.4299999999998363,
+    "p95Ms": 1.2857999999996537,
+    "totalMs": 56.126999999997224
+  },
+  "authenticatedFixturePoll": {
+    "medianMs": 1.0129000000006272,
+    "p95Ms": 2.9325999999991836,
+    "totalMs": 24.33430000000135
+  },
+  "memory": {
+    "rss": 495661056,
+    "heapTotal": 88498176,
+    "heapUsed": 32714400,
+    "external": 260728573,
+    "arrayBuffers": 101029839
+  },
+  "hotPathChange": "No management queries or external calls added to telemetry ingestion."
+}

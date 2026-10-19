@@ -1,5 +1,6 @@
 <template>
-  <div class="mx-auto max-w-5xl">
+  <EnterpriseAudit v-if="enterpriseEnabled"/>
+  <div v-else class="mx-auto max-w-5xl">
     <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <p class="text-sm text-[#8B93A7]">
@@ -73,6 +74,7 @@
 
 <script setup lang="ts">
 definePageMeta({ middleware: 'auth' })
+const enterpriseEnabled=useRuntimeConfig().public.enterpriseEnabled
 
 import type { AuditAction } from '~/types'
 

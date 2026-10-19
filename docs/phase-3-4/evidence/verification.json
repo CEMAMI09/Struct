@@ -1,0 +1,85 @@
+{
+  "generated_at": "2026-10-12T04:56:32.309Z",
+  "parent_commit": "27be12d582231ff7b2601f4021c2192474934866",
+  "production_activation": false,
+  "environment": {
+    "node": "v24.18.1",
+    "platform": "win32",
+    "arch": "x64",
+    "postgres": "PostgreSQL 18.4 on x86_64-windows, compiled by msvc-19.44.35226, 64-bit",
+    "pglite": "0.5.8",
+    "nuxt": "4.5.2"
+  },
+  "new_check_count": 150,
+  "new_suites": [
+    {
+      "name": "database",
+      "passed": 50
+    },
+    {
+      "name": "recovery-safety",
+      "passed": 18
+    },
+    {
+      "name": "policy-security",
+      "passed": 57
+    },
+    {
+      "name": "postgres",
+      "passed": 17
+    },
+    {
+      "name": "worker-startup",
+      "passed": 8
+    }
+  ],
+  "worker_fault_suite": "passed; see worker-faults.json for individual observations and measurement boundaries",
+  "browser": {
+    "passed": 18,
+    "failed": 0,
+    "skipped": 0
+  },
+  "web_tests": {
+    "passed": 184,
+    "files": 36,
+    "excluded": "unchanged shared/secureV2Project.test.ts firmware compilation suite"
+  },
+  "gateway_regression": {
+    "scripts_passed": 13,
+    "native_parser": "unavailable; JavaScript fallback"
+  },
+  "other_passed_suites": [
+    "database",
+    "auth-security",
+    "billing-db",
+    "delivery",
+    "onboarding-db",
+    "secure-v2-db",
+    "SDK Secure V2 vectors",
+    "SDK Secure V2 UDP",
+    "debugger local HTTP/UDP"
+  ],
+  "typecheck": "passed",
+  "build": "passed",
+  "build_reported_size": "15.8 MB (6.24 MB gzip)",
+  "physical_hardware": "not tested",
+  "production_load": "not tested",
+  "source_sha256": {
+    "supabase/migrations/035_reliable_delivery.sql": "36d3654c8bee6208a71432972ce9aa0f01eb741428d7374c86272f44826f8d88",
+    "tcp-server/outbox.js": "32ebd8d3af305f0d4acff1813777b6941d56a76187433ef6a3b2fc68b879db2e",
+    "tcp-server/worker.js": "aecc70d24deb67bba868143260935f7e685462284d3357e335853759fd54a68b",
+    "tcp-server/safeWebhook.js": "7ce3661936a12ae69352ee32a508258d4062ad463e4a1e4887406610bf2fd1ee",
+    "tcp-server/delivery-policy.js": "1f44878c9b24ffa964789635e250a331d911b30a25e9c49bca2594049cc76e86",
+    "tcp-server/trace.js": "3aa8bacc4d8d96acc8287541f75b904de1fb5b399b405023266746ece897bf1e",
+    "tcp-server/secure-v2.js": "a9d68d80aeef1a4f16c375902d28b2e1564444558edc0948a8348e7015a38cc8",
+    "web/app/pages/dashboard/deliveries.vue": "a5e702395557d872866da02e152a06fe269e4b9140b78fea6d8878bc5d4b2d25",
+    "web/app/components/DeliveryEventTrace.vue": "cd2a4c929cd0fd5d351bfd9a76d3bb14fc443f337c0050378a03913dc542495a",
+    "web/shared/delivery.ts": "ff272b629ccde692cac0bd47e6b084e3281eebe8522a1e485d50cbb4015cb51b",
+    "tests/pipelines/database.cjs": "495767a8c67cc6cef390b935797948fd5f6e00396c3246c93476d860c73b10b4",
+    "tests/pipelines/recovery-safety.cjs": "b1075dadac7f982f43899923c3f151db502c39fb47efb7ddf77c3d1658ae8c67",
+    "tests/pipelines/policy-security.cjs": "228c86f182cfb2e62b9ed24a1ac11724f8717035b8c537080140a3f370f99cb9",
+    "tests/pipelines/postgres.cjs": "ff77bda43d5f798e652529f7e40e228b155f0aaff3e35862c47cd38bc395bded",
+    "tests/pipelines/worker-faults.cjs": "0fb31c766d6f5f015de4725b47a07f73bd1306737c9b45054b1dbe1f1c2efd49",
+    "tests/pipelines/worker-startup.cjs": "99d45edbbc8ca58919dfb68034a25582105995473c38c8090e2597807adbd83c"
+  }
+}

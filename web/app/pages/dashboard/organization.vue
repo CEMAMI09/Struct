@@ -1,5 +1,6 @@
 <template>
-  <div class="mx-auto max-w-3xl">
+  <EnterpriseWorkspace v-if="enterpriseEnabled"/>
+  <div v-else class="mx-auto max-w-3xl">
     <div class="mb-6">
       <p class="text-sm text-[#8B93A7]">
         Manage the workspace, roles, and who can edit devices and schemas.
@@ -201,6 +202,7 @@
 
 <script setup lang="ts">
 definePageMeta({ middleware: 'auth' })
+const enterpriseEnabled=useRuntimeConfig().public.enterpriseEnabled
 
 import type { OrgRole } from '~/types'
 

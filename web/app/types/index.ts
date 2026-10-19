@@ -7,7 +7,7 @@ export interface FlagBit {
   bit: number
 }
 
-export type OrgRole = 'owner' | 'admin' | 'viewer'
+export type OrgRole = 'owner' | 'admin' | 'developer' | 'operator' | 'viewer'
 export type SubscriptionTier = 'free' | 'flexible' | 'pro' | 'scale'
 
 export interface Organization {
@@ -83,6 +83,7 @@ export interface Device {
   api_secret_preview: string | null
   protocol_version: number
   secure_v2_enabled?: boolean
+  lifecycle?: 'enabled' | 'disabled' | 'revoked' | 'deleted'
   wire_device_id?: number | null
   mac_address: string | null
   first_telemetry_at?: string | null

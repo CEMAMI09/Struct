@@ -1,0 +1,114 @@
+{
+  "timestamp": "2026-10-13T21:29:51.499Z",
+  "boundary": "Local PGlite; 1 actual authenticated reading plus synthetic fleet metadata and packet counters. Not credential provisioning, physical devices, hosted latency or database CPU.",
+  "stages": [
+    {
+      "devices": 10,
+      "seedMs": 4.446699999999964,
+      "processed": 10,
+      "aggregateMs": 4.195999999999913,
+      "aggregationPerSecond": 2383.222116301289,
+      "inventory": {
+        "medianMs": 1.3940999999999804,
+        "jsonBytes": 4093
+      },
+      "usage": {
+        "medianMs": 1.1415999999999258,
+        "jsonBytes": 1977
+      },
+      "groupUsage": {
+        "medianMs": 0.5160000000000764,
+        "jsonBytes": 1323
+      },
+      "alertMs": 3.880899999999883
+    },
+    {
+      "devices": 100,
+      "seedMs": 10.951299999999947,
+      "processed": 90,
+      "aggregateMs": 7.310799999999972,
+      "aggregationPerSecond": 12310.554248509103,
+      "inventory": {
+        "medianMs": 1.3503000000000611,
+        "jsonBytes": 20105
+      },
+      "usage": {
+        "medianMs": 0.8888999999999214,
+        "jsonBytes": 3082
+      },
+      "groupUsage": {
+        "medianMs": 0.7691999999999553,
+        "jsonBytes": 3081
+      },
+      "alertMs": 1.2920999999998912
+    },
+    {
+      "devices": 1000,
+      "seedMs": 89.5963999999999,
+      "processed": 900,
+      "aggregateMs": 92.25890000000004,
+      "aggregationPerSecond": 9755.156413094017,
+      "inventory": {
+        "medianMs": 3.568499999999858,
+        "jsonBytes": 20167
+      },
+      "usage": {
+        "medianMs": 2.9082999999998265,
+        "jsonBytes": 3116
+      },
+      "groupUsage": {
+        "medianMs": 2.335499999999911,
+        "jsonBytes": 3110
+      },
+      "alertMs": 2.4139999999999873
+    },
+    {
+      "devices": 10000,
+      "seedMs": 867.6019000000001,
+      "processed": 9000,
+      "aggregateMs": 672.7231000000002,
+      "aggregationPerSecond": 13378.461360996818,
+      "inventory": {
+        "medianMs": 32.919000000000324,
+        "jsonBytes": 20281
+      },
+      "usage": {
+        "medianMs": 24.660199999999804,
+        "jsonBytes": 3143
+      },
+      "groupUsage": {
+        "medianMs": 18.76339999999982,
+        "jsonBytes": 3138
+      },
+      "alertMs": 10.478300000000218
+    },
+    {
+      "devices": 100000,
+      "seedMs": 9973.9437,
+      "processed": 90000,
+      "aggregateMs": 7333.033000000001,
+      "aggregationPerSecond": 12273.229917279792,
+      "inventory": {
+        "medianMs": 366.52059999999983,
+        "jsonBytes": 20274
+      },
+      "usage": {
+        "medianMs": 330.0522999999994,
+        "jsonBytes": 3169
+      },
+      "groupUsage": {
+        "medianMs": 235.17380000000048,
+        "jsonBytes": 3167
+      },
+      "alertMs": 102.52929999999833
+    }
+  ],
+  "memory": {
+    "rss": 1765982208,
+    "heapTotal": 86138880,
+    "heapUsed": 16897432,
+    "external": 1740832842,
+    "arrayBuffers": 1501217820
+  },
+  "migrationSHA256": "6c9cecc3c3791742275152fd09f1ba21068cdeabdb1626a17f9578b2ead66f57"
+}

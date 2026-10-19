@@ -1,0 +1,38 @@
+{
+  "environment": {
+    "node": "v24.18.1",
+    "platform": "win32",
+    "database": "PGlite single backend; host timing, not production throughput"
+  },
+  "migration": "034",
+  "cases": [
+    {
+      "destinations": 0,
+      "samples": 100,
+      "median_ms": 0.28910000000018954,
+      "p95_ms": 0.7244000000000597,
+      "serial_inserts_per_second": 3046.681250114085
+    },
+    {
+      "destinations": 1,
+      "samples": 100,
+      "median_ms": 0.3007000000000062,
+      "p95_ms": 0.4293999999999869,
+      "serial_inserts_per_second": 3138.8600288147127
+    },
+    {
+      "destinations": 4,
+      "samples": 100,
+      "median_ms": 0.3606999999999516,
+      "p95_ms": 0.5139000000001488,
+      "serial_inserts_per_second": 2569.260849346335
+    }
+  ],
+  "memory": {
+    "rss": 418291712,
+    "heapTotal": 57303040,
+    "heapUsed": 23130712,
+    "external": 257792175,
+    "arrayBuffers": 98179657
+  }
+}

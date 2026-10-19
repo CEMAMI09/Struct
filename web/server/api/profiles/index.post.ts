@@ -1,10 +1,14 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 import { requireOrgWriter } from '../../utils/auth'
-import { createDeviceCredentials, sanitizeDeviceForClient } from '../../utils/deviceCredentials'
+import {
+  createDeviceCredentials,
+  sanitizeDeviceForClient,
+} from '../../utils/deviceCredentials'
 import { validateProfileSchema } from '../../utils/profileSchema'
 import { asDatabaseJson } from '../../utils/databaseJson'
 
 export default defineEventHandler(async (event) => {
+  setHeader(event, 'Cache-Control', 'private, no-store')
   const body = await readBody<{
     orgId?: string
     name?: string
@@ -21,32 +25,44 @@ export default defineEventHandler(async (event) => {
   const identityField = body?.identityField?.trim() || 'device_id'
 
   if (!orgId || !name) {
-    throw createError({ statusCode: 400, message: 'orgId and name are required' })
+    throw createError({
+      statusCode: 400,
+      message: 'orgId and name are required',
+    })
   }
 
-  const schemaDefinition = validateProfileSchema(body?.schemaDefinition, identityField)
-  const { user } = await requireOrgWriter(event, orgId)
+  const schemaDefinition = validateProfileSchema(
+    body?.schemaDefinition,
+    identityField,
+  )
+  const { user, requestId } = await requireOrgWriter(
+    event,
+    orgId,
+    'devices.export_credentials',
+  )
   const supabase = await serverSupabaseServiceRole(event)
   const creds = createDeviceCredentials()
 
-  const { data: profile, error } = await supabase
-    .from('device_profiles')
-    .insert({
-      organization_id: orgId,
-      user_id: user.id,
-      name,
-      device_model: deviceModel,
-      firmware_version: firmwareVersion,
-      schema_definition: asDatabaseJson(schemaDefinition),
-      identity_field: identityField,
-      fleet_key_id: creds.keyId,
-      fleet_secret_encrypted: creds.apiSecretEncrypted,
-      fleet_secret_preview: creds.apiSecretPreview,
-    })
-    .select(
-      'id, organization_id, user_id, name, device_model, firmware_version, schema_definition, identity_field, fleet_key_id, fleet_secret_preview, created_at, updated_at',
-    )
-    .single()
+  const { data: profile, error } = await (supabase as any).rpc(
+    'enterprise_legacy_admin',
+    {
+      p_org: orgId,
+      p_actor: user.id,
+      p_action: 'profile',
+      p_device: null,
+      p_request: requestId,
+      p_data: {
+        name,
+        device_model: deviceModel,
+        firmware_version: firmwareVersion,
+        schema_definition: asDatabaseJson(schemaDefinition),
+        identity_field: identityField,
+        key_id: creds.keyId,
+        secret_encrypted: creds.apiSecretEncrypted,
+        secret_preview: creds.apiSecretPreview,
+      },
+    },
+  )
 
   if (error) {
     if (/unique|duplicate/i.test(error.message)) {

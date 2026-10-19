@@ -10,7 +10,8 @@
     "test": "node test-parser.js && node test-parser-parity.js && node test-protocol.js && node test-crypto.js && node test-rateLimit.js && node test-replay.js && node test-webhooks.js && node test-udp.js && node test-ingest.js && node test-transports.js && node test-safeWebhook.js && node test-outbox-worker.js && node test-secure-v2.js",
     "test:parser": "node test-parser.js && node test-parser-parity.js",
     "build:native": "npm --prefix ./native-parser install && npm --prefix ./native-parser run build",
-    "build:native:debug": "npm --prefix ./native-parser install && npm --prefix ./native-parser run build:debug"
+    "build:native:debug": "npm --prefix ./native-parser install && npm --prefix ./native-parser run build:debug",
+    "delivery:health": "node delivery-health.js"
   },
   "keywords": [
     "struct",
@@ -22,9 +23,13 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@aws-sdk/client-eventbridge": "3.1149.0",
+    "@aws-sdk/client-sqs": "3.1149.0",
+    "@smithy/node-http-handler": "4.12.1",
     "@supabase/supabase-js": "^2.110.3",
     "dotenv": "^17.4.2",
-    "ipaddr.js": "^2.5.0"
+    "ipaddr.js": "^2.5.0",
+    "pg": "8.23.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

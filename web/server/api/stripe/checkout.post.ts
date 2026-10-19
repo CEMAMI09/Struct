@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  await requireOrgWriter(event, orgId)
+  await requireOrgWriter(event, orgId, 'billing.manage')
 
   const config = useRuntimeConfig()
   const prices = resolveStripePriceIds(config)

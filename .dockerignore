@@ -1,0 +1,12 @@
+.git
+**/node_modules
+**/.env
+**/.env.*
+**/private.env
+work
+web/.output
+web/.nuxt
+docs/**/evidence
+tests
+benchmarks
+*.log

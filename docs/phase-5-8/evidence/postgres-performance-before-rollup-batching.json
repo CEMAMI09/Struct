@@ -1,0 +1,56 @@
+{
+  "scope": "Actual local PostgreSQL SQL transactions with synthetic 1-byte sensor metadata; excludes UDP/crypto, Supabase RTT and production hardware; no physical fleet throughput claim",
+  "sampleCount": 500,
+  "stages": [
+    {
+      "stage": "037 baseline",
+      "durationMs": 388.3287999999998,
+      "commitsPerSecond": 1287.568678913334,
+      "medianCommitMs": 0.6990000000000691,
+      "p95CommitMs": 1.03899999999976,
+      "maxCommitMs": 17.155699999999797
+    },
+    {
+      "stage": "038 observed idle",
+      "durationMs": 531.0837000000001,
+      "commitsPerSecond": 941.4711842973148,
+      "medianCommitMs": 0.9569000000001324,
+      "p95CommitMs": 1.4587000000001353,
+      "maxCommitMs": 21.934700000000248
+    },
+    {
+      "stage": "038 with concurrent aggregation",
+      "durationMs": 480.9314999999997,
+      "commitsPerSecond": 1039.6490976365665,
+      "medianCommitMs": 0.9255000000002838,
+      "p95CommitMs": 1.3244999999997162,
+      "maxCommitMs": 2.6898999999998523
+    }
+  ],
+  "timestamp": "2026-10-13T19:50:25.536Z",
+  "aggregation": {
+    "processedDuringMixed": 636,
+    "measuredDurationMs": 548.7622000000001,
+    "logicalReadings": 1000,
+    "concurrentWorkers": 2
+  },
+  "concurrentIncidentDeduplication": true,
+  "meanAnalyticsQueryMs": 0.8278399999999919,
+  "alertEvaluationMs": 2.3159999999998035,
+  "storage": {
+    "packetmetrics": "745472",
+    "rollups": "786432",
+    "identities": "172032"
+  },
+  "eventsPersisted": 1500,
+  "deliveryIntents": 1500,
+  "memory": {
+    "rss": 88698880,
+    "heapTotal": 29155328,
+    "heapUsed": 11443144,
+    "external": 2763264,
+    "arrayBuffers": 323670
+  },
+  "postgresVersion": "18.4",
+  "migrationSHA256": "d292114f43ef65f3704bca2172bb6d52c00551cda936bd5e43bb7a42ca903dbb"
+}

@@ -21,6 +21,7 @@ it.each([
   const pending = new Map<string, ReturnType<typeof deferred<{ data: unknown[]; error: null }>>>()
   const selected: string[] = []
 
+  vi.stubGlobal('useRuntimeConfig',()=>({public:{fleetEnabled:false,integrationsEnabled:false}}))
   vi.stubGlobal('useNuxtApp', () => app)
   vi.stubGlobal('computed', computed)
   vi.stubGlobal('useState', (key: string, init: () => unknown) => {
